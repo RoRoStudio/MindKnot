@@ -1,0 +1,281 @@
+-e 
+
+// ==== ./App.tsx ====
+
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import AppNavigator from './src/navigation/AppNavigator';
+import { lightTheme } from './src/theme/light';
+import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, View, Text } from 'react-native';
+
+export default function App() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <View style={styles.container}>
+            <Text>Open up App.tsx to start working on your app dude!</Text>
+            <StatusBar style="auto" />
+            <AppNavigator />
+          </View>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: lightTheme.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+-e 
+
+// ==== ./index.ts ====
+
+import { registerRootComponent } from 'expo';
+
+import App from './App';
+
+// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
+// It also ensures that whether you load the app in Expo Go or in a native build,
+// the environment is set up appropriately
+registerRootComponent(App);
+-e 
+
+// ==== ./src/components/common/Icon.tsx ====
+
+import { SvgProps } from 'react-native-svg';
+
+import Plus from '../../assets/icons/lucide/plus.svg';
+import ArrowLeft from '../../assets/icons/lucide/arrow-left.svg';
+import Check from '../../assets/icons/lucide/check.svg';
+import Lightbulb from '../../assets/icons/lucide/lightbulb.svg';
+
+const iconMap = {
+    plus: Plus,
+    'arrow-left': ArrowLeft,
+    check: Check,
+    lightbulb: Lightbulb,
+};
+
+export type IconName = keyof typeof iconMap;
+
+type Props = SvgProps & {
+    name: IconName;
+};
+
+export function Icon({ name, ...props }: Props) {
+    const Component = iconMap[name];
+    return <Component {...props} />;
+}
+-e 
+
+// ==== ./src/navigation/AppNavigator.tsx ====
+
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Routes } from './Routes';
+import CanvasScreen from '../screens/CanvasScreen';
+import MapScreen from '../screens/MapScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+
+const Stack = createNativeStackNavigator();
+
+export default function AppNavigator() {
+    return (
+        <Stack.Navigator initialRouteName={Routes.Canvas}>
+            <Stack.Screen name={Routes.Canvas} component={CanvasScreen} />
+            <Stack.Screen name={Routes.Map} component={MapScreen} />
+            <Stack.Screen name={Routes.Settings} component={SettingsScreen} />
+        </Stack.Navigator>
+    );
+}
+-e 
+
+// ==== ./src/navigation/Routes.ts ====
+
+export enum Routes {
+    Canvas = 'Canvas',
+    Map = 'Map',
+    Settings = 'Settings',
+}
+-e 
+
+// ==== ./src/screens/CanvasScreen.tsx ====
+
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { lightTheme } from '../theme/light';
+
+export default function CanvasScreen() {
+    return (
+        <View style={styles.container}>
+            <Text style={styles.text}>This is the Canvas screen</Text>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: lightTheme.background,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    text: {
+        color: lightTheme.textPrimary,
+        fontSize: 18,
+    },
+});
+-e 
+
+// ==== ./src/screens/MapScreen.tsx ====
+
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { lightTheme } from '../theme/light';
+
+export default function MapScreen() {
+    return (
+        <View style={styles.container}>
+            <Text style={styles.text}>This is the Map screen</Text>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: lightTheme.background,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    text: {
+        color: lightTheme.textPrimary,
+        fontSize: 18,
+    },
+});
+-e 
+
+// ==== ./src/screens/SettingsScreen.tsx ====
+
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { lightTheme } from '../theme/light';
+
+export default function SettingsScreen() {
+    return (
+        <View style={styles.container}>
+            <Text style={styles.text}>This is the Settings screen</Text>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: lightTheme.background,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    text: {
+        color: lightTheme.textPrimary,
+        fontSize: 18,
+    },
+});
+-e 
+
+// ==== ./src/styles/colors.ts ====
+
+export const baseColors = {
+    white: '#ffffff',
+    black: '#000000',
+    nodeBlue: '#2D9CDB',
+    urgentRed: '#EB5757',
+    textSecondary: '#666666',
+};
+
+export const lightColors = {
+    background: '#ffffff',
+    textPrimary: '#1A1A1A',
+    surface: '#F2F2F2',
+    border: '#E0E0E0',
+};
+
+export const darkColors = {
+    background: '#121212',
+    textPrimary: '#ffffff',
+    surface: '#1E1E1E',
+    border: '#333333',
+};
+-e 
+
+// ==== ./src/styles/index.ts ====
+
+export * from './colors';
+export * from './spacing';
+export * from './typography';
+-e 
+
+// ==== ./src/styles/spacing.ts ====
+
+export const spacing = {
+    xs: 4,
+    s: 8,
+    m: 16,
+    l: 24,
+    xl: 32,
+};
+-e 
+
+// ==== ./src/styles/typography.ts ====
+
+export const typography = {
+    fontSize: {
+      xs: 10,
+      s: 12,
+      m: 14,
+      l: 18,
+      xl: 24,
+      xxl: 32,
+    },
+    fontWeight: {
+      regular: '400',
+      medium: '500',
+      bold: '700',
+    },
+    lineHeight: {
+      tight: 16,
+      normal: 20,
+      relaxed: 28,
+    },
+  };
+  -e 
+
+// ==== ./src/theme/dark.ts ====
+
+import { baseColors, darkColors } from '../styles/colors';
+
+export const darkTheme = {
+    ...darkColors,
+    ...baseColors,
+    primary: baseColors.nodeBlue,
+};
+-e 
+
+// ==== ./src/theme/light.ts ====
+
+import { baseColors, lightColors } from '../styles/colors';
+
+export const lightTheme = {
+    ...lightColors,
+    ...baseColors,
+    primary: baseColors.nodeBlue,
+};

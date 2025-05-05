@@ -1,11 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { lightTheme } from '../theme/light';
+import Canvas from '../components/canvas/Canvas';
 
 export default function CanvasScreen() {
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>This is the Canvas screen</Text>
+            <Canvas />
         </View>
     );
 }
