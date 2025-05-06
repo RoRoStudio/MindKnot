@@ -1,31 +1,25 @@
-import { create } from 'zustand';
-import { Node, Link } from '../types/Node';
-import { nanoid } from 'nanoid/non-secure';
+// Add the Text import at the top of Canvas.tsx
+import { Text } from 'react-native';
 
-type NodeStore = {
-    nodes: Node[];
-    links: Link[];
-    addNode: (x: number, y: number) => void;
-    updateNodePosition: (id: string, x: number, y: number) => void;
-    addLink: (sourceId: string, targetId: string) => void;
-};
+// Make sure the connectNodes function is exported and works correctly:
+connectNodes: (source: string, target: string) => {
+    if (source === target) return;
 
-export const useNodeStore = create<NodeStore>((set) => ({
-    nodes: [],
-    links: [],
-    addNode: (x, y) =>
-        set((s) => ({
-            nodes: [
-                ...s.nodes,
-                { id: nanoid(), title: 'New Node', x, y, color: '#2D9CDB' },
-            ],
-        })),
-    updateNodePosition: (id, x, y) =>
-        set((s) => ({
-            nodes: s.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)),
-        })),
-    addLink: (sourceId, targetId) =>
-        set((s) => ({
-            links: [...s.links, { sourceId, targetId }],
-        })),
-}));
+    const { links } = get();
+
+    // Check if this link already exists
+    const exists = links.some(link =>
+        (link.source === source && link.target === target) ||
+        (link.source === target && link.target === source)
+    );
+
+    if (!exists) {
+        const newLink: Link = {
+            id: `link-${links.length + 1}`,
+            source,
+            target
+        };
+
+        set({ links: [...links, newLink] });
+    }
+},

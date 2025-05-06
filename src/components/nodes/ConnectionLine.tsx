@@ -1,36 +1,48 @@
 import React from 'react';
 import Svg, { Path } from 'react-native-svg';
-import { useNodeStore } from '../../state/useNodeStore';
 import { Link } from '../../types/Node';
+import { useNodeStore } from '../../state/useNodeStore';
 
-type Props = {
-  link: Link;
-};
+interface Props {
+    link: Link;
+}
 
 export default function ConnectionLine({ link }: Props) {
-  const { nodes } = useNodeStore();
-  const source = nodes.find((n) => n.id === link.sourceId);
-  const target = nodes.find((n) => n.id === link.targetId);
+    const { nodes } = useNodeStore();
 
-  if (!source || !target) return null;
+    // Find source and target nodes
+    const sourceNode = nodes.find(node => node.id === link.source);
+    const targetNode = nodes.find(node => node.id === link.target);
 
-  const startX = source.x + 40;
-  const startY = source.y + 20;
-  const endX = target.x + 40;
-  const endY = target.y + 20;
+    if (!sourceNode || !targetNode) return null;
 
-  const dx = endX - startX;
-  const dy = endY - startY;
-  const cx1 = startX + dx * 0.25;
-  const cy1 = startY;
-  const cx2 = startX + dx * 0.75;
-  const cy2 = endY;
+    // Get positions
+    const sourceX = sourceNode.body.position.x;
+    const sourceY = sourceNode.body.position.y;
+    const targetX = targetNode.body.position.x;
+    const targetY = targetNode.body.position.y;
 
-  const path = `M ${startX} ${startY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${endX} ${endY}`;
+    // Create bezier curve
+    const dx = targetX - sourceX;
+    const dy = targetY - sourceY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
 
-  return (
-    <Svg style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }}>
-      <Path d={path} stroke="#aaa" strokeWidth={2} fill="none" />
-    </Svg>
-  );
+    // Control points for a nice curve
+    const curvature = Math.min(0.4, 60 / distance);
+    const controlX = sourceX + dx * 0.5;
+    const controlY = sourceY + dy * 0.5 - distance * curvature;
+
+    // Path for quadratic bezier curve
+    const path = `M ${sourceX} ${sourceY} Q ${controlX} ${controlY}, ${targetX} ${targetY}`;
+
+    return (
+        <Svg style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
+            <Path
+                d={path}
+                stroke="#666"
+                strokeWidth={2}
+                fill="none"
+            />
+        </Svg>
+    );
 }

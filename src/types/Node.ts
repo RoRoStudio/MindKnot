@@ -1,12 +1,14 @@
+import { PhysicsBody } from './Physics';
+
 export interface Node {
     id: string;
     title: string;
-    x: number;
-    y: number;
     color: string;
+    body: PhysicsBody;
 }
 
 export interface Link {
-    sourceId: string;
-    targetId: string;
+    id: string;
+    source: string;
+    target: string;
 }
