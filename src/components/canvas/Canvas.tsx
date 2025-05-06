@@ -1,11 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
-import { GestureDetector, Gesture, GestureStateChangeEvent, TapGestureHandlerEventPayload } from 'react-native-gesture-handler';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    runOnJS
-} from 'react-native-reanimated';
 import { GameEngine } from 'react-native-game-engine';
 import Matter from 'matter-js';
 import { useMindMapStore } from '../../state/useMindMapStore';
@@ -39,39 +33,6 @@ export default function Canvas() {
 
     const [gameEngineKey, setGameEngineKey] = useState(0);
     const gameEngineRef = useRef(null);
-
-    // Pan and zoom values
-    const panX = useSharedValue(0);
-    const panY = useSharedValue(0);
-    const scale = useSharedValue(1);
-
-    // Make this a proper JS function that can be called from a worklet
-    const handleTap = (x: number, y: number) => {
-        try {
-            console.log("Canvas coordinates:", x, y);
-
-            // Generate a random color
-            const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
-            console.log("Generated random color:", randomColor);
-
-            // Create a new node at this position
-            console.log("Calling addNode function...");
-            addNode({
-                x,
-                y,
-                title: `Node ${nodes.length + 1}`,
-                color: randomColor
-            }).catch(err => {
-                console.error("Error in addNode promise:", err);
-            });
-        } catch (err) {
-            console.error("Error in tap handler:", err);
-            if (err instanceof Error) {
-                console.error("Error message:", err.message);
-                console.error("Stack trace:", err.stack);
-            }
-        }
-    };
 
     // Prepare entities based on nodes - make it memoized
     const prepareEntities = useCallback((): Entities => {
@@ -159,66 +120,18 @@ export default function Canvas() {
         };
     }, []);
 
-    // Create a simple tap gesture with runOnJS
-    const tapGesture = Gesture.Tap()
-        .onEnd((event) => {
-            console.log("Tap detected at:", event.absoluteX, event.absoluteY);
-
-            // Convert screen coordinates to canvas coordinates
-            const canvasX = (event.absoluteX - panX.value) / scale.value;
-            const canvasY = (event.absoluteY - panY.value) / scale.value;
-
-            // Call the JS function from the worklet
-            runOnJS(handleTap)(canvasX, canvasY);
-        })
-        .runOnJS(true);  // Explicitly mark to run on JS thread
-
-    // Define pan gesture for moving the canvas - FIXED PROPERTY NAMES
-    const panGesture = Gesture.Pan()
-        .onUpdate((event) => {
-            // Using translationX/Y instead of changeX/Y
-            panX.value += event.translationX - panX.value;
-            panY.value += event.translationY - panY.value;
-        });
-
-    // Define pinch gesture for zooming - FIXED PROPERTY NAME
-    const pinchGesture = Gesture.Pinch()
-        .onUpdate((event) => {
-            // Using scale instead of scaleChange
-            scale.value = Math.max(0.5, Math.min(3, event.scale));
-        });
-
-    // Combine gestures with tap having priority
-    const combinedGestures = Gesture.Exclusive(
-        tapGesture,
-        Gesture.Simultaneous(panGesture, pinchGesture)
-    );
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [
-            { translateX: panX.value },
-            { translateY: panY.value },
-            { scale: scale.value }
-        ]
-    }));
-
     return (
-        <View style={styles.container}>
-            <GestureDetector gesture={combinedGestures}>
-                <View style={StyleSheet.absoluteFill}>
-                    <Animated.View style={[styles.canvasWrapper, animatedStyle]}>
-                        <GameEngine
-                            key={gameEngineKey}
-                            ref={gameEngineRef}
-                            style={styles.gameEngine}
-                            systems={[physics]}
-                            entities={prepareEntities()}
-                            running={true}
-                        />
-                    </Animated.View>
-                </View>
-            </GestureDetector>
+        <View style={styles.canvasWrapper}>
+            <GameEngine
+                key={gameEngineKey}
+                ref={gameEngineRef}
+                style={styles.gameEngine}
+                systems={[physics]}
+                entities={prepareEntities()}
+                running={true}
+            />
         </View>
+
     );
 }
 

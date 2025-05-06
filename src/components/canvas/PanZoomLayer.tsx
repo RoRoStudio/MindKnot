@@ -35,7 +35,9 @@ export default function PanZoomLayer({ children }: Props) {
 
     return (
         <GestureDetector gesture={gesture}>
-            <Animated.View style={[animatedStyle, { flex: 1 }]}>{children}</Animated.View>
+            <Animated.View style={[animatedStyle, { flex: 1 }]}>
+                {children}
+            </Animated.View>
         </GestureDetector>
     );
 }

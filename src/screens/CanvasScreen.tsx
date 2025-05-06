@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import Canvas from '../components/canvas/Canvas';
 import { useMindMapStore } from '../state/useMindMapStore';
+import PanZoomLayer from '../components/canvas/PanZoomLayer';
+import CreateNode from '../components/nodes/CreateNode';
 
 export default function CanvasScreen() {
     const loadNodes = useMindMapStore((s) => s.loadNodes);
@@ -13,12 +15,16 @@ export default function CanvasScreen() {
 
     return (
         <View style={styles.container}>
-            <Canvas />
+            <PanZoomLayer>
+                <Canvas />
+                <CreateNode />
+            </PanZoomLayer>
             <Pressable style={styles.fab} onPress={clearNodes}>
                 <Text style={styles.fabText}>🗑</Text>
             </Pressable>
         </View>
     );
+
 }
 
 const styles = StyleSheet.create({
