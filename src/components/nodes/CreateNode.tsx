@@ -1,59 +1,111 @@
+// src/components/nodes/CreateNode.tsx
+
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import Animated, { runOnJS } from 'react-native-reanimated';
 import { useMindMapStore } from '../../state/useMindMapStore';
+import { NodeTemplate } from '../../types/NodeTypes';
+import { runOnJS } from 'react-native-reanimated';
+
+const templateOptions: { type: NodeTemplate; label: string; icon: string }[] = [
+    { type: 'quicknote', label: '📝', icon: '📝' },
+    { type: 'checklist', label: '☑️', icon: '☑️' },
+    { type: 'bullet', label: '•', icon: '🔘' },
+];
 
 export default function CreateNode() {
     const addNode = useMindMapStore((s) => s.addNode);
-    const nodes = useMindMapStore((s) => s.nodes);
-
     const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
 
     const handleTap = (x: number, y: number) => {
-        console.log('Tapped at:', x, y);
+        console.log('[CreateNode] Gesture tap at:', x, y);
         setMenuPosition({ x, y });
     };
 
-    const handleCreate = (template: string) => {
-        if (!menuPosition) return;
+    const handleCreate = async (template: NodeTemplate) => {
+        if (!menuPosition) {
+            console.warn('[CreateNode] Tried to create node but no menuPosition is set.');
+            return;
+        }
 
-        const color = '#' + Math.floor(Math.random() * 16777215).toString(16);
-        addNode({
-            x: menuPosition.x,
-            y: menuPosition.y,
-            color,
-            title: `New ${template}`,
-            template: template as any,
-        });
-        setMenuPosition(null);
+        try {
+            const selected = templateOptions.find((t) => t.type === template);
+            const icon = selected?.icon || '🔖';
+            const color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+
+            const payload = {
+                x: menuPosition.x,
+                y: menuPosition.y,
+                color,
+                title: 'New ' + template,
+                template,
+                icon,
+            };
+
+            console.log('[CreateNode] Creating node with payload:', payload);
+            await addNode(payload);
+            console.log('[CreateNode] Node creation successful');
+        } catch (err) {
+            console.error('[CreateNode] Error creating node:', err);
+        } finally {
+            setMenuPosition(null);
+        }
     };
 
     const tap = Gesture.Tap().onEnd((e) => {
-        runOnJS(handleTap)(e.absoluteX, e.absoluteY);
+        try {
+            console.log('[CreateNode] Tap gesture end triggered');
+            runOnJS(handleTap)(e.absoluteX, e.absoluteY);
+        } catch (err) {
+            console.error('[CreateNode] Error in tap gesture handler:', err);
+        }
     });
 
     return (
         <GestureDetector gesture={tap}>
             <View style={StyleSheet.absoluteFill}>
                 {menuPosition && (
-                    <View style={[styles.menu, { left: menuPosition.x, top: menuPosition.y }]}>
-                        <TouchableOpacity onPress={() => handleCreate('quicknote')}>
-                            <Text style={styles.item}>Quick Note</Text>
+                    <Animated.View
+                        entering={FadeIn}
+                        exiting={FadeOut}
+                        style={[styles.radialMenu, {
+                            left: menuPosition.x - 28,
+                            top: menuPosition.y - 28,
+                        }]}
+                    >
+                        <TouchableOpacity
+                            style={[styles.centerButton, styles.cancelButton]}
+                            onPress={() => {
+                                console.log('[CreateNode] Cancel button pressed');
+                                setMenuPosition(null);
+                            }}
+                        >
+                            <Text style={styles.icon}>✕</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleCreate('checklist')}>
-                            <Text style={styles.item}>Checklist</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleCreate('decision')}>
-                            <Text style={styles.item}>Decision</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleCreate('bullet')}>
-                            <Text style={styles.item}>Bullet</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setMenuPosition(null)}>
-                            <Text style={[styles.item, styles.cancel]}>Cancel</Text>
-                        </TouchableOpacity>
-                    </View>
+
+                        {templateOptions.map((tpl, idx) => {
+                            const angle = (idx / templateOptions.length) * 2 * Math.PI;
+                            const radius = 70;
+                            const x = Math.cos(angle) * radius;
+                            const y = Math.sin(angle) * radius;
+                            return (
+                                <TouchableOpacity
+                                    key={tpl.type}
+                                    style={[styles.radialButton, {
+                                        left: x + 28,
+                                        top: y + 28,
+                                    }]}
+                                    onPress={() => {
+                                        console.log('[CreateNode] Pressed template button:', tpl.type);
+                                        handleCreate(tpl.type);
+                                    }}
+                                >
+                                    <Text style={styles.icon}>{tpl.label}</Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </Animated.View>
                 )}
             </View>
         </GestureDetector>
@@ -61,23 +113,37 @@ export default function CreateNode() {
 }
 
 const styles = StyleSheet.create({
-    menu: {
+    radialMenu: {
         position: 'absolute',
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        elevation: 4,
-        padding: 8,
-        zIndex: 99,
+        width: 0,
+        height: 0,
+        zIndex: 100,
     },
-    item: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        fontSize: 14,
-        color: '#1A1A1A',
+    radialButton: {
+        position: 'absolute',
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#ffffff',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
     },
-    cancel: {
-        color: '#EB5757',
-        fontWeight: 'bold',
-        marginTop: 6,
+    centerButton: {
+        position: 'absolute',
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#EB5757',
+        zIndex: 10,
+    },
+    cancelButton: {
+        left: 0,
+        top: 0,
+    },
+    icon: {
+        fontSize: 20,
     },
 });
