@@ -1,15 +1,17 @@
 import { create } from 'zustand';
 import { NodeModel } from '../types/NodeTypes';
-import { getAllNodes, insertNode } from '../services/sqliteService';
+import { getAllNodes, insertNode, updateNode, deleteAllNodes } from '../services/sqliteService';
 import { nanoid } from 'nanoid/non-secure';
 
 type MindMapState = {
     nodes: NodeModel[];
     loadNodes: () => Promise<void>;
     addNode: (partial: Partial<NodeModel>) => Promise<void>;
+    updateNodePosition: (id: string, x: number, y: number) => Promise<void>;
+    clearAllNodes: () => Promise<void>;
 };
 
-export const useMindMapStore = create<MindMapState>((set) => ({
+export const useMindMapStore = create<MindMapState>((set, get) => ({
     nodes: [],
 
     loadNodes: async () => {
@@ -34,5 +36,25 @@ export const useMindMapStore = create<MindMapState>((set) => ({
         };
         await insertNode(node);
         set((state) => ({ nodes: [...state.nodes, node] }));
+    },
+
+    updateNodePosition: async (id, x, y) => {
+        const now = Date.now();
+        set((state) => {
+            const updatedNodes = state.nodes.map((node) =>
+                node.id === id ? { ...node, x, y, updatedAt: now } : node
+            );
+            return { nodes: updatedNodes };
+        });
+
+        const updatedNode = get().nodes.find((node) => node.id === id);
+        if (updatedNode) {
+            await updateNode({ ...updatedNode, x, y, updatedAt: now });
+        }
+    },
+
+    clearAllNodes: async () => {
+        await deleteAllNodes();
+        set({ nodes: [] });
     },
 }));
