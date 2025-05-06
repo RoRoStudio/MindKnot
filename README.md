@@ -5,6 +5,7 @@ MindKnot
 ├─ .pnp.loader.mjs
 ├─ App.tsx
 ├─ README.md
+├─ all-code.txt
 ├─ app.json
 ├─ assets
 │  ├─ adaptive-icon.png
@@ -24,13 +25,16 @@ MindKnot
 │  │        ├─ a-arrow-up.svg
 │  │        ├─ (and a lot more)
 │  ├─ components
-│  │  └─ common
-│  │     └─ Icon.tsx
+│  │  ├─ canvas
+│  │  ├─ common
+│  │  │  └─ Icon.tsx
+│  │  └─ nodes
 │  ├─ constants
 │  ├─ contexts
 │  ├─ hooks
 │  ├─ navigation
 │  │  ├─ AppNavigator.tsx
+│  │  ├─ BottomTabs.tsx
 │  │  └─ Routes.ts
 │  ├─ screens
 │  │  ├─ CanvasScreen.tsx
@@ -47,6 +51,7 @@ MindKnot
 │  │  ├─ dark.ts
 │  │  └─ light.ts
 │  ├─ types
+│  │  └─ svg.d.ts
 │  └─ utils
 └─ tsconfig.json
 

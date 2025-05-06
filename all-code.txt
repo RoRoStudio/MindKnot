@@ -7,34 +7,18 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppNavigator from './src/navigation/AppNavigator';
-import { lightTheme } from './src/theme/light';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, Text } from 'react-native';
 
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <NavigationContainer>
-          <View style={styles.container}>
-            <Text>Open up App.tsx to start working on your app dude!</Text>
-            <StatusBar style="auto" />
-            <AppNavigator />
-          </View>
+          <AppNavigator />
         </NavigationContainer>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: lightTheme.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 -e 
 
 // ==== ./index.ts ====
@@ -57,12 +41,16 @@ import Plus from '../../assets/icons/lucide/plus.svg';
 import ArrowLeft from '../../assets/icons/lucide/arrow-left.svg';
 import Check from '../../assets/icons/lucide/check.svg';
 import Lightbulb from '../../assets/icons/lucide/lightbulb.svg';
+import Map from '../../assets/icons/lucide/map.svg';
+import Settings from '../../assets/icons/lucide/settings.svg';
 
 const iconMap = {
     plus: Plus,
     'arrow-left': ArrowLeft,
     check: Check,
     lightbulb: Lightbulb,
+    map: Map,
+    settings: Settings,
 };
 
 export type IconName = keyof typeof iconMap;
@@ -80,21 +68,44 @@ export function Icon({ name, ...props }: Props) {
 // ==== ./src/navigation/AppNavigator.tsx ====
 
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Routes } from './Routes';
-import CanvasScreen from '../screens/CanvasScreen';
-import MapScreen from '../screens/MapScreen';
-import SettingsScreen from '../screens/SettingsScreen';
-
-const Stack = createNativeStackNavigator();
+import BottomTabs from './BottomTabs';
 
 export default function AppNavigator() {
+    return <BottomTabs />;
+}
+-e 
+
+// ==== ./src/navigation/BottomTabs.tsx ====
+
+import React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import CanvasScreen from '../screens/CanvasScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import { Icon } from '../components/common/Icon';
+import { lightTheme } from '../theme/light';
+
+const Tab = createBottomTabNavigator();
+
+export default function BottomTabs() {
     return (
-        <Stack.Navigator initialRouteName={Routes.Canvas}>
-            <Stack.Screen name={Routes.Canvas} component={CanvasScreen} />
-            <Stack.Screen name={Routes.Map} component={MapScreen} />
-            <Stack.Screen name={Routes.Settings} component={SettingsScreen} />
-        </Stack.Navigator>
+        <Tab.Navigator
+            screenOptions={({ route }: { route: RouteProp<Record<string, object | undefined>, string> }) => {
+                return {
+                    headerStyle: { backgroundColor: lightTheme.background },
+                    headerTitleStyle: { color: lightTheme.textPrimary },
+                    tabBarStyle: { backgroundColor: lightTheme.background },
+                    tabBarActiveTintColor: lightTheme.primary,
+                    tabBarInactiveTintColor: lightTheme.textSecondary,
+                    tabBarIcon: ({ color, size }: { color: string; size: number }) => {
+                        const name = route.name === 'Canvas' ? 'map' : 'settings';
+                        return <Icon name={name} width={size} height={size} stroke={color} />;
+                    },
+                } as BottomTabNavigationOptions;
+            }}
+        >
+            <Tab.Screen name="Canvas" component={CanvasScreen} />
+            <Tab.Screen name="Settings" component={SettingsScreen} />
+        </Tab.Navigator>
     );
 }
 -e 
@@ -111,13 +122,13 @@ export enum Routes {
 // ==== ./src/screens/CanvasScreen.tsx ====
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { lightTheme } from '../theme/light';
+import { View, StyleSheet } from 'react-native';
+import Canvas from '../components/canvas/Canvas';
 
 export default function CanvasScreen() {
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>This is the Canvas screen</Text>
+            <Canvas />
         </View>
     );
 }
@@ -125,16 +136,8 @@ export default function CanvasScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: lightTheme.background,
-        alignItems: 'center',
-        justifyContent: 'center',
     },
-    text: {
-        color: lightTheme.textPrimary,
-        fontSize: 18,
-    },
-});
--e 
+});-e 
 
 // ==== ./src/screens/MapScreen.tsx ====
 
@@ -279,3 +282,13 @@ export const lightTheme = {
     ...baseColors,
     primary: baseColors.nodeBlue,
 };
+-e 
+
+// ==== ./src/types/svg.d.ts ====
+
+declare module '*.svg' {
+    import * as React from 'react';
+    import { SvgProps } from 'react-native-svg';
+    const content: React.FC<SvgProps>;
+    export default content;
+}
