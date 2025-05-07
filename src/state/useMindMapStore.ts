@@ -1,39 +1,53 @@
 // src/state/useMindMapStore.ts
-
 import { create } from 'zustand';
 import { NodeModel } from '../types/NodeTypes';
-import { getAllNodes, insertNode, updateNode, deleteAllNodes } from '../services/sqliteService';
+import { 
+  getAllNodes, 
+  insertNode, 
+  updateNode as updateNodeInDb, 
+  deleteAllNodes 
+} from '../services/sqliteService';
 import { nanoid } from 'nanoid/non-secure';
 
+// Define the state shape
 type MindMapState = {
   nodes: NodeModel[];
+  isLoading: boolean;
+  
+  // Data operations
   loadNodes: () => Promise<void>;
-  addNode: (partial: Partial<NodeModel>) => Promise<void>;
+  addNode: (partial: Partial<NodeModel>) => Promise<string>;
+  updateNode: (node: NodeModel) => Promise<void>;
   updateNodePosition: (id: string, x: number, y: number) => Promise<void>;
   clearAllNodes: () => Promise<void>;
 };
 
 export const useMindMapStore = create<MindMapState>((set, get) => ({
   nodes: [],
+  isLoading: false,
 
   loadNodes: async () => {
     try {
-      console.log('[MindMapStore] Loading nodes from database...');
-      const loaded = await getAllNodes();
-      set({ nodes: loaded });
-      console.log(`[MindMapStore] Loaded ${loaded.length} nodes`);
-    } catch (err) {
-      console.error('[MindMapStore] Failed to load nodes:', err);
-      set({ nodes: [] });
+      set({ isLoading: true });
+      console.log("[MindMapStore] Loading nodes from database...");
+      const loadedNodes = await getAllNodes();
+      console.log(`[MindMapStore] Loaded ${loadedNodes.length} nodes`);
+      set({ nodes: loadedNodes, isLoading: false });
+    } catch (error) {
+      console.error("[MindMapStore] Error loading nodes:", error);
+      set({ nodes: [], isLoading: false });
     }
   },
 
   addNode: async (partial) => {
     try {
+      // Generate an ID and timestamp
+      const nodeId = nanoid();
       const now = Date.now();
-      const id = nanoid();
+      
+      // Provide sensible defaults for required fields
       const node: NodeModel = {
-        id,
+        id: nodeId,
         title: partial.title ?? 'Untitled',
         body: partial.body ?? '',
         icon: partial.icon ?? '',
@@ -45,27 +59,59 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
         createdAt: now,
         updatedAt: now,
       };
-
-      console.log('[MindMapStore] Creating node:', node);
+      
+      // Update state first for immediate feedback
       set((state) => ({ nodes: [...state.nodes, node] }));
+      
+      // Then save to database
       await insertNode(node);
-    } catch (err) {
-      console.error('[MindMapStore] Failed to add node:', err);
+      console.log("[MindMapStore] Added node:", nodeId);
+      return nodeId;
+    } catch (error) {
+      console.error("[MindMapStore] Error adding node:", error);
+      if (error instanceof Error) {
+        console.error("Stack trace:", error.stack);
+      }
+      return "";
+    }
+  },
+  
+  updateNode: async (updatedNode) => {
+    try {
+      // Update the local state
+      set((state) => ({
+        nodes: state.nodes.map(node => 
+          node.id === updatedNode.id ? { ...updatedNode, updatedAt: Date.now() } : node
+        )
+      }));
+      
+      // Then update in database
+      await updateNodeInDb(updatedNode);
+      console.log("[MindMapStore] Updated node:", updatedNode.id);
+    } catch (error) {
+      console.error("[MindMapStore] Error updating node:", error);
     }
   },
 
   updateNodePosition: async (id, x, y) => {
     try {
       const now = Date.now();
-      const updated = get().nodes.map((n) =>
-        n.id === id ? { ...n, x, y, updatedAt: now } : n
-      );
-      set({ nodes: updated });
-
-      const changed = updated.find((n) => n.id === id);
-      if (changed) await updateNode(changed);
-    } catch (err) {
-      console.error('[MindMapStore] Failed to update position:', err);
+      
+      // Update the local state
+      set((state) => ({
+        nodes: state.nodes.map(node => 
+          node.id === id ? { ...node, x, y, updatedAt: now } : node
+        )
+      }));
+      
+      // Get the node from state and update in database
+      const updatedNode = get().nodes.find(node => node.id === id);
+      if (updatedNode) {
+        await updateNodeInDb({ ...updatedNode, x, y, updatedAt: now });
+        console.log("[MindMapStore] Updated position for node:", id);
+      }
+    } catch (error) {
+      console.error("[MindMapStore] Error updating node position:", error);
     }
   },
 
@@ -73,8 +119,9 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
     try {
       await deleteAllNodes();
       set({ nodes: [] });
-    } catch (err) {
-      console.error('[MindMapStore] Failed to clear nodes:', err);
+      console.log("[MindMapStore] Cleared all nodes");
+    } catch (error) {
+      console.error("[MindMapStore] Error clearing nodes:", error);
     }
   },
 }));
