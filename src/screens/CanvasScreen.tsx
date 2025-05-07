@@ -12,12 +12,12 @@ export default function CanvasScreen() {
   const clearNodes = useMindMapStore((s) => s.clearAllNodes);
   const isLoading = useMindMapStore((s) => s.isLoading);
   const [scale, setScale] = useState(1);
-  
+
   // Load nodes when the screen mounts
   useEffect(() => {
     loadNodes();
   }, []);
-  
+
   // Handle transform changes from the PanZoomLayer
   const handleTransformChange = (newScale: number, _x: number, _y: number) => {
     setScale(newScale);
@@ -32,7 +32,7 @@ export default function CanvasScreen() {
           <Text style={styles.loadingText}>Loading your mind map...</Text>
         </View>
       )}
-      
+
       {/* Main canvas with pan/zoom */}
       <PanZoomLayer
         minScale={0.25}
@@ -42,16 +42,16 @@ export default function CanvasScreen() {
         <Canvas />
         <CreateNode />
       </PanZoomLayer>
-      
+
       {/* UI Controls */}
       <View style={styles.controls}>
-        <Pressable 
-          style={styles.clearButton} 
+        <Pressable
+          style={styles.clearButton}
           onPress={clearNodes}
         >
           <Text style={styles.clearText}>🗑️ Clear All</Text>
         </Pressable>
-        
+
         <View style={styles.zoomIndicator}>
           <Text style={styles.zoomText}>{Math.round(scale * 100)}%</Text>
         </View>

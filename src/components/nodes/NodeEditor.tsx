@@ -1,14 +1,14 @@
 // src/components/nodes/NodeEditor.tsx
 import React, { useState } from 'react';
-import { 
-  View, 
-  TextInput, 
-  StyleSheet, 
-  KeyboardAvoidingView, 
-  Platform, 
-  Text, 
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Text,
   TouchableOpacity,
-  ScrollView 
+  ScrollView
 } from 'react-native';
 import Animated, { FadeIn, SlideInUp } from 'react-native-reanimated';
 import { NodeModel } from '../../types/NodeTypes';
@@ -41,13 +41,13 @@ const statusOptions = [
 
 export default function NodeEditor({ node, onClose }: NodeEditorProps) {
   const updateNode = useMindMapStore(state => state.updateNode);
-  
+
   // Local state for form values
   const [title, setTitle] = useState(node.title);
   const [body, setBody] = useState(node.body || '');
   const [color, setColor] = useState(node.color);
   const [status, setStatus] = useState(node.status || '');
-  
+
   // Handle save and close
   const handleSave = () => {
     updateNode({
@@ -60,10 +60,10 @@ export default function NodeEditor({ node, onClose }: NodeEditorProps) {
     });
     onClose();
   };
-  
+
   // Generate content based on template type
   const renderTemplateContent = () => {
-    switch(node.template) {
+    switch (node.template) {
       case 'checklist':
         return (
           <View style={styles.checklist}>
@@ -78,7 +78,7 @@ export default function NodeEditor({ node, onClose }: NodeEditorProps) {
             />
           </View>
         );
-        
+
       case 'bullet':
         return (
           <View style={styles.bullets}>
@@ -92,7 +92,7 @@ export default function NodeEditor({ node, onClose }: NodeEditorProps) {
             />
           </View>
         );
-        
+
       case 'decision':
         return (
           <View style={styles.decision}>
@@ -106,7 +106,7 @@ export default function NodeEditor({ node, onClose }: NodeEditorProps) {
             />
           </View>
         );
-        
+
       case 'quicknote':
       default:
         return (
@@ -122,11 +122,11 @@ export default function NodeEditor({ node, onClose }: NodeEditorProps) {
   };
 
   return (
-    <Animated.View 
+    <Animated.View
       style={styles.container}
       entering={SlideInUp.springify().damping(15)}
     >
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardView}
       >
@@ -136,7 +136,7 @@ export default function NodeEditor({ node, onClose }: NodeEditorProps) {
             <Text style={styles.closeButton}>✕</Text>
           </TouchableOpacity>
         </View>
-        
+
         <ScrollView style={styles.scrollContent}>
           {/* Title input */}
           <Text style={styles.label}>Title:</Text>
@@ -146,11 +146,11 @@ export default function NodeEditor({ node, onClose }: NodeEditorProps) {
             onChangeText={setTitle}
             placeholder="Node Title"
           />
-          
+
           {/* Template-specific content */}
           <Text style={styles.label}>Content:</Text>
           {renderTemplateContent()}
-          
+
           {/* Color picker */}
           <Text style={styles.label}>Color:</Text>
           <View style={styles.colorPicker}>
@@ -166,7 +166,7 @@ export default function NodeEditor({ node, onClose }: NodeEditorProps) {
               />
             ))}
           </View>
-          
+
           {/* Status picker */}
           <Text style={styles.label}>Status:</Text>
           <View style={styles.statusPicker}>
@@ -186,10 +186,10 @@ export default function NodeEditor({ node, onClose }: NodeEditorProps) {
             ))}
           </View>
         </ScrollView>
-        
+
         {/* Save button */}
         <View style={styles.footer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.saveButton}
             onPress={handleSave}
           >
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: typography.fontSize.l,
-    fontWeight: typography.fontWeight.bold,
+    fontWeight: '700', // Changed from 'bold' to '700'
   },
   closeButton: {
     fontSize: 24,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: typography.fontSize.m,
-    fontWeight: typography.fontWeight.medium,
+    fontWeight: '500', // Changed from 'medium' to '500'
     marginTop: spacing.m,
     marginBottom: spacing.xs,
   },
@@ -318,6 +318,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#fff',
     fontSize: typography.fontSize.m,
-    fontWeight: typography.fontWeight.medium,
+    fontWeight: '500',
   }
 });

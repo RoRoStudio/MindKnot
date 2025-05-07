@@ -1,143 +1,84 @@
 // src/components/nodes/CreateNode.tsx
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Pressable } from 'react-native';
-import Animated, { 
-  FadeIn, 
-  FadeOut,
-  SlideInDown,
-  useAnimatedStyle,
-  withTiming,
-  useSharedValue
-} from 'react-native-reanimated';
 import { useMindMapStore } from '../../state/useMindMapStore';
-import { spacing, typography } from '../../styles';
 
-// Template definitions
+// Template definitions with colors
 const templates = [
-  { type: 'quicknote', label: '📝', name: 'Note' },
-  { type: 'checklist', label: '✅', name: 'Checklist' },
-  { type: 'bullet', label: '🔘', name: 'Bullet' },
-  { type: 'decision', label: '🔄', name: 'Decision' },
+  { type: 'quicknote', label: '📝', name: 'Note', color: '#2D9CDB' },
+  { type: 'checklist', label: '✅', name: 'Checklist', color: '#6FCF97' },
+  { type: 'bullet', label: '🔘', name: 'Bullet', color: '#BB6BD9' },
+  { type: 'decision', label: '🔄', name: 'Decision', color: '#F2994A' },
 ];
 
 export default function CreateNode() {
+  // Only use essential hooks
   const addNode = useMindMapStore((s) => s.addNode);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
-  
-  // Shared values for radial button animations
-  const buttonScale = useSharedValue(0);
-  
+
   // Handle canvas tap to create a node
   const handleTap = (event: any) => {
-    const { locationX, locationY } = event.nativeEvent;
-    console.log('[CreateNode] Tap at:', locationX, locationY);
-    
-    // Open the radial menu
-    setMenuPosition({ x: locationX, y: locationY });
-    
-    // Start animation
-    buttonScale.value = withTiming(1, { duration: 300 });
+    if (menuPosition) {
+      // If menu is already open, close it
+      setMenuPosition(null);
+    } else {
+      // Open the menu
+      const { locationX, locationY } = event.nativeEvent;
+      console.log('[CreateNode] Tap at:', locationX, locationY);
+      setMenuPosition({ x: locationX, y: locationY });
+    }
   };
 
   // Create a node of the selected template type
   const handleCreate = (template: string) => {
     if (!menuPosition) return;
 
-    // Generate a color based on template type (more intentional than random)
-    const templateColors = {
-      quicknote: '#2D9CDB',  // Blue
-      checklist: '#6FCF97',  // Green
-      bullet: '#BB6BD9',     // Purple
-      decision: '#F2994A'    // Orange
-    };
-    
-    const color = templateColors[template as keyof typeof templateColors] || '#2D9CDB';
-    const icon = templates.find((t) => t.type === template)?.label || '📝';
+    // Find template info
+    const templateInfo = templates.find(t => t.type === template);
+    if (!templateInfo) return;
 
     const node = {
       x: menuPosition.x,
       y: menuPosition.y,
-      color,
-      icon,
+      color: templateInfo.color,
+      icon: templateInfo.label,
       template: template as any,
-      title: 'New ' + template,
+      title: 'New ' + templateInfo.name,
     };
 
     console.log('[CreateNode] Creating node:', node);
     addNode(node);
-    closeMenu();
-  };
-  
-  // Close the radial menu
-  const closeMenu = () => {
-    buttonScale.value = withTiming(0, { duration: 200 });
-    
-    // Delay setting position to null until animation completes
-    setTimeout(() => {
-      setMenuPosition(null);
-    }, 200);
+    setMenuPosition(null);
   };
 
-  // Generate animated styles for radial buttons
-  const getRadialButtonStyle = (index: number) => {
-    return useAnimatedStyle(() => {
-      const angle = (index / templates.length) * 2 * Math.PI;
-      const radius = 80;
-      const scale = buttonScale.value;
-      
-      // Calculate position based on angle and radius
-      const x = Math.cos(angle) * radius * scale;
-      const y = Math.sin(angle) * radius * scale;
-      
-      return {
-        transform: [
-          { translateX: x },
-          { translateY: y },
-          { scale: scale }
-        ],
-        opacity: scale,
-      };
-    });
+  // Cancel menu
+  const handleCancel = () => {
+    setMenuPosition(null);
   };
 
   return (
     <Pressable style={StyleSheet.absoluteFill} onPress={handleTap}>
       {menuPosition && (
-        <View style={[styles.menuContainer, { left: menuPosition.x, top: menuPosition.y }]}>
-          {/* Center cancel button */}
-          <Animated.View
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(150)}
-            style={styles.centerButton}
-          >
-            <TouchableOpacity 
-              style={styles.cancelButton}
-              onPress={closeMenu}
-            >
-              <Text style={styles.cancelText}>✕</Text>
-            </TouchableOpacity>
-          </Animated.View>
-          
-          {/* Radial template buttons */}
-          {templates.map((tpl, idx) => (
-            <Animated.View
-              key={tpl.type}
-              style={[styles.buttonWrapper, getRadialButtonStyle(idx)]}
-            >
+        <View style={styles.menuBackground}>
+          <View style={[styles.menu, { left: menuPosition.x - 100, top: menuPosition.y - 100 }]}>
+            {templates.map((tpl) => (
               <TouchableOpacity
-                style={[styles.templateButton, { backgroundColor: '#fff' }]}
+                key={tpl.type}
+                style={[styles.templateButton, { backgroundColor: tpl.color }]}
                 onPress={() => handleCreate(tpl.type)}
               >
-                <Text style={styles.iconText}>{tpl.label}</Text>
-                <Animated.Text 
-                  entering={SlideInDown.delay(150 + idx * 50)}
-                  style={styles.labelText}
-                >
-                  {tpl.name}
-                </Animated.Text>
+                <Text style={styles.templateIcon}>{tpl.label}</Text>
+                <Text style={styles.templateName}>{tpl.name}</Text>
               </TouchableOpacity>
-            </Animated.View>
-          ))}
+            ))}
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={handleCancel}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </Pressable>
@@ -145,64 +86,50 @@ export default function CreateNode() {
 }
 
 const styles = StyleSheet.create({
-  menuContainer: {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    zIndex: 100,
+  menuBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  buttonWrapper: {
+  menu: {
     position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 200,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   templateButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
   },
-  centerButton: {
-    width: 64,
-    height: 64,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
+  templateIcon: {
+    fontSize: 20,
+    marginRight: 12,
   },
-  cancelButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#EB5757',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  cancelText: {
-    fontSize: 24,
+  templateName: {
+    fontSize: 16,
+    fontWeight: '500',
     color: '#fff',
   },
-  iconText: {
-    fontSize: 24,
+  cancelButton: {
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
+    marginTop: 8,
   },
-  labelText: {
-    position: 'absolute',
-    bottom: -24,
-    fontSize: typography.fontSize.s,
-    fontWeight: typography.fontWeight.medium,
-    color: '#1A1A1A',
-    textAlign: 'center',
+  cancelText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#EB5757',
   }
 });

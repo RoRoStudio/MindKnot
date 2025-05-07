@@ -1,11 +1,11 @@
 // src/state/useMindMapStore.ts
 import { create } from 'zustand';
 import { NodeModel } from '../types/NodeTypes';
-import { 
-  getAllNodes, 
-  insertNode, 
-  updateNode as updateNodeInDb, 
-  deleteAllNodes 
+import {
+  getAllNodes,
+  insertNode,
+  updateNode as updateNodeInDb,
+  deleteAllNodes
 } from '../services/sqliteService';
 import { nanoid } from 'nanoid/non-secure';
 
@@ -13,7 +13,7 @@ import { nanoid } from 'nanoid/non-secure';
 type MindMapState = {
   nodes: NodeModel[];
   isLoading: boolean;
-  
+
   // Data operations
   loadNodes: () => Promise<void>;
   addNode: (partial: Partial<NodeModel>) => Promise<string>;
@@ -44,7 +44,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       // Generate an ID and timestamp
       const nodeId = nanoid();
       const now = Date.now();
-      
+
       // Provide sensible defaults for required fields
       const node: NodeModel = {
         id: nodeId,
@@ -59,10 +59,10 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
         createdAt: now,
         updatedAt: now,
       };
-      
+
       // Update state first for immediate feedback
       set((state) => ({ nodes: [...state.nodes, node] }));
-      
+
       // Then save to database
       await insertNode(node);
       console.log("[MindMapStore] Added node:", nodeId);
@@ -75,16 +75,16 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
       return "";
     }
   },
-  
+
   updateNode: async (updatedNode) => {
     try {
       // Update the local state
       set((state) => ({
-        nodes: state.nodes.map(node => 
+        nodes: state.nodes.map(node =>
           node.id === updatedNode.id ? { ...updatedNode, updatedAt: Date.now() } : node
         )
       }));
-      
+
       // Then update in database
       await updateNodeInDb(updatedNode);
       console.log("[MindMapStore] Updated node:", updatedNode.id);
@@ -96,14 +96,14 @@ export const useMindMapStore = create<MindMapState>((set, get) => ({
   updateNodePosition: async (id, x, y) => {
     try {
       const now = Date.now();
-      
+
       // Update the local state
       set((state) => ({
-        nodes: state.nodes.map(node => 
+        nodes: state.nodes.map(node =>
           node.id === id ? { ...node, x, y, updatedAt: now } : node
         )
       }));
-      
+
       // Get the node from state and update in database
       const updatedNode = get().nodes.find(node => node.id === id);
       if (updatedNode) {
