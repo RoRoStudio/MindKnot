@@ -1,6 +1,7 @@
 // src/screens/CanvasScreen.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, Pressable, Text, ActivityIndicator } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useMindMapStore } from '../state/useMindMapStore';
 import Canvas from '../components/canvas/Canvas';
 import PanZoomLayer from '../components/canvas/PanZoomLayer';
@@ -10,6 +11,7 @@ import { lightTheme } from '../theme/light';
 export default function CanvasScreen() {
   const loadNodes = useMindMapStore((s) => s.loadNodes);
   const clearNodes = useMindMapStore((s) => s.clearAllNodes);
+  const flushPendingUpdates = useMindMapStore((s) => s.flushPendingUpdates);
   const isLoading = useMindMapStore((s) => s.isLoading);
   const [scale, setScale] = useState(1);
 
@@ -18,13 +20,20 @@ export default function CanvasScreen() {
     loadNodes();
   }, []);
 
+  // Flush pending updates when the component unmounts
+  useEffect(() => {
+    return () => {
+      flushPendingUpdates();
+    };
+  }, [flushPendingUpdates]);
+
   // Handle transform changes from the PanZoomLayer
-  const handleTransformChange = (newScale: number, _x: number, _y: number) => {
+  const handleTransformChange = useCallback((newScale: number, _x: number, _y: number) => {
     setScale(newScale);
-  };
+  }, []);
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       {/* Show loading indicator if data is loading */}
       {isLoading && (
         <View style={styles.loadingOverlay}>
@@ -56,7 +65,7 @@ export default function CanvasScreen() {
           <Text style={styles.zoomText}>{Math.round(scale * 100)}%</Text>
         </View>
       </View>
-    </View>
+    </GestureHandlerRootView>
   );
 }
 

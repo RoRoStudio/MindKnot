@@ -1,147 +1,168 @@
 // src/components/canvas/Canvas.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
+import { DndProvider, type ItemOptions } from '@mgcrea/react-native-dnd';
 import { useMindMapStore } from '../../state/useMindMapStore';
 import NodeCard from '../nodes/NodeCard';
 import NodeEditor from '../nodes/NodeEditor';
 import { NodeModel } from '../../types/NodeTypes';
+import { runOnJS } from 'react-native-reanimated';
 
-// Define a consistent node size
-const NODE_SIZE: [number, number] = [80, 80];
-// Minimum distance between node centers for repulsion
-const MIN_DISTANCE = 100;
+// Constants for physics
+const MIN_NODE_DISTANCE = 100; // Minimum distance between node centers
+const REPULSION_STRENGTH = 0.5; // How strongly nodes push each other away
 
 export default function Canvas() {
   const nodes = useMindMapStore((state) => state.nodes);
   const updateNodePosition = useMindMapStore((state) => state.updateNodePosition);
+  const batchUpdateNodes = useMindMapStore((state) => state.batchUpdateNodes);
   const [selectedNode, setSelectedNode] = useState<NodeModel | null>(null);
-  const [movingNodeId, setMovingNodeId] = useState<string | null>(null);
 
-  // Direct implementation of node repulsion - immediately happening on drag
-  const handleDragMove = (id: string, x: number, y: number) => {
-    // Find the node being moved
-    const movingNode = nodes.find(n => n.id === id);
-    if (!movingNode) return;
+  // Keep track of the dragging node ID
+  const draggingNodeId = useRef<string | null>(null);
 
-    // Temporarily update the local position (not in store yet)
-    const updatedNode = { ...movingNode, x, y };
+  // Apply physics to separate overlapping nodes
+  const applyPhysics = useCallback(() => {
+    if (nodes.length < 2) return;
 
-    // Check for collisions with other nodes
-    let collisions = false;
+    // Clone nodes to work with
+    const nodesCopy = JSON.parse(JSON.stringify(nodes)) as NodeModel[];
+    let hasChanges = false;
 
-    // Process each other node for potential repulsion
-    nodes.forEach(otherNode => {
-      // Skip the node we're moving
-      if (otherNode.id === id) return;
-
-      // Calculate distance between nodes
-      const dx = x - otherNode.x;
-      const dy = y - otherNode.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      // If too close, apply repulsion by moving the other node
-      if (distance < MIN_DISTANCE) {
-        collisions = true;
-
-        // Calculate repulsion direction
-        const angle = Math.atan2(dy, dx);
-
-        // Calculate how much the nodes overlap
-        const overlap = MIN_DISTANCE - distance;
-
-        // Move the other node away
-        const newX = otherNode.x - Math.cos(angle) * overlap * 1.1;
-        const newY = otherNode.y - Math.sin(angle) * overlap * 1.1;
-
-        // Update the other node position in the store
-        updateNodePosition(otherNode.id, newX, newY);
-      }
-    });
-
-    // Update the moving node (both to keep in sync and to update the store)
-    updateNodePosition(id, x, y);
-
-    return collisions;
-  };
-
-  const handleDragStart = (id: string) => {
-    setMovingNodeId(id);
-  };
-
-  const handleDragEnd = (id: string, x: number, y: number) => {
-    // Final position update
-    updateNodePosition(id, x, y);
-    setMovingNodeId(null);
-  };
-
-  const handleNodePress = (node: NodeModel) => {
-    setSelectedNode(node);
-  };
-
-  const handleEditorClose = () => {
-    setSelectedNode(null);
-  };
-
-  // Spread nodes if they start overlapping
-  useEffect(() => {
-    // Only run this when nodes change but no node is being moved
-    if (movingNodeId || nodes.length < 2) return;
-
-    let hasOverlap = false;
-    const nodesCopy = [...nodes];
-
-    // Check each pair of nodes for overlap
+    // Check each pair of nodes for potential overlap
     for (let i = 0; i < nodesCopy.length; i++) {
       for (let j = i + 1; j < nodesCopy.length; j++) {
         const nodeA = nodesCopy[i];
         const nodeB = nodesCopy[j];
 
-        // Calculate distance
+        // Skip if one of the nodes is being dragged
+        if (nodeA.id === draggingNodeId.current || nodeB.id === draggingNodeId.current) {
+          continue;
+        }
+
+        // Calculate distance between nodes
         const dx = nodeA.x - nodeB.x;
         const dy = nodeA.y - nodeB.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // If too close, move them apart
-        if (distance < MIN_DISTANCE) {
-          hasOverlap = true;
+        // If nodes are too close, push them apart
+        if (distance < MIN_NODE_DISTANCE) {
+          hasChanges = true;
 
-          // Calculate movement direction
+          // Calculate repulsion direction (normalized vector)
           const angle = Math.atan2(dy, dx);
-          const moveDistance = (MIN_DISTANCE - distance) / 2;
+          const moveDistance = (MIN_NODE_DISTANCE - distance) * REPULSION_STRENGTH;
 
-          // Move nodeA away
-          nodeA.x += Math.cos(angle) * moveDistance;
-          nodeA.y += Math.sin(angle) * moveDistance;
+          // Move nodes apart along the repulsion vector
+          const moveX = Math.cos(angle) * moveDistance;
+          const moveY = Math.sin(angle) * moveDistance;
 
-          // Move nodeB away in opposite direction
-          nodeB.x -= Math.cos(angle) * moveDistance;
-          nodeB.y -= Math.sin(angle) * moveDistance;
+          // Update positions (split the movement between both nodes)
+          nodeA.x += moveX;
+          nodeA.y += moveY;
+          nodeB.x -= moveX;
+          nodeB.y -= moveY;
         }
       }
     }
 
-    // If we made changes, update all node positions
-    if (hasOverlap) {
+    // If changes were made, update the nodes in the store
+    if (hasChanges) {
+      const updates: Record<string, { x: number, y: number }> = {};
       nodesCopy.forEach(node => {
-        updateNodePosition(node.id, node.x, node.y);
+        updates[node.id] = { x: node.x, y: node.y };
       });
+
+      // Apply the updates
+      batchUpdateNodes(updates);
     }
-  }, [nodes, movingNodeId, updateNodePosition]);
+  }, [nodes, batchUpdateNodes]);
+
+  // Run physics when node count changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      applyPhysics();
+    }, 300); // Small delay to allow new nodes to settle
+
+    return () => clearTimeout(timer);
+  }, [nodes.length, applyPhysics]);
+
+  // Handle drag start to track which node is being dragged
+  const handleDragStart = useCallback(({ active }: { active: ItemOptions; }) => {
+    'worklet';
+    if (active && active.id) {
+      const nodeId = String(active.id);
+      runOnJS(id => { draggingNodeId.current = id; })(nodeId);
+    }
+  }, []);
+
+  // Handle drag updates for live position updates
+  const handleDragUpdate = useCallback(({ active }: { active: ItemOptions; }) => {
+    'worklet';
+    if (active && active.id) {
+      const nodeId = String(active.id);
+
+      // Get the active layout info
+      // This uses layout information from the DndProvider
+      if (active.layout) {
+        const centerX = active.layout.x + active.layout.width / 2;
+        const centerY = active.layout.y + active.layout.height / 2;
+
+        // Update position in the store without saving to database
+        runOnJS(updateNodePosition)(nodeId, centerX, centerY, false);
+      }
+    }
+  }, [updateNodePosition]);
+
+  // Handle drag end to save final position and clear dragging state
+  const handleDragEnd = useCallback(({ active }: { active: ItemOptions; }) => {
+    'worklet';
+    if (active && active.id) {
+      const nodeId = String(active.id);
+
+      // Get the position from the active node's layout
+      if (active.layout) {
+        const centerX = active.layout.x + active.layout.width / 2;
+        const centerY = active.layout.y + active.layout.height / 2;
+
+        // Update position in the store and save to database
+        runOnJS(updateNodePosition)(nodeId, centerX, centerY, true);
+
+        // Clear the dragging node ID
+        runOnJS(id => {
+          draggingNodeId.current = null;
+          // Run physics after drag to adjust other nodes
+          setTimeout(applyPhysics, 50);
+        })(nodeId);
+      }
+    }
+  }, [updateNodePosition, applyPhysics]);
+
+  const handleNodePress = useCallback((node: NodeModel) => {
+    setSelectedNode(node);
+  }, []);
+
+  const handleEditorClose = useCallback(() => {
+    setSelectedNode(null);
+  }, []);
 
   return (
     <View style={styles.container}>
-      {/* Render all nodes */}
-      {nodes.map((node) => (
-        <NodeCard
-          key={node.id}
-          node={node}
-          size={NODE_SIZE}
-          onDragStart={handleDragStart}
-          onDragMove={handleDragMove}
-          onDragEnd={handleDragEnd}
-          onNodePress={handleNodePress}
-        />
-      ))}
+      <DndProvider
+        onBegin={handleDragStart}
+        onUpdate={handleDragUpdate}
+        onDragEnd={handleDragEnd}
+        activationDelay={0}
+      >
+        {/* Render all nodes */}
+        {nodes.map((node) => (
+          <NodeCard
+            key={node.id}
+            node={node}
+            onNodePress={handleNodePress}
+          />
+        ))}
+      </DndProvider>
 
       {/* Node editor modal */}
       {selectedNode && (

@@ -1,118 +1,90 @@
 // src/components/nodes/NodeCard.tsx
-import React, { useEffect } from 'react';
-import { Text, StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  runOnJS,
-} from 'react-native-reanimated';
+import React, { memo, useEffect } from 'react';
+import { Text, StyleSheet, TouchableOpacity, View, Platform, ViewStyle } from 'react-native';
+import { Draggable } from '@mgcrea/react-native-dnd';
 import { NodeModel } from '../../types/NodeTypes';
+import Animated, { useSharedValue } from 'react-native-reanimated';
 
 interface NodeCardProps {
   node: NodeModel;
-  size: [number, number]; // [width, height]
-  onDragStart?: (id: string) => void;
-  onDragMove?: (id: string, x: number, y: number) => boolean | void;
-  onDragEnd: (id: string, x: number, y: number) => void;
   onNodePress?: (node: NodeModel) => void;
+  onDragUpdate?: (id: string, x: number, y: number) => void;
 }
 
-// Spring configuration for smooth movement
-const SPRING_CONFIG = {
-  damping: 15,
-  stiffness: 120,
-  mass: 0.8,
-  overshootClamping: false,
-};
+interface AnimatedStyleOptions {
+  isActive: boolean;
+  isDisabled: boolean;
+  isActing?: boolean;
+}
 
-function NodeCard({
-  node,
-  size,
-  onDragStart,
-  onDragMove,
-  onDragEnd,
-  onNodePress,
-}: NodeCardProps) {
-  // Create shared values for position
-  const translateX = useSharedValue(node.x);
-  const translateY = useSharedValue(node.y);
-  const scale = useSharedValue(1);
+function NodeCard({ node, onNodePress, onDragUpdate }: NodeCardProps) {
+  // Track position for live updates
+  const nodeX = useSharedValue(node.x);
+  const nodeY = useSharedValue(node.y);
 
-  // Update shared values when node position changes in store
+  // Update shared values when node changes
   useEffect(() => {
-    translateX.value = withSpring(node.x, SPRING_CONFIG);
-    translateY.value = withSpring(node.y, SPRING_CONFIG);
+    nodeX.value = node.x;
+    nodeY.value = node.y;
   }, [node.x, node.y]);
 
-  // Pan gesture for dragging
-  const panGesture = Gesture.Pan()
-    .onStart(() => {
-      // Scale up slightly when dragging begins
-      scale.value = withSpring(1.1, { damping: 15, stiffness: 200 });
+  const handlePress = () => {
+    if (onNodePress) {
+      onNodePress(node);
+    }
+  };
 
-      // Notify parent that dragging has started
-      if (onDragStart) {
-        runOnJS(onDragStart)(node.id);
+  // Custom animated style with drag effects
+  const animatedStyleWorklet = (style: ViewStyle, options: AnimatedStyleOptions) => {
+    'worklet';
+
+    const { isActive } = options;
+
+    // Add visual effects when node is being dragged
+    if (isActive) {
+      // Elevate the node while dragging
+      if (Platform.OS === 'ios') {
+        style.shadowOpacity = 0.4;
+        style.shadowRadius = 10;
+      } else {
+        style.elevation = 10;
       }
-    })
-    .onUpdate((event) => {
-      // Calculate new position
-      const newX = node.x + event.translationX;
-      const newY = node.y + event.translationY;
 
-      // Update immediately for visual feedback
-      translateX.value = newX;
-      translateY.value = newY;
+      // Ensure it's on top of other nodes
+      style.zIndex = 1000;
 
-      // Notify parent of movement (for repulsion)
-      if (onDragMove) {
-        runOnJS(onDragMove)(node.id, newX, newY);
-      }
-    })
-    .onEnd((event) => {
-      // Calculate final position
-      const finalX = node.x + event.translationX;
-      const finalY = node.y + event.translationY;
+      // Small scale effect
+      if (!style.transform) style.transform = [];
+      style.transform.push({ scale: 1.1 });
+    }
 
-      // Animate scale back to normal
-      scale.value = withSpring(1, { damping: 15, stiffness: 200 });
-
-      // Update the store with the final position
-      runOnJS(onDragEnd)(node.id, finalX, finalY);
-    });
-
-  // Tap gesture for selecting a node
-  const tapGesture = Gesture.Tap()
-    .onEnd(() => {
-      if (onNodePress) {
-        runOnJS(onNodePress)(node);
-      }
-    });
-
-  // Combine gestures with priority
-  const gesture = Gesture.Exclusive(panGesture, tapGesture);
-
-  // Animated style for the node
-  const nodeStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { scale: scale.value },
-      ],
-    };
-  });
+    return style;
+  };
 
   return (
-    <GestureDetector gesture={gesture}>
-      <Animated.View
-        style={[
-          styles.nodeContainer,
-          { backgroundColor: node.color, width: size[0], height: size[1] },
-          nodeStyle
-        ]}
+    <Draggable
+      id={node.id}
+      data={{
+        id: node.id,
+        x: node.x,
+        y: node.y,
+        // Other properties needed for the node
+      }}
+      style={[
+        styles.nodeContainer,
+        {
+          backgroundColor: node.color,
+          // Position using absolute positioning
+          left: node.x - 40,
+          top: node.y - 40,
+        }
+      ]}
+      animatedStyleWorklet={animatedStyleWorklet}
+    >
+      <TouchableOpacity
+        style={styles.nodeTouchable}
+        onPress={handlePress}
+        activeOpacity={0.7}
       >
         <View style={styles.iconContainer}>
           <Text style={styles.icon}>{node.icon || '📝'}</Text>
@@ -125,23 +97,29 @@ function NodeCard({
             <Text style={styles.statusText}>{node.status}</Text>
           </View>
         ) : null}
-      </Animated.View>
-    </GestureDetector>
+      </TouchableOpacity>
+    </Draggable>
   );
 }
 
 const styles = StyleSheet.create({
   nodeContainer: {
     position: 'absolute',
+    width: 80,
+    height: 80,
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
+  },
+  nodeTouchable: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconContainer: {
     alignItems: 'center',
@@ -175,4 +153,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NodeCard;
+export default memo(NodeCard);

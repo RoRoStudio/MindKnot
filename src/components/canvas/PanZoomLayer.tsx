@@ -1,12 +1,13 @@
 // src/components/canvas/PanZoomLayer.tsx
-import React, { ReactNode, useRef } from 'react';
-import { StyleSheet } from 'react-native';
+import React, { ReactNode, useRef, useCallback } from 'react';
+import { StyleSheet, Platform } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withDecay,
   runOnJS,
+  withSpring,
 } from 'react-native-reanimated';
 
 interface PanZoomLayerProps {
@@ -19,8 +20,8 @@ interface PanZoomLayerProps {
 
 function PanZoomLayer({
   children,
-  minScale = 0.5,
-  maxScale = 3,
+  minScale = 0.1, // Lower to ensure truly infinite feel
+  maxScale = 5, // Higher for more detailed zooming
   initialScale = 1,
   onTransformChange,
 }: PanZoomLayerProps) {
@@ -30,63 +31,48 @@ function PanZoomLayer({
   const translateY = useSharedValue(0);
   const savedScale = useSharedValue(initialScale);
 
-  // Keep track of last translation values to calculate changes
-  const lastTranslationX = useRef(0);
-  const lastTranslationY = useRef(0);
+  // Keep track of focal point for pinch gesture
+  const focalX = useSharedValue(0);
+  const focalY = useSharedValue(0);
 
   // Optional callback when transform changes
-  const updateTransform = (newScale: number, newX: number, newY: number) => {
+  const updateTransform = useCallback((newScale: number, newX: number, newY: number) => {
     if (onTransformChange) {
       onTransformChange(newScale, newX, newY);
     }
-  };
+  }, [onTransformChange]);
 
   // Pan gesture for moving the canvas
   const panGesture = Gesture.Pan()
     .minPointers(1)
     .maxPointers(1)
-    .onStart(() => {
-      // Reset last translation values
-      lastTranslationX.current = 0;
-      lastTranslationY.current = 0;
-    })
     .onUpdate((event) => {
-      // Calculate the change in translation since last update
-      const deltaX = event.translationX - lastTranslationX.current;
-      const deltaY = event.translationY - lastTranslationY.current;
-
-      // Update last translation values
-      lastTranslationX.current = event.translationX;
-      lastTranslationY.current = event.translationY;
-
-      // Apply delta to current translation values
-      translateX.value += deltaX;
-      translateY.value += deltaY;
+      // Use translationX and translationY instead of changeX and changeY
+      translateX.value += event.translationX - (event.translationX > 0 ? event.translationX - 1 : event.translationX + 1);
+      translateY.value += event.translationY - (event.translationY > 0 ? event.translationY - 1 : event.translationY + 1);
     })
     .onEnd((event) => {
       // Use decay for a natural stopping motion with momentum
       translateX.value = withDecay({
         velocity: event.velocityX,
-        clamp: [-2000, 2000], // Optional: limit how far it can move
+        // Remove clamp to allow infinite panning
       });
       translateY.value = withDecay({
         velocity: event.velocityY,
-        clamp: [-2000, 2000],
+        // Remove clamp to allow infinite panning
       });
 
       if (onTransformChange) {
         runOnJS(updateTransform)(scale.value, translateX.value, translateY.value);
       }
-
-      // Reset last translation values
-      lastTranslationX.current = 0;
-      lastTranslationY.current = 0;
     });
 
-  // Pinch gesture for zooming
+  // Pinch gesture for zooming - improved for better focal point handling
   const pinchGesture = Gesture.Pinch()
-    .onStart(() => {
+    .onStart((event) => {
       savedScale.value = scale.value;
+      focalX.value = event.focalX;
+      focalY.value = event.focalY;
     })
     .onUpdate((event) => {
       // Calculate new scale with constraints
@@ -94,6 +80,18 @@ function PanZoomLayer({
         maxScale,
         Math.max(minScale, savedScale.value * event.scale)
       );
+
+      // Calculate the focal point in the world space
+      const worldFocalX = (focalX.value - translateX.value) / scale.value;
+      const worldFocalY = (focalY.value - translateY.value) / scale.value;
+
+      // Calculate the new screen space position of the focal point
+      const newScreenFocalX = worldFocalX * newScale + translateX.value;
+      const newScreenFocalY = worldFocalY * newScale + translateY.value;
+
+      // Adjust translation to keep the focal point at the same screen position
+      translateX.value += focalX.value - newScreenFocalX;
+      translateY.value += focalY.value - newScreenFocalY;
 
       scale.value = newScale;
     })
@@ -107,9 +105,9 @@ function PanZoomLayer({
   const doubleTapGesture = Gesture.Tap()
     .numberOfTaps(2)
     .onEnd(() => {
-      scale.value = initialScale;
-      translateX.value = 0;
-      translateY.value = 0;
+      scale.value = withSpring(initialScale, { damping: 15, stiffness: 200 });
+      translateX.value = withSpring(0, { damping: 15, stiffness: 200 });
+      translateY.value = withSpring(0, { damping: 15, stiffness: 200 });
 
       if (onTransformChange) {
         runOnJS(updateTransform)(initialScale, 0, 0);
