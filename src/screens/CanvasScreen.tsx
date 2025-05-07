@@ -18,7 +18,7 @@ export default function CanvasScreen() {
   // Load nodes when the screen mounts
   useEffect(() => {
     loadNodes();
-  }, []);
+  }, [loadNodes]);
 
   // Flush pending updates when the component unmounts
   useEffect(() => {

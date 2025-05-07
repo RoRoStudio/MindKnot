@@ -40,25 +40,37 @@ function NodeCard({ node, onNodePress, onDragUpdate }: NodeCardProps) {
 
     const { isActive } = options;
 
+    // Create a new style object to avoid mutations
+    const newStyle = { ...style };
+
     // Add visual effects when node is being dragged
     if (isActive) {
       // Elevate the node while dragging
       if (Platform.OS === 'ios') {
-        style.shadowOpacity = 0.4;
-        style.shadowRadius = 10;
+        newStyle.shadowOpacity = 0.4;
+        newStyle.shadowRadius = 10;
       } else {
-        style.elevation = 10;
+        newStyle.elevation = 10;
       }
 
       // Ensure it's on top of other nodes
-      style.zIndex = 1000;
+      newStyle.zIndex = 1000;
 
-      // Small scale effect
-      if (!style.transform) style.transform = [];
-      style.transform.push({ scale: 1.1 });
+      // Handle transform property safely
+      if (!newStyle.transform) {
+        newStyle.transform = [{ scale: 1.1 }];
+      } else if (Array.isArray(newStyle.transform)) {
+        // Check if scale transform already exists
+        const hasScale = newStyle.transform.some(t => 'scale' in t);
+        if (!hasScale) {
+          // Create a new array with scale added
+          newStyle.transform = [...newStyle.transform, { scale: 1.1 }];
+        }
+      }
+      // If transform is a string or other type, leave it unchanged
     }
 
-    return style;
+    return newStyle;
   };
 
   return (
