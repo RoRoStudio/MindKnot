@@ -52,7 +52,7 @@ export default function CanvasScreen() {
         <CreateNode />
       </PanZoomLayer>
 
-      {/* UI Controls */}
+      {/* UI Controls - only keeping zoom indicator and clear button */}
       <View style={styles.controls}>
         <Pressable
           style={styles.clearButton}

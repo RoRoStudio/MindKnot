@@ -1,106 +1,135 @@
 // src/components/nodes/NodeCard.tsx
 import React, { memo, useEffect } from 'react';
-import { Text, StyleSheet, View, Platform } from 'react-native';
-import { PanGestureHandler } from 'react-native-gesture-handler';
-import { NodeModel } from '../../types/NodeTypes';
+import { Text, StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  useAnimatedGestureHandler,
   useAnimatedStyle,
   useSharedValue,
-  runOnJS
+  runOnJS,
+  useDerivedValue,
 } from 'react-native-reanimated';
+import { NodeModel } from '../../types/NodeTypes';
 
 interface NodeCardProps {
   node: NodeModel;
   onNodePress?: (node: NodeModel) => void;
-  onDragUpdate?: (id: string, x: number, y: number) => void;
+  onNodeMove?: (id: string, x: number, y: number) => void;
+  otherNodes: NodeModel[]; // All other nodes for collision detection
+  onNodePush?: (nodeId: string, x: number, y: number) => void; // To push other nodes
 }
 
-function NodeCard({ node, onNodePress, onDragUpdate }: NodeCardProps) {
-  // Track translation during drag
+const NODE_SIZE = 80; // Width/height of node
+const MIN_DISTANCE = 100; // Minimum distance between node centers
+const REPULSION_FACTOR = 1.2; // How strongly nodes repel (higher = stronger)
+
+function NodeCard({ node, onNodePress, onNodeMove, otherNodes, onNodePush }: NodeCardProps) {
+  // Track translations separately from the node's base position
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
 
-  // Reset translations when node position changes from outside
-  useEffect(() => {
-    translateX.value = 0;
-    translateY.value = 0;
-  }, [node.x, node.y]);
-
-  // Track if we're currently dragging (to distinguish press from drag)
+  // Track if we're currently dragging
   const isDragging = useSharedValue(false);
+  // Track if this was just a tap (not a drag)
+  const isTap = useSharedValue(true);
 
-  // Handle node position updates
-  const updateNodePosition = (x: number, y: number, save: boolean = false) => {
-    if (onDragUpdate) {
-      console.log(`Updating node ${node.id} position to ${x}, ${y}, save: ${save}`);
-      onDragUpdate(node.id, x, y);
+  // Current absolute position during drag (node base position + translation)
+  const currentX = useDerivedValue(() => node.x + translateX.value);
+  const currentY = useDerivedValue(() => node.y + translateY.value);
+
+  // Check for collisions with other nodes
+  const checkCollisions = (x: number, y: number) => {
+    'worklet';
+
+    for (const otherNode of otherNodes) {
+      // Skip self
+      if (otherNode.id === node.id) continue;
+
+      // Calculate distance between node centers
+      const dx = x - otherNode.x;
+      const dy = y - otherNode.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // If nodes are too close
+      if (distance < MIN_DISTANCE) {
+        // Calculate repulsion vector (normalized)
+        const repulsionX = dx / distance;
+        const repulsionY = dy / distance;
+
+        // Calculate push distance (how far to push the other node)
+        const pushDistance = MIN_DISTANCE - distance;
+
+        // Calculate new position for other node
+        const newOtherX = otherNode.x - repulsionX * pushDistance * REPULSION_FACTOR;
+        const newOtherY = otherNode.y - repulsionY * pushDistance * REPULSION_FACTOR;
+
+        // Push the other node
+        if (onNodePush) {
+          runOnJS(onNodePush)(otherNode.id, newOtherX, newOtherY);
+        }
+      }
     }
   };
 
-  // Gesture handler for dragging
-  const gestureHandler = useAnimatedGestureHandler({
-    onStart: () => {
-      isDragging.value = false;
-    },
-    onActive: (event) => {
-      // Update translation
-      translateX.value = event.translationX;
-      translateY.value = event.translationY;
+  // Pan gesture for dragging
+  const panGesture = Gesture.Pan()
+    .onBegin(() => {
+      isDragging.value = true;
+      isTap.value = true;
+    })
+    .onUpdate((e) => {
+      translateX.value = e.translationX;
+      translateY.value = e.translationY;
 
-      // If moved more than 5px, consider it a drag
-      if (Math.abs(event.translationX) > 5 || Math.abs(event.translationY) > 5) {
-        isDragging.value = true;
+      // If moved more than a few pixels, it's not a tap
+      if (Math.abs(e.translationX) > 3 || Math.abs(e.translationY) > 3) {
+        isTap.value = false;
       }
 
-      // Update position during drag (but don't save to DB yet)
-      if (isDragging.value) {
-        const newX = node.x + event.translationX;
-        const newY = node.y + event.translationY;
-        runOnJS(updateNodePosition)(newX, newY, false);
-      }
-    },
-    onEnd: (event) => {
-      // Calculate final position
-      const finalX = node.x + event.translationX;
-      const finalY = node.y + event.translationY;
-
-      // If it was a drag, update the final position
-      if (isDragging.value) {
-        // Save final position to database
-        runOnJS(updateNodePosition)(finalX, finalY, true);
-      } else {
-        // It was a tap
+      // Check for collisions while dragging
+      checkCollisions(node.x + e.translationX, node.y + e.translationY);
+    })
+    .onEnd(() => {
+      if (isTap.value) {
+        // This was just a tap - invoke the press handler
         if (onNodePress) {
           runOnJS(onNodePress)(node);
         }
+      } else if (onNodeMove) {
+        // This was a drag - update the node position
+        const newX = node.x + translateX.value;
+        const newY = node.y + translateY.value;
+
+        // Simply update position - no animation needed
+        runOnJS(onNodeMove)(node.id, newX, newY);
       }
 
-      // Reset translations
+      // Immediately reset translations - no animation = no bounce
       translateX.value = 0;
       translateY.value = 0;
-    },
-  });
+      isDragging.value = false;
+    });
 
-  // Animated style for dragging
+  // Animated styles for the node
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
         { translateX: translateX.value },
         { translateY: translateY.value }
       ],
+      zIndex: isDragging.value ? 999 : 1,
+      opacity: isDragging.value ? 0.8 : 1,
     };
   });
 
   return (
-    <PanGestureHandler onGestureEvent={gestureHandler}>
+    <GestureDetector gesture={panGesture}>
       <Animated.View
         style={[
           styles.nodeContainer,
           {
             backgroundColor: node.color,
-            left: node.x - 40, // Center horizontally
-            top: node.y - 40,  // Center vertically
+            left: node.x - NODE_SIZE / 2, // Center horizontally
+            top: node.y - NODE_SIZE / 2,  // Center vertically
           },
           animatedStyle,
         ]}
@@ -119,15 +148,15 @@ function NodeCard({ node, onNodePress, onDragUpdate }: NodeCardProps) {
           ) : null}
         </View>
       </Animated.View>
-    </PanGestureHandler>
+    </GestureDetector>
   );
 }
 
 const styles = StyleSheet.create({
   nodeContainer: {
     position: 'absolute',
-    width: 80,
-    height: 80,
+    width: NODE_SIZE,
+    height: NODE_SIZE,
     borderRadius: 12,
     padding: 8,
     shadowColor: '#000',
