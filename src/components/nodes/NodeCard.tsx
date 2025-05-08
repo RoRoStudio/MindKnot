@@ -1,9 +1,14 @@
 // src/components/nodes/NodeCard.tsx
 import React, { memo, useEffect } from 'react';
-import { Text, StyleSheet, TouchableOpacity, View, Platform, ViewStyle } from 'react-native';
-import { Draggable } from '@mgcrea/react-native-dnd';
+import { Text, StyleSheet, View, Platform } from 'react-native';
+import { PanGestureHandler } from 'react-native-gesture-handler';
 import { NodeModel } from '../../types/NodeTypes';
-import Animated, { useSharedValue } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedGestureHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  runOnJS
+} from 'react-native-reanimated';
 
 interface NodeCardProps {
   node: NodeModel;
@@ -11,106 +16,110 @@ interface NodeCardProps {
   onDragUpdate?: (id: string, x: number, y: number) => void;
 }
 
-interface AnimatedStyleOptions {
-  isActive: boolean;
-  isDisabled: boolean;
-  isActing?: boolean;
-}
-
 function NodeCard({ node, onNodePress, onDragUpdate }: NodeCardProps) {
-  // Track position for live updates
-  const nodeX = useSharedValue(node.x);
-  const nodeY = useSharedValue(node.y);
+  // Track translation during drag
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
 
-  // Update shared values when node changes
+  // Reset translations when node position changes from outside
   useEffect(() => {
-    nodeX.value = node.x;
-    nodeY.value = node.y;
+    translateX.value = 0;
+    translateY.value = 0;
   }, [node.x, node.y]);
 
-  const handlePress = () => {
-    if (onNodePress) {
-      onNodePress(node);
+  // Track if we're currently dragging (to distinguish press from drag)
+  const isDragging = useSharedValue(false);
+
+  // Handle node position updates
+  const updateNodePosition = (x: number, y: number, save: boolean = false) => {
+    if (onDragUpdate) {
+      console.log(`Updating node ${node.id} position to ${x}, ${y}, save: ${save}`);
+      onDragUpdate(node.id, x, y);
     }
   };
 
-  // Custom animated style with drag effects
-  const animatedStyleWorklet = (style: ViewStyle, options: AnimatedStyleOptions) => {
-    'worklet';
+  // Gesture handler for dragging
+  const gestureHandler = useAnimatedGestureHandler({
+    onStart: () => {
+      isDragging.value = false;
+    },
+    onActive: (event) => {
+      // Update translation
+      translateX.value = event.translationX;
+      translateY.value = event.translationY;
 
-    const { isActive } = options;
-
-    // Create a new style object to avoid mutations
-    const newStyle = { ...style };
-
-    // Add visual effects when node is being dragged
-    if (isActive) {
-      // Elevate the node while dragging
-      if (Platform.OS === 'ios') {
-        newStyle.shadowOpacity = 0.4;
-        newStyle.shadowRadius = 10;
-      } else {
-        newStyle.elevation = 10;
+      // If moved more than 5px, consider it a drag
+      if (Math.abs(event.translationX) > 5 || Math.abs(event.translationY) > 5) {
+        isDragging.value = true;
       }
 
-      // Ensure it's on top of other nodes
-      newStyle.zIndex = 1000;
+      // Update position during drag (but don't save to DB yet)
+      if (isDragging.value) {
+        const newX = node.x + event.translationX;
+        const newY = node.y + event.translationY;
+        runOnJS(updateNodePosition)(newX, newY, false);
+      }
+    },
+    onEnd: (event) => {
+      // Calculate final position
+      const finalX = node.x + event.translationX;
+      const finalY = node.y + event.translationY;
 
-      // Handle transform property safely
-      if (!newStyle.transform) {
-        newStyle.transform = [{ scale: 1.1 }];
-      } else if (Array.isArray(newStyle.transform)) {
-        // Check if scale transform already exists
-        const hasScale = newStyle.transform.some(t => 'scale' in t);
-        if (!hasScale) {
-          // Create a new array with scale added
-          newStyle.transform = [...newStyle.transform, { scale: 1.1 }];
+      // If it was a drag, update the final position
+      if (isDragging.value) {
+        // Save final position to database
+        runOnJS(updateNodePosition)(finalX, finalY, true);
+      } else {
+        // It was a tap
+        if (onNodePress) {
+          runOnJS(onNodePress)(node);
         }
       }
-      // If transform is a string or other type, leave it unchanged
-    }
 
-    return newStyle;
-  };
+      // Reset translations
+      translateX.value = 0;
+      translateY.value = 0;
+    },
+  });
+
+  // Animated style for dragging
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value }
+      ],
+    };
+  });
 
   return (
-    <Draggable
-      id={node.id}
-      data={{
-        id: node.id,
-        x: node.x,
-        y: node.y,
-        // Other properties needed for the node
-      }}
-      style={[
-        styles.nodeContainer,
-        {
-          backgroundColor: node.color,
-          // Position using absolute positioning
-          left: node.x - 40,
-          top: node.y - 40,
-        }
-      ]}
-      animatedStyleWorklet={animatedStyleWorklet}
-    >
-      <TouchableOpacity
-        style={styles.nodeTouchable}
-        onPress={handlePress}
-        activeOpacity={0.7}
+    <PanGestureHandler onGestureEvent={gestureHandler}>
+      <Animated.View
+        style={[
+          styles.nodeContainer,
+          {
+            backgroundColor: node.color,
+            left: node.x - 40, // Center horizontally
+            top: node.y - 40,  // Center vertically
+          },
+          animatedStyle,
+        ]}
       >
-        <View style={styles.iconContainer}>
-          <Text style={styles.icon}>{node.icon || '📝'}</Text>
-        </View>
-        <Text style={styles.titleText} numberOfLines={1}>
-          {node.title}
-        </Text>
-        {node.status ? (
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{node.status}</Text>
+        <View style={styles.nodeTouchable}>
+          <View style={styles.iconContainer}>
+            <Text style={styles.icon}>{node.icon || '📝'}</Text>
           </View>
-        ) : null}
-      </TouchableOpacity>
-    </Draggable>
+          <Text style={styles.titleText} numberOfLines={1}>
+            {node.title}
+          </Text>
+          {node.status ? (
+            <View style={styles.statusBadge}>
+              <Text style={styles.statusText}>{node.status}</Text>
+            </View>
+          ) : null}
+        </View>
+      </Animated.View>
+    </PanGestureHandler>
   );
 }
 
