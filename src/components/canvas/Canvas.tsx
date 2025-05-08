@@ -55,13 +55,32 @@ export default function Canvas(props: CanvasProps) {
     }
   }, [linkCreationMode]);
 
+  // This ensures the source node ref is updated when link creation mode changes
+  useEffect(() => {
+    if (linkCreationMode && tempLink && tempLink.sourceId) {
+      sourceNodeRef.current = nodes.find(n => n.id === tempLink.sourceId) || null;
+    } else {
+      sourceNodeRef.current = null;
+    }
+  }, [linkCreationMode, tempLink, nodes]);
+
+  useEffect(() => {
+    console.log('Link creation state:', {
+      linkCreationMode,
+      tempLinkSource: tempLink?.sourceId,
+      pendingTarget: pendingTargetNodeId,
+      showSelector: showLinkTypeSelector
+    });
+  }, [linkCreationMode, tempLink, pendingTargetNodeId, showLinkTypeSelector]);
+
   // Set up a pan responder to track mouse movement for the temporary link
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => linkCreationMode,
       onMoveShouldSetPanResponder: () => linkCreationMode,
       onPanResponderMove: (evt, gestureState) => {
-        if (linkCreationMode) {
+        if (linkCreationMode && tempLink && tempLink.sourceId) {
+          // Get the current touch position
           const { locationX, locationY } = evt.nativeEvent;
           setTempLinkTarget({ x: locationX, y: locationY });
         }
@@ -77,14 +96,16 @@ export default function Canvas(props: CanvasProps) {
 
   // Handle node selection for editing
   const handleNodePress = useCallback((node: NodeModel) => {
-    // If in link creation mode, show link type selector
+    // If in link creation mode, handle link target selection
     if (linkCreationMode && tempLink && tempLink.sourceId) {
       if (tempLink.sourceId === node.id) {
         // Cancel if clicking on the source node again
         cancelLinkCreation();
       } else {
         console.log(`Setting up link from ${tempLink.sourceId} to ${node.id}`);
+        // Store the target node ID for when link type is selected
         setPendingTargetNodeId(node.id);
+        // Show link type selector
         setShowLinkTypeSelector(true);
       }
     } else {
@@ -119,28 +140,41 @@ export default function Canvas(props: CanvasProps) {
 
   const handleSelectLinkType = useCallback((type: string) => {
     console.log(`Selected link type: ${type}`);
-    if (pendingTargetNodeId) {
+
+    if (pendingTargetNodeId && tempLink && tempLink.sourceId) {
+      // First update the link type
       selectLinkType(type);
+
+      // Then complete the link creation
+      console.log(`Creating ${type} link from ${tempLink.sourceId} to ${pendingTargetNodeId}`);
       finishLinkCreation(pendingTargetNodeId);
+
+      // Reset state
       setPendingTargetNodeId(null);
+      setShowLinkTypeSelector(false);
     }
-    setShowLinkTypeSelector(false);
-  }, [pendingTargetNodeId, selectLinkType, finishLinkCreation]);
+  }, [pendingTargetNodeId, selectLinkType, finishLinkCreation, tempLink]);
 
   const handleCancelLinkTypeSelection = useCallback(() => {
+    console.log('Canceling link type selection');
     setShowLinkTypeSelector(false);
     setPendingTargetNodeId(null);
-  }, []);
+
+    // Also cancel the entire link creation process
+    if (linkCreationMode) {
+      cancelLinkCreation();
+    }
+  }, [cancelLinkCreation, linkCreationMode]);
 
 
   // Enhanced tempLink object with coordinates
-  const enhancedTempLink = tempLink && tempLink.sourceId
+  const enhancedTempLink = tempLink && tempLink.sourceId && sourceNodeRef.current
     ? {
       ...tempLink,
-      sourceX: sourceNodeRef.current?.x,
-      sourceY: sourceNodeRef.current?.y,
-      targetX: tempLinkTarget?.x,
-      targetY: tempLinkTarget?.y
+      sourceX: sourceNodeRef.current.x,
+      sourceY: sourceNodeRef.current.y,
+      targetX: tempLinkTarget?.x || sourceNodeRef.current.x,
+      targetY: tempLinkTarget?.y || sourceNodeRef.current.y + 50 // Default to below the node
     }
     : null;
 

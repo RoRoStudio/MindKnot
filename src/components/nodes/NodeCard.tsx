@@ -9,6 +9,7 @@ import Animated, {
   useDerivedValue,
 } from 'react-native-reanimated';
 import { NodeModel } from '../../types/NodeTypes';
+import { Icon } from '../common/Icon';
 
 interface NodeCardProps {
   node: NodeModel;
@@ -26,6 +27,14 @@ const MIN_DISTANCE = 100; // Minimum distance between node centers
 const REPULSION_FACTOR = 1.2; // How strongly nodes repel (higher = stronger)
 const LONG_PRESS_DURATION = 500; // ms for long press
 
+// Map template types to icon names
+const templateToIcon = {
+  'quicknote': 'file-text',
+  'checklist': 'check-square',
+  'bullet': 'list',
+  'decision': 'git-branch'
+};
+
 function NodeCard({
   node,
   onNodePress,
@@ -36,6 +45,17 @@ function NodeCard({
   isLinkCreationMode,
   isLinkTargetMode
 }: NodeCardProps) {
+  // Get the appropriate icon name for this node
+  const getIconName = () => {
+    // If node has an explicit icon defined, use it
+    if (node.icon && typeof node.icon === 'string' && node.icon.indexOf('.svg') === -1) {
+      return node.icon;
+    }
+
+    // Otherwise default to template-based icon
+    return templateToIcon[node.template] || 'file-text';
+  };
+
   // Track translations separately from the node's base position
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -171,10 +191,13 @@ function NodeCard({
       zIndex: isDragging.value ? 999 : 1,
       opacity: isDragging.value ? 0.8 : 1,
       // Add a subtle pulse effect when long press is active
-      shadowOpacity: longPressActive.value ? 0.6 : 0.2,
-      shadowRadius: longPressActive.value ? 10 : 4,
+      shadowOpacity: longPressActive.value ? 0.6 : 0.3,
+      shadowRadius: longPressActive.value ? 10 : 6,
     };
   });
+
+  // Get the icon name to use
+  const iconName = getIconName();
 
   return (
     <GestureDetector gesture={gesture}>
@@ -182,7 +205,6 @@ function NodeCard({
         style={[
           styles.nodeContainer,
           {
-            backgroundColor: node.color,
             left: node.x - NODE_SIZE / 2, // Center horizontally
             top: node.y - NODE_SIZE / 2,  // Center vertically
           },
@@ -191,19 +213,29 @@ function NodeCard({
           animatedStyle,
         ]}
       >
-        <View style={styles.nodeTouchable}>
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>{node.icon || '📝'}</Text>
-          </View>
-          <Text style={styles.titleText} numberOfLines={1}>
-            {node.title}
-          </Text>
-          {node.status ? (
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>{node.status}</Text>
-            </View>
-          ) : null}
+        {/* Node content */}
+        <View style={styles.nodeContent}>
+          {/* Use Icon component instead of emoji text */}
+          <Icon
+            name={iconName as any}
+            width={32}
+            height={32}
+            stroke={node.color}
+            strokeWidth={2.5}
+          />
         </View>
+
+        {/* Title below the node */}
+        <Text style={styles.titleText} numberOfLines={1}>
+          {node.title}
+        </Text>
+
+        {/* Status badge if present */}
+        {node.status ? (
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>{node.status}</Text>
+          </View>
+        ) : null}
       </Animated.View>
     </GestureDetector>
   );
@@ -213,59 +245,52 @@ const styles = StyleSheet.create({
   nodeContainer: {
     position: 'absolute',
     width: NODE_SIZE,
+    height: NODE_SIZE + 24, // Add extra height for the title below
+    alignItems: 'center',
+  },
+  nodeContent: {
+    width: NODE_SIZE,
     height: NODE_SIZE,
     borderRadius: 12,
-    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF', // White background
+    borderWidth: 1.5,
+    borderColor: '#333333', // Near-black border
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
   },
   linkSourceNode: {
-    borderWidth: 3,
     borderColor: '#2D9CDB',
+    borderWidth: 3,
     shadowColor: '#2D9CDB',
     shadowOpacity: 0.5,
     shadowRadius: 10,
     elevation: 8,
-    transform: [{ scale: 1.05 }],
   },
   linkTargetNode: {
-    borderWidth: 2,
     borderColor: '#6FCF97',
+    borderWidth: 2,
     shadowColor: '#6FCF97',
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
   },
-  nodeTouchable: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-  },
-  icon: {
-    fontSize: 24,
-  },
   titleText: {
-    position: 'absolute',
-    bottom: -24,
     fontSize: 12,
     fontWeight: '500',
     color: '#1A1A1A',
     textAlign: 'center',
-    width: '100%',
+    marginTop: 4,
+    maxWidth: NODE_SIZE * 1.2,
   },
   statusBadge: {
     position: 'absolute',
     top: -8,
-    right: -8,
+    right: NODE_SIZE / 2 - 24,
     backgroundColor: 'rgba(0,0,0,0.5)',
     paddingHorizontal: 4,
     paddingVertical: 2,

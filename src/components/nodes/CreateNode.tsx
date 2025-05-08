@@ -2,13 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Pressable, Alert, Dimensions } from 'react-native';
 import { useMindMapStore } from '../../state/useMindMapStore';
+import { Icon } from '../common/Icon';
 
-// Template definitions with colors
+// Template definitions with icons and colors
 const templates = [
-  { type: 'quicknote', label: '📝', name: 'Note', color: '#2D9CDB' },
-  { type: 'checklist', label: '✅', name: 'Checklist', color: '#6FCF97' },
-  { type: 'bullet', label: '🔘', name: 'Bullet', color: '#BB6BD9' },
-  { type: 'decision', label: '🔄', name: 'Decision', color: '#F2994A' },
+  { type: 'quicknote', iconName: 'file-text', name: 'Note', color: '#2D9CDB' },
+  { type: 'checklist', iconName: 'check-square', name: 'Checklist', color: '#6FCF97' },
+  { type: 'bullet', iconName: 'list', name: 'Bullet', color: '#BB6BD9' },
+  { type: 'decision', iconName: 'git-branch', name: 'Decision', color: '#F2994A' },
 ];
 
 interface CreateNodeProps {
@@ -62,7 +63,7 @@ export default function CreateNode({ onComplete }: CreateNodeProps) {
       x: menuPosition.x,
       y: menuPosition.y,
       color: templateInfo.color,
-      icon: templateInfo.label,
+      icon: templateInfo.iconName,
       template: template as any,
       title: 'New ' + templateInfo.name,
     };
@@ -105,10 +106,12 @@ export default function CreateNode({ onComplete }: CreateNodeProps) {
             {templates.map((tpl) => (
               <TouchableOpacity
                 key={tpl.type}
-                style={[styles.templateButton, { backgroundColor: tpl.color }]}
+                style={styles.templateButton}
                 onPress={() => handleCreate(tpl.type)}
               >
-                <Text style={styles.templateIcon}>{tpl.label}</Text>
+                <View style={[styles.iconContainer, { backgroundColor: tpl.color }]}>
+                  <Icon name={tpl.iconName as any} width={24} height={24} stroke="#fff" />
+                </View>
                 <Text style={styles.templateName}>{tpl.name}</Text>
               </TouchableOpacity>
             ))}
@@ -163,15 +166,20 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
+    backgroundColor: '#f8f8f8',
   },
-  templateIcon: {
-    fontSize: 20,
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 12,
   },
   templateName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#fff',
+    color: '#333',
   },
   cancelButton: {
     alignItems: 'center',
