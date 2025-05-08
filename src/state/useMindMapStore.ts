@@ -1,26 +1,54 @@
-// src/state/useMindMapStore.ts
+// src/state/useMindMapStore.ts (update)
 import { create } from 'zustand';
-import { NodeModel } from '../types/NodeTypes';
+import { NodeModel, LinkModel } from '../types/NodeTypes';
 import {
   getAllNodes,
+  getAllLinks,
   insertNode,
+  insertLink,
   updateNode as updateNodeInDb,
-  deleteAllNodes
+  deleteAllNodes,
+  deleteLink,
+  getLinksForNode
 } from '../services/sqliteService';
 import { nanoid } from 'nanoid/non-secure';
 
 // Define the state shape
 type MindMapState = {
   nodes: NodeModel[];
+  links: LinkModel[];
   isLoading: boolean;
   pendingUpdates: Record<string, NodeModel>;
+  selectedNodes: string[];
+  linkCreationMode: boolean;
+  tempLink: {
+    sourceId: string | null;
+    targetId: string | null;
+  } | null;
+  selectedLinkType: string;
 
   // Data operations
   loadNodes: () => Promise<void>;
+  loadLinks: () => Promise<void>;
   addNode: (partial: Partial<NodeModel>) => Promise<string>;
   updateNode: (node: NodeModel) => Promise<void>;
   updateNodePosition: (id: string, x: number, y: number, commitToDb?: boolean) => Promise<void>;
   batchUpdateNodes: (updates: Record<string, { x: number, y: number }>) => Promise<void>;
+
+  // Link operations
+  addLink: (sourceId: string, targetId: string, type?: string, label?: string) => Promise<string>;
+  removeLink: (linkId: string) => Promise<void>;
+  startLinkCreation: (sourceId: string) => void;
+  selectLinkType: (type: string) => void;
+  finishLinkCreation: (targetId: string) => Promise<void>;
+  cancelLinkCreation: () => void;
+
+  // Selection
+  selectNode: (nodeId: string) => void;
+  deselectNode: (nodeId: string) => void;
+  clearSelection: () => void;
+
+  // Cleanup
   clearAllNodes: () => Promise<void>;
   flushPendingUpdates: () => Promise<void>;
 };
@@ -63,8 +91,13 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
 
   return {
     nodes: [],
+    links: [],
     isLoading: false,
     pendingUpdates: {},
+    selectedNodes: [],
+    linkCreationMode: false,
+    tempLink: null,
+    selectedLinkType: 'default',
 
     loadNodes: async () => {
       try {
@@ -76,6 +109,18 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       } catch (error) {
         console.error("[MindMapStore] Error loading nodes:", error);
         set({ nodes: [], isLoading: false });
+      }
+    },
+
+    loadLinks: async () => {
+      try {
+        console.log("[MindMapStore] Loading links from database...");
+        const loadedLinks = await getAllLinks();
+        console.log(`[MindMapStore] Loaded ${loadedLinks.length} links`);
+        set({ links: loadedLinks });
+      } catch (error) {
+        console.error("[MindMapStore] Error loading links:", error);
+        set({ links: [] });
       }
     },
 
@@ -214,11 +259,103 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       }
     },
 
+    addLink: async (sourceId, targetId, type = 'default', label = '') => {
+      try {
+        const linkId = nanoid();
+        const now = Date.now();
+
+        const link: LinkModel = {
+          id: linkId,
+          sourceId,
+          targetId,
+          type: type as any,
+          label,
+          createdAt: now,
+        };
+
+        // Update state
+        set((state) => ({ links: [...state.links, link] }));
+
+        // Save to database
+        await insertLink(link);
+        console.log("[MindMapStore] Added link:", linkId);
+        return linkId;
+      } catch (error) {
+        console.error("[MindMapStore] Error adding link:", error);
+        return "";
+      }
+    },
+
+    removeLink: async (linkId) => {
+      try {
+        // Update state
+        set((state) => ({
+          links: state.links.filter(link => link.id !== linkId)
+        }));
+
+        // Remove from database
+        await deleteLink(linkId);
+        console.log("[MindMapStore] Removed link:", linkId);
+      } catch (error) {
+        console.error("[MindMapStore] Error removing link:", error);
+      }
+    },
+
+    startLinkCreation: (sourceId) => {
+      set({
+        linkCreationMode: true,
+        tempLink: { sourceId, targetId: null }
+      });
+      console.log("[MindMapStore] Started link creation from:", sourceId);
+    },
+
+    selectLinkType: (type) => {
+      set({ selectedLinkType: type });
+      console.log("[MindMapStore] Selected link type:", type);
+    },
+
+    finishLinkCreation: async (targetId) => {
+      const { tempLink, selectedLinkType } = get();
+      if (tempLink && tempLink.sourceId) {
+        // Don't create self-links
+        if (tempLink.sourceId === targetId) {
+          set({ linkCreationMode: false, tempLink: null });
+          return;
+        }
+
+        // Create the link
+        await get().addLink(tempLink.sourceId, targetId, selectedLinkType);
+        set({ linkCreationMode: false, tempLink: null });
+        console.log(`[MindMapStore] Created link from ${tempLink.sourceId} to ${targetId}`);
+      }
+    },
+
+    cancelLinkCreation: () => {
+      set({ linkCreationMode: false, tempLink: null });
+      console.log("[MindMapStore] Cancelled link creation");
+    },
+
+    selectNode: (nodeId) => {
+      set((state) => ({
+        selectedNodes: [...state.selectedNodes, nodeId]
+      }));
+    },
+
+    deselectNode: (nodeId) => {
+      set((state) => ({
+        selectedNodes: state.selectedNodes.filter(id => id !== nodeId)
+      }));
+    },
+
+    clearSelection: () => {
+      set({ selectedNodes: [] });
+    },
+
     clearAllNodes: async () => {
       try {
         await deleteAllNodes();
-        set({ nodes: [], pendingUpdates: {} });
-        console.log("[MindMapStore] Cleared all nodes");
+        set({ nodes: [], links: [], pendingUpdates: {} });
+        console.log("[MindMapStore] Cleared all nodes and links");
       } catch (error) {
         console.error("[MindMapStore] Error clearing nodes:", error);
       }

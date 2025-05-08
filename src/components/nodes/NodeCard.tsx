@@ -1,5 +1,5 @@
 // src/components/nodes/NodeCard.tsx
-import React, { memo, useEffect } from 'react';
+import React, { memo } from 'react';
 import { Text, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -13,16 +13,29 @@ import { NodeModel } from '../../types/NodeTypes';
 interface NodeCardProps {
   node: NodeModel;
   onNodePress?: (node: NodeModel) => void;
+  onNodeLongPress?: (node: NodeModel) => void;
   onNodeMove?: (id: string, x: number, y: number) => void;
   otherNodes: NodeModel[]; // All other nodes for collision detection
   onNodePush?: (nodeId: string, x: number, y: number) => void; // To push other nodes
+  isLinkCreationMode?: boolean; // If true, this node is the source of a link being created
+  isLinkTargetMode?: boolean; // If true, this node could be a target for a link
 }
 
 const NODE_SIZE = 80; // Width/height of node
 const MIN_DISTANCE = 100; // Minimum distance between node centers
 const REPULSION_FACTOR = 1.2; // How strongly nodes repel (higher = stronger)
+const LONG_PRESS_DURATION = 500; // ms for long press
 
-function NodeCard({ node, onNodePress, onNodeMove, otherNodes, onNodePush }: NodeCardProps) {
+function NodeCard({
+  node,
+  onNodePress,
+  onNodeLongPress,
+  onNodeMove,
+  otherNodes,
+  onNodePush,
+  isLinkCreationMode,
+  isLinkTargetMode
+}: NodeCardProps) {
   // Track translations separately from the node's base position
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -31,6 +44,8 @@ function NodeCard({ node, onNodePress, onNodeMove, otherNodes, onNodePush }: Nod
   const isDragging = useSharedValue(false);
   // Track if this was just a tap (not a drag)
   const isTap = useSharedValue(true);
+  // Track for long press
+  const longPressActive = useSharedValue(false);
 
   // Current absolute position during drag (node base position + translation)
   const currentX = useDerivedValue(() => node.x + translateX.value);
@@ -70,11 +85,30 @@ function NodeCard({ node, onNodePress, onNodeMove, otherNodes, onNodePush }: Nod
     }
   };
 
+  // Only allow dragging if not in link creation mode
+  const shouldAllowDragging = !isLinkCreationMode && !isLinkTargetMode;
+
+  // Long press gesture for link creation
+  const longPressGesture = Gesture.LongPress()
+    .minDuration(LONG_PRESS_DURATION)
+    .enabled(!isLinkCreationMode && !isLinkTargetMode) // Only enable if not already in link mode
+    .onStart(() => {
+      longPressActive.value = true;
+    })
+    .onEnd(() => {
+      if (longPressActive.value && onNodeLongPress) {
+        runOnJS(onNodeLongPress)(node);
+      }
+      longPressActive.value = false;
+    });
+
   // Pan gesture for dragging
   const panGesture = Gesture.Pan()
+    .enabled(shouldAllowDragging) // Only allow dragging when not in link mode
     .onBegin(() => {
       isDragging.value = true;
       isTap.value = true;
+      longPressActive.value = false; // Cancel long press if drag begins
     })
     .onUpdate((e) => {
       translateX.value = e.translationX;
@@ -109,6 +143,24 @@ function NodeCard({ node, onNodePress, onNodeMove, otherNodes, onNodePush }: Nod
       isDragging.value = false;
     });
 
+  // Tap gesture for node selection or completing link creation
+  const tapGesture = Gesture.Tap()
+    .onEnd(() => {
+      if (onNodePress) {
+        runOnJS(onNodePress)(node);
+      }
+    });
+
+  // Combine the gestures with priority
+  let gesture;
+  if (isLinkCreationMode || isLinkTargetMode) {
+    // If in link mode, only allow taps
+    gesture = tapGesture;
+  } else {
+    // Normal mode - allow long press and pan
+    gesture = Gesture.Exclusive(longPressGesture, panGesture);
+  }
+
   // Animated styles for the node
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -118,11 +170,14 @@ function NodeCard({ node, onNodePress, onNodeMove, otherNodes, onNodePush }: Nod
       ],
       zIndex: isDragging.value ? 999 : 1,
       opacity: isDragging.value ? 0.8 : 1,
+      // Add a subtle pulse effect when long press is active
+      shadowOpacity: longPressActive.value ? 0.6 : 0.2,
+      shadowRadius: longPressActive.value ? 10 : 4,
     };
   });
 
   return (
-    <GestureDetector gesture={panGesture}>
+    <GestureDetector gesture={gesture}>
       <Animated.View
         style={[
           styles.nodeContainer,
@@ -131,6 +186,8 @@ function NodeCard({ node, onNodePress, onNodeMove, otherNodes, onNodePush }: Nod
             left: node.x - NODE_SIZE / 2, // Center horizontally
             top: node.y - NODE_SIZE / 2,  // Center vertically
           },
+          isLinkCreationMode && styles.linkSourceNode,
+          isLinkTargetMode && styles.linkTargetNode,
           animatedStyle,
         ]}
       >
@@ -164,6 +221,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
+  },
+  linkSourceNode: {
+    borderWidth: 3,
+    borderColor: '#2D9CDB',
+    shadowColor: '#2D9CDB',
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
+    transform: [{ scale: 1.05 }],
+  },
+  linkTargetNode: {
+    borderWidth: 2,
+    borderColor: '#6FCF97',
+    shadowColor: '#6FCF97',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   nodeTouchable: {
     width: '100%',

@@ -1,11 +1,12 @@
 // src/screens/CanvasScreen.tsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, Pressable, Text, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, ActivityIndicator, Alert, Dimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useMindMapStore } from '../state/useMindMapStore';
 import Canvas from '../components/canvas/Canvas';
 import PanZoomLayer from '../components/canvas/PanZoomLayer';
 import CreateNode from '../components/nodes/CreateNode';
+import CanvasToolbar from '../components/canvas/CanvasToolbar';
 import { lightTheme } from '../theme/light';
 
 export default function CanvasScreen() {
@@ -14,6 +15,7 @@ export default function CanvasScreen() {
   const flushPendingUpdates = useMindMapStore((s) => s.flushPendingUpdates);
   const isLoading = useMindMapStore((s) => s.isLoading);
   const [scale, setScale] = useState(1);
+  const [isCreateNodeVisible, setIsCreateNodeVisible] = useState(false);
 
   // Load nodes when the screen mounts
   useEffect(() => {
@@ -32,6 +34,30 @@ export default function CanvasScreen() {
     setScale(newScale);
   }, []);
 
+  // Show node creation UI
+  const handleAddNode = useCallback(() => {
+    console.log('Add node button pressed');
+    setIsCreateNodeVisible(true);
+  }, []);
+
+  // Handle completion of node creation
+  const handleNodeCreationComplete = useCallback(() => {
+    console.log('Node creation completed');
+    setIsCreateNodeVisible(false);
+  }, []);
+
+  // Handle clear canvas confirmation
+  const handleClearCanvas = useCallback(() => {
+    Alert.alert(
+      "Clear Canvas",
+      "Are you sure you want to delete all nodes and links? This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Clear All", style: "destructive", onPress: clearNodes }
+      ]
+    );
+  }, [clearNodes]);
+
   return (
     <GestureHandlerRootView style={styles.container}>
       {/* Show loading indicator if data is loading */}
@@ -49,21 +75,24 @@ export default function CanvasScreen() {
         onTransformChange={handleTransformChange}
       >
         <Canvas />
-        <CreateNode />
       </PanZoomLayer>
 
-      {/* UI Controls - only keeping zoom indicator and clear button */}
-      <View style={styles.controls}>
-        <Pressable
-          style={styles.clearButton}
-          onPress={clearNodes}
-        >
-          <Text style={styles.clearText}>🗑️ Clear All</Text>
-        </Pressable>
-
-        <View style={styles.zoomIndicator}>
-          <Text style={styles.zoomText}>{Math.round(scale * 100)}%</Text>
+      {/* Create node UI - placed above PanZoomLayer but below toolbar */}
+      {isCreateNodeVisible && (
+        <View style={styles.createNodeContainer}>
+          <CreateNode onComplete={handleNodeCreationComplete} />
         </View>
+      )}
+
+      {/* Toolbar */}
+      <CanvasToolbar
+        onAddNode={handleAddNode}
+        onClearCanvas={handleClearCanvas}
+      />
+
+      {/* Zoom indicator */}
+      <View style={styles.zoomIndicator}>
+        <Text style={styles.zoomText}>{Math.round(scale * 100)}%</Text>
       </View>
     </GestureHandlerRootView>
   );
@@ -86,31 +115,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: lightTheme.textPrimary,
   },
-  controls: {
+  createNodeContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 200,
+  },
+  zoomIndicator: {
     position: 'absolute',
     bottom: 20,
     right: 20,
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-  },
-  clearButton: {
-    backgroundColor: '#EB5757',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-  },
-  clearText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  zoomIndicator: {
     backgroundColor: 'rgba(0,0,0,0.15)',
     paddingHorizontal: 12,
     paddingVertical: 6,

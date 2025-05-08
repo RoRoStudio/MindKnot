@@ -1,6 +1,6 @@
 // src/components/nodes/CreateNode.tsx
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Pressable } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Pressable, Alert, Dimensions } from 'react-native';
 import { useMindMapStore } from '../../state/useMindMapStore';
 
 // Template definitions with colors
@@ -11,27 +11,48 @@ const templates = [
   { type: 'decision', label: '🔄', name: 'Decision', color: '#F2994A' },
 ];
 
-export default function CreateNode() {
+interface CreateNodeProps {
+  onComplete?: () => void;
+}
+
+export default function CreateNode({ onComplete }: CreateNodeProps) {
   // Only use essential hooks
   const addNode = useMindMapStore((s) => s.addNode);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
 
+  // Get screen dimensions using Dimensions API
+  const { width, height } = Dimensions.get('window');
+
+  // Set a default position when component mounts if none is set
+  useEffect(() => {
+    if (!menuPosition) {
+      console.log('Setting default menu position');
+      // Default to center of screen
+      setMenuPosition({
+        x: width / 2,
+        y: height / 2
+      });
+    }
+  }, []);
+
   // Handle canvas tap to create a node
   const handleTap = (event: any) => {
-    if (menuPosition) {
-      // If menu is already open, close it
-      setMenuPosition(null);
-    } else {
-      // Open the menu
-      const { locationX, locationY } = event.nativeEvent;
-      console.log('[CreateNode] Tap at:', locationX, locationY);
-      setMenuPosition({ x: locationX, y: locationY });
-    }
+    console.log('[CreateNode] Tap handled');
+
+    // Get the touch coordinates
+    const { locationX, locationY } = event.nativeEvent;
+    console.log('[CreateNode] Tap at:', locationX, locationY);
+
+    // Set the menu position
+    setMenuPosition({ x: locationX, y: locationY });
   };
 
   // Create a node of the selected template type
   const handleCreate = (template: string) => {
-    if (!menuPosition) return;
+    if (!menuPosition) {
+      Alert.alert('Error', 'Cannot determine position for new node');
+      return;
+    }
 
     // Find template info
     const templateInfo = templates.find(t => t.type === template);
@@ -48,19 +69,39 @@ export default function CreateNode() {
 
     console.log('[CreateNode] Creating node:', node);
     addNode(node);
-    setMenuPosition(null);
+
+    if (onComplete) {
+      onComplete();
+    }
   };
 
   // Cancel menu
   const handleCancel = () => {
-    setMenuPosition(null);
+    if (onComplete) {
+      onComplete();
+    }
   };
 
   return (
-    <Pressable style={StyleSheet.absoluteFill} onPress={handleTap}>
+    <View style={StyleSheet.absoluteFill}>
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        onPress={handleTap}
+      >
+        <View style={styles.pressableArea} />
+      </Pressable>
+
       {menuPosition && (
         <View style={styles.menuBackground}>
-          <View style={[styles.menu, { left: menuPosition.x - 100, top: menuPosition.y - 100 }]}>
+          <View style={[
+            styles.menu,
+            {
+              left: Math.max(20, Math.min(menuPosition.x - 100, width - 220)),
+              top: Math.max(20, Math.min(menuPosition.y - 100, height - 300))
+            }
+          ]}>
+            <Text style={styles.menuTitle}>Create New Node</Text>
+
             {templates.map((tpl) => (
               <TouchableOpacity
                 key={tpl.type}
@@ -81,16 +122,21 @@ export default function CreateNode() {
           </View>
         </View>
       )}
-    </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  pressableArea: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.01)', // Almost transparent but still catches touches
+  },
   menuBackground: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 500,
   },
   menu: {
     position: 'absolute',
@@ -103,6 +149,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
+    zIndex: 550,
+  },
+  menuTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   templateButton: {
     flexDirection: 'row',
