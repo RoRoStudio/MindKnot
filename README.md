@@ -5,12 +5,14 @@ MindKnot
 ├─ .pnp.loader.mjs
 ├─ App.tsx
 ├─ README.md
+├─ all-code.txt
 ├─ app.json
 ├─ assets
 │  ├─ adaptive-icon.png
 │  ├─ favicon.png
 │  ├─ icon.png
 │  └─ splash-icon.png
+├─ babel.config.js
 ├─ commands.md
 ├─ index.ts
 ├─ metro.config.js
@@ -22,17 +24,23 @@ MindKnot
 │  │     └─ lucide
 │  │        ├─ a-arrow-down.svg
 │  │        ├─ a-arrow-up.svg
-│  │        ├─ (And a lot more)
+│  │        ├─ (and a lot more)
 │  ├─ components
+│  │  ├─ animations
+│  │  │  └─ NodeTransform.tsx
 │  │  ├─ canvas
 │  │  │  ├─ Canvas.tsx
-│  │  │  ├─ PanZoomLayer.tsx
-│  │  │  └─ PhysicsEngine.tsx
+│  │  │  ├─ CanvasToolbar.tsx
+│  │  │  └─ PanZoomLayer.tsx
 │  │  ├─ common
 │  │  │  └─ Icon.tsx
+│  │  ├─ links
+│  │  │  ├─ LinkTypeSelector.tsx
+│  │  │  └─ NodeLinks.tsx
 │  │  └─ nodes
 │  │     ├─ CreateNode.tsx
-│  │     └─ NodeCard.tsx
+│  │     ├─ NodeCard.tsx
+│  │     └─ NodeEditor.tsx
 │  ├─ constants
 │  ├─ contexts
 │  ├─ hooks
