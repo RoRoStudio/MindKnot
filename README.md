@@ -4,6 +4,7 @@ MindKnot
 ├─ .pnp.cjs
 ├─ .pnp.loader.mjs
 ├─ App.tsx
+├─ README.md
 ├─ all-code.txt
 ├─ app.json
 ├─ assets
@@ -27,14 +28,32 @@ MindKnot
 │  ├─ components
 │  │  ├─ chapters
 │  │  ├─ common
-│  │  │  └─ Icon.tsx
+│  │  │  ├─ Button.tsx
+│  │  │  ├─ Card.tsx
+│  │  │  ├─ FormInput.tsx
+│  │  │  ├─ Icon.tsx
+│  │  │  ├─ IconPicker.tsx
+│  │  │  └─ Typography.tsx
 │  │  ├─ entries
+│  │  ├─ navigation
+│  │  │  ├─ CustomBottomNavBar.tsx
+│  │  │  └─ DiamondFab.tsx
 │  │  └─ sagas
+│  │     ├─ AnimatedBookSaga.tsx
+│  │     ├─ SagaCreationSheet backup.tsx
+│  │     └─ SagaCreationSheet.tsx
 │  ├─ constants
 │  ├─ contexts
+│  │  └─ ThemeContext.tsx
 │  ├─ hooks
+│  │  └─ useStyles.ts
 │  ├─ navigation
+│  │  ├─ AppNavigator.tsx
+│  │  └─ TabNavigator.tsx
 │  ├─ screens
+│  │  ├─ HomeScreen.tsx
+│  │  ├─ SagaScreen.tsx
+│  │  └─ ThemeInspectorScreen.tsx
 │  ├─ services
 │  │  ├─ chapterService.ts
 │  │  ├─ entryService.ts
@@ -47,7 +66,8 @@ MindKnot
 │  │  └─ typography.ts
 │  ├─ theme
 │  │  ├─ dark.ts
-│  │  └─ light.ts
+│  │  ├─ light.ts
+│  │  └─ themeTypes.ts
 │  ├─ types
 │  │  ├─ ChapterTypes.ts
 │  │  ├─ EntryTypes.ts
@@ -55,6 +75,7 @@ MindKnot
 │  │  ├─ index.ts
 │  │  └─ svg.d.ts
 │  └─ utils
+│     └─ themeUtils.ts
 └─ tsconfig.json
 
 ```

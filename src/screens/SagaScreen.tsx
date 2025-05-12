@@ -19,11 +19,11 @@ import AnimatedBookSaga from '../components/sagas/AnimatedBookSaga';
 
 // Get screen width to calculate grid item width
 const { width } = Dimensions.get('window');
-// Calculate item width (3 items per row with some spacing)
-const SPACING = 12;
-const ITEMS_PER_ROW = 3;
-const ITEM_WIDTH = (width - (SPACING * (ITEMS_PER_ROW + 1))) / ITEMS_PER_ROW;
-const ITEM_HEIGHT = ITEM_WIDTH * 1.4; // Slightly taller for book appearance
+// Calculate item width (2 items per row with proper spacing)
+const SPACING = 24;
+const ITEMS_PER_ROW = 2;
+const ITEM_WIDTH = Math.floor((width - SPACING * (ITEMS_PER_ROW + 1)) / ITEMS_PER_ROW); // Left padding + middle spacing + right padding
+const ITEM_HEIGHT = ITEM_WIDTH * 1.5; // Book height ratio
 
 // Define saga type
 interface Saga {
@@ -69,7 +69,7 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
         headerSubtitle: {
             color: theme.colors.textSecondary,
         },
-        grid: {
+        gridContainer: {
             padding: SPACING,
         },
         addItem: {
@@ -79,16 +79,21 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
             borderWidth: 2,
             borderColor: theme.colors.border,
             borderStyle: 'dashed',
-            margin: SPACING / 2,
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: theme.colors.surfaceVariant,
+            margin: 0,
         },
         addIcon: {
             marginBottom: theme.spacing.s,
         },
         addText: {
             color: theme.colors.primary,
+        },
+        itemContainer: {
+            width: ITEM_WIDTH,
+            height: ITEM_HEIGHT,
+            marginBottom: SPACING,
         }
     }));
 
@@ -108,35 +113,44 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
     };
 
     // Render a saga item or the "add new" item
-    const renderItem = ({ item }: { item: GridItem }) => {
+    const renderItem = ({ item, index }: { item: GridItem, index: number }) => {
+        // Calculate the correct left margin for grid items
+        // First item in each row should have 0 left margin, second item should have spacing
+        const isEvenItem = index % 2 === 0;
+        const marginLeft = isEvenItem ? 0 : SPACING;
+
         if ('isAddButton' in item) {
             return (
-                <TouchableOpacity
-                    style={styles.addItem}
-                    onPress={() => setCreationSheetVisible(true)}
-                    activeOpacity={0.7}
-                >
-                    <Icon
-                        name="plus"
-                        width={32}
-                        height={32}
-                        color={theme.colors.primary}
-                        style={styles.addIcon}
-                    />
-                    <Typography variant="body2" style={styles.addText}>
-                        Create Saga
-                    </Typography>
-                </TouchableOpacity>
+                <View style={[styles.itemContainer, { marginLeft }]}>
+                    <TouchableOpacity
+                        style={styles.addItem}
+                        onPress={() => setCreationSheetVisible(true)}
+                        activeOpacity={0.7}
+                    >
+                        <Icon
+                            name="plus"
+                            width={32}
+                            height={32}
+                            color={theme.colors.primary}
+                            style={styles.addIcon}
+                        />
+                        <Typography variant="body2" style={styles.addText}>
+                            Create Saga
+                        </Typography>
+                    </TouchableOpacity>
+                </View>
             );
         }
 
         return (
-            <AnimatedBookSaga
-                saga={item}
-                width={ITEM_WIDTH}
-                height={ITEM_HEIGHT}
-                onPress={() => navigateToSagaDetails(item.id)}
-            />
+            <View style={[styles.itemContainer, { marginLeft }]}>
+                <AnimatedBookSaga
+                    saga={item}
+                    width={ITEM_WIDTH}
+                    height={ITEM_HEIGHT}
+                    onPress={() => navigateToSagaDetails(item.id)}
+                />
+            </View>
         );
     };
 
@@ -162,7 +176,8 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
                 numColumns={ITEMS_PER_ROW}
-                contentContainerStyle={styles.grid}
+                contentContainerStyle={styles.gridContainer}
+                columnWrapperStyle={{ justifyContent: 'flex-start' }}
             />
 
             <SagaCreationSheet

@@ -2,17 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import {
     View,
-    Modal,
-    TouchableWithoutFeedback,
     Keyboard,
-    Animated,
-    Dimensions,
-    KeyboardAvoidingView,
+    TouchableWithoutFeedback,
     Platform,
+    KeyboardAvoidingView,
     TouchableOpacity,
-    StyleSheet
+    Dimensions
 } from 'react-native';
+import { BottomSheet } from '../common/BottomSheet';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../common/Typography';
 import { Button } from '../common/Button';
 import { IconName } from '../common/Icon';
@@ -43,7 +42,6 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
     onCreate
 }) => {
     const { theme } = useTheme();
-    const [slideAnimation] = useState(new Animated.Value(SCREEN_HEIGHT));
 
     // Initialize react-hook-form
     const {
@@ -70,23 +68,6 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
         }
     }, [visible, reset]);
 
-    // Animation for sliding up/down
-    useEffect(() => {
-        if (visible) {
-            Animated.timing(slideAnimation, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: true
-            }).start();
-        } else {
-            Animated.timing(slideAnimation, {
-                toValue: SCREEN_HEIGHT,
-                duration: 300,
-                useNativeDriver: true
-            }).start();
-        }
-    }, [visible, slideAnimation]);
-
     // Handle form submission
     const onSubmit = (data: FormValues) => {
         onCreate({
@@ -100,138 +81,122 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
         Keyboard.dismiss();
     };
 
+    const styles = useStyles((theme) => ({
+        overlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'flex-end',
+        },
+        container: {
+            backgroundColor: theme.colors.background,
+            borderTopLeftRadius: theme.shape.radius.l,
+            borderTopRightRadius: theme.shape.radius.l,
+            paddingTop: theme.spacing.m,
+            paddingHorizontal: theme.spacing.m,
+            paddingBottom: theme.spacing.xl * 2, // enough to clear the nav
+            maxHeight: SCREEN_HEIGHT * 0.8,
+            width: '100%',
+        },
+
+        header: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: theme.spacing.m,
+        },
+        closeButton: {
+            padding: theme.spacing.s,
+        },
+        iconSection: {
+            marginBottom: theme.spacing.m,
+        },
+        errorText: {
+            color: theme.colors.error,
+            marginTop: 4,
+        },
+        buttonContainer: {
+            marginTop: theme.spacing.m,
+        },
+    }));
+
     if (!visible) return null;
 
     return (
-        <Modal
-            transparent
-            visible={visible}
-            animationType="none"
-            onRequestClose={onClose}
-        >
-            <TouchableWithoutFeedback onPress={onClose}>
-                <View style={styles.overlay}>
-                    <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                        <KeyboardAvoidingView
-                            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                            style={styles.keyboardView}
-                        >
-                            <Animated.View
-                                style={[
-                                    styles.container,
-                                    {
-                                        backgroundColor: theme.colors.background,
-                                        transform: [{ translateY: slideAnimation }]
-                                    }
-                                ]}
+        <BottomSheet visible={visible} onClose={onClose}>
+            <TouchableWithoutFeedback onPress={dismissKeyboard}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    style={{ width: '100%' }}
+                >
+                    <View style={styles.container}>
+                        <View style={styles.header}>
+                            <Typography variant="h3">Create New Saga</Typography>
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={onClose}
                             >
-                                <View style={styles.header}>
-                                    <Typography variant="h3">Create New Saga</Typography>
-                                    <TouchableOpacity
-                                        style={styles.closeButton}
-                                        onPress={onClose}
-                                    >
-                                        <Typography color="secondary">Cancel</Typography>
-                                    </TouchableOpacity>
-                                </View>
+                                <Typography color="secondary">Cancel</Typography>
+                            </TouchableOpacity>
+                        </View>
 
-                                {/* Saga Name Input */}
-                                <FormInput<FormValues>
-                                    control={control}
-                                    name="name"
-                                    label="Saga Name"
-                                    placeholder="Enter saga name..."
-                                    rules={{
-                                        required: 'Saga name is required',
-                                        maxLength: {
-                                            value: MAX_NAME_LENGTH,
-                                            message: `Name cannot exceed ${MAX_NAME_LENGTH} characters`
-                                        }
-                                    }}
-                                    showCharCount
-                                    maxLength={MAX_NAME_LENGTH}
-                                    autoFocus
-                                />
+                        {/* Saga Name Input */}
+                        <FormInput<FormValues>
+                            control={control}
+                            name="name"
+                            label="Saga Name"
+                            placeholder="Enter saga name..."
+                            rules={{
+                                required: 'Saga name is required',
+                                maxLength: {
+                                    value: MAX_NAME_LENGTH,
+                                    message: `Name cannot exceed ${MAX_NAME_LENGTH} characters`
+                                }
+                            }}
+                            showCharCount
+                            maxLength={MAX_NAME_LENGTH}
+                            autoFocus
+                        />
 
-                                {/* Icon Picker */}
-                                <View style={styles.iconSection}>
-                                    <Typography variant="h4" style={{ marginBottom: 8 }}>
-                                        Choose an Icon
-                                    </Typography>
-                                    <Controller
-                                        control={control}
-                                        name="icon"
-                                        rules={{ required: 'Please select an icon' }}
-                                        render={({ field: { value, onChange } }) => (
-                                            <View>
-                                                <IconPicker
-                                                    selectedIcon={value}
-                                                    onSelectIcon={onChange}
-                                                />
-                                                {errors.icon && (
-                                                    <Typography variant="caption" style={{
-                                                        color: theme.colors.error,
-                                                        marginTop: 4
-                                                    }}>
-                                                        {errors.icon.message}
-                                                    </Typography>
-                                                )}
-                                            </View>
+                        {/* Icon Picker */}
+                        <View style={styles.iconSection}>
+                            <Typography variant="h4" style={{ marginBottom: 8 }}>
+                                Choose an Icon
+                            </Typography>
+                            <Controller
+                                control={control}
+                                name="icon"
+                                rules={{ required: 'Please select an icon' }}
+                                render={({ field: { value, onChange } }) => (
+                                    <View>
+                                        <IconPicker
+                                            selectedIcon={value}
+                                            onSelectIcon={onChange}
+                                        />
+                                        {errors.icon && (
+                                            <Typography variant="caption" style={styles.errorText}>
+                                                {errors.icon.message}
+                                            </Typography>
                                         )}
-                                    />
-                                </View>
+                                    </View>
+                                )}
+                            />
+                        </View>
 
-                                {/* Create Button */}
-                                <View style={styles.buttonContainer}>
-                                    <Button
-                                        label="Create Saga"
-                                        variant="primary"
-                                        leftIcon="plus"
-                                        onPress={handleSubmit(onSubmit)}
-                                        disabled={!isValid}
-                                    />
-                                </View>
-                            </Animated.View>
-                        </KeyboardAvoidingView>
-                    </TouchableWithoutFeedback>
-                </View>
+                        {/* Create Button */}
+                        <View style={{ paddingBottom: 100 }}>
+                            <Button
+                                label="Create Saga"
+                                variant="primary"
+                                leftIcon="plus"
+                                onPress={handleSubmit(onSubmit)}
+                                disabled={!isValid}
+                            />
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
             </TouchableWithoutFeedback>
-        </Modal>
+        </BottomSheet>
     );
 };
-
-const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'flex-end',
-    },
-    keyboardView: {
-        width: '100%',
-        justifyContent: 'flex-end',
-    },
-    container: {
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        padding: 20,
-        maxHeight: SCREEN_HEIGHT * 0.8,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    closeButton: {
-        padding: 8,
-    },
-    iconSection: {
-        marginBottom: 20,
-    },
-    buttonContainer: {
-        marginTop: 20,
-        marginBottom: 20,
-    },
-});
 
 export default SagaCreationSheet;

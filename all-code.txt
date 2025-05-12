@@ -14,29 +14,782 @@ registerRootComponent(App);
 
 // ==== ./App.tsx ====
 
--e 
+// App.tsx
+
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ActionSheetProvider } from '@expo/react-native-action-sheet';
+import { ThemeProvider } from './src/contexts/ThemeContext';
+import AppNavigator from './src/navigation/AppNavigator';
+
+export default function App() {
+    return (
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <SafeAreaProvider>
+                <ThemeProvider>
+                    <ActionSheetProvider>
+                        <NavigationContainer>
+                            <AppNavigator />
+                        </NavigationContainer>
+                    </ActionSheetProvider>
+                </ThemeProvider>
+            </SafeAreaProvider>
+        </GestureHandlerRootView>
+    );
+}-e 
+
+// ==== ./src/contexts/ThemeContext.tsx ====
+
+// src/contexts/ThemeContext.tsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useColorScheme } from 'react-native';
+import { ThemeType } from '../theme/themeTypes';
+import { lightTheme } from '../theme/light';
+import { darkTheme } from '../theme/dark';
+
+type ThemeContextType = {
+    theme: ThemeType;
+    isDark: boolean;
+    toggleTheme: () => void;
+    setTheme: (theme: 'light' | 'dark') => void;
+};
+
+// Create the context with a default value
+const ThemeContext = createContext<ThemeContextType>({
+    theme: lightTheme,
+    isDark: false,
+    toggleTheme: () => { },
+    setTheme: () => { },
+});
+
+// Custom hook to use the theme context
+export const useTheme = () => useContext(ThemeContext);
+
+type ThemeProviderProps = {
+    children: React.ReactNode;
+};
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+    // Get the device color scheme
+    const colorScheme = useColorScheme();
+
+    // Initialize theme based on device color scheme or default to light
+    const [themeName, setThemeName] = useState<'light' | 'dark'>(colorScheme || 'light');
+
+    // Update theme when device color scheme changes
+    useEffect(() => {
+        if (colorScheme) {
+            setThemeName(colorScheme);
+        }
+    }, [colorScheme]);
+
+    // Get the actual theme object based on the theme name
+    const theme = themeName === 'dark' ? darkTheme : lightTheme;
+
+    // Toggle between light and dark themes
+    const toggleTheme = () => {
+        setThemeName(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    };
+
+    // Set a specific theme
+    const setTheme = (newTheme: 'light' | 'dark') => {
+        setThemeName(newTheme);
+    };
+
+    return (
+        <ThemeContext.Provider
+            value={{
+                theme,
+                isDark: themeName === 'dark',
+                toggleTheme,
+                setTheme,
+            }}
+        >
+            {children}
+        </ThemeContext.Provider>
+    );
+};-e 
+
+// ==== ./src/theme/themeTypes.ts ====
+
+// src/theme/themeTypes.ts
+import { TextStyle } from 'react-native';
+
+// Base color palette definitions
+export interface ColorPalette {
+    // Primary colors
+    primary: string;
+    primaryLight: string;
+    primaryDark: string;
+    onPrimary: string;
+
+    // Secondary colors
+    secondary: string;
+    secondaryLight: string;
+    secondaryDark: string;
+    onSecondary: string;
+
+    // Accent colors
+    accent: string;
+    accentLight: string;
+    accentDark: string;
+    onAccent: string;
+
+    // Neutral colors
+    background: string;
+    surface: string;
+    surfaceVariant: string;
+    error: string;
+    warning: string;
+    success: string;
+    info: string;
+
+    // Text colors
+    textPrimary: string;
+    textSecondary: string;
+    textDisabled: string;
+    textLink: string;
+
+    // Border and divider
+    border: string;
+    divider: string;
+
+    // Utility colors
+    white: string;
+    black: string;
+    transparent: string;
+}
+
+// Typography definitions
+export interface TypographySystem {
+    fontFamily: {
+        regular: string;
+        medium: string;
+        bold: string;
+    };
+    fontSize: {
+        xs: number;
+        s: number;
+        m: number;
+        l: number;
+        xl: number;
+        xxl: number;
+    };
+    fontWeight: {
+        regular: TextStyle['fontWeight'];
+        medium: TextStyle['fontWeight'];
+        bold: TextStyle['fontWeight'];
+    };
+    lineHeight: {
+        tight: number;
+        normal: number;
+        relaxed: number;
+    };
+}
+
+// Spacing definitions
+export interface SpacingSystem {
+    xs: number;
+    s: number;
+    m: number;
+    l: number;
+    xl: number;
+    xxl: number;
+}
+
+// Shape/radius definitions
+export interface ShapeSystem {
+    radius: {
+        none: number;
+        xs: number;
+        s: number;
+        m: number;
+        l: number;
+        xl: number;
+        circle: number;
+    };
+}
+
+// Elevation/shadow definitions
+export interface ElevationSystem {
+    z1: {
+        shadowColor: string;
+        shadowOffset: { width: number; height: number };
+        shadowOpacity: number;
+        shadowRadius: number;
+        elevation: number;
+    };
+    z2: {
+        shadowColor: string;
+        shadowOffset: { width: number; height: number };
+        shadowOpacity: number;
+        shadowRadius: number;
+        elevation: number;
+    };
+    z3: {
+        shadowColor: string;
+        shadowOffset: { width: number; height: number };
+        shadowOpacity: number;
+        shadowRadius: number;
+        elevation: number;
+    };
+    z4: {
+        shadowColor: string;
+        shadowOffset: { width: number; height: number };
+        shadowOpacity: number;
+        shadowRadius: number;
+        elevation: number;
+    };
+}
+
+// Component-specific theme properties
+export interface ComponentTheme {
+    bottomNavBar: {
+        background: string;
+        activeIcon: string;
+        inactiveIcon: string;
+        activeText: string;
+        inactiveText: string;
+        fabBackground: string;
+        fabIcon: string;
+        menuItemBackground: string;
+        menuItemIcon: string;
+        elevation: number;
+    };
+    card: {
+        background: string;
+        border: string;
+        titleColor: string;
+        textColor: string;
+        radius: number;
+    };
+    button: {
+        primary: {
+            background: string;
+            text: string;
+            border: string;
+            radius: number;
+        };
+        secondary: {
+            background: string;
+            text: string;
+            border: string;
+            radius: number;
+        };
+        text: {
+            color: string;
+            pressedColor: string;
+        };
+    };
+    inputs: {
+        background: string;
+        text: string;
+        placeholder: string;
+        border: string;
+        focusBorder: string;
+        radius: number;
+        error: string;
+        success: string;
+    };
+}
+
+// Complete theme definition
+export interface ThemeType {
+    name: string;
+    isDark: boolean;
+    colors: ColorPalette;
+    typography: TypographySystem;
+    spacing: SpacingSystem;
+    shape: ShapeSystem;
+    elevation: ElevationSystem;
+    components: ComponentTheme;
+
+    // Additional theme values can be added here
+}-e 
 
 // ==== ./src/theme/light.ts ====
 
+// src/theme/light.ts
+import { ThemeType } from './themeTypes';
 import { baseColors, lightColors } from '../styles/colors';
+import { typography } from '../styles/typography';
+import { spacing } from '../styles/spacing';
 
-export const lightTheme = {
-    ...lightColors,
-    ...baseColors,
-    primary: baseColors.nodeBlue,
-};
--e 
+export const lightTheme: ThemeType = {
+    name: 'light',
+    isDark: false,
+    colors: {
+        // Primary colors
+        primary: '#213448',
+        primaryLight: '#547792',
+        primaryDark: '#0E1924',
+        onPrimary: '#FFFFFF',
+
+        // Secondary colors
+        secondary: '#ECEFCA',
+        secondaryLight: '#F5F7E2',
+        secondaryDark: '#C8CCA6',
+        onSecondary: '#213448',
+
+        // Accent colors
+        accent: '#94B4C1',
+        accentLight: '#B5CEDA',
+        accentDark: '#6E8C99',
+        onAccent: '#FFFFFF',
+
+        // Neutral colors
+        background: lightColors.background,
+        surface: lightColors.surface,
+        surfaceVariant: '#F8F8F8',
+        error: baseColors.urgentRed,
+        warning: '#F2994A', // Orange warning color
+        success: '#27AE60', // Green success color
+        info: '#56CCF2', // Light blue info color
+
+        // Text colors
+        textPrimary: '#213448',
+        textSecondary: '#547792',
+        textDisabled: '#BDBDBD',
+        textLink: '#547792',
+
+        // Border and divider
+        border: '#ECEFCA',
+        divider: '#E9E9E9',
+
+        // Utility colors
+        white: baseColors.white,
+        black: baseColors.black,
+        transparent: 'transparent',
+    },
+
+    typography: {
+        fontFamily: {
+            regular: 'System',
+            medium: 'System',
+            bold: 'System',
+        },
+        fontSize: typography.fontSize,
+        fontWeight: {
+            regular: '400',
+            medium: '500',
+            bold: '700',
+        },
+        lineHeight: typography.lineHeight,
+    },
+
+    spacing: {
+        ...spacing,
+        xxl: 48, // Adding an xxl size that was missing
+    },
+
+    shape: {
+        radius: {
+            none: 0,
+            xs: 2,
+            s: 4,
+            m: 8,
+            l: 12,
+            xl: 20,
+            circle: 999,
+        },
+    },
+
+    elevation: {
+        z1: {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 1,
+        },
+        z2: {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 3,
+            elevation: 2,
+        },
+        z3: {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 4,
+        },
+        z4: {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 6,
+            elevation: 8,
+        },
+    },
+
+    components: {
+        bottomNavBar: {
+            background: '#213448', // Updated to match primary color
+            activeIcon: '#ECEFCA', // Updated to match secondary color
+            inactiveIcon: 'rgba(236, 239, 202, 0.7)', // Semi-transparent secondary
+            activeText: '#ECEFCA', // Updated to match secondary
+            inactiveText: 'rgba(236, 239, 202, 0.7)', // Semi-transparent secondary
+            fabBackground: '#94B4C1', // Updated to accent color
+            fabIcon: '#FFFFFF',
+            menuItemBackground: '#547792', // Using primaryLight
+            menuItemIcon: '#FFFFFF',
+            elevation: 8,
+        },
+        card: {
+            background: '#FFFFFF',
+            border: '#ECEFCA', // Updated to match secondary color
+            titleColor: '#213448', // Updated to match primary
+            textColor: '#547792', // Updated to match primaryLight
+            radius: 8,
+        },
+        button: {
+            primary: {
+                background: '#213448', // Updated to match primary
+                text: '#FFFFFF',
+                border: 'transparent',
+                radius: 8,
+            },
+            secondary: {
+                background: 'transparent',
+                text: '#213448', // Updated to match primary
+                border: '#213448', // Updated to match primary
+                radius: 8,
+            },
+            text: {
+                color: '#213448', // Updated to match primary
+                pressedColor: '#547792', // Updated to match primaryLight
+            },
+        },
+        inputs: {
+            background: '#FFFFFF',
+            text: '#213448', // Updated to match primary
+            placeholder: '#BDBDBD',
+            border: '#ECEFCA', // Updated to match secondary
+            focusBorder: '#213448', // Updated to match primary
+            radius: 8,
+            error: baseColors.urgentRed,
+            success: '#27AE60',
+        },
+    },
+};-e 
 
 // ==== ./src/theme/dark.ts ====
 
+// src/theme/dark.ts
+import { ThemeType } from './themeTypes';
 import { baseColors, darkColors } from '../styles/colors';
+import { typography } from '../styles/typography';
+import { spacing } from '../styles/spacing';
 
-export const darkTheme = {
-    ...darkColors,
-    ...baseColors,
-    primary: baseColors.nodeBlue,
-};
--e 
+export const darkTheme: ThemeType = {
+    name: 'dark',
+    isDark: true,
+    colors: {
+        // Primary colors - slightly brighter for dark mode
+        primary: '#547792',
+        primaryLight: '#94B4C1',
+        primaryDark: '#213448',
+        onPrimary: '#FFFFFF',
+
+        // Secondary colors - slightly darker for dark mode
+        secondary: '#C8CCA6',
+        secondaryLight: '#ECEFCA',
+        secondaryDark: '#A6A980',
+        onSecondary: '#213448',
+
+        // Accent colors
+        accent: '#94B4C1',
+        accentLight: '#B5CEDA',
+        accentDark: '#6E8C99',
+        onAccent: '#FFFFFF',
+
+        // Neutral colors
+        background: '#121212',
+        surface: '#1E1E1E',
+        surfaceVariant: '#2C2C2C',
+        error: '#FF6B6B', // Lighter red for dark mode
+        warning: '#FFAB4C', // Lighter orange for dark mode
+        success: '#4ADE80', // Lighter green for dark mode
+        info: '#7DD3FC', // Lighter blue info color for dark mode
+
+        // Text colors
+        textPrimary: '#FFFFFF',
+        textSecondary: '#B5CEDA', // Lighter version of accentLight
+        textDisabled: '#666666',
+        textLink: '#94B4C1', // Accent color
+
+        // Border and divider
+        border: '#333333',
+        divider: '#404040',
+
+        // Utility colors
+        white: baseColors.white,
+        black: baseColors.black,
+        transparent: 'transparent',
+    },
+
+    typography: {
+        fontFamily: {
+            regular: 'System',
+            medium: 'System',
+            bold: 'System',
+        },
+        fontSize: typography.fontSize,
+        fontWeight: {
+            regular: '400',
+            medium: '500',
+            bold: '700',
+        },
+        lineHeight: typography.lineHeight,
+    },
+
+    spacing: {
+        ...spacing,
+        xxl: 48, // Adding an xxl size that was missing
+    },
+
+    shape: {
+        radius: {
+            none: 0,
+            xs: 2,
+            s: 4,
+            m: 8,
+            l: 12,
+            xl: 20,
+            circle: 999,
+        },
+    },
+
+    elevation: {
+        z1: {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.2,
+            shadowRadius: 2,
+            elevation: 1,
+        },
+        z2: {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 3,
+            elevation: 2,
+        },
+        z3: {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 4,
+        },
+        z4: {
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.4,
+            shadowRadius: 6,
+            elevation: 8,
+        },
+    },
+
+    components: {
+        bottomNavBar: {
+            background: '#213448', // Dark primary
+            activeIcon: '#ECEFCA', // Light secondary 
+            inactiveIcon: 'rgba(236, 239, 202, 0.7)', // Semi-transparent
+            activeText: '#ECEFCA', // Light secondary
+            inactiveText: 'rgba(236, 239, 202, 0.7)', // Semi-transparent
+            fabBackground: '#94B4C1', // Accent color
+            fabIcon: '#213448', // Dark primary for contrast on the accent
+            menuItemBackground: '#547792', // Primary
+            menuItemIcon: '#FFFFFF',
+            elevation: 8,
+        },
+        card: {
+            background: '#1E1E1E',
+            border: '#333333',
+            titleColor: '#ECEFCA', // Light secondary
+            textColor: '#B5CEDA', // Light accent
+            radius: 8,
+        },
+        button: {
+            primary: {
+                background: '#547792', // Primary (slightly brighter for dark mode)
+                text: '#FFFFFF',
+                border: 'transparent',
+                radius: 8,
+            },
+            secondary: {
+                background: 'transparent',
+                text: '#94B4C1', // Accent
+                border: '#94B4C1', // Accent
+                radius: 8,
+            },
+            text: {
+                color: '#ECEFCA', // Light secondary
+                pressedColor: '#C8CCA6', // Secondary
+            },
+        },
+        inputs: {
+            background: '#2C2C2C',
+            text: '#FFFFFF',
+            placeholder: '#666666',
+            border: '#333333',
+            focusBorder: '#94B4C1', // Accent
+            radius: 8,
+            error: '#FF6B6B',
+            success: '#4ADE80',
+        },
+    },
+};-e 
+
+// ==== ./src/utils/themeUtils.ts ====
+
+// src/utils/themeUtils.ts
+import { ThemeType, ColorPalette } from '../theme/themeTypes';
+
+/**
+ * Gets a color value from the theme using a path string
+ * 
+ * @param theme The theme object
+ * @param colorPath A dot-notation path to the color (e.g., 'colors.primary', 'components.button.primary.background')
+ * @param fallback Optional fallback color if the path is not found
+ * @returns The color value
+ */
+export function getThemeColor(
+    theme: ThemeType,
+    colorPath: string,
+    fallback: string = '#000000'
+): string {
+    try {
+        const parts = colorPath.split('.');
+        let current: any = theme;
+
+        for (const part of parts) {
+            if (current && part in current) {
+                current = current[part];
+            } else {
+                return fallback;
+            }
+        }
+
+        return typeof current === 'string' ? current : fallback;
+    } catch (error) {
+        console.warn(`Error getting theme color for path: ${colorPath}`, error);
+        return fallback;
+    }
+}
+
+/**
+ * Calculates a new color with opacity based on a base color
+ * 
+ * @param baseColor The base color (hex format)
+ * @param opacity Opacity between 0 and 1
+ * @returns The color with opacity applied in rgba format
+ */
+export function withOpacity(baseColor: string, opacity: number): string {
+    // Handle case where baseColor is already in rgba format
+    if (baseColor.startsWith('rgba')) {
+        const rgbaMatch = baseColor.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*[\d.]+\s*\)/);
+        if (rgbaMatch) {
+            const [, r, g, b] = rgbaMatch;
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+    }
+
+    // Handle case where baseColor is in rgb format
+    if (baseColor.startsWith('rgb(')) {
+        const rgbMatch = baseColor.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+        if (rgbMatch) {
+            const [, r, g, b] = rgbMatch;
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+    }
+
+    // Handle hex color format
+    let hex = baseColor.replace('#', '');
+
+    // Convert short hex to full hex
+    if (hex.length === 3) {
+        hex = hex.split('').map(char => char + char).join('');
+    }
+
+    // Convert hex to rgb
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
+/**
+ * Derives a lighter version of a given color
+ * 
+ * @param color The base color
+ * @param percent How much lighter to make the color (0-100)
+ * @returns The lightened color
+ */
+export function lighten(color: string, percent: number = 20): string {
+    return adjustColor(color, percent);
+}
+
+/**
+ * Derives a darker version of a given color
+ * 
+ * @param color The base color
+ * @param percent How much darker to make the color (0-100)
+ * @returns The darkened color
+ */
+export function darken(color: string, percent: number = 20): string {
+    return adjustColor(color, -percent);
+}
+
+/**
+ * Adjusts a color by making it lighter or darker
+ * 
+ * @param color The base color
+ * @param percent Positive for lighter, negative for darker
+ * @returns The adjusted color
+ */
+function adjustColor(color: string, percent: number): string {
+    // Extract RGB components
+    let r: number = 0, g: number = 0, b: number = 0;
+
+    if (color.startsWith('rgb')) {
+        const rgbMatch = color.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*/);
+        if (rgbMatch) {
+            r = parseInt(rgbMatch[1], 10);
+            g = parseInt(rgbMatch[2], 10);
+            b = parseInt(rgbMatch[3], 10);
+        } else {
+            return color;
+        }
+    } else {
+        // Handle hex format
+        let hex = color.replace('#', '');
+
+        // Convert short hex to full hex
+        if (hex.length === 3) {
+            hex = hex.split('').map(char => char + char).join('');
+        }
+
+        r = parseInt(hex.substring(0, 2), 16);
+        g = parseInt(hex.substring(2, 4), 16);
+        b = parseInt(hex.substring(4, 6), 16);
+    }
+
+    // Adjust the color
+    r = Math.max(0, Math.min(255, Math.round(r + (percent / 100) * 255)));
+    g = Math.max(0, Math.min(255, Math.round(g + (percent / 100) * 255)));
+    b = Math.max(0, Math.min(255, Math.round(b + (percent / 100) * 255)));
+
+    // Convert back to hex
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}-e 
 
 // ==== ./src/services/chapterService.ts ====
 
@@ -137,11 +890,371 @@ declare module '*.svg' {
 
 // ==== ./src/types/EntryTypes.ts ====
 
--e 
+    -e 
 
 // ==== ./src/types/SagaTypes.ts ====
 
 -e 
+
+// ==== ./src/components/common/Typography.tsx ====
+
+// src/components/common/Typography.tsx
+import React from 'react';
+import { Text, TextProps, StyleSheet } from 'react-native';
+import { useStyles } from '../../hooks/useStyles';
+
+type TypographyVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'body1' | 'body2' | 'caption' | 'button' | 'overline';
+
+interface TypographyProps extends TextProps {
+    variant?: TypographyVariant;
+    color?: 'primary' | 'secondary' | 'disabled' | 'error' | 'inherit';
+    align?: 'left' | 'center' | 'right';
+    bold?: boolean;
+    italic?: boolean;
+    children: React.ReactNode;
+}
+
+export const Typography: React.FC<TypographyProps> = ({
+    variant = 'body1',
+    color = 'inherit',
+    align = 'left',
+    bold = false,
+    italic = false,
+    style,
+    children,
+    ...props
+}) => {
+    const styles = useStyles((theme) => {
+        // Define variant styles
+        const variantStyles = {
+            h1: {
+                fontSize: theme.typography.fontSize.xxl,
+                fontWeight: theme.typography.fontWeight.bold,
+                lineHeight: theme.typography.lineHeight.relaxed,
+            },
+            h2: {
+                fontSize: theme.typography.fontSize.xl,
+                fontWeight: theme.typography.fontWeight.bold,
+                lineHeight: theme.typography.lineHeight.relaxed,
+            },
+            h3: {
+                fontSize: theme.typography.fontSize.l,
+                fontWeight: theme.typography.fontWeight.medium,
+                lineHeight: theme.typography.lineHeight.normal,
+            },
+            h4: {
+                fontSize: theme.typography.fontSize.m,
+                fontWeight: theme.typography.fontWeight.medium,
+                lineHeight: theme.typography.lineHeight.normal,
+            },
+            body1: {
+                fontSize: theme.typography.fontSize.m,
+                fontWeight: theme.typography.fontWeight.regular,
+                lineHeight: theme.typography.lineHeight.normal,
+            },
+            body2: {
+                fontSize: theme.typography.fontSize.s,
+                fontWeight: theme.typography.fontWeight.regular,
+                lineHeight: theme.typography.lineHeight.normal,
+            },
+            caption: {
+                fontSize: theme.typography.fontSize.xs,
+                fontWeight: theme.typography.fontWeight.regular,
+                lineHeight: theme.typography.lineHeight.tight,
+            },
+            button: {
+                fontSize: theme.typography.fontSize.m,
+                fontWeight: theme.typography.fontWeight.medium,
+                lineHeight: theme.typography.lineHeight.tight,
+                textTransform: 'uppercase' as const,
+            },
+            overline: {
+                fontSize: theme.typography.fontSize.xs,
+                fontWeight: theme.typography.fontWeight.regular,
+                lineHeight: theme.typography.lineHeight.tight,
+                textTransform: 'uppercase' as const,
+                letterSpacing: 1.5,
+            },
+        };
+
+        // Define color styles
+        const colorStyles = {
+            primary: { color: theme.colors.primary },
+            secondary: { color: theme.colors.secondary },
+            disabled: { color: theme.colors.textDisabled },
+            error: { color: theme.colors.error },
+            inherit: {}, // No specific color - will inherit from parent
+        };
+
+        return {
+            text: {
+                ...variantStyles[variant],
+                ...colorStyles[color],
+                textAlign: align,
+                ...(bold && { fontWeight: theme.typography.fontWeight.bold }),
+                ...(italic && { fontStyle: 'italic' as const }),
+            },
+        };
+    });
+
+    return (
+        <Text style={[styles.text, style]} {...props}>
+            {children}
+        </Text>
+    );
+};-e 
+
+// ==== ./src/components/common/IconPicker.tsx ====
+
+// src/components/common/IconPicker.tsx
+import React from 'react';
+import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useStyles } from '../../hooks/useStyles';
+import { Icon, IconName } from './Icon';
+import { Typography } from './Typography';
+
+interface IconPickerProps {
+    selectedIcon: IconName | null;
+    onSelectIcon: (icon: IconName) => void;
+}
+
+// List of icons to show in the picker
+// These are the icons available in the Icon component
+const AVAILABLE_ICONS: IconName[] = [
+    'lightbulb',
+    'git-branch',
+    'sparkles',
+    'map',
+    'file-text',
+    'check',
+    'link',
+    'settings',
+    'sun',
+    'moon',
+    'plus',
+    'list'
+];
+
+const IconPicker: React.FC<IconPickerProps> = ({ selectedIcon, onSelectIcon }) => {
+    const { theme } = useTheme();
+
+    const styles = useStyles((theme) => ({
+        container: {
+            marginVertical: theme.spacing.m,
+        },
+        title: {
+            marginBottom: theme.spacing.s,
+        },
+        iconsContainer: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-start',
+            marginHorizontal: -theme.spacing.xs, // To offset the margin of the icon items
+        },
+        iconItem: {
+            width: 60,
+            height: 60,
+            margin: theme.spacing.xs,
+            borderRadius: theme.shape.radius.m,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: theme.colors.surface,
+        },
+        selectedIconItem: {
+            backgroundColor: theme.colors.primaryLight,
+        },
+        iconText: {
+            fontSize: theme.typography.fontSize.xs,
+            marginTop: 4,
+            textAlign: 'center',
+        },
+        scrollView: {
+            maxHeight: 240, // Limit height to ensure it doesn't take up too much space
+        },
+    }));
+
+    return (
+        <View style={styles.container}>
+            <Typography variant="h4" style={styles.title}>
+                Choose an Icon
+            </Typography>
+
+            <ScrollView
+                horizontal={false}
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={true}
+            >
+                <View style={styles.iconsContainer}>
+                    {AVAILABLE_ICONS.map((icon) => (
+                        <TouchableOpacity
+                            key={icon}
+                            style={[
+                                styles.iconItem,
+                                selectedIcon === icon && styles.selectedIconItem,
+                            ]}
+                            onPress={() => onSelectIcon(icon)}
+                            activeOpacity={0.7}
+                        >
+                            <Icon
+                                name={icon}
+                                width={24}
+                                height={24}
+                                color={selectedIcon === icon ? theme.colors.onPrimary : theme.colors.primary}
+                            />
+                            <Typography
+                                variant="caption"
+                                style={styles.iconText}
+                                color={selectedIcon === icon ? 'primary' : 'inherit'}
+                            >
+                                {icon.replace('-', ' ')}
+                            </Typography>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </ScrollView>
+        </View>
+    );
+};
+
+export default IconPicker;-e 
+
+// ==== ./src/components/common/FormInput.tsx ====
+
+// src/components/common/FormInput.tsx
+import React, { useState } from 'react';
+import {
+    View,
+    TextInput,
+    TextInputProps,
+    StyleSheet
+} from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useStyles } from '../../hooks/useStyles';
+import { Typography } from './Typography';
+import { Control, Controller, FieldValues, Path, RegisterOptions, FieldPath } from 'react-hook-form';
+
+interface FormInputProps<T extends FieldValues> extends TextInputProps {
+    name: Path<T>;
+    control: Control<T>;
+    label?: string;
+    rules?: Omit<RegisterOptions<T, Path<T>>, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>;
+    showCharCount?: boolean;
+    maxLength?: number;
+    message?: string;
+}
+
+function FormInput<T extends FieldValues>({
+    name,
+    control,
+    label,
+    rules,
+    showCharCount,
+    maxLength,
+    message,
+    ...inputProps
+}: FormInputProps<T>) {
+    const { theme } = useTheme();
+    const [isFocused, setIsFocused] = useState(false);
+
+    const styles = useStyles((theme) => ({
+        container: {
+            marginBottom: theme.spacing.m,
+        },
+        label: {
+            marginBottom: theme.spacing.xs,
+        },
+        input: {
+            backgroundColor: theme.components.inputs.background,
+            borderWidth: 1,
+            borderColor: theme.components.inputs.border,
+            borderRadius: theme.components.inputs.radius,
+            paddingVertical: theme.spacing.s,
+            paddingHorizontal: theme.spacing.m,
+            color: theme.components.inputs.text,
+            fontSize: theme.typography.fontSize.m,
+        },
+        focusedInput: {
+            borderColor: theme.components.inputs.focusBorder,
+        },
+        errorInput: {
+            borderColor: theme.colors.error,
+        },
+        charCounter: {
+            alignSelf: 'flex-end',
+            marginTop: 4,
+        },
+        errorText: {
+            color: theme.colors.error,
+            marginTop: 4,
+        },
+        messageText: {
+            marginTop: 4,
+        },
+    }));
+
+    return (
+        <Controller
+            control={control}
+            name={name}
+            rules={rules}
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                <View style={styles.container}>
+                    {label && (
+                        <Typography variant="body1" style={styles.label}>
+                            {label}
+                        </Typography>
+                    )}
+
+                    <TextInput
+                        style={[
+                            styles.input,
+                            isFocused && styles.focusedInput,
+                            error && styles.errorInput,
+                        ]}
+                        value={value}
+                        onChangeText={text => {
+                            if (maxLength && text.length > maxLength) {
+                                return;
+                            }
+                            onChange(text);
+                        }}
+                        onBlur={() => {
+                            setIsFocused(false);
+                            onBlur();
+                        }}
+                        onFocus={() => setIsFocused(true)}
+                        maxLength={maxLength}
+                        placeholderTextColor={theme.components.inputs.placeholder}
+                        {...inputProps}
+                    />
+
+                    {showCharCount && maxLength && (
+                        <Typography
+                            variant="caption"
+                            style={styles.charCounter}
+                            color={value?.length === maxLength ? 'error' : 'secondary'}
+                        >
+                            {value?.length || 0}/{maxLength}
+                        </Typography>
+                    )}
+
+                    {error ? (
+                        <Typography variant="caption" style={styles.errorText}>
+                            {error.message}
+                        </Typography>
+                    ) : message ? (
+                        <Typography variant="caption" style={styles.messageText} color="secondary">
+                            {message}
+                        </Typography>
+                    ) : null}
+                </View>
+            )}
+        />
+    );
+}
+
+export default FormInput;-e 
 
 // ==== ./src/components/common/Icon.tsx ====
 
@@ -160,6 +1273,11 @@ import Link from '../../assets/icons/lucide/link.svg';
 import ArrowRight from '../../assets/icons/lucide/arrow-right.svg';
 import Minus from '../../assets/icons/lucide/minus.svg';
 import Sparkles from '../../assets/icons/lucide/sparkles.svg';
+// Add moon and sun icons
+import Moon from '../../assets/icons/lucide/moon.svg';
+import Sun from '../../assets/icons/lucide/sun.svg';
+import House from '../../assets/icons/lucide/house.svg'
+import BookOpen from '../../assets/icons/lucide/book-open.svg'
 
 const iconMap = {
     plus: Plus,
@@ -175,6 +1293,11 @@ const iconMap = {
     link: Link,
     minus: Minus,
     sparkles: Sparkles,
+    // Add new icons
+    moon: Moon,
+    sun: Sun,
+    house: House,
+    'book-open': BookOpen,
 };
 
 export type IconName = keyof typeof iconMap;
@@ -192,4 +1315,2123 @@ export function Icon({ name, ...props }: Props) {
     }
 
     return <Component {...props} />;
+}-e 
+
+// ==== ./src/components/common/Card.tsx ====
+
+// src/components/common/Card.tsx
+import React from 'react';
+import { View, Text, StyleSheet, ViewProps, TouchableOpacity } from 'react-native';
+import { useStyles } from '../../hooks/useStyles';
+
+interface CardProps extends ViewProps {
+    title?: string;
+    onPress?: () => void;
+    children: React.ReactNode;
+    elevated?: boolean;
+    noPadding?: boolean;
+}
+
+export const Card: React.FC<CardProps> = ({
+    title,
+    onPress,
+    children,
+    elevated = false,
+    noPadding = false,
+    style,
+    ...props
+}) => {
+    const styles = useStyles((theme) => ({
+        container: {
+            backgroundColor: theme.components.card.background,
+            borderRadius: theme.components.card.radius,
+            borderWidth: 1,
+            borderColor: theme.components.card.border,
+            padding: noPadding ? 0 : theme.spacing.m,
+            ...(elevated && {
+                ...theme.elevation.z2,
+                borderWidth: 0,
+            }),
+        },
+        title: {
+            color: theme.components.card.titleColor,
+            fontSize: theme.typography.fontSize.l,
+            fontWeight: theme.typography.fontWeight.bold,
+            marginBottom: theme.spacing.s,
+        },
+    }));
+
+    const CardComponent = onPress ? TouchableOpacity : View;
+
+    return (
+        <CardComponent
+            style={[styles.container, style]}
+            onPress={onPress}
+            activeOpacity={onPress ? 0.7 : 1}
+            {...props}
+        >
+            {title && <Text style={styles.title}>{title}</Text>}
+            {children}
+        </CardComponent>
+    );
+};-e 
+
+// ==== ./src/components/common/Button.tsx ====
+
+// src/components/common/Button.tsx
+import React from 'react';
+import {
+    TouchableOpacity,
+    Text,
+    ActivityIndicator,
+    StyleSheet,
+    TouchableOpacityProps,
+    View,
+} from 'react-native';
+import { useStyles } from '../../hooks/useStyles';
+import { Icon, IconName } from './Icon';
+
+type ButtonVariant = 'primary' | 'secondary' | 'text';
+
+interface ButtonProps extends TouchableOpacityProps {
+    variant?: ButtonVariant;
+    label: string;
+    isLoading?: boolean;
+    leftIcon?: IconName;
+    rightIcon?: IconName;
+    fullWidth?: boolean;
+    small?: boolean;
+}
+
+export const Button: React.FC<ButtonProps> = ({
+    variant = 'primary',
+    label,
+    isLoading = false,
+    leftIcon,
+    rightIcon,
+    disabled,
+    fullWidth = false,
+    small = false,
+    style,
+    ...props
+}) => {
+    const styles = useStyles((theme) => ({
+        button: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: small ? theme.spacing.s : theme.spacing.m,
+            paddingHorizontal: small ? theme.spacing.m : theme.spacing.l,
+            borderRadius:
+                variant === 'primary'
+                    ? theme.components.button.primary.radius
+                    : variant === 'secondary'
+                        ? theme.components.button.secondary.radius
+                        : 0,
+            borderWidth: variant === 'secondary' ? 1 : 0,
+            backgroundColor:
+                variant === 'primary'
+                    ? theme.components.button.primary.background
+                    : variant === 'secondary'
+                        ? theme.components.button.secondary.background
+                        : 'transparent',
+            borderColor: variant === 'secondary'
+                ? theme.components.button.secondary.border
+                : 'transparent',
+            opacity: disabled ? 0.5 : 1,
+            width: fullWidth ? '100%' : 'auto',
+        },
+        label: {
+            color:
+                variant === 'primary'
+                    ? theme.components.button.primary.text
+                    : variant === 'secondary'
+                        ? theme.components.button.secondary.text
+                        : theme.components.button.text.color,
+            fontSize: small ? theme.typography.fontSize.s : theme.typography.fontSize.m,
+            fontWeight: theme.typography.fontWeight.medium,
+            textAlign: 'center',
+        },
+        icon: {
+            marginRight: leftIcon && label ? theme.spacing.s : 0,
+            marginLeft: rightIcon && label ? theme.spacing.s : 0,
+        },
+        loader: {
+            marginRight: label ? theme.spacing.s : 0,
+        },
+    }));
+
+    const getIconColor = () => {
+        if (variant === 'primary') {
+            return styles.label.color;
+        } else if (variant === 'secondary') {
+            return styles.label.color;
+        } else {
+            return styles.label.color;
+        }
+    };
+
+    return (
+        <TouchableOpacity
+            style={[styles.button, style]}
+            disabled={isLoading || disabled}
+            activeOpacity={0.7}
+            {...props}
+        >
+            {isLoading && (
+                <ActivityIndicator
+                    size="small"
+                    color={styles.label.color}
+                    style={styles.loader}
+                />
+            )}
+
+            {!isLoading && leftIcon && (
+                <View style={styles.icon}>
+                    <Icon name={leftIcon} width={18} height={18} color={getIconColor()} />
+                </View>
+            )}
+
+            <Text style={styles.label}>{label}</Text>
+
+            {!isLoading && rightIcon && (
+                <View style={styles.icon}>
+                    <Icon name={rightIcon} width={18} height={18} color={getIconColor()} />
+                </View>
+            )}
+        </TouchableOpacity>
+    );
+};-e 
+
+// ==== ./src/components/navigation/CustomBottomNavBar.tsx ====
+
+// src/components/navigation/CustomBottomNavBar.tsx
+import React from 'react';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    Dimensions,
+} from 'react-native';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Icon } from '../common/Icon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
+import { DiamondFab } from './DiamondFab';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useStyles } from '../../hooks/useStyles';
+
+const { width } = Dimensions.get('window');
+const BAR_HEIGHT = 64;
+const FAB_SIZE = 56;
+const GAP_SIZE = 4; // Gap between FAB and cutout
+
+export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTabBarProps) {
+    const insets = useSafeAreaInsets();
+    const bottomInset = Math.max(insets.bottom, 0);
+    const { theme } = useTheme();
+
+    const styles = useStyles((theme) => ({
+        container: {
+            width: '100%',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+        },
+        svg: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+        },
+        tabsContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            height: BAR_HEIGHT,
+            width: '100%',
+            // Push tabs down to account for the cutout
+            paddingTop: (FAB_SIZE / Math.sqrt(2)) / 2, // Half the diamond's height from top
+        },
+        tabSection: {
+            flexDirection: 'row',
+            flex: 1,
+        },
+        tab: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: BAR_HEIGHT * 0.7, // Only use 70% of the navbar height
+            marginTop: BAR_HEIGHT * 0.15, // Push down by 15% of the navbar height
+        },
+        fabSpace: {
+            width: FAB_SIZE + 16, // Space for the FAB plus some margin
+        },
+        tabContent: {
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        tabLabel: {
+            fontSize: theme.typography.fontSize.s,
+            marginTop: theme.spacing.xs, // Ensure there's enough space between icon and label
+            fontWeight: theme.typography.fontWeight.medium,
+        },
+        activeTabLabel: {
+            color: theme.components.bottomNavBar.activeText,
+        },
+        inactiveTabLabel: {
+            color: theme.components.bottomNavBar.inactiveText,
+        },
+    }));
+
+    const getIcon = (routeName: string, isFocused: boolean) => {
+        let iconName: IconName;
+        switch (routeName) {
+            case 'Home': iconName = "house"; break;
+            case 'Sagas': iconName = "book-open"; break;
+            case 'Explore': iconName = "sparkles"; break;
+            case 'Settings': iconName = "settings"; break;
+            default: iconName = "settings"; break;
+        }
+        return (
+            <Icon
+                name={iconName}
+                width={24}
+                height={24}
+                color={isFocused
+                    ? theme.components.bottomNavBar.activeIcon
+                    : theme.components.bottomNavBar.inactiveIcon}
+            />
+        );
+    };
+
+    const createNavBarPath = () => {
+        const centerX = width / 2;
+        // Add GAP_SIZE to make cutout slightly larger than the FAB
+        const diamondSize = (FAB_SIZE / Math.sqrt(2)) + GAP_SIZE;
+
+        // Path starts from top-left corner, and goes clockwise
+        let path = `M0,0 `; // Start at top-left
+
+        // Go right to where diamond cutout begins
+        path += `H${centerX - diamondSize} `;
+
+        // Create diamond cutout (counter-clockwise)
+        path += `L${centerX},${diamondSize} `; // Top to right corner of diamond
+        path += `L${centerX + diamondSize},0 `; // Right corner to top
+
+        // Continue to right edge
+        path += `H${width} `;
+
+        // Down to bottom-right, left to bottom-left, and back up to close the path
+        path += `V${BAR_HEIGHT + bottomInset} H0 Z`;
+
+        return path;
+    };
+
+    return (
+        <View style={[styles.container, { height: BAR_HEIGHT + bottomInset }]}>
+            {/* Background with cutout */}
+            <Svg width={width} height={BAR_HEIGHT + bottomInset} style={styles.svg}>
+                <Path d={createNavBarPath()} fill={theme.components.bottomNavBar.background} />
+            </Svg>
+
+            {/* Tabs container - splitting into left and right sections */}
+            <View style={[styles.tabsContainer, { paddingBottom: bottomInset }]}>
+                {/* Left section */}
+                <View style={styles.tabSection}>
+                    {state.routes.slice(0, 2).map((route, index) => {
+                        const { options } = descriptors[route.key];
+                        const isFocused = state.index === index;
+
+                        const onPress = () => {
+                            const event = navigation.emit({
+                                type: 'tabPress',
+                                target: route.key,
+                                canPreventDefault: true,
+                            });
+                            if (!isFocused && !event.defaultPrevented) {
+                                navigation.navigate(route.name);
+                            }
+                        };
+
+                        return (
+                            <TouchableOpacity
+                                key={route.key}
+                                style={styles.tab}
+                                onPress={onPress}
+                                accessibilityRole="button"
+                                accessibilityState={isFocused ? { selected: true } : {}}
+                            >
+                                <View style={styles.tabContent}>
+                                    {getIcon(route.name, isFocused)}
+                                    <Text style={[
+                                        styles.tabLabel,
+                                        isFocused ? styles.activeTabLabel : styles.inactiveTabLabel
+                                    ]}>
+                                        {route.name}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+
+                {/* Middle spacer for FAB */}
+                <View style={styles.fabSpace} />
+
+                {/* Right section */}
+                <View style={styles.tabSection}>
+                    {state.routes.slice(2, 4).map((route, index) => {
+                        const actualIndex = index + 2; // Adjust index for the right side
+                        const { options } = descriptors[route.key];
+                        const isFocused = state.index === actualIndex;
+
+                        const onPress = () => {
+                            const event = navigation.emit({
+                                type: 'tabPress',
+                                target: route.key,
+                                canPreventDefault: true,
+                            });
+                            if (!isFocused && !event.defaultPrevented) {
+                                navigation.navigate(route.name);
+                            }
+                        };
+
+                        return (
+                            <TouchableOpacity
+                                key={route.key}
+                                style={styles.tab}
+                                onPress={onPress}
+                                accessibilityRole="button"
+                                accessibilityState={isFocused ? { selected: true } : {}}
+                            >
+                                <View style={styles.tabContent}>
+                                    {getIcon(route.name, isFocused)}
+                                    <Text style={[
+                                        styles.tabLabel,
+                                        isFocused ? styles.activeTabLabel : styles.inactiveTabLabel
+                                    ]}>
+                                        {route.name}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            </View>
+
+            {/* FAB */}
+            <DiamondFab onPress={() => console.log('FAB pressed')} />
+        </View>
+    );
+}
+
+// Make sure this type is imported or defined
+type IconName = "house" | "book-open" | "sparkles" | "settings" | "plus" | "arrow-left" |
+    "arrow-right" | "check" | "lightbulb" | "file-text" | "list" | "minus" |
+    "git-branch" | "link" | "map" | "moon" | "sun";-e 
+
+// ==== ./src/components/navigation/DiamondFab.tsx ====
+
+// src/components/navigation/DiamondFab.tsx
+import React, { useState, useImperativeHandle, forwardRef } from 'react';
+import {
+    View,
+    TouchableOpacity,
+    StyleSheet,
+    Platform,
+    Dimensions,
+} from 'react-native';
+import { Icon } from '../common/Icon';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withTiming,
+    interpolate,
+} from 'react-native-reanimated';
+import { useStyles } from '../../hooks/useStyles';
+import { useTheme } from '../../contexts/ThemeContext';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const FAB_SIZE = 56;
+
+export interface DiamondFabRef {
+    closeMenuExternally: () => void;
+}
+
+interface DiamondFabProps {
+    onPress: () => void;
+}
+
+export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress }, ref) => {
+    const [menuOpen, setMenuOpen] = useState(false);
+    const progress = useSharedValue(0);
+    const rotation = useSharedValue(0);
+    const { theme } = useTheme();
+
+    const styles = useStyles((theme) => ({
+        fabContainer: {
+            position: 'absolute',
+            width: FAB_SIZE,
+            height: FAB_SIZE,
+            justifyContent: 'center',
+            alignItems: 'center',
+            top: -FAB_SIZE / 2,
+            left: '50%',
+            marginLeft: -FAB_SIZE / 2,
+            zIndex: 1001,
+        },
+        diamond: {
+            width: FAB_SIZE,
+            height: FAB_SIZE,
+            backgroundColor: theme.components.bottomNavBar.fabBackground,
+            borderRadius: theme.shape.radius.m,
+            justifyContent: 'center',
+            alignItems: 'center',
+            transform: [{ rotate: '45deg' }],
+            ...Platform.select({
+                ios: {
+                    shadowColor: theme.colors.black,
+                    shadowOffset: theme.elevation.z4.shadowOffset,
+                    shadowOpacity: theme.elevation.z4.shadowOpacity,
+                    shadowRadius: theme.elevation.z4.shadowRadius,
+                },
+                android: {
+                    elevation: theme.elevation.z4.elevation,
+                },
+            }),
+        },
+        menuItem: {
+            position: 'absolute',
+            width: FAB_SIZE * 0.8,
+            height: FAB_SIZE * 0.8,
+            backgroundColor: theme.components.bottomNavBar.menuItemBackground,
+            borderRadius: theme.shape.radius.m,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        innerDiamond: {
+            width: '100%',
+            height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            transform: [{ rotate: '45deg' }],
+        },
+        iconContainer: {
+            transform: [{ rotate: '-45deg' }],
+        },
+        uprightIcon: {
+            transform: [{ rotate: '-45deg' }],
+        },
+    }));
+
+    const toggleMenu = () => {
+        const isOpening = !menuOpen;
+        setMenuOpen(isOpening);
+        progress.value = withTiming(isOpening ? 1 : 0, { duration: 300 });
+        rotation.value = withTiming(isOpening ? 1 : 0, { duration: 300 });
+    };
+
+    const closeMenu = () => {
+        setMenuOpen(false);
+        progress.value = withTiming(0, { duration: 300 });
+        rotation.value = withTiming(0, { duration: 300 });
+    };
+
+    useImperativeHandle(ref, () => ({
+        closeMenuExternally: closeMenu,
+    }));
+
+    const menuItems = [
+        { icon: 'lightbulb' },
+        { icon: 'file-text' },
+        { icon: 'link' },
+        { icon: 'check' },
+    ];
+
+    // rotate icon: closed = + (0°), open = x (45°)
+    const iconAnimStyle = useAnimatedStyle(() => {
+        const rotate = interpolate(rotation.value, [0, 1], [0, 45]);
+        return {
+            transform: [{ rotate: `${rotate}deg` }],
+        };
+    });
+
+    return (
+        <View style={styles.fabContainer}>
+            {/* Radial items */}
+            {menuItems.map((item, index) => {
+                const radius = 100;
+                const spread = 110; // degrees between first and last item
+                const baseAngle = -90; // straight up
+                const startAngle = baseAngle - spread / 2;
+                const angle = startAngle + (index * spread) / (menuItems.length - 1);
+                const angleRad = (angle * Math.PI) / 180;
+
+                const animatedStyle = useAnimatedStyle(() => {
+                    const x = progress.value * radius * Math.cos(angleRad);
+                    const y = progress.value * radius * Math.sin(angleRad);
+                    return {
+                        transform: [
+                            { translateX: x },
+                            { translateY: y },
+                            { rotate: '45deg' },
+                        ],
+                        opacity: progress.value,
+                    };
+                });
+
+                return (
+                    <Animated.View key={index} style={[styles.menuItem, animatedStyle]}>
+                        <TouchableOpacity
+                            onPress={() => {
+                                console.log(`Pressed ${item.icon}`);
+                                closeMenu();
+                            }}
+                            style={styles.innerDiamond}
+                        >
+                            <View style={styles.iconContainer}>
+                                <View style={styles.uprightIcon}>
+                                    <Icon
+                                        name={item.icon as any}
+                                        width={20}
+                                        height={20}
+                                        color={theme.components.bottomNavBar.menuItemIcon}
+                                    />
+                                </View>
+                            </View>
+                        </TouchableOpacity>
+                    </Animated.View>
+                );
+            })}
+
+            {/* Main FAB */}
+            <TouchableOpacity
+                style={styles.diamond}
+                onPress={toggleMenu}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Create new entry"
+            >
+                <Animated.View style={[styles.iconContainer, iconAnimStyle]}>
+                    <View style={styles.uprightIcon}>
+                        <Icon
+                            name="plus"
+                            width={24}
+                            height={24}
+                            color={theme.components.bottomNavBar.fabIcon}
+                        />
+                    </View>
+                </Animated.View>
+            </TouchableOpacity>
+        </View>
+    );
+});-e 
+
+// ==== ./src/components/sagas/SagaCreationSheet.tsx ====
+
+// src/components/sagas/SagaCreationSheet.tsx
+import React, { useState, useEffect } from 'react';
+import {
+    View,
+    Modal,
+    TouchableWithoutFeedback,
+    Keyboard,
+    Animated,
+    Dimensions,
+    KeyboardAvoidingView,
+    Platform,
+    TouchableOpacity
+} from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useStyles } from '../../hooks/useStyles';
+import { Typography } from '../common/Typography';
+import { Button } from '../common/Button';
+import { IconName } from '../common/Icon';
+import IconPicker from '../common/IconPicker';
+import FormInput from '../common/FormInput';
+import { useForm, Controller } from 'react-hook-form';
+
+interface SagaCreationSheetProps {
+    visible: boolean;
+    onClose: () => void;
+    onCreate: (saga: { name: string; icon: IconName }) => void;
+}
+
+// Form values type
+type FormValues = {
+    name: string;
+    icon: IconName;
+};
+
+// Maximum character limit for saga names
+const MAX_NAME_LENGTH = 25;
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
+    visible,
+    onClose,
+    onCreate
+}) => {
+    const { theme } = useTheme();
+    const [animatedValue] = useState(new Animated.Value(0));
+
+    // Initialize react-hook-form
+    const {
+        control,
+        handleSubmit,
+        formState: { errors, isValid },
+        reset,
+        watch
+    } = useForm<FormValues>({
+        defaultValues: {
+            name: '',
+            icon: undefined as unknown as IconName,
+        },
+        mode: 'onChange' // Validate on change for real-time feedback
+    });
+
+    // Reset form when modal opens
+    useEffect(() => {
+        if (visible) {
+            reset({
+                name: '',
+                icon: undefined as unknown as IconName,
+            });
+        }
+    }, [visible, reset]);
+
+    // Animation for sliding up/down
+    useEffect(() => {
+        Animated.timing(animatedValue, {
+            toValue: visible ? 1 : 0,
+            duration: 300,
+            useNativeDriver: true,
+        }).start();
+    }, [visible, animatedValue]);
+
+    const translateY = animatedValue.interpolate({
+        inputRange: [0, 1],
+        outputRange: [SCREEN_HEIGHT, 0],
+    });
+
+    // Handle form submission
+    const onSubmit = (data: FormValues) => {
+        onCreate({
+            name: data.name.trim(),
+            icon: data.icon,
+        });
+    };
+
+    // Dismiss keyboard when tapping outside input
+    const dismissKeyboard = () => {
+        Keyboard.dismiss();
+    };
+
+    const styles = useStyles((theme) => ({
+        overlay: {
+            flex: 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'flex-end',
+        },
+        container: {
+            backgroundColor: theme.colors.background,
+            borderTopLeftRadius: theme.shape.radius.l,
+            borderTopRightRadius: theme.shape.radius.l,
+            padding: theme.spacing.m,
+            maxHeight: SCREEN_HEIGHT * 0.8,
+            width: '100%',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+        },
+
+        header: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: theme.spacing.m,
+        },
+        closeButton: {
+            padding: theme.spacing.s,
+        },
+        iconSection: {
+            marginBottom: theme.spacing.m,
+        },
+        errorText: {
+            color: theme.colors.error,
+            marginTop: 4,
+        },
+        buttonContainer: {
+            marginTop: theme.spacing.m,
+        },
+    }));
+
+    if (!visible) return null;
+
+    return (
+        <Modal
+            transparent
+            visible={visible}
+            animationType="none" // We're handling animation ourselves
+            onRequestClose={onClose}
+        >
+            <View style={styles.overlay}>
+                <TouchableWithoutFeedback onPress={dismissKeyboard}>
+
+                    <KeyboardAvoidingView
+                        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                        style={{ width: '100%' }} // Ensure full width
+                    >
+                        <Animated.View
+                            style={[
+                                styles.container,
+                                {
+                                    position: 'absolute',
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    transform: [{ translateY }]
+                                }
+                            ]}
+                        >
+
+                            <View style={styles.header}>
+                                <Typography variant="h3">Create New Saga</Typography>
+                                <TouchableOpacity
+                                    style={styles.closeButton}
+                                    onPress={onClose}
+                                >
+                                    <Typography color="secondary">Cancel</Typography>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Saga Name Input */}
+                            <FormInput<FormValues>
+                                control={control}
+                                name="name"
+                                label="Saga Name"
+                                placeholder="Enter saga name..."
+                                rules={{
+                                    required: 'Saga name is required',
+                                    maxLength: {
+                                        value: MAX_NAME_LENGTH,
+                                        message: `Name cannot exceed ${MAX_NAME_LENGTH} characters`
+                                    }
+                                }}
+                                showCharCount
+                                maxLength={MAX_NAME_LENGTH}
+                                autoFocus
+                            />
+
+                            {/* Icon Picker */}
+                            <View style={styles.iconSection}>
+                                <Typography variant="h4" style={{ marginBottom: 8 }}>
+                                    Choose an Icon
+                                </Typography>
+                                <Controller
+                                    control={control}
+                                    name="icon"
+                                    rules={{ required: 'Please select an icon' }}
+                                    render={({ field: { value, onChange } }) => (
+                                        <View>
+                                            <IconPicker
+                                                selectedIcon={value}
+                                                onSelectIcon={onChange}
+                                            />
+                                            {errors.icon && (
+                                                <Typography variant="caption" style={styles.errorText}>
+                                                    {errors.icon.message}
+                                                </Typography>
+                                            )}
+                                        </View>
+                                    )}
+                                />
+                            </View>
+
+                            {/* Create Button */}
+                            <View style={styles.buttonContainer}>
+                                <Button
+                                    label="Create Saga"
+                                    variant="primary"
+                                    leftIcon="plus"
+                                    onPress={handleSubmit(onSubmit)}
+                                    disabled={!isValid}
+                                />
+                            </View>
+                        </Animated.View>
+                    </KeyboardAvoidingView>
+                </TouchableWithoutFeedback>
+            </View>
+        </Modal >
+    );
+};
+
+export default SagaCreationSheet;-e 
+
+// ==== ./src/components/sagas/AnimatedBookSaga.tsx ====
+
+// src/components/sagas/AnimatedBookSaga.tsx
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, Pressable, Dimensions, Text } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  runOnJS,
+  Easing,
+  interpolate,
+  useDerivedValue,
+} from 'react-native-reanimated';
+import { Icon, IconName } from '../common/Icon';
+import { useTheme } from '../../contexts/ThemeContext';
+import { Typography } from '../common/Typography';
+
+interface AnimatedBookSagaProps {
+  saga: {
+    id: string;
+    name: string;
+    icon: IconName;
+  };
+  width: number;
+  height: number;
+  onPress: () => void;
+}
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const ANIMATION_DURATION = 500;
+const PERSPECTIVE = 1200;
+
+export const AnimatedBookSaga: React.FC<AnimatedBookSagaProps> = ({
+  saga,
+  width,
+  height,
+  onPress
+}) => {
+  const { theme } = useTheme();
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Original position values
+  const originalX = useSharedValue(0);
+  const originalY = useSharedValue(0);
+  const originalScale = useSharedValue(1);
+
+  // Animation values for book movement
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const scale = useSharedValue(1);
+
+  // Animation values for pages
+  const frontRotate = useSharedValue(0);
+  const backRotate = useSharedValue(0);
+  const page1Rotate = useSharedValue(0);
+  const page2Rotate = useSharedValue(0);
+  const page3Rotate = useSharedValue(0);
+  const page4Rotate = useSharedValue(0);
+  const page5Rotate = useSharedValue(0);
+  const page6Rotate = useSharedValue(0);
+
+  // Record the initial position when component mounts
+  const setInitialPosition = (event: any) => {
+    const { layout } = event.nativeEvent;
+
+    // Calculate the center of the screen
+    const screenCenterX = SCREEN_WIDTH / 2;
+    const itemCenterX = layout.x + width / 2;
+
+    // How much we need to move to center
+    const moveToX = screenCenterX - itemCenterX;
+
+    originalX.value = layout.x;
+    originalY.value = layout.y;
+  };
+
+  // Format title to fit on book cover
+  const formatTitle = (title: string) => {
+    if (title.length <= 15) {
+      return title;
+    } else {
+      // For longer titles, add line breaks
+      const words = title.split(' ');
+      let firstLine = '';
+      let secondLine = '';
+
+      // Distribute words to keep lines somewhat balanced
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        if ((firstLine + word).length < 15 && firstLine.length < secondLine.length) {
+          firstLine += (firstLine ? ' ' : '') + word;
+        } else {
+          secondLine += (secondLine ? ' ' : '') + word;
+        }
+      }
+
+      return `${firstLine}\n${secondLine}`;
+    }
+  };
+
+  // Animated styles for book movement
+  const containerStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+        { scale: scale.value }
+      ],
+    };
+  });
+
+  // Animated styles for each page
+  const frontStyle = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: PERSPECTIVE },
+      { rotateY: `${interpolate(frontRotate.value, [0, 1], [0, -160])}deg` }
+    ],
+  }));
+
+  const backStyle = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: PERSPECTIVE },
+      { rotateY: `${interpolate(backRotate.value, [0, 1], [0, -20])}deg` }
+    ],
+  }));
+
+  const page1Style = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: PERSPECTIVE },
+      { rotateY: `${interpolate(page1Rotate.value, [0, 1], [0, -150])}deg` }
+    ],
+  }));
+
+  const page2Style = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: PERSPECTIVE },
+      { rotateY: `${interpolate(page2Rotate.value, [0, 1], [0, -30])}deg` }
+    ],
+  }));
+
+  const page3Style = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: PERSPECTIVE },
+      { rotateY: `${interpolate(page3Rotate.value, [0, 1], [0, -140])}deg` }
+    ],
+  }));
+
+  const page4Style = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: PERSPECTIVE },
+      { rotateY: `${interpolate(page4Rotate.value, [0, 1], [0, -40])}deg` }
+    ],
+  }));
+
+  const page5Style = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: PERSPECTIVE },
+      { rotateY: `${interpolate(page5Rotate.value, [0, 1], [0, -130])}deg` }
+    ],
+  }));
+
+  const page6Style = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: PERSPECTIVE },
+      { rotateY: `${interpolate(page6Rotate.value, [0, 1], [0, -50])}deg` }
+    ],
+  }));
+
+  // Animation to open the book
+  const openBook = () => {
+    // First move to center of screen
+    const screenCenterX = SCREEN_WIDTH / 2;
+    const moveToX = screenCenterX - (originalX.value + width / 2);
+
+    // Animate to center position
+    translateX.value = withSpring(moveToX, {
+      damping: 20,
+      stiffness: 150
+    });
+
+    // Scale up slightly
+    scale.value = withSpring(1.2, {
+      damping: 20,
+      stiffness: 150
+    });
+
+    // Once centered, animate pages opening
+    setTimeout(() => {
+      frontRotate.value = withTiming(1, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.inOut(Easing.quad)
+      });
+
+      page1Rotate.value = withTiming(1, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.inOut(Easing.quad)
+      });
+
+      page2Rotate.value = withTiming(1, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.inOut(Easing.quad)
+      });
+
+      page3Rotate.value = withTiming(1, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.inOut(Easing.quad)
+      });
+
+      page4Rotate.value = withTiming(1, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.inOut(Easing.quad)
+      });
+
+      page5Rotate.value = withTiming(1, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.inOut(Easing.quad)
+      });
+
+      page6Rotate.value = withTiming(1, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.inOut(Easing.quad)
+      });
+
+      backRotate.value = withTiming(1, {
+        duration: ANIMATION_DURATION,
+        easing: Easing.inOut(Easing.quad)
+      });
+    }, 200);
+  };
+
+  // Animation to close the book
+  const closeBook = () => {
+    // Close pages first
+    frontRotate.value = withTiming(0, {
+      duration: ANIMATION_DURATION,
+      easing: Easing.inOut(Easing.quad)
+    });
+
+    page1Rotate.value = withTiming(0, {
+      duration: ANIMATION_DURATION,
+      easing: Easing.inOut(Easing.quad)
+    });
+
+    page2Rotate.value = withTiming(0, {
+      duration: ANIMATION_DURATION,
+      easing: Easing.inOut(Easing.quad)
+    });
+
+    page3Rotate.value = withTiming(0, {
+      duration: ANIMATION_DURATION,
+      easing: Easing.inOut(Easing.quad)
+    });
+
+    page4Rotate.value = withTiming(0, {
+      duration: ANIMATION_DURATION,
+      easing: Easing.inOut(Easing.quad)
+    });
+
+    page5Rotate.value = withTiming(0, {
+      duration: ANIMATION_DURATION,
+      easing: Easing.inOut(Easing.quad)
+    });
+
+    page6Rotate.value = withTiming(0, {
+      duration: ANIMATION_DURATION,
+      easing: Easing.inOut(Easing.quad)
+    });
+
+    backRotate.value = withTiming(0, {
+      duration: ANIMATION_DURATION,
+      easing: Easing.inOut(Easing.quad)
+    });
+
+    // Then move back to original position
+    setTimeout(() => {
+      translateX.value = withSpring(0, {
+        damping: 20,
+        stiffness: 150
+      });
+
+      scale.value = withSpring(1, {
+        damping: 20,
+        stiffness: 150
+      });
+    }, ANIMATION_DURATION);
+  };
+
+  // Handle book press
+  const handlePress = () => {
+    if (isOpen) {
+      closeBook();
+      setIsOpen(false);
+    } else {
+      openBook();
+      setIsOpen(true);
+    }
+  };
+
+  // Handle long press to navigate
+  const handleLongPress = () => {
+    onPress();
+  };
+
+  // Reset animations when component unmounts
+  useEffect(() => {
+    frontRotate.value = 0;
+    backRotate.value = 0;
+    page1Rotate.value = 0;
+    page2Rotate.value = 0;
+    page3Rotate.value = 0;
+    page4Rotate.value = 0;
+    page5Rotate.value = 0;
+    page6Rotate.value = 0;
+    translateX.value = 0;
+    translateY.value = 0;
+    scale.value = 1;
+    setIsOpen(false);
+  }, []);
+
+  return (
+    <View style={[styles.container, { width, height }]} onLayout={setInitialPosition}>
+      <Pressable onPress={handlePress} onLongPress={handleLongPress} delayLongPress={500}>
+        <Animated.View style={[styles.bookWrapper, containerStyle]}>
+          {/* Book structure */}
+          <Animated.View
+            style={[
+              styles.page,
+              styles.front,
+              frontStyle,
+              {
+                backgroundColor: theme.colors.primary,
+                width: width * 0.9,
+                height: height * 0.9
+              }
+            ]}
+          >
+            {/* Front cover content */}
+            <View style={styles.coverContent}>
+              <Icon
+                name={saga.icon}
+                width={width * 0.3}
+                height={height * 0.3}
+                color={theme.colors.secondary}
+              />
+
+              {/* Title on book cover */}
+              <Text
+                style={[
+                  styles.coverTitle,
+                  { color: theme.colors.secondary }
+                ]}
+                numberOfLines={2}
+              >
+                {formatTitle(saga.name)}
+              </Text>
+            </View>
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              styles.page,
+              styles.page1,
+              page1Style,
+              { width: width * 0.9, height: height * 0.9 }
+            ]}
+          />
+
+          <Animated.View
+            style={[
+              styles.page,
+              styles.page2,
+              page2Style,
+              { width: width * 0.9, height: height * 0.9 }
+            ]}
+          />
+
+          <Animated.View
+            style={[
+              styles.page,
+              styles.page3,
+              page3Style,
+              { width: width * 0.9, height: height * 0.9 }
+            ]}
+          />
+
+          <Animated.View
+            style={[
+              styles.page,
+              styles.page4,
+              page4Style,
+              { width: width * 0.9, height: height * 0.9 }
+            ]}
+          />
+
+          <Animated.View
+            style={[
+              styles.page,
+              styles.page5,
+              page5Style,
+              { width: width * 0.9, height: height * 0.9 }
+            ]}
+          />
+
+          <Animated.View
+            style={[
+              styles.page,
+              styles.page6,
+              page6Style,
+              { width: width * 0.9, height: height * 0.9 }
+            ]}
+          />
+
+          <Animated.View
+            style={[
+              styles.page,
+              styles.back,
+              backStyle,
+              {
+                backgroundColor: theme.colors.primary,
+                width: width * 0.9,
+                height: height * 0.9
+              }
+            ]}
+          />
+        </Animated.View>
+      </Pressable>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  page: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    transformOrigin: 'left center',
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  front: {
+    zIndex: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  back: {
+    zIndex: 1,
+  },
+  page1: {
+    backgroundColor: '#efefef',
+    zIndex: 7,
+  },
+  page2: {
+    backgroundColor: '#efefef',
+    zIndex: 6,
+  },
+  page3: {
+    backgroundColor: '#f5f5f5',
+    zIndex: 5,
+  },
+  page4: {
+    backgroundColor: '#f5f5f5',
+    zIndex: 4,
+  },
+  page5: {
+    backgroundColor: '#fafafa',
+    zIndex: 3,
+  },
+  page6: {
+    backgroundColor: '#fdfdfd',
+    zIndex: 2,
+  },
+  coverContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+  },
+  coverTitle: {
+    marginTop: 12,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    width: '90%',
+  }
+});
+
+export default AnimatedBookSaga;-e 
+
+// ==== ./src/navigation/AppNavigator.tsx ====
+
+// src/navigation/AppNavigator.tsx
+
+import React from 'react';
+import TabNavigator from './TabNavigator';
+
+export default function AppNavigator() {
+    return <TabNavigator />;
+}
+-e 
+
+// ==== ./src/navigation/TabNavigator.tsx ====
+
+// src/navigation/TabNavigator.tsx
+import React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import HomeScreen from '../screens/HomeScreen';
+import SagaScreen from '../screens/SagaScreen';
+import ThemeInspectorScreen from '../screens/ThemeInspectorScreen';
+import { CustomBottomNavBar } from '../components/navigation/CustomBottomNavBar';
+
+const Tab = createBottomTabNavigator();
+
+export default function TabNavigator() {
+    return (
+        <Tab.Navigator
+            tabBar={(props) => <CustomBottomNavBar {...props} />}
+            screenOptions={{
+                headerShown: false
+            }}
+        >
+            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Sagas" component={SagaScreen} />
+            <Tab.Screen name="Explore" component={SagaScreen} />
+            <Tab.Screen name="Settings" component={ThemeInspectorScreen} />
+        </Tab.Navigator>
+    );
+}-e 
+
+// ==== ./src/screens/HomeScreen.tsx ====
+
+// src/screens/HomeScreen.tsx
+import React, { useEffect } from 'react';
+import {
+    View,
+    ScrollView,
+    StyleSheet,
+    SafeAreaView,
+    StatusBar,
+    TouchableOpacity,
+    Dimensions
+} from 'react-native';
+import { NavigationProp, ParamListBase } from '@react-navigation/native';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withTiming,
+    withSequence,
+    withDelay,
+    Easing
+} from 'react-native-reanimated';
+import { useTheme } from '../contexts/ThemeContext';
+import { Typography } from '../components/common/Typography';
+import { Icon } from '../components/common/Icon';
+import { Card } from '../components/common/Card';
+
+interface HomeScreenProps {
+    navigation: NavigationProp<ParamListBase>;
+}
+
+// Sample data for recent entries
+const recentEntries = [
+    { id: '1', title: 'Morning Reflection', type: 'reflection', date: 'Today, 9:15 AM', saga: 'Personal Growth' },
+    { id: '2', title: 'Weekly Plan', type: 'action', date: 'Yesterday, 7:30 PM', saga: 'Startup Journey' },
+    { id: '3', title: 'New Product Idea', type: 'idea', date: '2 days ago', saga: 'Startup Journey' },
+    { id: '4', title: 'Exercise Log', type: 'note', date: '3 days ago', saga: 'Health & Fitness' },
+];
+
+// Sample data for quick actions
+const quickActions = [
+    { id: '1', title: 'New Reflection', icon: 'sparkles', color: '#8A4FFB' },
+    { id: '2', title: 'Add Task', icon: 'check', color: '#2D9CDB' },
+    { id: '3', title: 'Capture Idea', icon: 'lightbulb', color: '#FFB800' },
+    { id: '4', title: 'Write Note', icon: 'file-text', color: '#27AE60' },
+];
+
+const { width } = Dimensions.get('window');
+
+export default function HomeScreen({ navigation }: HomeScreenProps) {
+    const { theme, isDark } = useTheme();
+
+    // Animation values
+    const headerOpacity = useSharedValue(0);
+    const cardsOpacity = useSharedValue(0);
+    const actionsTranslateY = useSharedValue(50);
+
+    // Animation styles
+    const headerStyle = useAnimatedStyle(() => ({
+        opacity: headerOpacity.value,
+    }));
+
+    const cardsStyle = useAnimatedStyle(() => ({
+        opacity: cardsOpacity.value,
+    }));
+
+    const actionsStyle = useAnimatedStyle(() => ({
+        opacity: cardsOpacity.value,
+        transform: [{ translateY: actionsTranslateY.value }],
+    }));
+
+    // Start animations when component mounts
+    useEffect(() => {
+        headerOpacity.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) });
+
+        cardsOpacity.value = withDelay(
+            400,
+            withTiming(1, { duration: 800, easing: Easing.out(Easing.quad) })
+        );
+
+        actionsTranslateY.value = withDelay(
+            600,
+            withTiming(0, { duration: 800, easing: Easing.out(Easing.elastic(1)) })
+        );
+    }, []);
+
+    // Define styles using theme
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.background,
+        },
+        content: {
+            padding: theme.spacing.m,
+        },
+        header: {
+            marginBottom: theme.spacing.l,
+        },
+        sectionTitle: {
+            marginTop: theme.spacing.xl,
+            marginBottom: theme.spacing.m,
+            color: theme.colors.textPrimary,
+        },
+        cardList: {
+            marginBottom: theme.spacing.m,
+        },
+        entryCard: {
+            marginBottom: theme.spacing.m,
+            borderLeftWidth: 4,
+            borderLeftColor: theme.colors.primary,
+        },
+        entryInfo: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginTop: theme.spacing.s,
+        },
+        entryMeta: {
+            fontSize: theme.typography.fontSize.s,
+            color: theme.colors.textSecondary,
+        },
+        quickActionsContainer: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            marginHorizontal: -theme.spacing.xs,
+        },
+        actionCard: {
+            width: (width - theme.spacing.m * 2 - theme.spacing.xs * 2) / 2,
+            padding: theme.spacing.m,
+            marginHorizontal: theme.spacing.xs,
+            marginBottom: theme.spacing.m,
+            alignItems: 'center',
+            borderRadius: theme.shape.radius.m,
+        },
+        actionIcon: {
+            marginBottom: theme.spacing.s,
+            padding: theme.spacing.s,
+            borderRadius: theme.shape.radius.circle,
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        },
+        actionTitle: {
+            color: theme.colors.white,
+            fontWeight: theme.typography.fontWeight.medium,
+            textAlign: 'center',
+        },
+        welcomeMessage: {
+            marginTop: theme.spacing.s,
+            color: theme.colors.textSecondary,
+        }
+    });
+
+    // Get entry type icon
+    const getEntryTypeIcon = (type: string) => {
+        switch (type) {
+            case 'reflection': return 'sparkles';
+            case 'action': return 'check';
+            case 'idea': return 'lightbulb';
+            case 'note': return 'file-text';
+            default: return 'file-text';
+        }
+    };
+
+    // Navigate to a saga
+    const navigateToSaga = () => {
+        navigation.navigate('Sagas');
+    };
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <StatusBar
+                barStyle={isDark ? 'light-content' : 'dark-content'}
+                backgroundColor={theme.colors.background}
+            />
+
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.content}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Header Section */}
+                <Animated.View style={[styles.header, headerStyle]}>
+                    <Typography variant="h1">MindKnot</Typography>
+                    <Typography variant="body1" style={styles.welcomeMessage}>
+                        Connect your thoughts and narratives
+                    </Typography>
+                </Animated.View>
+
+                {/* Recent Entries Section */}
+                <Animated.View style={cardsStyle}>
+                    <Typography variant="h2" style={styles.sectionTitle}>Recent Entries</Typography>
+
+                    <View style={styles.cardList}>
+                        {recentEntries.map(entry => (
+                            <Card
+                                key={entry.id}
+                                style={styles.entryCard}
+                                elevated
+                                onPress={() => console.log(`View entry ${entry.id}`)}
+                            >
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Icon
+                                        name={getEntryTypeIcon(entry.type)}
+                                        width={20}
+                                        height={20}
+                                        color={theme.colors.primary}
+                                        style={{ marginRight: theme.spacing.s }}
+                                    />
+                                    <Typography variant="h3">{entry.title}</Typography>
+                                </View>
+
+                                <View style={styles.entryInfo}>
+                                    <Typography variant="caption" style={styles.entryMeta}>
+                                        {entry.date}
+                                    </Typography>
+                                    <Typography
+                                        variant="caption"
+                                        style={styles.entryMeta}
+                                        onPress={navigateToSaga}
+                                    >
+                                        {entry.saga}
+                                    </Typography>
+                                </View>
+                            </Card>
+                        ))}
+                    </View>
+                </Animated.View>
+
+                {/* Quick Actions Section */}
+                <Animated.View style={actionsStyle}>
+                    <Typography variant="h2" style={styles.sectionTitle}>Quick Actions</Typography>
+
+                    <View style={styles.quickActionsContainer}>
+                        {quickActions.map(action => (
+                            <TouchableOpacity
+                                key={action.id}
+                                style={[
+                                    styles.actionCard,
+                                    { backgroundColor: action.color }
+                                ]}
+                                onPress={() => console.log(`Action ${action.title}`)}
+                                activeOpacity={0.8}
+                            >
+                                <View style={styles.actionIcon}>
+                                    <Icon
+                                        name={action.icon}
+                                        width={24}
+                                        height={24}
+                                        color="#FFFFFF"
+                                    />
+                                </View>
+                                <Typography style={styles.actionTitle}>
+                                    {action.title}
+                                </Typography>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </Animated.View>
+            </ScrollView>
+        </SafeAreaView>
+    );
+}-e 
+
+// ==== ./src/screens/SagaScreen.tsx ====
+
+// src/screens/SagaScreen.tsx
+import React, { useState } from 'react';
+import {
+    View,
+    FlatList,
+    Dimensions,
+    TouchableOpacity,
+    StyleSheet,
+    SafeAreaView,
+    StatusBar
+} from 'react-native';
+import { NavigationProp, ParamListBase } from '@react-navigation/native';
+import { useTheme } from '../contexts/ThemeContext';
+import { useStyles } from '../hooks/useStyles';
+import { Typography } from '../components/common/Typography';
+import { Icon, IconName } from '../components/common/Icon';
+import SagaCreationSheet from '../components/sagas/SagaCreationSheet';
+import AnimatedBookSaga from '../components/sagas/AnimatedBookSaga';
+
+// Get screen width to calculate grid item width
+const { width } = Dimensions.get('window');
+// Calculate item width (2 items per row with proper spacing)
+const SPACING = 24;
+const ITEMS_PER_ROW = 2;
+const ITEM_WIDTH = Math.floor((width - SPACING * (ITEMS_PER_ROW + 1)) / ITEMS_PER_ROW); // Left padding + middle spacing + right padding
+const ITEM_HEIGHT = ITEM_WIDTH * 1.5; // Book height ratio
+
+// Define saga type
+interface Saga {
+    id: string;
+    name: string;
+    icon: IconName;
+}
+
+// Define types for grid items
+type GridItem = Saga | { id: string; isAddButton: boolean };
+
+// Mock data for sagas
+const initialSagas: Saga[] = [
+    { id: '1', name: 'Personal Growth', icon: 'lightbulb' },
+    { id: '2', name: 'Startup Journey', icon: 'git-branch' },
+    { id: '3', name: 'Health & Fitness', icon: 'map' },
+    { id: '4', name: 'Learning Piano', icon: 'sparkles' },
+];
+
+interface SagaScreenProps {
+    navigation: NavigationProp<ParamListBase>;
+}
+
+export default function SagaScreen({ navigation }: SagaScreenProps) {
+    const { theme, isDark } = useTheme();
+    const [sagas, setSagas] = useState<Saga[]>(initialSagas);
+    const [isCreationSheetVisible, setCreationSheetVisible] = useState(false);
+
+    const styles = useStyles((theme) => ({
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.background,
+        },
+        header: {
+            paddingHorizontal: theme.spacing.m,
+            paddingTop: theme.spacing.l,
+            paddingBottom: theme.spacing.m,
+        },
+        headerTitle: {
+            color: theme.colors.textPrimary,
+            marginBottom: theme.spacing.xs,
+        },
+        headerSubtitle: {
+            color: theme.colors.textSecondary,
+        },
+        gridContainer: {
+            padding: SPACING,
+        },
+        addItem: {
+            width: ITEM_WIDTH,
+            height: ITEM_HEIGHT,
+            borderRadius: theme.shape.radius.m,
+            borderWidth: 2,
+            borderColor: theme.colors.border,
+            borderStyle: 'dashed',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: theme.colors.surfaceVariant,
+            margin: 0,
+        },
+        addIcon: {
+            marginBottom: theme.spacing.s,
+        },
+        addText: {
+            color: theme.colors.primary,
+        },
+        itemContainer: {
+            width: ITEM_WIDTH,
+            height: ITEM_HEIGHT,
+            marginBottom: SPACING,
+        }
+    }));
+
+    // Function to handle saga creation
+    const handleCreateSaga = (newSaga: { name: string; icon: IconName }) => {
+        // Generate a random ID (in a real app, this would be handled better)
+        const newId = Date.now().toString();
+        setSagas([...sagas, { id: newId, ...newSaga }]);
+        setCreationSheetVisible(false);
+    };
+
+    // Function to navigate to saga details
+    const navigateToSagaDetails = (sagaId: string) => {
+        // In a real app, you'd navigate to a detail screen with the saga ID
+        console.log(`Navigating to saga details: ${sagaId}`);
+        // navigation.navigate('SagaDetails', { sagaId });
+    };
+
+    // Render a saga item or the "add new" item
+    const renderItem = ({ item, index }: { item: GridItem, index: number }) => {
+        // Calculate the correct left margin for grid items
+        // First item in each row should have 0 left margin, second item should have spacing
+        const isEvenItem = index % 2 === 0;
+        const marginLeft = isEvenItem ? 0 : SPACING;
+
+        if ('isAddButton' in item) {
+            return (
+                <View style={[styles.itemContainer, { marginLeft }]}>
+                    <TouchableOpacity
+                        style={styles.addItem}
+                        onPress={() => setCreationSheetVisible(true)}
+                        activeOpacity={0.7}
+                    >
+                        <Icon
+                            name="plus"
+                            width={32}
+                            height={32}
+                            color={theme.colors.primary}
+                            style={styles.addIcon}
+                        />
+                        <Typography variant="body2" style={styles.addText}>
+                            Create Saga
+                        </Typography>
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
+        return (
+            <View style={[styles.itemContainer, { marginLeft }]}>
+                <AnimatedBookSaga
+                    saga={item}
+                    width={ITEM_WIDTH}
+                    height={ITEM_HEIGHT}
+                    onPress={() => navigateToSagaDetails(item.id)}
+                />
+            </View>
+        );
+    };
+
+    // Add the "Create New" button to the data
+    const gridData: GridItem[] = [...sagas, { id: 'add-button', isAddButton: true }];
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <StatusBar
+                barStyle={isDark ? 'light-content' : 'dark-content'}
+                backgroundColor={theme.colors.background}
+            />
+
+            <View style={styles.header}>
+                <Typography variant="h1" style={styles.headerTitle}>Your Sagas</Typography>
+                <Typography variant="body1" style={styles.headerSubtitle}>
+                    Your chronicles of knowledge
+                </Typography>
+            </View>
+
+            <FlatList
+                data={gridData}
+                renderItem={renderItem}
+                keyExtractor={item => item.id}
+                numColumns={ITEMS_PER_ROW}
+                contentContainerStyle={styles.gridContainer}
+                columnWrapperStyle={{ justifyContent: 'flex-start' }}
+            />
+
+            <SagaCreationSheet
+                visible={isCreationSheetVisible}
+                onClose={() => setCreationSheetVisible(false)}
+                onCreate={handleCreateSaga}
+            />
+        </SafeAreaView>
+    );
+}-e 
+
+// ==== ./src/screens/ThemeInspectorScreen.tsx ====
+
+// src/screens/ThemeInspectorScreen.tsx
+import React from 'react';
+import { ScrollView, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
+import { useStyles } from '../hooks/useStyles';
+import { Typography } from '../components/common/Typography';
+import { Card } from '../components/common/Card';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+export default function ThemeInspectorScreen() {
+    const { theme, toggleTheme, isDark } = useTheme();
+
+    const styles = useStyles((theme) => ({
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.background,
+        },
+        content: {
+            padding: theme.spacing.m,
+        },
+        header: {
+            marginBottom: theme.spacing.l,
+        },
+        sectionTitle: {
+            marginTop: theme.spacing.l,
+            marginBottom: theme.spacing.s,
+        },
+        card: {
+            marginBottom: theme.spacing.m,
+        },
+        colorGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            marginTop: theme.spacing.s,
+        },
+        colorItem: {
+            width: '30%',
+            margin: '1.5%',
+            aspectRatio: 1,
+            borderRadius: theme.shape.radius.s,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            padding: theme.spacing.xs,
+        },
+        colorBox: {
+            flex: 1,
+            borderRadius: theme.shape.radius.s,
+            marginBottom: theme.spacing.xs,
+        },
+        colorName: {
+            fontSize: theme.typography.fontSize.xs,
+            textAlign: 'center',
+        },
+        spacingContainer: {
+            flexDirection: 'row',
+            alignItems: 'flex-end',
+            marginTop: theme.spacing.m,
+        },
+        spacingBox: {
+            backgroundColor: theme.colors.primary,
+            width: 20,
+            marginRight: theme.spacing.s,
+        },
+        typographyRow: {
+            marginBottom: theme.spacing.m,
+        },
+        toggleButton: {
+            backgroundColor: theme.colors.primary,
+            padding: theme.spacing.m,
+            borderRadius: theme.shape.radius.m,
+            alignItems: 'center',
+            marginVertical: theme.spacing.m,
+        },
+        toggleButtonText: {
+            color: theme.colors.onPrimary,
+            fontWeight: theme.typography.fontWeight.medium,
+        },
+    }));
+
+    // Extract color swatches from theme
+    const renderColorSwatches = () => {
+        const colorCategories = [
+            {
+                title: 'Primary Colors',
+                colors: [
+                    { name: 'primary', value: theme.colors.primary },
+                    { name: 'primaryLight', value: theme.colors.primaryLight },
+                    { name: 'primaryDark', value: theme.colors.primaryDark },
+                    { name: 'onPrimary', value: theme.colors.onPrimary },
+                ],
+            },
+            {
+                title: 'Secondary Colors',
+                colors: [
+                    { name: 'secondary', value: theme.colors.secondary },
+                    { name: 'secondaryLight', value: theme.colors.secondaryLight },
+                    { name: 'secondaryDark', value: theme.colors.secondaryDark },
+                    { name: 'onSecondary', value: theme.colors.onSecondary },
+                ],
+            },
+            {
+                title: 'Accent Colors',
+                colors: [
+                    { name: 'accent', value: theme.colors.accent },
+                    { name: 'accentLight', value: theme.colors.accentLight },
+                    { name: 'accentDark', value: theme.colors.accentDark },
+                    { name: 'onAccent', value: theme.colors.onAccent },
+                ],
+            },
+            {
+                title: 'UI Colors',
+                colors: [
+                    { name: 'background', value: theme.colors.background },
+                    { name: 'surface', value: theme.colors.surface },
+                    { name: 'surfaceVariant', value: theme.colors.surfaceVariant },
+                    { name: 'border', value: theme.colors.border },
+                    { name: 'divider', value: theme.colors.divider },
+                ],
+            },
+            {
+                title: 'Text Colors',
+                colors: [
+                    { name: 'textPrimary', value: theme.colors.textPrimary },
+                    { name: 'textSecondary', value: theme.colors.textSecondary },
+                    { name: 'textDisabled', value: theme.colors.textDisabled },
+                    { name: 'textLink', value: theme.colors.textLink },
+                ],
+            },
+            {
+                title: 'Status Colors',
+                colors: [
+                    { name: 'error', value: theme.colors.error },
+                    { name: 'warning', value: theme.colors.warning },
+                    { name: 'success', value: theme.colors.success },
+                    { name: 'info', value: theme.colors.info },
+                ],
+            },
+        ];
+
+        return colorCategories.map((category, index) => (
+            <View key={index}>
+                <Typography variant="h3" style={styles.sectionTitle}>{category.title}</Typography>
+                <View style={styles.colorGrid}>
+                    {category.colors.map((color, colorIndex) => (
+                        <View key={colorIndex} style={styles.colorItem}>
+                            <View style={[styles.colorBox, { backgroundColor: color.value }]} />
+                            <Typography variant="caption" style={styles.colorName}>
+                                {color.name}
+                            </Typography>
+                        </View>
+                    ))}
+                </View>
+            </View>
+        ));
+    };
+
+    // Render spacing examples
+    const renderSpacing = () => {
+        const spacingKeys = Object.keys(theme.spacing);
+
+        return (
+            <>
+                <Typography variant="h3" style={styles.sectionTitle}>Spacing</Typography>
+                <View style={styles.spacingContainer}>
+                    {spacingKeys.map((key) => (
+                        <View
+                            key={key}
+                            style={[
+                                styles.spacingBox,
+                                { height: theme.spacing[key as keyof typeof theme.spacing] }
+                            ]}
+                        >
+                            <Typography variant="caption" style={styles.colorName}>
+                                {key}
+                            </Typography>
+                        </View>
+                    ))}
+                </View>
+            </>
+        );
+    };
+
+    // Render typography examples
+    const renderTypography = () => {
+        const variants = [
+            'h1', 'h2', 'h3', 'h4',
+            'body1', 'body2', 'caption',
+            'button', 'overline'
+        ];
+
+        return (
+            <>
+                <Typography variant="h3" style={styles.sectionTitle}>Typography</Typography>
+                {variants.map((variant) => (
+                    <View key={variant} style={styles.typographyRow}>
+                        <Typography variant={variant as any}>
+                            {variant} - The quick brown fox jumps over the lazy dog
+                        </Typography>
+                    </View>
+                ))}
+            </>
+        );
+    };
+
+    return (
+        <SafeAreaView style={styles.container} edges={['top']}>
+            <ScrollView style={styles.container}>
+                <View style={styles.content}>
+                    <View style={styles.header}>
+                        <Typography variant="h1">Theme Inspector</Typography>
+                        <Typography variant="body1" color="secondary">
+                            Current theme: {theme.name}
+                        </Typography>
+                    </View>
+
+                    <TouchableOpacity style={styles.toggleButton} onPress={toggleTheme}>
+                        <Typography style={styles.toggleButtonText}>
+                            Switch to {isDark ? 'Light' : 'Dark'} Theme
+                        </Typography>
+                    </TouchableOpacity>
+
+                    <Card style={styles.card} elevated>
+                        {renderColorSwatches()}
+                    </Card>
+
+                    <Card style={styles.card}>
+                        {renderSpacing()}
+                    </Card>
+
+                    <Card style={styles.card}>
+                        {renderTypography()}
+                    </Card>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
+    );
+}-e 
+
+// ==== ./src/hooks/useStyles.ts ====
+
+// src/hooks/useStyles.ts
+import { StyleSheet } from 'react-native';
+import { useTheme } from '../contexts/ThemeContext';
+import { ThemeType } from '../theme/themeTypes';
+
+/**
+ * Custom hook to create styles that are theme-aware
+ * 
+ * @param styleCreator A function that takes the theme and returns a style object
+ * @returns The created styles
+ */
+export function useStyles<T extends StyleSheet.NamedStyles<T> | StyleSheet.NamedStyles<any>>(
+    styleCreator: (theme: ThemeType) => T
+): T {
+    const { theme } = useTheme();
+
+    // Create and memoize the styles based on the current theme
+    return StyleSheet.create(styleCreator(theme));
 }
