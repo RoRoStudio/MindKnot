@@ -16,6 +16,7 @@ import { DiamondFab } from './DiamondFab';
 const { width } = Dimensions.get('window');
 const BAR_HEIGHT = 64;
 const FAB_SIZE = 56;
+const GAP_SIZE = 4; // Gap between FAB and cutout
 
 export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const insets = useSafeAreaInsets();
@@ -41,7 +42,8 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
 
     const createNavBarPath = () => {
         const centerX = width / 2;
-        const diamondSize = FAB_SIZE / Math.sqrt(2); // Size for a diamond rotated 45 degrees
+        // Add GAP_SIZE to make cutout slightly larger than the FAB
+        const diamondSize = (FAB_SIZE / Math.sqrt(2)) + GAP_SIZE;
 
         // Path starts from top-left corner, and goes clockwise
         let path = `M0,0 `; // Start at top-left
@@ -180,6 +182,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         height: BAR_HEIGHT,
         width: '100%',
+        // Push tabs down to account for the cutout
+        paddingTop: (FAB_SIZE / Math.sqrt(2)) / 2, // Half the diamond's height from top
     },
     tabSection: {
         flexDirection: 'row',
@@ -189,7 +193,8 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        height: '100%',
+        height: BAR_HEIGHT * 0.7, // Only use 70% of the navbar height
+        marginTop: BAR_HEIGHT * 0.15, // Push down by 15% of the navbar height
     },
     fabSpace: {
         width: FAB_SIZE + 16, // Space for the FAB plus some margin
@@ -197,7 +202,6 @@ const styles = StyleSheet.create({
     tabContent: {
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 4, // Add some padding to push content down slightly
     },
     tabLabel: {
         fontSize: 12,

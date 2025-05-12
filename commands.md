@@ -7,3 +7,9 @@ find . -type f \( -name "*.ts" -o -name "*.tsx" \) \
   -exec sh -c 'for f do echo -e "\n\n// ==== $f ====\n"; cat "$f"; done' sh {} + \
   > all-code.txt
  
+# use android emulator with expo
+~/emulator.sh
+
+(not needed mostly) emulator -avd Pixel_8_API_35
+
+npx expo start --android
