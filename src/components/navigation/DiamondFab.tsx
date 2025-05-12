@@ -5,13 +5,11 @@ import {
     View,
     StyleSheet,
     Platform,
-    Dimensions,
 } from 'react-native';
 import { Icon } from '../common/Icon';
 
-const { width } = Dimensions.get('window');
 const FAB_SIZE = 56;
-const CORNER_RADIUS = 8; // Slight rounding of corners
+const CORNER_RADIUS = 8;
 
 interface DiamondFabProps {
     onPress: () => void;
@@ -23,6 +21,8 @@ export function DiamondFab({ onPress }: DiamondFabProps) {
             style={styles.fabContainer}
             onPress={onPress}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Create new entry"
         >
             <View style={styles.diamond}>
                 <View style={styles.iconContainer}>
@@ -40,33 +40,31 @@ const styles = StyleSheet.create({
         height: FAB_SIZE,
         justifyContent: 'center',
         alignItems: 'center',
-        top: -FAB_SIZE / 2, // This matches the CSS top: -50%
+        top: -FAB_SIZE / 2, // Position the FAB to stick out half way from the navbar
         left: '50%',
-        transform: [
-            { translateX: -FAB_SIZE / 2 }, // Center horizontally
-        ],
+        marginLeft: -FAB_SIZE / 2, // Center horizontally (alternative to translateX)
         zIndex: 1001,
     },
     diamond: {
         width: FAB_SIZE,
         height: FAB_SIZE,
-        backgroundColor: 'black',
+        backgroundColor: '#000000',
         borderRadius: CORNER_RADIUS,
         justifyContent: 'center',
         alignItems: 'center',
         transform: [
             { rotate: '45deg' }, // Rotate to create diamond shape
         ],
-        // Shadow properties
+        // Improved shadow properties
         ...Platform.select({
             ios: {
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.2,
-                shadowRadius: 5,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 6,
             },
             android: {
-                elevation: 6,
+                elevation: 8,
             },
         }),
     },

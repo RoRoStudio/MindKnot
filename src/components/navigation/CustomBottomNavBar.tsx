@@ -14,10 +14,8 @@ import Svg, { Path } from 'react-native-svg';
 import { DiamondFab } from './DiamondFab';
 
 const { width } = Dimensions.get('window');
-const BAR_HEIGHT = 56;
+const BAR_HEIGHT = 64;
 const FAB_SIZE = 56;
-const CUTOUT_RADIUS = 38;
-const CORNER_RADIUS = 8;
 
 export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const insets = useSafeAreaInsets();
@@ -41,19 +39,26 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
         );
     };
 
-    const createDiamondCutoutPath = () => {
+    const createNavBarPath = () => {
         const centerX = width / 2;
-        const diamondSize = CUTOUT_RADIUS * 1.2;
-        const cornerOffset = CORNER_RADIUS * 0.6;
+        const diamondSize = FAB_SIZE / Math.sqrt(2); // Size for a diamond rotated 45 degrees
 
-        const diamondLeft = { x: centerX - diamondSize, y: diamondSize };
-        const diamondRight = { x: centerX + diamondSize, y: diamondSize };
+        // Path starts from top-left corner, and goes clockwise
+        let path = `M0,0 `; // Start at top-left
 
-        let path = `M0,0 H${centerX - diamondSize - cornerOffset} `;
-        path += `Q${centerX - diamondSize},0 ${diamondLeft.x + cornerOffset},${diamondLeft.y - cornerOffset} `;
-        path += `Q${centerX},${diamondSize + cornerOffset} ${diamondRight.x - cornerOffset},${diamondRight.y - cornerOffset} `;
-        path += `Q${centerX + diamondSize},0 ${centerX + diamondSize + cornerOffset},0 `;
-        path += `H${width} V${BAR_HEIGHT + bottomInset} H0 Z`;
+        // Go right to where diamond cutout begins
+        path += `H${centerX - diamondSize} `;
+
+        // Create diamond cutout (counter-clockwise)
+        path += `L${centerX},${diamondSize} `; // Top to right corner of diamond
+        path += `L${centerX + diamondSize},0 `; // Right corner to top
+
+        // Continue to right edge
+        path += `H${width} `;
+
+        // Down to bottom-right, left to bottom-left, and back up to close the path
+        path += `V${BAR_HEIGHT + bottomInset} H0 Z`;
+
         return path;
     };
 
@@ -61,47 +66,92 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
         <View style={[styles.container, { height: BAR_HEIGHT + bottomInset }]}>
             {/* Background with cutout */}
             <Svg width={width} height={BAR_HEIGHT + bottomInset} style={styles.svg}>
-                <Path d={createDiamondCutoutPath()} fill="#6102ED" />
+                <Path d={createNavBarPath()} fill="#6102ED" />
             </Svg>
 
-            {/* Tabs including fab placeholder */}
+            {/* Tabs container - splitting into left and right sections */}
             <View style={[styles.tabsContainer, { paddingBottom: bottomInset }]}>
-                {state.routes.map((route, index) => {
-                    const isFabSlot = index === 1;
-                    if (isFabSlot) {
-                        return <View key="fab-space" style={{ width: FAB_SIZE }} />;
-                    }
+                {/* Left section */}
+                <View style={styles.tabSection}>
+                    {state.routes.slice(0, 2).map((route, index) => {
+                        const { options } = descriptors[route.key];
+                        const isFocused = state.index === index;
 
-                    const isFocused = state.index === index;
-                    const onPress = () => {
-                        const event = navigation.emit({
-                            type: 'tabPress',
-                            target: route.key,
-                            canPreventDefault: true,
-                        });
-                        if (!isFocused && !event.defaultPrevented) {
-                            navigation.navigate(route.name);
-                        }
-                    };
+                        const onPress = () => {
+                            const event = navigation.emit({
+                                type: 'tabPress',
+                                target: route.key,
+                                canPreventDefault: true,
+                            });
+                            if (!isFocused && !event.defaultPrevented) {
+                                navigation.navigate(route.name);
+                            }
+                        };
 
-                    return (
-                        <TouchableOpacity
-                            key={route.key}
-                            style={styles.tab}
-                            onPress={onPress}
-                        >
-                            <View style={styles.tabContent}>
-                                {getIcon(route.name, isFocused)}
-                                <Text style={[
-                                    styles.tabLabel,
-                                    { color: isFocused ? '#fff' : 'rgba(255,255,255,0.7)' }
-                                ]}>
-                                    {route.name}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    );
-                })}
+                        return (
+                            <TouchableOpacity
+                                key={route.key}
+                                style={styles.tab}
+                                onPress={onPress}
+                                accessibilityRole="button"
+                                accessibilityState={isFocused ? { selected: true } : {}}
+                            >
+                                <View style={styles.tabContent}>
+                                    {getIcon(route.name, isFocused)}
+                                    <Text style={[
+                                        styles.tabLabel,
+                                        { color: isFocused ? '#fff' : 'rgba(255,255,255,0.7)' }
+                                    ]}>
+                                        {route.name}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+
+                {/* Middle spacer for FAB */}
+                <View style={styles.fabSpace} />
+
+                {/* Right section */}
+                <View style={styles.tabSection}>
+                    {state.routes.slice(2, 4).map((route, index) => {
+                        const actualIndex = index + 2; // Adjust index for the right side
+                        const { options } = descriptors[route.key];
+                        const isFocused = state.index === actualIndex;
+
+                        const onPress = () => {
+                            const event = navigation.emit({
+                                type: 'tabPress',
+                                target: route.key,
+                                canPreventDefault: true,
+                            });
+                            if (!isFocused && !event.defaultPrevented) {
+                                navigation.navigate(route.name);
+                            }
+                        };
+
+                        return (
+                            <TouchableOpacity
+                                key={route.key}
+                                style={styles.tab}
+                                onPress={onPress}
+                                accessibilityRole="button"
+                                accessibilityState={isFocused ? { selected: true } : {}}
+                            >
+                                <View style={styles.tabContent}>
+                                    {getIcon(route.name, isFocused)}
+                                    <Text style={[
+                                        styles.tabLabel,
+                                        { color: isFocused ? '#fff' : 'rgba(255,255,255,0.7)' }
+                                    ]}>
+                                        {route.name}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
             </View>
 
             {/* FAB */}
@@ -126,25 +176,32 @@ const styles = StyleSheet.create({
     },
     tabsContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         height: BAR_HEIGHT,
         width: '100%',
     },
+    tabSection: {
+        flexDirection: 'row',
+        flex: 1,
+    },
     tab: {
         flex: 1,
-        height: '100%',
         justifyContent: 'center',
         alignItems: 'center',
+        height: '100%',
+    },
+    fabSpace: {
+        width: FAB_SIZE + 16, // Space for the FAB plus some margin
     },
     tabContent: {
-        justifyContent: 'flex-end',
         alignItems: 'center',
-        paddingBottom: 4,
+        justifyContent: 'center',
+        paddingTop: 4, // Add some padding to push content down slightly
     },
     tabLabel: {
-        fontSize: 11,
-        marginTop: 2,
+        fontSize: 12,
+        marginTop: 6, // Ensure there's enough space between icon and label
         fontWeight: '500',
     },
 });
