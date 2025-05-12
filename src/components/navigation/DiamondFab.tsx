@@ -14,10 +14,11 @@ import Animated, {
     withTiming,
     interpolate,
 } from 'react-native-reanimated';
+import { useStyles } from '../../hooks/useStyles';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const FAB_SIZE = 56;
-const CORNER_RADIUS = 8;
 
 export interface DiamondFabRef {
     closeMenuExternally: () => void;
@@ -31,6 +32,63 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress 
     const [menuOpen, setMenuOpen] = useState(false);
     const progress = useSharedValue(0);
     const rotation = useSharedValue(0);
+    const { theme } = useTheme();
+
+    const styles = useStyles((theme) => ({
+        fabContainer: {
+            position: 'absolute',
+            width: FAB_SIZE,
+            height: FAB_SIZE,
+            justifyContent: 'center',
+            alignItems: 'center',
+            top: -FAB_SIZE / 2,
+            left: '50%',
+            marginLeft: -FAB_SIZE / 2,
+            zIndex: 1001,
+        },
+        diamond: {
+            width: FAB_SIZE,
+            height: FAB_SIZE,
+            backgroundColor: theme.components.bottomNavBar.fabBackground,
+            borderRadius: theme.shape.radius.m,
+            justifyContent: 'center',
+            alignItems: 'center',
+            transform: [{ rotate: '45deg' }],
+            ...Platform.select({
+                ios: {
+                    shadowColor: theme.colors.black,
+                    shadowOffset: theme.elevation.z4.shadowOffset,
+                    shadowOpacity: theme.elevation.z4.shadowOpacity,
+                    shadowRadius: theme.elevation.z4.shadowRadius,
+                },
+                android: {
+                    elevation: theme.elevation.z4.elevation,
+                },
+            }),
+        },
+        menuItem: {
+            position: 'absolute',
+            width: FAB_SIZE * 0.8,
+            height: FAB_SIZE * 0.8,
+            backgroundColor: theme.components.bottomNavBar.menuItemBackground,
+            borderRadius: theme.shape.radius.m,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        innerDiamond: {
+            width: '100%',
+            height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+            transform: [{ rotate: '45deg' }],
+        },
+        iconContainer: {
+            transform: [{ rotate: '-45deg' }],
+        },
+        uprightIcon: {
+            transform: [{ rotate: '-45deg' }],
+        },
+    }));
 
     const toggleMenu = () => {
         const isOpening = !menuOpen;
@@ -99,10 +157,14 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress 
                         >
                             <View style={styles.iconContainer}>
                                 <View style={styles.uprightIcon}>
-                                    <Icon name={item.icon as any} width={20} height={20} color="white" />
+                                    <Icon
+                                        name={item.icon as any}
+                                        width={20}
+                                        height={20}
+                                        color={theme.components.bottomNavBar.menuItemIcon}
+                                    />
                                 </View>
                             </View>
-
                         </TouchableOpacity>
                     </Animated.View>
                 );
@@ -118,67 +180,15 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress 
             >
                 <Animated.View style={[styles.iconContainer, iconAnimStyle]}>
                     <View style={styles.uprightIcon}>
-                        <Icon name="plus" width={24} height={24} color="white" />
+                        <Icon
+                            name="plus"
+                            width={24}
+                            height={24}
+                            color={theme.components.bottomNavBar.fabIcon}
+                        />
                     </View>
                 </Animated.View>
-
             </TouchableOpacity>
         </View>
     );
-});
-
-const styles = StyleSheet.create({
-    fabContainer: {
-        position: 'absolute',
-        width: FAB_SIZE,
-        height: FAB_SIZE,
-        justifyContent: 'center',
-        alignItems: 'center',
-        top: -FAB_SIZE / 2,
-        left: '50%',
-        marginLeft: -FAB_SIZE / 2,
-        zIndex: 1001,
-    },
-    diamond: {
-        width: FAB_SIZE,
-        height: FAB_SIZE,
-        backgroundColor: '#000000',
-        borderRadius: CORNER_RADIUS,
-        justifyContent: 'center',
-        alignItems: 'center',
-        transform: [{ rotate: '45deg' }],
-        ...Platform.select({
-            ios: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 6,
-            },
-            android: {
-                elevation: 8,
-            },
-        }),
-    },
-    menuItem: {
-        position: 'absolute',
-        width: FAB_SIZE * 0.8,
-        height: FAB_SIZE * 0.8,
-        backgroundColor: '#000',
-        borderRadius: CORNER_RADIUS,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    innerDiamond: {
-        width: '100%',
-        height: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-        transform: [{ rotate: '45deg' }],
-    },
-    iconContainer: {
-        transform: [{ rotate: '-45deg' }],
-    },
-    uprightIcon: {
-        transform: [{ rotate: '-45deg' }],
-    },
 });

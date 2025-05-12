@@ -12,6 +12,8 @@ import { Icon } from '../common/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { DiamondFab } from './DiamondFab';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useStyles } from '../../hooks/useStyles';
 
 const { width } = Dimensions.get('window');
 const BAR_HEIGHT = 64;
@@ -21,21 +23,79 @@ const GAP_SIZE = 4; // Gap between FAB and cutout
 export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const insets = useSafeAreaInsets();
     const bottomInset = Math.max(insets.bottom, 0);
+    const { theme } = useTheme();
+
+    const styles = useStyles((theme) => ({
+        container: {
+            width: '100%',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 1000,
+        },
+        svg: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+        },
+        tabsContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            height: BAR_HEIGHT,
+            width: '100%',
+            // Push tabs down to account for the cutout
+            paddingTop: (FAB_SIZE / Math.sqrt(2)) / 2, // Half the diamond's height from top
+        },
+        tabSection: {
+            flexDirection: 'row',
+            flex: 1,
+        },
+        tab: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: BAR_HEIGHT * 0.7, // Only use 70% of the navbar height
+            marginTop: BAR_HEIGHT * 0.15, // Push down by 15% of the navbar height
+        },
+        fabSpace: {
+            width: FAB_SIZE + 16, // Space for the FAB plus some margin
+        },
+        tabContent: {
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        tabLabel: {
+            fontSize: theme.typography.fontSize.s,
+            marginTop: theme.spacing.xs, // Ensure there's enough space between icon and label
+            fontWeight: theme.typography.fontWeight.medium,
+        },
+        activeTabLabel: {
+            color: theme.components.bottomNavBar.activeText,
+        },
+        inactiveTabLabel: {
+            color: theme.components.bottomNavBar.inactiveText,
+        },
+    }));
 
     const getIcon = (routeName: string, isFocused: boolean) => {
-        let iconName: "map" | "git-branch" | "sparkles" | "settings" = "map";
+        let iconName: IconName;
         switch (routeName) {
-            case 'Home': iconName = "map"; break;
-            case 'Sagas': iconName = "git-branch"; break;
+            case 'Home': iconName = "house"; break;
+            case 'Sagas': iconName = "book-open"; break;
             case 'Explore': iconName = "sparkles"; break;
             case 'Settings': iconName = "settings"; break;
+            default: iconName = "settings"; break;
         }
         return (
             <Icon
                 name={iconName}
                 width={24}
                 height={24}
-                color={isFocused ? '#fff' : 'rgba(255,255,255,0.7)'}
+                color={isFocused
+                    ? theme.components.bottomNavBar.activeIcon
+                    : theme.components.bottomNavBar.inactiveIcon}
             />
         );
     };
@@ -68,7 +128,7 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
         <View style={[styles.container, { height: BAR_HEIGHT + bottomInset }]}>
             {/* Background with cutout */}
             <Svg width={width} height={BAR_HEIGHT + bottomInset} style={styles.svg}>
-                <Path d={createNavBarPath()} fill="#6102ED" />
+                <Path d={createNavBarPath()} fill={theme.components.bottomNavBar.background} />
             </Svg>
 
             {/* Tabs container - splitting into left and right sections */}
@@ -102,7 +162,7 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
                                     {getIcon(route.name, isFocused)}
                                     <Text style={[
                                         styles.tabLabel,
-                                        { color: isFocused ? '#fff' : 'rgba(255,255,255,0.7)' }
+                                        isFocused ? styles.activeTabLabel : styles.inactiveTabLabel
                                     ]}>
                                         {route.name}
                                     </Text>
@@ -145,7 +205,7 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
                                     {getIcon(route.name, isFocused)}
                                     <Text style={[
                                         styles.tabLabel,
-                                        { color: isFocused ? '#fff' : 'rgba(255,255,255,0.7)' }
+                                        isFocused ? styles.activeTabLabel : styles.inactiveTabLabel
                                     ]}>
                                         {route.name}
                                     </Text>
@@ -162,50 +222,7 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        width: '100%',
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-    },
-    svg: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-    },
-    tabsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        height: BAR_HEIGHT,
-        width: '100%',
-        // Push tabs down to account for the cutout
-        paddingTop: (FAB_SIZE / Math.sqrt(2)) / 2, // Half the diamond's height from top
-    },
-    tabSection: {
-        flexDirection: 'row',
-        flex: 1,
-    },
-    tab: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: BAR_HEIGHT * 0.7, // Only use 70% of the navbar height
-        marginTop: BAR_HEIGHT * 0.15, // Push down by 15% of the navbar height
-    },
-    fabSpace: {
-        width: FAB_SIZE + 16, // Space for the FAB plus some margin
-    },
-    tabContent: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    tabLabel: {
-        fontSize: 12,
-        marginTop: 6, // Ensure there's enough space between icon and label
-        fontWeight: '500',
-    },
-});
+// Make sure this type is imported or defined
+type IconName = "house" | "book-open" | "sparkles" | "settings" | "plus" | "arrow-left" |
+    "arrow-right" | "check" | "lightbulb" | "file-text" | "list" | "minus" |
+    "git-branch" | "link" | "map" | "moon" | "sun";

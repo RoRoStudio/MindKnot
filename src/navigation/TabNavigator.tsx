@@ -3,6 +3,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
 import SagaScreen from '../screens/SagaScreen';
+import ThemeInspectorScreen from '../screens/ThemeInspectorScreen';
 import { CustomBottomNavBar } from '../components/navigation/CustomBottomNavBar';
 
 const Tab = createBottomTabNavigator();
@@ -18,7 +19,7 @@ export default function TabNavigator() {
             <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="Sagas" component={SagaScreen} />
             <Tab.Screen name="Explore" component={SagaScreen} />
-            <Tab.Screen name="Settings" component={SagaScreen} />
+            <Tab.Screen name="Settings" component={ThemeInspectorScreen} />
         </Tab.Navigator>
     );
 }

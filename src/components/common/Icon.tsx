@@ -13,6 +13,11 @@ import Link from '../../assets/icons/lucide/link.svg';
 import ArrowRight from '../../assets/icons/lucide/arrow-right.svg';
 import Minus from '../../assets/icons/lucide/minus.svg';
 import Sparkles from '../../assets/icons/lucide/sparkles.svg';
+// Add moon and sun icons
+import Moon from '../../assets/icons/lucide/moon.svg';
+import Sun from '../../assets/icons/lucide/sun.svg';
+import House from '../../assets/icons/lucide/house.svg'
+import BookOpen from '../../assets/icons/lucide/book-open.svg'
 
 const iconMap = {
     plus: Plus,
@@ -28,6 +33,11 @@ const iconMap = {
     link: Link,
     minus: Minus,
     sparkles: Sparkles,
+    // Add new icons
+    moon: Moon,
+    sun: Sun,
+    house: House,
+    'book-open': BookOpen,
 };
 
 export type IconName = keyof typeof iconMap;
