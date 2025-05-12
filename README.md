@@ -4,7 +4,6 @@ MindKnot
 ├─ .pnp.cjs
 ├─ .pnp.loader.mjs
 ├─ App.tsx
-├─ README.md
 ├─ all-code.txt
 ├─ app.json
 ├─ assets
@@ -26,36 +25,21 @@ MindKnot
 │  │        ├─ a-arrow-up.svg
 │  │        ├─ (and a lot more)
 │  ├─ components
-│  │  ├─ animations
-│  │  │  └─ NodeTransform.tsx
-│  │  ├─ canvas
-│  │  │  ├─ Canvas.tsx
-│  │  │  ├─ CanvasToolbar.tsx
-│  │  │  └─ PanZoomLayer.tsx
+│  │  ├─ chapters
 │  │  ├─ common
 │  │  │  └─ Icon.tsx
-│  │  ├─ links
-│  │  │  ├─ LinkTypeSelector.tsx
-│  │  │  └─ NodeLinks.tsx
-│  │  └─ nodes
-│  │     ├─ CreateNode.tsx
-│  │     ├─ NodeCard.tsx
-│  │     └─ NodeEditor.tsx
+│  │  ├─ entries
+│  │  └─ sagas
 │  ├─ constants
 │  ├─ contexts
 │  ├─ hooks
 │  ├─ navigation
-│  │  ├─ AppNavigator.tsx
-│  │  ├─ BottomTabs.tsx
-│  │  └─ Routes.ts
 │  ├─ screens
-│  │  ├─ CanvasScreen.tsx
-│  │  ├─ MapScreen.tsx
-│  │  └─ SettingsScreen.tsx
 │  ├─ services
-│  │  └─ sqliteService.ts
+│  │  ├─ chapterService.ts
+│  │  ├─ entryService.ts
+│  │  └─ sagaService.ts
 │  ├─ state
-│  │  └─ useMindMapStore.ts
 │  ├─ styles
 │  │  ├─ colors.ts
 │  │  ├─ index.ts
@@ -65,7 +49,10 @@ MindKnot
 │  │  ├─ dark.ts
 │  │  └─ light.ts
 │  ├─ types
-│  │  ├─ NodeTypes.ts
+│  │  ├─ ChapterTypes.ts
+│  │  ├─ EntryTypes.ts
+│  │  ├─ SagaTypes.ts
+│  │  ├─ index.ts
 │  │  └─ svg.d.ts
 │  └─ utils
 └─ tsconfig.json

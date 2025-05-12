@@ -14,59 +14,7 @@ registerRootComponent(App);
 
 // ==== ./App.tsx ====
 
-// App.tsx (update the useEffect for database initialization)
-import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Text, View } from 'react-native';
-import AppNavigator from './src/navigation/AppNavigator';
-import { initDatabase, resetDatabase } from './src/services/sqliteService';
-import { ActionSheetProvider } from '@expo/react-native-action-sheet';
-
-
-export default function App() {
-  const [dbInitialized, setDbInitialized] = useState(false);
-  const [dbError, setDbError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        console.log('Starting database reset...');
-        await resetDatabase(); // ← 🚨 TEMPORARY! COMMENT OUT WHEN WIPING SCHEMA IS NOT INTENTED
-        console.log('Reset complete. Initializing database...');
-        await initDatabase();
-        console.log('Database initialization complete');
-        setDbInitialized(true);
-      } catch (error) {
-        console.error("Failed to initialize database:", error);
-        setDbError(error instanceof Error ? error.message : String(error));
-      }
-    };
-
-    initialize();
-  }, []);
-
-  if (dbError) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: 'red' }}>Database Error: {dbError}</Text>
-      </View>
-    );
-  }
-
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <ActionSheetProvider>
-          <NavigationContainer>
-            <AppNavigator />
-          </NavigationContainer>
-        </ActionSheetProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
-  );
-}-e 
+-e 
 
 // ==== ./src/theme/light.ts ====
 
@@ -90,222 +38,16 @@ export const darkTheme = {
 };
 -e 
 
-// ==== ./src/services/sqliteService.ts ====
+// ==== ./src/services/chapterService.ts ====
 
-// src/services/sqliteService.ts (update)
-import * as SQLite from 'expo-sqlite';
-import { NodeModel, LinkModel } from '../types/NodeTypes';
+-e 
 
-let db: SQLite.SQLiteDatabase | null = null;
+// ==== ./src/services/entryService.ts ====
 
-export async function initDatabase() {
-  try {
-    console.log("Initializing database...");
-    db = await SQLite.openDatabaseAsync('mindknot.db');
+-e 
 
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS nodes (
-        id TEXT PRIMARY KEY NOT NULL,
-        title TEXT,
-        body TEXT,
-        icon TEXT,
-        color TEXT,
-        x REAL,
-        y REAL,
-        template TEXT,
-        status TEXT,
-        createdAt INTEGER,
-        updatedAt INTEGER
-      );
-      
-      CREATE TABLE IF NOT EXISTS links (
-        id TEXT PRIMARY KEY NOT NULL,
-        sourceId TEXT,
-        targetId TEXT,
-        label TEXT,
-        color TEXT,
-        style TEXT,
-        type TEXT,
-        createdAt INTEGER,
-        updatedAt INTEGER,
-        FOREIGN KEY (sourceId) REFERENCES nodes(id) ON DELETE CASCADE,
-        FOREIGN KEY (targetId) REFERENCES nodes(id) ON DELETE CASCADE
-      );
-    `);
-    console.log("Database initialized successfully");
-  } catch (error) {
-    console.error("Error initializing database:", error);
-  }
-}
+// ==== ./src/services/sagaService.ts ====
 
-export async function getAllNodes(): Promise<NodeModel[]> {
-  try {
-    if (!db) {
-      console.warn("Database not initialized when trying to get all nodes");
-      return [];
-    }
-    const result = await db.getAllAsync<NodeModel>('SELECT * FROM nodes;');
-    return result;
-  } catch (error) {
-    console.error("Error getting all nodes:", error);
-    return [];
-  }
-}
-
-export async function getAllLinks(): Promise<LinkModel[]> {
-  try {
-    if (!db) {
-      console.warn("Database not initialized when trying to get all links");
-      return [];
-    }
-    const result = await db.getAllAsync<LinkModel>('SELECT * FROM links;');
-    return result;
-  } catch (error) {
-    console.error("Error getting all links:", error);
-    return [];
-  }
-}
-
-export async function insertNode(node: NodeModel): Promise<boolean> {
-  try {
-    if (!db) {
-      console.error("Database not initialized when trying to insert node");
-      return false;
-    }
-    console.log("Inserting node into database:", node.id);
-
-    await db.runAsync(
-      `INSERT OR REPLACE INTO nodes 
-        (id, title, body, icon, color, x, y, template, status, createdAt, updatedAt) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-      [
-        node.id,
-        node.title,
-        node.body || '',
-        node.icon || '',
-        node.color,
-        node.x,
-        node.y,
-        node.template,
-        node.status || '',
-        node.createdAt,
-        node.updatedAt,
-      ]
-    );
-    console.log("Node inserted successfully:", node.id);
-    return true;
-  } catch (error) {
-    console.error("Error inserting node:", error);
-    return false;
-  }
-}
-
-export async function insertLink(link: LinkModel): Promise<boolean> {
-  try {
-    if (!db) {
-      console.error("Database not initialized when trying to insert link");
-      return false;
-    }
-    console.log("Inserting link into database:", link.id);
-
-    await db.runAsync(
-      `INSERT OR REPLACE INTO links 
-        (id, sourceId, targetId, label, color, style, type, createdAt, updatedAt) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-      [
-        link.id,
-        link.sourceId,
-        link.targetId,
-        link.label || '',
-        link.color || '',
-        link.style || 'solid',
-        link.type,
-        link.createdAt,
-        link.updatedAt || link.createdAt,
-      ]
-    );
-    console.log("Link inserted successfully:", link.id);
-    return true;
-  } catch (error) {
-    console.error("Error inserting link:", error);
-    return false;
-  }
-}
-
-export async function updateNode(node: NodeModel): Promise<boolean> {
-  try {
-    if (!db) {
-      console.error("Database not initialized when trying to update node");
-      return false;
-    }
-
-    await db.runAsync(
-      `UPDATE nodes SET x = ?, y = ?, updatedAt = ? WHERE id = ?;`,
-      [node.x, node.y, node.updatedAt, node.id]
-    );
-    return true;
-  } catch (error) {
-    console.error("Error updating node:", error);
-    return false;
-  }
-}
-
-export async function deleteLink(linkId: string): Promise<boolean> {
-  try {
-    if (!db) {
-      console.error("Database not initialized when trying to delete link");
-      return false;
-    }
-
-    await db.runAsync('DELETE FROM links WHERE id = ?;', [linkId]);
-    console.log("Link deleted successfully:", linkId);
-    return true;
-  } catch (error) {
-    console.error("Error deleting link:", error);
-    return false;
-  }
-}
-
-export async function getLinksForNode(nodeId: string): Promise<LinkModel[]> {
-  try {
-    if (!db) {
-      console.warn("Database not initialized when trying to get links for node");
-      return [];
-    }
-    const result = await db.getAllAsync<LinkModel>(
-      'SELECT * FROM links WHERE sourceId = ? OR targetId = ?;',
-      [nodeId, nodeId]
-    );
-    return result;
-  } catch (error) {
-    console.error("Error getting links for node:", error);
-    return [];
-  }
-}
-
-export async function deleteAllNodes(): Promise<boolean> {
-  try {
-    if (!db) {
-      console.error("Database not initialized when trying to delete all nodes");
-      return false;
-    }
-
-    await db.runAsync('DELETE FROM links;');
-    await db.runAsync('DELETE FROM nodes;');
-    return true;
-  } catch (error) {
-    console.error("Error deleting all nodes:", error);
-    return false;
-  }
-}
-
-// DEV-ONLY: Reset the database by dropping all tables
-export async function resetDatabase(): Promise<void> {
-  const db = await SQLite.openDatabaseAsync('mindknot.db');
-  await db.execAsync('DROP TABLE IF EXISTS links;');
-  await db.execAsync('DROP TABLE IF EXISTS nodes;');
-  console.log('[DEV] Dropped all tables');
-}
 -e 
 
 // ==== ./src/styles/spacing.ts ====
@@ -385,6 +127,22 @@ declare module '*.svg' {
 }
 -e 
 
+// ==== ./src/types/ChapterTypes.ts ====
+
+-e 
+
+// ==== ./src/types/index.ts ====
+
+-e 
+
+// ==== ./src/types/EntryTypes.ts ====
+
+-e 
+
+// ==== ./src/types/SagaTypes.ts ====
+
+-e 
+
 // ==== ./src/components/common/Icon.tsx ====
 
 import { SvgProps } from 'react-native-svg';
@@ -434,57 +192,4 @@ export function Icon({ name, ...props }: Props) {
     }
 
     return <Component {...props} />;
-}-e 
-
-// ==== ./src/navigation/BottomTabs.tsx ====
-
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import CanvasScreen from '../screens/CanvasScreen';
-import SettingsScreen from '../screens/SettingsScreen';
-import { Icon } from '../components/common/Icon';
-import { lightTheme } from '../theme/light';
-
-const Tab = createBottomTabNavigator();
-
-export default function BottomTabs() {
-    return (
-        <Tab.Navigator
-            screenOptions={({ route }: { route: RouteProp<Record<string, object | undefined>, string> }) => {
-                return {
-                    headerStyle: { backgroundColor: lightTheme.background },
-                    headerTitleStyle: { color: lightTheme.textPrimary },
-                    tabBarStyle: { backgroundColor: lightTheme.background },
-                    tabBarActiveTintColor: lightTheme.primary,
-                    tabBarInactiveTintColor: lightTheme.textSecondary,
-                    tabBarIcon: ({ color, size }: { color: string; size: number }) => {
-                        const name = route.name === 'Canvas' ? 'map' : 'settings';
-                        return <Icon name={name} width={size} height={size} stroke={color} />;
-                    },
-                } as BottomTabNavigationOptions;
-            }}
-        >
-            <Tab.Screen name="Canvas" component={CanvasScreen} />
-            <Tab.Screen name="Settings" component={SettingsScreen} />
-        </Tab.Navigator>
-    );
-}
--e 
-
-// ==== ./src/navigation/Routes.ts ====
-
-export enum Routes {
-    Canvas = 'Canvas',
-    Map = 'Map',
-    Settings = 'Settings',
-}
--e 
-
-// ==== ./src/navigation/AppNavigator.tsx ====
-
-import React from 'react';
-import BottomTabs from './BottomTabs';
-
-export default function AppNavigator() {
-    return <BottomTabs />;
 }
