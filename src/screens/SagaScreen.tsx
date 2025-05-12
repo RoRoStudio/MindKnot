@@ -51,6 +51,7 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
     const { theme, isDark } = useTheme();
     const [sagas, setSagas] = useState<Saga[]>(initialSagas);
     const [isCreationSheetVisible, setCreationSheetVisible] = useState(false);
+    const [overlay, setOverlay] = useState<React.ReactNode>(null);
 
     const styles = useStyles((theme) => ({
         container: {
@@ -114,8 +115,7 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
 
     // Render a saga item or the "add new" item
     const renderItem = ({ item, index }: { item: GridItem, index: number }) => {
-        // Calculate the correct left margin for grid items
-        // First item in each row should have 0 left margin, second item should have spacing
+        // Calculate the correct left margin for grid items as before
         const isEvenItem = index % 2 === 0;
         const marginLeft = isEvenItem ? 0 : SPACING;
 
@@ -149,6 +149,7 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
                     width={ITEM_WIDTH}
                     height={ITEM_HEIGHT}
                     onPress={() => navigateToSagaDetails(item.id)}
+                    setOverlay={setOverlay}
                 />
             </View>
         );
@@ -163,6 +164,9 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
                 barStyle={isDark ? 'light-content' : 'dark-content'}
                 backgroundColor={theme.colors.background}
             />
+
+            {/* Render the overlay BEFORE the content */}
+            {overlay}
 
             <View style={styles.header}>
                 <Typography variant="h1" style={styles.headerTitle}>Your Sagas</Typography>
