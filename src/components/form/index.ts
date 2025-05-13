@@ -1,4 +1,4 @@
-// src/components/form/index.ts (updated)
+// src/components/form/index.ts
 import Form from './Form';
 import FormInput from './FormInput';
 import FormTextarea from './FormTextarea';

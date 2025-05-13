@@ -5,7 +5,6 @@ import {
     TextInput,
     TextInputProps,
     TouchableOpacity,
-    StyleSheet,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
@@ -17,17 +16,14 @@ interface FormInputProps<T extends FieldValues> extends Omit<TextInputProps, 'on
     name: Path<T>;
     control: Control<T>;
     label?: string;
-    rules?: Omit
-    RegisterOptions<T, Path<T>>,
-        'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'
-        >;
-showCharCount ?: boolean;
-maxLength ?: number;
-helperText ?: string;
-leftIcon ?: React.ReactNode;
-rightIcon ?: React.ReactNode;
-errorIcon ?: boolean;
-leadingText ?: string;
+    rules?: Omit<RegisterOptions<T, Path<T>>, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>;
+    showCharCount?: boolean;
+    maxLength?: number;
+    helperText?: string;
+    leftIcon?: React.ReactNode;
+    rightIcon?: React.ReactNode;
+    errorIcon?: boolean;
+    leadingText?: string;
 }
 
 export default function FormInput<T extends FieldValues>({

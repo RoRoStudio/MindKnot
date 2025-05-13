@@ -4,9 +4,9 @@ import {
     View,
     TouchableOpacity,
     Platform,
-    StyleSheet,
     Modal,
     SafeAreaView,
+    Text,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -20,17 +20,14 @@ interface FormDatePickerProps<T extends FieldValues> {
     name: Path<T>;
     control: Control<T>;
     label?: string;
-    rules?: Omit
-    RegisterOptions<T, Path<T>>,
-        'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'
-        >;
-placeholder ?: string;
-helperText ?: string;
-disabled ?: boolean;
-mode ?: 'date' | 'time' | 'datetime';
-minimumDate ?: Date;
-maximumDate ?: Date;
-formatDate ?: (date: Date) => string;
+    rules?: Omit<RegisterOptions<T, Path<T>>, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>;
+    placeholder?: string;
+    helperText?: string;
+    disabled?: boolean;
+    mode?: 'date' | 'time' | 'datetime';
+    minimumDate?: Date;
+    maximumDate?: Date;
+    formatDate?: (date: Date) => string;
 }
 
 export default function FormDatePicker<T extends FieldValues>({
@@ -135,6 +132,31 @@ export default function FormDatePicker<T extends FieldValues>({
         }
     };
 
+    // This is a simplified version that may need adjustment based on
+    // how the DateTimePicker is configured in your project
+    const renderDatePicker = (value: Date | undefined, onChange: (date: Date) => void) => {
+        if (!showPicker) return null;
+
+        const handleChange = (_: any, selectedDate?: Date) => {
+            setShowPicker(Platform.OS === 'ios');
+            if (selectedDate) {
+                onChange(selectedDate);
+            }
+        };
+
+        return (
+            <DateTimePicker
+                value={value || new Date()}
+                mode={mode === 'datetime' ? 'date' : mode}
+                is24Hour={true}
+                display="default"
+                onChange={handleChange}
+                minimumDate={minimumDate}
+                maximumDate={maximumDate}
+            />
+        );
+    };
+
     return (
         <Controller
             control={control}
@@ -147,123 +169,8 @@ export default function FormDatePicker<T extends FieldValues>({
                     }
                 };
 
-                const closePicker = () => {
-                    setShowPicker(false);
-                };
+                const dateValue = value ? new Date(value) : undefined;
 
-                const handleConfirm = (date: Date) => {
-                    onChange(date);
-                    closePicker();
-                };
-
-                const dateValue = value ? new Date(value) : null;
-
-                if (Platform.OS === 'ios') {
-                    return (
-                        <View style={styles.container}>
-                            {label && (
-                                <Typography variant="body1" style={styles.label}>
-                                    {label}
-                                </Typography>
-                            )}
-
-                            <TouchableOpacity
-                                style={[
-                                    styles.pickerContainer,
-                                    error && styles.pickerContainerError,
-                                    disabled && styles.pickerContainerDisabled,
-                                ]}
-                                onPress={openPicker}
-                                activeOpacity={disabled ? 1 : 0.7}
-                                disabled={disabled}
-                            >
-                                <View style={styles.pickerContent}>
-                                    <Typography
-                                        style={dateValue ? styles.selectedValue : styles.placeholder}
-                                    >
-                                        {dateValue ? formatValue(dateValue) : placeholder}
-                                    </Typography>
-                                    <Icon
-                                        name={getIconForMode()}
-                                        width={20}
-                                        height={20}
-                                        color={styles.selectedValue.color}
-                                    />
-                                </View>
-                            </TouchableOpacity>
-
-                            <FormErrorMessage message={error?.message} visible={!!error} />
-
-                            {helperText && !error && (
-                                <Typography
-                                    variant="caption"
-                                    style={styles.helperText}
-                                    color="secondary"
-                                >
-                                    {helperText}
-                                </Typography>
-                            )}
-
-                            <Modal
-                                visible={showPicker}
-                                transparent
-                                animationType="slide"
-                                onRequestClose={closePicker}
-                            >
-                                <View style={styles.modalContainer}>
-                                    <SafeAreaView style={styles.modalContent}>
-                                        <View style={styles.modalHeader}>
-                                            <Typography variant="h3">
-                                                {label || (mode === 'time' ? 'Select Time' : 'Select Date')}
-                                            </Typography>
-                                        </View>
-                                        <View style={styles.pickerWrapper}>
-                                            <DateTimePicker
-                                                value={dateValue || new Date()}
-                                                mode={mode === 'datetime' ? 'date' : mode}
-                                                display="spinner"
-                                                onChange={(_, selectedDate) => {
-                                                    if (selectedDate) {
-                                                        handleConfirm(selectedDate);
-                                                    }
-                                                }}
-                                                minimumDate={minimumDate}
-                                                maximumDate={maximumDate}
-                                            />
-
-                                            {mode === 'datetime' && (
-                                                <DateTimePicker
-                                                    value={dateValue || new Date()}
-                                                    mode="time"
-                                                    display="spinner"
-                                                    onChange={(_, selectedDate) => {
-                                                        if (selectedDate) {
-                                                            handleConfirm(selectedDate);
-                                                        }
-                                                    }}
-                                                />
-                                            )}
-                                        </View>
-                                        <View style={styles.buttonContainer}>
-                                            <Button
-                                                variant="secondary"
-                                                label="Cancel"
-                                                onPress={closePicker}
-                                            />
-                                            <Button
-                                                variant="primary"
-                                                label="Confirm"
-                                                onPress={() => handleConfirm(dateValue || new Date())}
-                                            />
-                                        </View>
-                                    </SafeAreaView>
-                                </View>
-                            </Modal>
-                        </View>
-                    );
-                }
-
-                // Android implementation
                 return (
                     <View style={styles.container}>
                         {label && (
@@ -309,36 +216,8 @@ export default function FormDatePicker<T extends FieldValues>({
                             </Typography>
                         )}
 
-                        {showPicker && (
-                            <DateTimePicker
-                                value={dateValue || new Date()}
-                                mode={mode === 'datetime' ? 'date' : mode}
-                                is24Hour={true}
-                                display="default"
-                                onChange={(_, selectedDate) => {
-                                    setShowPicker(false);
-                                    if (selectedDate) {
-                                        if (mode === 'datetime') {
-                                            // For datetime on Android, we need to handle this specially
-                                            // First pick date, then time
-                                            const currentDate = dateValue || new Date();
-                                            currentDate.setFullYear(selectedDate.getFullYear());
-                                            currentDate.setMonth(selectedDate.getMonth());
-                                            currentDate.setDate(selectedDate.getDate());
-
-                                            // Now show time picker
-                                            setTimeout(() => {
-                                                setShowPicker(true);
-                                            }, 100);
-                                        } else {
-                                            onChange(selectedDate);
-                                        }
-                                    }
-                                }}
-                                minimumDate={minimumDate}
-                                maximumDate={maximumDate}
-                            />
-                        )}
+                        {/* Render DatePicker based on platform */}
+                        {renderDatePicker(dateValue, onChange)}
                     </View>
                 );
             }}

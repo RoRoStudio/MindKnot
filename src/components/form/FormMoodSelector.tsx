@@ -5,6 +5,7 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
+    Text,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
@@ -24,12 +25,9 @@ interface FormMoodSelectorProps<T extends FieldValues> {
     name: Path<T>;
     control: Control<T>;
     label?: string;
-    rules?: Omit
-    RegisterOptions<T, Path<T>>,
-        'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'
-        >;
-helperText ?: string;
-showLabels ?: boolean;
+    rules?: Omit<RegisterOptions<T, Path<T>>, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>;
+    helperText?: string;
+    showLabels?: boolean;
 }
 
 export default function FormMoodSelector<T extends FieldValues>({

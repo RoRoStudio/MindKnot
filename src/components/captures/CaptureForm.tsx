@@ -1,10 +1,11 @@
 // src/components/captures/CaptureForm.tsx
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { useForm } from 'react-hook-form';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../common/Typography';
 import { Button } from '../common/Button';
+import { Icon } from '../common/Icon';
 import {
     Form,
     FormSelect,

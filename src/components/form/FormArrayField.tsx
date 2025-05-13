@@ -2,55 +2,42 @@
 import React from 'react';
 import {
     View,
-    StyleSheet,
     TouchableOpacity,
 } from 'react-native';
-import { Control, FieldValues, useFieldArray, FieldArrayPath, DeepPartial, FieldArray } from 'react-hook-form';
+import { Control, FieldValues, useFieldArray, FieldArrayPath, DeepPartial } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../common/Typography';
 import { Icon } from '../common/Icon';
 import { Button } from '../common/Button';
 import FormErrorMessage from './FormErrorMessage';
 
-interface FormArrayFieldProps
-    TFieldValues extends FieldValues = FieldValues,
-    TFieldArrayName extends FieldArrayPath<TFieldValues> = FieldArrayPath<TFieldValues>,
-        TKeyName extends string = 'id'
-            > {
-            name: TFieldArrayName;
-            control: Control<TFieldValues>;
-            label?: string;
-            helperText?: string;
-            keyName?: TKeyName;
-            defaultValue?: DeepPartial<FieldArray<TFieldValues, TFieldArrayName>>;
-            renderItem: (
-                item: Record<TKeyName, string> & DeepPartial<FieldArray<TFieldValues, TFieldArrayName>>,
-                index: number,
-                remove: (index: number) => void
-            ) => React.ReactNode;
-            addButtonLabel: string;
-            maxItems?: number;
-            showError?: boolean;
-            error?: string;
-        }
+interface FormArrayFieldProps<TFieldValues extends FieldValues = FieldValues> {
+    name: string;
+    control: Control<TFieldValues>;
+    label?: string;
+    helperText?: string;
+    keyName?: string;
+    defaultValue?: any;
+    renderItem: (item: any, index: number, remove: (index: number) => void) => React.ReactNode;
+    addButtonLabel: string;
+    maxItems?: number;
+    showError?: boolean;
+    error?: string;
+}
 
-export default function FormArrayField
-    TFieldValues extends FieldValues = FieldValues,
-    TFieldArrayName extends FieldArrayPath<TFieldValues> = FieldArrayPath<TFieldValues>,
-        TKeyName extends string = 'id'
-            > ({
-                name,
-                control,
-                label,
-                helperText,
-                keyName = 'id' as TKeyName,
-                defaultValue,
-                renderItem,
-                addButtonLabel = 'Add Item',
-                maxItems,
-                showError = true,
-                error,
-            }: FormArrayFieldProps<TFieldValues, TFieldArrayName, TKeyName>) {
+export default function FormArrayField<TFieldValues extends FieldValues = FieldValues>({
+    name,
+    control,
+    label,
+    helperText,
+    keyName = 'id',
+    defaultValue,
+    renderItem,
+    addButtonLabel = 'Add Item',
+    maxItems,
+    showError = true,
+    error,
+}: FormArrayFieldProps<TFieldValues>) {
     const { fields, append, remove } = useFieldArray({
         control,
         name,
@@ -96,7 +83,7 @@ export default function FormArrayField
         if (maxItems && fields.length >= maxItems) {
             return;
         }
-        append(defaultValue || {} as any);
+        append(defaultValue || {});
     };
 
     const isMaxItems = maxItems && fields.length >= maxItems;
@@ -112,8 +99,8 @@ export default function FormArrayField
             {fields.length > 0 ? (
                 <View style={styles.itemsContainer}>
                     {fields.map((field, index) => (
-                        <View key={field[keyName]} style={styles.item}>
-                            {renderItem(field as any, index, remove)}
+                        <View key={field.id} style={styles.item}>
+                            {renderItem(field, index, remove)}
                         </View>
                     ))}
                 </View>
