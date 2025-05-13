@@ -1,39 +1,48 @@
 // ----------------------------
 // src/services/pathService.ts
 // ----------------------------
-import db from '../database/database';
-import { v4 as uuidv4 } from 'uuid';
+import { executeSql } from '../database/database';
+import { generateUUID } from '../utils/uuidUtil';
 import { Path, Milestone, PathAction } from '../types/path';
 
 export const createPath = async (path: Omit<Path, 'id' | 'createdAt' | 'updatedAt'>): Promise<Path> => {
-    const id = uuidv4();
+    const id = await generateUUID();
     const now = new Date().toISOString();
 
-    await new Promise<void>((resolve, reject) => {
-        db.transaction((tx: any) => {
-            tx.executeSql(
-                'INSERT INTO paths (id, title, description, startDate, targetDate, sagaId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [id, path.title, path.description ?? null, path.startDate ?? null, path.targetDate ?? null, path.sagaId ?? null, now, now],
-                () => resolve(),
-                (_: any, err: any) => reject(err)
-            );
-        });
-    });
+    await executeSql(
+        'INSERT INTO paths (id, title, description, startDate, targetDate, sagaId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+            id,
+            path.title,
+            path.description ?? null,
+            path.startDate ?? null,
+            path.targetDate ?? null,
+            path.sagaId ?? null,
+            now,
+            now
+        ]
+    );
 
     return { ...path, id, createdAt: now, updatedAt: now };
 };
 
 export const getPathsBySaga = async (sagaId: string): Promise<Path[]> => {
-    return new Promise((resolve, reject) => {
-        db.transaction((tx: any) => {
-            tx.executeSql(
-                'SELECT * FROM paths WHERE sagaId = ? ORDER BY createdAt DESC',
-                [sagaId],
-                (_: any, result: any) => {
-                    resolve(result.rows._array as Path[]);
-                },
-                (_: any, err: any) => reject(err)
-            );
-        });
-    });
+    const result = await executeSql(
+        'SELECT * FROM paths WHERE sagaId = ? ORDER BY createdAt DESC',
+        [sagaId]
+    );
+
+    let paths: Path[] = [];
+
+    // Check if result has rows property
+    if (result && result.rows) {
+        // Check if rows is an array or has _array property
+        const rowsData = Array.isArray(result.rows) ? result.rows : result.rows._array;
+
+        if (Array.isArray(rowsData)) {
+            paths = rowsData as Path[];
+        }
+    }
+
+    return paths;
 };

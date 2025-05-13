@@ -7,7 +7,8 @@ import {
     Platform,
     KeyboardAvoidingView,
     TouchableOpacity,
-    Dimensions
+    Dimensions,
+    Alert
 } from 'react-native';
 import { BottomSheet } from '../common/BottomSheet';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -16,8 +17,8 @@ import { Typography } from '../common/Typography';
 import { Button } from '../common/Button';
 import { IconName } from '../common/Icon';
 import IconPicker from '../common/IconPicker';
-import { FormInput } from '../form'; // Updated import path
-import { Form } from '../form'; // Added Form component import
+import { FormInput } from '../form';
+import { Form } from '../form';
 import { useForm, Controller } from 'react-hook-form';
 
 interface SagaCreationSheetProps {
@@ -43,6 +44,7 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
     onCreate
 }) => {
     const { theme } = useTheme();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Initialize react-hook-form
     const {
@@ -66,15 +68,42 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
                 name: '',
                 icon: undefined as unknown as IconName,
             });
+            setIsSubmitting(false);
         }
     }, [visible, reset]);
 
     // Handle form submission
-    const onSubmit = (data: FormValues) => {
-        onCreate({
-            name: data.name.trim(),
-            icon: data.icon,
-        });
+    const onSubmit = async (data: FormValues) => {
+        if (isSubmitting) return; // Prevent double submission
+
+        try {
+            console.log("Submitting saga creation:", data);
+            setIsSubmitting(true);
+
+            // Make sure we have the required icon
+            if (!data.icon) {
+                Alert.alert("Missing Icon", "Please select an icon for your saga.");
+                setIsSubmitting(false);
+                return;
+            }
+
+            await onCreate({
+                name: data.name.trim(),
+                icon: data.icon,
+            });
+
+            // Close the sheet after successful creation
+            onClose();
+        } catch (error) {
+            // Show error to the user
+            console.error("Failed to create saga:", error);
+            Alert.alert(
+                "Error Creating Saga",
+                "There was an error creating your saga. Please try again."
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     // Dismiss keyboard when tapping outside input
@@ -137,6 +166,7 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
                             <TouchableOpacity
                                 style={styles.closeButton}
                                 onPress={onClose}
+                                disabled={isSubmitting}
                             >
                                 <Typography color="secondary">Cancel</Typography>
                             </TouchableOpacity>
@@ -189,11 +219,12 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
                             {/* Create Button */}
                             <View style={{ paddingBottom: 100 }}>
                                 <Button
-                                    label="Create Saga"
+                                    label={isSubmitting ? "Creating..." : "Create Saga"}
                                     variant="primary"
                                     leftIcon="plus"
                                     onPress={handleSubmit(onSubmit)}
-                                    disabled={!isValid}
+                                    disabled={!isValid || isSubmitting}
+                                    isLoading={isSubmitting}
                                 />
                             </View>
                         </Form>

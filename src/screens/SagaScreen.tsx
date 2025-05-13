@@ -6,7 +6,8 @@ import {
     TouchableOpacity,
     StyleSheet,
     SafeAreaView,
-    StatusBar
+    StatusBar,
+    Alert
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStyles } from '../hooks/useStyles';
@@ -80,9 +81,20 @@ export default function SagaScreen() {
     }, []);
 
     const handleCreateSaga = async (newSaga: { name: string; icon: IconName }) => {
-        const created = await createSaga(newSaga.name, newSaga.icon);
-        setSagas((prev) => [...prev, created]);
-        setCreationSheetVisible(false);
+        try {
+            console.log("Creating new saga:", newSaga);
+            const created = await createSaga(newSaga.name, newSaga.icon);
+            console.log("Saga created successfully:", created);
+            setSagas((prev) => [...prev, created]);
+            setCreationSheetVisible(false);
+        } catch (error) {
+            console.error("Error creating saga:", error);
+            Alert.alert(
+                "Error",
+                "Failed to create the saga. Please try again."
+            );
+            // Keep the sheet open so the user can try again
+        }
     };
 
     const renderItem = ({ item, index }: { item: any; index: number }) => {
