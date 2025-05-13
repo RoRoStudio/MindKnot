@@ -1,3 +1,4 @@
+// src/components/common/Icon.tsx
 import { SvgProps } from 'react-native-svg';
 
 import Plus from '../../assets/icons/lucide/plus.svg';
@@ -13,11 +14,18 @@ import Link from '../../assets/icons/lucide/link.svg';
 import ArrowRight from '../../assets/icons/lucide/arrow-right.svg';
 import Minus from '../../assets/icons/lucide/minus.svg';
 import Sparkles from '../../assets/icons/lucide/sparkles.svg';
-// Add moon and sun icons
 import Moon from '../../assets/icons/lucide/moon.svg';
 import Sun from '../../assets/icons/lucide/sun.svg';
-import House from '../../assets/icons/lucide/house.svg'
-import BookOpen from '../../assets/icons/lucide/book-open.svg'
+import House from '../../assets/icons/lucide/house.svg';
+import BookOpen from '../../assets/icons/lucide/book-open.svg';
+// Add new icons needed by form components
+import Eye from '../../assets/icons/lucide/eye.svg';
+import EyeOff from '../../assets/icons/lucide/eye-off.svg';
+import ChevronDown from '../../assets/icons/lucide/chevron-down.svg';
+import AlertCircle from '../../assets/icons/lucide/alert-circle.svg';
+import X from '../../assets/icons/lucide/x.svg';
+import Calendar from '../../assets/icons/lucide/calendar.svg';
+import Clock from '../../assets/icons/lucide/clock.svg';
 
 const iconMap = {
     plus: Plus,
@@ -33,11 +41,18 @@ const iconMap = {
     link: Link,
     minus: Minus,
     sparkles: Sparkles,
-    // Add new icons
     moon: Moon,
     sun: Sun,
     house: House,
     'book-open': BookOpen,
+    // Add new icons
+    eye: Eye,
+    'eye-off': EyeOff,
+    'chevron-down': ChevronDown,
+    'alert-circle': AlertCircle,
+    x: X,
+    calendar: Calendar,
+    clock: Clock,
 };
 
 export type IconName = keyof typeof iconMap;

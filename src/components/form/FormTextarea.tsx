@@ -1,38 +1,43 @@
-// src/components/common/FormInput.tsx
+// src/components/form/FormTextarea.tsx
 import React, { useState } from 'react';
-import {
-    View,
-    TextInput,
-    TextInputProps,
-    StyleSheet
-} from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
+import { View, TextInput, StyleSheet } from 'react-native';
+import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from './Typography';
-import { Control, Controller, FieldValues, Path, RegisterOptions, FieldPath } from 'react-hook-form';
+import { Typography } from '../common/Typography';
+import FormErrorMessage from './FormErrorMessage';
 
-interface FormInputProps<T extends FieldValues> extends TextInputProps {
+interface FormTextareaProps<T extends FieldValues> {
     name: Path<T>;
     control: Control<T>;
     label?: string;
-    rules?: Omit<RegisterOptions<T, Path<T>>, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>;
-    showCharCount?: boolean;
-    maxLength?: number;
-    message?: string;
+    placeholder?: string;
+    rules?: Omit
+    RegisterOptions<T, Path<T>>,
+        'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'
+        >;
+showCharCount ?: boolean;
+maxLength ?: number;
+helperText ?: string;
+numberOfLines ?: number;
+autoGrow ?: boolean;
+maxHeight ?: number;
 }
 
-function FormInput<T extends FieldValues>({
+export default function FormTextarea<T extends FieldValues>({
     name,
     control,
     label,
+    placeholder,
     rules,
     showCharCount,
     maxLength,
-    message,
-    ...inputProps
-}: FormInputProps<T>) {
-    const { theme } = useTheme();
+    helperText,
+    numberOfLines = 4,
+    autoGrow = true,
+    maxHeight = 200,
+}: FormTextareaProps<T>) {
     const [isFocused, setIsFocused] = useState(false);
+    const [height, setHeight] = useState<number | undefined>(undefined);
 
     const styles = useStyles((theme) => ({
         container: {
@@ -46,29 +51,32 @@ function FormInput<T extends FieldValues>({
             borderWidth: 1,
             borderColor: theme.components.inputs.border,
             borderRadius: theme.components.inputs.radius,
-            paddingVertical: theme.spacing.s,
-            paddingHorizontal: theme.spacing.m,
+            padding: theme.spacing.m,
             color: theme.components.inputs.text,
             fontSize: theme.typography.fontSize.m,
+            textAlignVertical: 'top',
         },
-        focusedInput: {
+        inputFocused: {
             borderColor: theme.components.inputs.focusBorder,
         },
-        errorInput: {
+        inputError: {
             borderColor: theme.colors.error,
         },
         charCounter: {
             alignSelf: 'flex-end',
             marginTop: 4,
         },
-        errorText: {
-            color: theme.colors.error,
-            marginTop: 4,
-        },
-        messageText: {
+        helperText: {
             marginTop: 4,
         },
     }));
+
+    const handleContentSizeChange = (event: any) => {
+        if (autoGrow) {
+            const contentHeight = event.nativeEvent.contentSize.height;
+            setHeight(Math.min(contentHeight, maxHeight));
+        }
+    };
 
     return (
         <Controller
@@ -86,11 +94,12 @@ function FormInput<T extends FieldValues>({
                     <TextInput
                         style={[
                             styles.input,
-                            isFocused && styles.focusedInput,
-                            error && styles.errorInput,
+                            isFocused && styles.inputFocused,
+                            error && styles.inputError,
+                            height ? { height } : { minHeight: 20 * numberOfLines },
                         ]}
                         value={value}
-                        onChangeText={text => {
+                        onChangeText={(text) => {
                             if (maxLength && text.length > maxLength) {
                                 return;
                             }
@@ -102,33 +111,39 @@ function FormInput<T extends FieldValues>({
                         }}
                         onFocus={() => setIsFocused(true)}
                         maxLength={maxLength}
-                        placeholderTextColor={theme.components.inputs.placeholder}
-                        {...inputProps}
+                        placeholder={placeholder}
+                        multiline
+                        numberOfLines={numberOfLines}
+                        onContentSizeChange={handleContentSizeChange}
                     />
 
                     {showCharCount && maxLength && (
                         <Typography
                             variant="caption"
                             style={styles.charCounter}
-                            color={value?.length === maxLength ? 'error' : 'secondary'}
+                            color={
+                                value && typeof value === 'string' && value.length === maxLength
+                                    ? 'error'
+                                    : 'secondary'
+                            }
                         >
-                            {value?.length || 0}/{maxLength}
+                            {value && typeof value === 'string' ? value.length : 0}/{maxLength}
                         </Typography>
                     )}
 
-                    {error ? (
-                        <Typography variant="caption" style={styles.errorText}>
-                            {error.message}
+                    <FormErrorMessage message={error?.message} visible={!!error} />
+
+                    {helperText && !error && (
+                        <Typography
+                            variant="caption"
+                            style={styles.helperText}
+                            color="secondary"
+                        >
+                            {helperText}
                         </Typography>
-                    ) : message ? (
-                        <Typography variant="caption" style={styles.messageText} color="secondary">
-                            {message}
-                        </Typography>
-                    ) : null}
+                    )}
                 </View>
             )}
         />
     );
 }
-
-export default FormInput;
