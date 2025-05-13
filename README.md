@@ -4,7 +4,6 @@ MindKnot
 ├─ .pnp.cjs
 ├─ .pnp.loader.mjs
 ├─ App.tsx
-├─ README.md
 ├─ all-code.txt
 ├─ app.json
 ├─ assets
@@ -24,8 +23,9 @@ MindKnot
 │  │     └─ lucide
 │  │        ├─ a-arrow-down.svg
 │  │        ├─ a-arrow-up.svg
-│  │        ├─ (And a lot more)
+│  │        ├─ (and a lot more)
 │  ├─ components
+│  │  ├─ captures
 │  │  ├─ chapters
 │  │  ├─ common
 │  │  │  ├─ BottomSheet.tsx
@@ -36,16 +36,25 @@ MindKnot
 │  │  │  ├─ IconPicker.tsx
 │  │  │  └─ Typography.tsx
 │  │  ├─ entries
+│  │  ├─ loops
 │  │  ├─ navigation
 │  │  │  ├─ CustomBottomNavBar.tsx
 │  │  │  └─ DiamondFab.tsx
+│  │  ├─ paths
 │  │  └─ sagas
 │  │     ├─ AnimatedBookSaga.tsx
 │  │     └─ SagaCreationSheet.tsx
 │  ├─ constants
 │  ├─ contexts
 │  │  └─ ThemeContext.tsx
+│  ├─ database
+│  │  ├─ database.ts
+│  │  └─ schema.ts
 │  ├─ hooks
+│  │  ├─ useCaptures.ts
+│  │  ├─ useLoops.ts
+│  │  ├─ usePaths.ts
+│  │  ├─ useSagas.ts
 │  │  └─ useStyles.ts
 │  ├─ navigation
 │  │  ├─ AppNavigator.tsx
@@ -55,7 +64,15 @@ MindKnot
 │  │  ├─ SagaScreen.tsx
 │  │  └─ ThemeInspectorScreen.tsx
 │  ├─ services
+│  │  ├─ captureService.ts
+│  │  ├─ loopService.ts
+│  │  ├─ pathService.ts
+│  │  └─ sagaService.ts
 │  ├─ state
+│  │  ├─ captureStore.ts
+│  │  ├─ loopStore.ts
+│  │  ├─ pathStore.ts
+│  │  └─ sagaStore.ts
 │  ├─ styles
 │  │  ├─ colors.ts
 │  │  ├─ index.ts
@@ -66,8 +83,15 @@ MindKnot
 │  │  ├─ light.ts
 │  │  └─ themeTypes.ts
 │  ├─ types
+│  │  ├─ capture.ts
+│  │  ├─ chapter.ts
+│  │  ├─ index.ts
+│  │  ├─ loop.ts
+│  │  ├─ path.ts
+│  │  ├─ saga.ts
 │  │  └─ svg.d.ts
 │  └─ utils
+│     ├─ dateUtils.ts
 │     └─ themeUtils.ts
 └─ tsconfig.json
 
