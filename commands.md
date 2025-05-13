@@ -13,3 +13,5 @@ find . -type f \( -name "*.ts" -o -name "*.tsx" \) \
 (not needed mostly) emulator -avd Pixel_8_API_35
 
 npx expo start --android
+
+npx expo run:android (for sqlite)

@@ -123,14 +123,14 @@ export default function CaptureForm({ onSubmit, initialData, sagas = [] }: Captu
     return (
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.formContainer}>
-                <Form onSubmit={handleSubmit(handleFormSubmit)}>
+                <Form onSubmit={(data: any) => handleSubmit(handleFormSubmit)(data)}>
                     <FormSelect
                         name="subType"
                         control={control}
                         label="Capture Type"
                         options={CAPTURE_TYPE_OPTIONS}
                         rules={{ required: 'Capture type is required' }}
-                        onChange={(value) => setCaptureType(value as CaptureSubType)}
+                        onChange={(value: CaptureSubType) => setCaptureType(value)}
                     />
 
                     <FormInput

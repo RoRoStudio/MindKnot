@@ -15,12 +15,9 @@ interface FormSwitchProps<T extends FieldValues> {
     name: Path<T>;
     control: Control<T>;
     label: string;
-    rules?: Omit
-    RegisterOptions<T, Path<T>>,
-        'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'
-        >;
-helperText ?: string;
-disabled ?: boolean;
+    rules?: Omit<RegisterOptions<T, Path<T>>, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>;
+    helperText?: string;
+    disabled?: boolean;
 }
 
 export default function FormSwitch<T extends FieldValues>({

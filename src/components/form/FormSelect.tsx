@@ -25,13 +25,11 @@ interface FormSelectProps<T extends FieldValues> {
     control: Control<T>;
     label?: string;
     options: Option[];
-    rules?: Omit
-    RegisterOptions<T, Path<T>>,
-        'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'
-        >;
-placeholder ?: string;
-helperText ?: string;
-disabled ?: boolean;
+    rules?: Omit<RegisterOptions<T, Path<T>>, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>;
+    placeholder?: string;
+    helperText?: string;
+    disabled?: boolean;
+    onChange?: (value: any) => void;
 }
 
 export default function FormSelect<T extends FieldValues>({
@@ -43,6 +41,7 @@ export default function FormSelect<T extends FieldValues>({
     placeholder = 'Select an option',
     helperText,
     disabled = false,
+    onChange: onExternalChange,
 }: FormSelectProps<T>) {
     const [modalVisible, setModalVisible] = useState(false);
     const selectedOptionRef = useRef<View>(null);
@@ -136,6 +135,9 @@ export default function FormSelect<T extends FieldValues>({
 
                 const handleSelect = (option: Option) => {
                     onChange(option.value);
+                    if (onExternalChange) {
+                        onExternalChange(option.value);
+                    }
                     closeModal();
                 };
 

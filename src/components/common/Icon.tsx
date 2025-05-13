@@ -22,7 +22,7 @@ import BookOpen from '../../assets/icons/lucide/book-open.svg';
 import Eye from '../../assets/icons/lucide/eye.svg';
 import EyeOff from '../../assets/icons/lucide/eye-off.svg';
 import ChevronDown from '../../assets/icons/lucide/chevron-down.svg';
-import AlertCircle from '../../assets/icons/lucide/alert-circle.svg';
+import CircleAlert from '../../assets/icons/lucide/circle-alert.svg';
 import X from '../../assets/icons/lucide/x.svg';
 import Calendar from '../../assets/icons/lucide/calendar.svg';
 import Clock from '../../assets/icons/lucide/clock.svg';
@@ -49,7 +49,7 @@ const iconMap = {
     eye: Eye,
     'eye-off': EyeOff,
     'chevron-down': ChevronDown,
-    'alert-circle': AlertCircle,
+    'circle-alert': CircleAlert,
     x: X,
     calendar: Calendar,
     clock: Clock,

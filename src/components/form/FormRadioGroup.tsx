@@ -20,13 +20,10 @@ interface FormRadioGroupProps<T extends FieldValues> {
     control: Control<T>;
     label?: string;
     options: Option[];
-    rules?: Omit
-    RegisterOptions<T, Path<T>>,
-        'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'
-        >;
-helperText ?: string;
-disabled ?: boolean;
-row ?: boolean;
+    rules?: Omit<RegisterOptions<T, Path<T>>, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>;
+    helperText?: string;
+    disabled?: boolean;
+    row?: boolean;
 }
 
 export default function FormRadioGroup<T extends FieldValues>({

@@ -16,7 +16,8 @@ import { Typography } from '../common/Typography';
 import { Button } from '../common/Button';
 import { IconName } from '../common/Icon';
 import IconPicker from '../common/IconPicker';
-import FormInput from '../common/FormInput';
+import { FormInput } from '../form'; // Updated import path
+import { Form } from '../form'; // Added Form component import
 import { useForm, Controller } from 'react-hook-form';
 
 interface SagaCreationSheetProps {
@@ -97,7 +98,6 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
             maxHeight: SCREEN_HEIGHT * 0.8,
             width: '100%',
         },
-
         header: {
             flexDirection: 'row',
             justifyContent: 'space-between',
@@ -117,6 +117,9 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
         buttonContainer: {
             marginTop: theme.spacing.m,
         },
+        formContainer: {
+            width: '100%',
+        }
     }));
 
     if (!visible) return null;
@@ -139,59 +142,61 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
                             </TouchableOpacity>
                         </View>
 
-                        {/* Saga Name Input */}
-                        <FormInput<FormValues>
-                            control={control}
-                            name="name"
-                            label="Saga Name"
-                            placeholder="Enter saga name..."
-                            rules={{
-                                required: 'Saga name is required',
-                                maxLength: {
-                                    value: MAX_NAME_LENGTH,
-                                    message: `Name cannot exceed ${MAX_NAME_LENGTH} characters`
-                                }
-                            }}
-                            showCharCount
-                            maxLength={MAX_NAME_LENGTH}
-                            autoFocus
-                        />
-
-                        {/* Icon Picker */}
-                        <View style={styles.iconSection}>
-                            <Typography variant="h4" style={{ marginBottom: 8 }}>
-                                Choose an Icon
-                            </Typography>
-                            <Controller
+                        <Form style={styles.formContainer}>
+                            {/* Saga Name Input */}
+                            <FormInput
                                 control={control}
-                                name="icon"
-                                rules={{ required: 'Please select an icon' }}
-                                render={({ field: { value, onChange } }) => (
-                                    <View>
-                                        <IconPicker
-                                            selectedIcon={value}
-                                            onSelectIcon={onChange}
-                                        />
-                                        {errors.icon && (
-                                            <Typography variant="caption" style={styles.errorText}>
-                                                {errors.icon.message}
-                                            </Typography>
-                                        )}
-                                    </View>
-                                )}
+                                name="name"
+                                label="Saga Name"
+                                placeholder="Enter saga name..."
+                                rules={{
+                                    required: 'Saga name is required',
+                                    maxLength: {
+                                        value: MAX_NAME_LENGTH,
+                                        message: `Name cannot exceed ${MAX_NAME_LENGTH} characters`
+                                    }
+                                }}
+                                showCharCount
+                                maxLength={MAX_NAME_LENGTH}
+                                autoFocus
                             />
-                        </View>
 
-                        {/* Create Button */}
-                        <View style={{ paddingBottom: 100 }}>
-                            <Button
-                                label="Create Saga"
-                                variant="primary"
-                                leftIcon="plus"
-                                onPress={handleSubmit(onSubmit)}
-                                disabled={!isValid}
-                            />
-                        </View>
+                            {/* Icon Picker */}
+                            <View style={styles.iconSection}>
+                                <Typography variant="h4" style={{ marginBottom: 8 }}>
+                                    Choose an Icon
+                                </Typography>
+                                <Controller
+                                    control={control}
+                                    name="icon"
+                                    rules={{ required: 'Please select an icon' }}
+                                    render={({ field: { value, onChange } }) => (
+                                        <View>
+                                            <IconPicker
+                                                selectedIcon={value}
+                                                onSelectIcon={onChange}
+                                            />
+                                            {errors.icon && (
+                                                <Typography variant="caption" style={styles.errorText}>
+                                                    {errors.icon.message}
+                                                </Typography>
+                                            )}
+                                        </View>
+                                    )}
+                                />
+                            </View>
+
+                            {/* Create Button */}
+                            <View style={{ paddingBottom: 100 }}>
+                                <Button
+                                    label="Create Saga"
+                                    variant="primary"
+                                    leftIcon="plus"
+                                    onPress={handleSubmit(onSubmit)}
+                                    disabled={!isValid}
+                                />
+                            </View>
+                        </Form>
                     </View>
                 </KeyboardAvoidingView>
             </TouchableWithoutFeedback>

@@ -34,7 +34,7 @@ export default function FormErrorMessage({ message, visible = true }: FormErrorM
         <View style={styles.container}>
             <View style={styles.iconContainer}>
                 <Icon
-                    name="alert-circle"
+                    name="circle-alert"
                     width={14}
                     height={14}
                     color={styles.text.color}

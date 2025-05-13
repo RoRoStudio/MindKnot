@@ -11,16 +11,13 @@ interface FormTextareaProps<T extends FieldValues> {
     control: Control<T>;
     label?: string;
     placeholder?: string;
-    rules?: Omit
-    RegisterOptions<T, Path<T>>,
-        'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'
-        >;
-showCharCount ?: boolean;
-maxLength ?: number;
-helperText ?: string;
-numberOfLines ?: number;
-autoGrow ?: boolean;
-maxHeight ?: number;
+    rules?: Omit<RegisterOptions<T, Path<T>>, 'valueAsNumber' | 'valueAsDate' | 'setValueAs' | 'disabled'>;
+    showCharCount?: boolean;
+    maxLength?: number;
+    helperText?: string;
+    numberOfLines?: number;
+    autoGrow?: boolean;
+    maxHeight?: number;
 }
 
 export default function FormTextarea<T extends FieldValues>({

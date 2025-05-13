@@ -40,7 +40,7 @@ export default function FormArrayField<TFieldValues extends FieldValues = FieldV
 }: FormArrayFieldProps<TFieldValues>) {
     const { fields, append, remove } = useFieldArray({
         control,
-        name,
+        name: name as any, // Use type assertion to work around the type issue
         keyName,
     });
 
@@ -86,7 +86,7 @@ export default function FormArrayField<TFieldValues extends FieldValues = FieldV
         append(defaultValue || {});
     };
 
-    const isMaxItems = maxItems && fields.length >= maxItems;
+    const isMaxItems = maxItems ? fields.length >= maxItems : false;
 
     return (
         <View style={styles.container}>
