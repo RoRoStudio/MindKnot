@@ -193,9 +193,6 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
 
                             {/* Icon Picker */}
                             <View style={styles.iconSection}>
-                                <Typography variant="h4" style={{ marginBottom: 8 }}>
-                                    Choose an Icon
-                                </Typography>
                                 <Controller
                                     control={control}
                                     name="icon"

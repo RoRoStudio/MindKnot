@@ -1,18 +1,21 @@
 // src/components/common/IconPicker.tsx
-import React from 'react';
-import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import {
+    View,
+    TouchableOpacity,
+    ScrollView,
+    StyleSheet,
+    TextInput,
+} from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStyles } from '../../hooks/useStyles';
 import { Icon, IconName } from './Icon';
-import { Typography } from './Typography';
 
 interface IconPickerProps {
     selectedIcon: IconName | null;
     onSelectIcon: (icon: IconName) => void;
 }
 
-// List of icons to show in the picker
-// These are the icons available in the Icon component
 const AVAILABLE_ICONS: IconName[] = [
     'lightbulb',
     'git-branch',
@@ -25,24 +28,35 @@ const AVAILABLE_ICONS: IconName[] = [
     'sun',
     'moon',
     'plus',
-    'list'
+    'list',
+    'circle-help',
+    'compass',
+    'calendar-sync',
+    'scroll-text',
 ];
 
 const IconPicker: React.FC<IconPickerProps> = ({ selectedIcon, onSelectIcon }) => {
     const { theme } = useTheme();
+    const [searchTerm, setSearchTerm] = useState('');
 
     const styles = useStyles((theme) => ({
         container: {
             marginVertical: theme.spacing.m,
         },
-        title: {
+        searchBar: {
+            height: 40,
+            borderRadius: theme.shape.radius.m,
+            backgroundColor: theme.colors.surface,
+            paddingHorizontal: theme.spacing.m,
             marginBottom: theme.spacing.s,
+            fontSize: theme.typography.fontSize.m,
+            color: theme.colors.textPrimary,
         },
         iconsContainer: {
             flexDirection: 'row',
             flexWrap: 'wrap',
             justifyContent: 'flex-start',
-            marginHorizontal: -theme.spacing.xs, // To offset the margin of the icon items
+            marginHorizontal: -theme.spacing.xs,
         },
         iconItem: {
             width: 60,
@@ -56,21 +70,26 @@ const IconPicker: React.FC<IconPickerProps> = ({ selectedIcon, onSelectIcon }) =
         selectedIconItem: {
             backgroundColor: theme.colors.primaryLight,
         },
-        iconText: {
-            fontSize: theme.typography.fontSize.xs,
-            marginTop: 4,
-            textAlign: 'center',
-        },
         scrollView: {
-            maxHeight: 240, // Limit height to ensure it doesn't take up too much space
+            maxHeight: 4 * 60 + 3 * theme.spacing.xs * 2, // 4 rows + margins
         },
     }));
 
+    const filteredIcons = useMemo(() => {
+        return AVAILABLE_ICONS.filter((icon) =>
+            icon.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [searchTerm]);
+
     return (
         <View style={styles.container}>
-            <Typography variant="h4" style={styles.title}>
-                Choose an Icon
-            </Typography>
+            <TextInput
+                style={styles.searchBar}
+                placeholder="Search icons..."
+                placeholderTextColor={theme.colors.textSecondary}
+                onChangeText={setSearchTerm}
+                value={searchTerm}
+            />
 
             <ScrollView
                 horizontal={false}
@@ -78,7 +97,7 @@ const IconPicker: React.FC<IconPickerProps> = ({ selectedIcon, onSelectIcon }) =
                 showsVerticalScrollIndicator={true}
             >
                 <View style={styles.iconsContainer}>
-                    {AVAILABLE_ICONS.map((icon) => (
+                    {filteredIcons.map((icon) => (
                         <TouchableOpacity
                             key={icon}
                             style={[
@@ -92,15 +111,12 @@ const IconPicker: React.FC<IconPickerProps> = ({ selectedIcon, onSelectIcon }) =
                                 name={icon}
                                 width={24}
                                 height={24}
-                                color={selectedIcon === icon ? theme.colors.onPrimary : theme.colors.primary}
+                                color={
+                                    selectedIcon === icon
+                                        ? theme.colors.onPrimary
+                                        : theme.colors.primary
+                                }
                             />
-                            <Typography
-                                variant="caption"
-                                style={styles.iconText}
-                                color={selectedIcon === icon ? 'primary' : 'inherit'}
-                            >
-                                {icon.replace('-', ' ')}
-                            </Typography>
                         </TouchableOpacity>
                     ))}
                 </View>
