@@ -3,7 +3,8 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
 import SagaScreen from '../screens/SagaScreen';
-import ThemeInspectorScreen from '../screens/ThemeInspectorScreen';
+import VaultScreen from '../screens/VaultScreen';
+import MomentumScreen from '../screens/MomentumScreen';
 import { CustomBottomNavBar } from '../components/navigation/CustomBottomNavBar';
 
 const Tab = createBottomTabNavigator();
@@ -18,8 +19,8 @@ export default function TabNavigator() {
         >
             <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="Sagas" component={SagaScreen} />
-            <Tab.Screen name="Explore" component={SagaScreen} />
-            <Tab.Screen name="Settings" component={ThemeInspectorScreen} />
+            <Tab.Screen name="Vault" component={VaultScreen} />
+            <Tab.Screen name="Momentum" component={MomentumScreen} />
         </Tab.Navigator>
     );
 }

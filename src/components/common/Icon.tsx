@@ -27,6 +27,14 @@ import X from '../../assets/icons/lucide/x.svg';
 import Calendar from '../../assets/icons/lucide/calendar.svg';
 import Clock from '../../assets/icons/lucide/clock.svg';
 
+// Add new icons for updated navigation
+import Vault from '../../assets/icons/lucide/vault.svg';
+import CircleHelp from '../../assets/icons/lucide/circle-help.svg';
+import Zap from '../../assets/icons/lucide/zap.svg';
+import ScrollText from '../../assets/icons/lucide/scroll-text.svg';
+import CalendarSync from '../../assets/icons/lucide/calendar-sync.svg';
+import Compass from '../../assets/icons/lucide/compass.svg';
+
 const iconMap = {
     plus: Plus,
     'arrow-left': ArrowLeft,
@@ -53,6 +61,13 @@ const iconMap = {
     x: X,
     calendar: Calendar,
     clock: Clock,
+    // New navigation icons
+    vault: Vault,
+    'circle-help': CircleHelp,
+    'zap': Zap,
+    'scroll-text': ScrollText,
+    'calendar-sync': CalendarSync,
+    compass: Compass,
 };
 
 export type IconName = keyof typeof iconMap;

@@ -80,14 +80,16 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
     }));
 
     const getIcon = (routeName: string, isFocused: boolean) => {
+        // Updated icon mapping according to the UI/UX blueprint
         let iconName: IconName;
         switch (routeName) {
             case 'Home': iconName = "house"; break;
             case 'Sagas': iconName = "book-open"; break;
-            case 'Explore': iconName = "sparkles"; break;
-            case 'Settings': iconName = "settings"; break;
-            default: iconName = "settings"; break;
+            case 'Vault': iconName = "vault"; break;
+            case 'Momentum': iconName = "zap"; break;
+            default: iconName = "house"; break;
         }
+
         return (
             <Icon
                 name={iconName}
@@ -222,7 +224,7 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
     );
 }
 
-// Make sure this type is imported or defined
-type IconName = "house" | "book-open" | "sparkles" | "settings" | "plus" | "arrow-left" |
+// Updated IconName type to include new icons
+type IconName = "house" | "book-open" | "vault" | "zap" | "plus" | "arrow-left" |
     "arrow-right" | "check" | "lightbulb" | "file-text" | "list" | "minus" |
-    "git-branch" | "link" | "map" | "moon" | "sun";
+    "git-branch" | "link" | "map" | "moon" | "sun" | "scroll-text" | "loop" | "path" | "circle-help";

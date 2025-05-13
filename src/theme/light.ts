@@ -121,10 +121,10 @@ export const lightTheme: ThemeType = {
             inactiveIcon: 'rgba(236, 239, 202, 0.7)', // Semi-transparent secondary
             activeText: '#ECEFCA', // Updated to match secondary
             inactiveText: 'rgba(236, 239, 202, 0.7)', // Semi-transparent secondary
-            fabBackground: '#94B4C1', // Updated to accent color
+            fabBackground: '#6E8C99', // Updated to accent color
             fabIcon: '#FFFFFF',
-            menuItemBackground: '#547792', // Using primaryLight
-            menuItemIcon: '#FFFFFF',
+            menuItemBackground: '#213448', // Using primary
+            menuItemIcon: '#ECEFCA',
             elevation: 8,
         },
         card: {
