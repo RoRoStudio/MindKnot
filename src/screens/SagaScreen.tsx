@@ -1,5 +1,4 @@
-// src/screens/SagaScreen.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     FlatList,
@@ -9,49 +8,28 @@ import {
     SafeAreaView,
     StatusBar
 } from 'react-native';
-import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStyles } from '../hooks/useStyles';
 import { Typography } from '../components/common/Typography';
 import { Icon, IconName } from '../components/common/Icon';
 import SagaCreationSheet from '../components/sagas/SagaCreationSheet';
 import AnimatedBookSaga from '../components/sagas/AnimatedBookSaga';
+import { getAllSagas, createSaga } from '../services/sagaService';
+import { useSagaStore } from '../state/sagaStore';
+import { Saga } from '../types/saga';
 
-// Get screen width to calculate grid item width
 const { width } = Dimensions.get('window');
-// Calculate item width (2 items per row with proper spacing)
 const SPACING = 24;
 const ITEMS_PER_ROW = 2;
-const ITEM_WIDTH = Math.floor((width - SPACING * (ITEMS_PER_ROW + 1)) / ITEMS_PER_ROW); // Left padding + middle spacing + right padding
-const ITEM_HEIGHT = ITEM_WIDTH * 1.5; // Book height ratio
+const ITEM_WIDTH = Math.floor((width - SPACING * (ITEMS_PER_ROW + 1)) / ITEMS_PER_ROW);
+const ITEM_HEIGHT = ITEM_WIDTH * 1.5;
 
-// Define saga type
-interface Saga {
-    id: string;
-    name: string;
-    icon: IconName;
-}
-
-// Define types for grid items
-type GridItem = Saga | { id: string; isAddButton: boolean };
-
-// Mock data for sagas
-const initialSagas: Saga[] = [
-    { id: '1', name: 'Personal Growth', icon: 'lightbulb' },
-    { id: '2', name: 'Startup Journey', icon: 'git-branch' },
-    { id: '3', name: 'Health & Fitness', icon: 'map' },
-    { id: '4', name: 'Learning Piano', icon: 'sparkles' },
-];
-
-interface SagaScreenProps {
-    navigation: NavigationProp<ParamListBase>;
-}
-
-export default function SagaScreen({ navigation }: SagaScreenProps) {
+export default function SagaScreen() {
     const { theme, isDark } = useTheme();
-    const [sagas, setSagas] = useState<Saga[]>(initialSagas);
+    const [sagas, setSagas] = useState<Saga[]>([]);
     const [isCreationSheetVisible, setCreationSheetVisible] = useState(false);
     const [overlay, setOverlay] = useState<React.ReactNode>(null);
+    const setSelectedSaga = useSagaStore(state => state.setSelectedSaga);
 
     const styles = useStyles((theme) => ({
         container: {
@@ -83,7 +61,6 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: theme.colors.surfaceVariant,
-            margin: 0,
         },
         addIcon: {
             marginBottom: theme.spacing.s,
@@ -98,28 +75,21 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
         }
     }));
 
-    // Function to handle saga creation
-    const handleCreateSaga = (newSaga: { name: string; icon: IconName }) => {
-        // Generate a random ID (in a real app, this would be handled better)
-        const newId = Date.now().toString();
-        setSagas([...sagas, { id: newId, ...newSaga }]);
+    useEffect(() => {
+        getAllSagas().then(setSagas).catch(console.error);
+    }, []);
+
+    const handleCreateSaga = async (newSaga: { name: string; icon: IconName }) => {
+        const created = await createSaga(newSaga.name, newSaga.icon);
+        setSagas((prev) => [...prev, created]);
         setCreationSheetVisible(false);
     };
 
-    // Function to navigate to saga details
-    const navigateToSagaDetails = (sagaId: string) => {
-        // In a real app, you'd navigate to a detail screen with the saga ID
-        console.log(`Navigating to saga details: ${sagaId}`);
-        // navigation.navigate('SagaDetails', { sagaId });
-    };
-
-    // Render a saga item or the "add new" item
-    const renderItem = ({ item, index }: { item: GridItem, index: number }) => {
-        // Calculate the correct left margin for grid items as before
+    const renderItem = ({ item, index }: { item: any; index: number }) => {
         const isEvenItem = index % 2 === 0;
         const marginLeft = isEvenItem ? 0 : SPACING;
 
-        if ('isAddButton' in item) {
+        if (item.isAddButton) {
             return (
                 <View style={[styles.itemContainer, { marginLeft }]}>
                     <TouchableOpacity
@@ -148,15 +118,14 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
                     saga={item}
                     width={ITEM_WIDTH}
                     height={ITEM_HEIGHT}
-                    onPress={() => navigateToSagaDetails(item.id)}
+                    onPress={() => setSelectedSaga(item.id)}
                     setOverlay={setOverlay}
                 />
             </View>
         );
     };
 
-    // Add the "Create New" button to the data
-    const gridData: GridItem[] = [...sagas, { id: 'add-button', isAddButton: true }];
+    const gridData = [...sagas, { id: 'add-button', isAddButton: true }];
 
     return (
         <SafeAreaView style={styles.container}>
@@ -164,10 +133,7 @@ export default function SagaScreen({ navigation }: SagaScreenProps) {
                 barStyle={isDark ? 'light-content' : 'dark-content'}
                 backgroundColor={theme.colors.background}
             />
-
-            {/* Render the overlay BEFORE the content */}
             {overlay}
-
             <View style={styles.header}>
                 <Typography variant="h1" style={styles.headerTitle}>Your Sagas</Typography>
                 <Typography variant="body1" style={styles.headerSubtitle}>

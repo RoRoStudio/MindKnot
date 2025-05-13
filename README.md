@@ -24,10 +24,11 @@ MindKnot
 │  │     └─ lucide
 │  │        ├─ a-arrow-down.svg
 │  │        ├─ a-arrow-up.svg
-│  │        ├─ (and a lot more)
+│  │        ├─ (And a lot more)
 │  ├─ components
 │  │  ├─ chapters
 │  │  ├─ common
+│  │  │  ├─ BottomSheet.tsx
 │  │  │  ├─ Button.tsx
 │  │  │  ├─ Card.tsx
 │  │  │  ├─ FormInput.tsx
@@ -40,7 +41,6 @@ MindKnot
 │  │  │  └─ DiamondFab.tsx
 │  │  └─ sagas
 │  │     ├─ AnimatedBookSaga.tsx
-│  │     ├─ SagaCreationSheet backup.tsx
 │  │     └─ SagaCreationSheet.tsx
 │  ├─ constants
 │  ├─ contexts
@@ -55,9 +55,6 @@ MindKnot
 │  │  ├─ SagaScreen.tsx
 │  │  └─ ThemeInspectorScreen.tsx
 │  ├─ services
-│  │  ├─ chapterService.ts
-│  │  ├─ entryService.ts
-│  │  └─ sagaService.ts
 │  ├─ state
 │  ├─ styles
 │  │  ├─ colors.ts
@@ -69,10 +66,6 @@ MindKnot
 │  │  ├─ light.ts
 │  │  └─ themeTypes.ts
 │  ├─ types
-│  │  ├─ ChapterTypes.ts
-│  │  ├─ EntryTypes.ts
-│  │  ├─ SagaTypes.ts
-│  │  ├─ index.ts
 │  │  └─ svg.d.ts
 │  └─ utils
 │     └─ themeUtils.ts
