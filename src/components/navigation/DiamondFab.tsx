@@ -47,7 +47,7 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress,
     const rotation = useSharedValue(0);
     const scale = useSharedValue(1);
     const { theme } = useTheme();
-    
+
     // State for form sheets
     const [captureFormVisible, setCaptureFormVisible] = useState(false);
     const [captureType, setCaptureType] = useState<CaptureSubType>(CaptureSubType.NOTE);
@@ -128,14 +128,10 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress,
 
     // Updated menu items
     const menuItems = [
-        { icon: 'scroll-text', label: 'Create Capture', action: () => showCaptureForm(CaptureSubType.NOTE) },
-        { icon: 'lightbulb', label: 'Create Spark', action: () => showCaptureForm(CaptureSubType.SPARK) },
-        { icon: 'check', label: 'Create Action', action: () => showCaptureForm(CaptureSubType.ACTION) },
-        { icon: 'sparkles', label: 'Create Reflection', action: () => showCaptureForm(CaptureSubType.REFLECTION) },
+        { icon: 'file-text', label: 'Create Capture', action: () => showCaptureForm(CaptureSubType.NOTE) },
         { icon: 'calendar-sync', label: 'Create Loop', action: () => showLoopForm() },
         { icon: 'compass', label: 'Create Path', action: () => showPathForm() },
     ];
-
     // Show creation forms
     const showCaptureForm = (type: CaptureSubType) => {
         closeMenu();

@@ -79,23 +79,28 @@ export const getCapturesBySaga = async (sagaId: string): Promise<Capture[]> => {
 };
 
 export const getAllCaptures = async (): Promise<Capture[]> => {
+    console.log('Fetching all captures...');
+
     const result = await executeSql(
         'SELECT * FROM captures ORDER BY createdAt DESC',
         []
     );
 
-    // Handle the result structure from our updated executeSql function
-    if (result && result.rows && Array.isArray(result.rows)) {
-        return result.rows.map((row: any) => ({
+    // Check specifically for the rows structure from executeSql
+    if (result && result.rows && result.rows._array) {
+        console.log(`Found ${result.rows.length} captures in _array:`, result.rows._array);
+
+        return result.rows._array.map((row: any) => ({
             ...row,
             tags: row.tags ? JSON.parse(row.tags) : [],
             linkedCaptureIds: row.linkedCaptureIds ? JSON.parse(row.linkedCaptureIds) : [],
             subActions: row.subActions ? JSON.parse(row.subActions) : [],
             done: Boolean(row.done),
         })) as Capture[];
+    } else {
+        console.log('No captures found or invalid result structure', result);
+        return [];
     }
-
-    return [];
 };
 
 // Add more functions as needed
