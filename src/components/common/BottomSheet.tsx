@@ -1,3 +1,4 @@
+// src/components/common/BottomSheet.tsx
 import React, { useEffect } from 'react';
 import {
     Dimensions,
@@ -5,6 +6,7 @@ import {
     TouchableWithoutFeedback,
     Keyboard,
     Platform,
+    StyleSheet,
 } from 'react-native';
 import Animated, {
     useSharedValue,
@@ -20,7 +22,7 @@ import {
 } from 'react-native-gesture-handler';
 import { useTheme } from '../../contexts/ThemeContext';
 
-// ✅ Define props at the top
+// Define props type
 interface BottomSheetProps {
     visible: boolean;
     onClose: () => void;
@@ -30,24 +32,42 @@ interface BottomSheetProps {
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const DRAG_DISMISS_THRESHOLD = 100;
 
-// ✅ Component starts here
 export const BottomSheet: React.FC<BottomSheetProps> = ({
     visible,
     onClose,
     children,
 }) => {
-    const { theme } = useTheme(); // ✅ Now valid hook usage
+    // Get theme
+    const { theme } = useTheme();
 
+    // Animation values
     const translateY = useSharedValue(SCREEN_HEIGHT);
 
+    // Update animation when visibility changes
     useEffect(() => {
-        translateY.value = withTiming(visible ? 0 : SCREEN_HEIGHT, { duration: 300 });
-    }, [visible]);
+        if (visible) {
+            translateY.value = withTiming(0, { duration: 300 });
+        } else {
+            translateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 });
+        }
+    }, [visible, translateY]);
 
+    // Main content animation
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: translateY.value }],
     }));
 
+    // Backdrop animation
+    const backdropStyle = useAnimatedStyle(() => ({
+        opacity: interpolate(
+            translateY.value,
+            [0, SCREEN_HEIGHT],
+            [1, 0],
+            'clamp'
+        ),
+    }));
+
+    // Pan gesture handler
     const gestureHandler = useAnimatedGestureHandler<
         PanGestureHandlerGestureEvent,
         { startY: number }
@@ -69,84 +89,97 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         },
     });
 
-    if (!visible) return null;
+    // Base styles
+    const styles = StyleSheet.create({
+        container: {
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            justifyContent: 'flex-end',
+            zIndex: 1000,
+        },
+        backdrop: {
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+        },
+        sheetContainer: {
+            position: 'relative',
+            width: '100%',
+        },
+        decorationLayer: {
+            position: 'absolute',
+            top: -6,
+            left: -2,
+            right: -2,
+            bottom: 0,
+            backgroundColor: theme.colors.primary,
+            borderTopLeftRadius: 18,
+            borderTopRightRadius: 18,
+            zIndex: 0,
+        },
+        contentContainer: {
+            backgroundColor: 'white',
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            padding: 20,
+            minHeight: 180,
+            paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+            zIndex: 1,
+            width: '100%',
+        },
+        dragHandle: {
+            width: 40,
+            height: 5,
+            borderRadius: 3,
+            backgroundColor: '#ccc',
+            alignSelf: 'center',
+            marginBottom: 12,
+        },
+        childrenContainer: {
+            width: '100%',
+        }
+    });
 
-    const backdropStyle = useAnimatedStyle(() => ({
-        backgroundColor: `rgba(0,0,0,${interpolate(
-            translateY.value,
-            [0, SCREEN_HEIGHT],
-            [0.5, 0],
-            'clamp'
-        )})`,
-    }));
+    // Don't render anything if not visible
+    if (!visible) {
+        return null;
+    }
 
     return (
-        <Animated.View
-            style={[
-                {
-                    position: 'absolute',
-                    top: 0,
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    justifyContent: 'flex-end',
-                },
-                backdropStyle,
-            ]}
-        >
-            <TouchableWithoutFeedback onPress={onClose}>
-                <View style={{ flex: 1 }} />
-            </TouchableWithoutFeedback>
+        <View style={styles.container} pointerEvents="box-none">
+            {/* Backdrop */}
+            <Animated.View style={[styles.backdrop, backdropStyle]}>
+                <TouchableWithoutFeedback onPress={onClose}>
+                    <View style={{ flex: 1 }} />
+                </TouchableWithoutFeedback>
+            </Animated.View>
 
+            {/* Sheet */}
             <PanGestureHandler onGestureEvent={gestureHandler}>
-                <Animated.View style={[{ position: 'relative' }, animatedStyle]}>
-                    {/* Background layer that peeks out on top */}
-                    <View
-                        style={{
-                            position: 'absolute',
-                            top: -6, // Offset upward to peek above
-                            left: -2,
-                            right: -2,
-                            bottom: 0, // Full height of parent
-                            backgroundColor: theme.colors.primary,
-                            borderTopLeftRadius: 18,
-                            borderTopRightRadius: 18,
-                            zIndex: 0,
-                        }}
-                    />
+                <Animated.View style={[styles.sheetContainer, animatedStyle]}>
+                    {/* Background decoration */}
+                    <View style={styles.decorationLayer} />
 
-                    {/* Foreground white sheet */}
-                    <View
-                        style={{
-                            backgroundColor: 'white',
-                            borderTopLeftRadius: 20,
-                            borderTopRightRadius: 20,
-                            padding: 20,
-                            minHeight: 180, // Slightly shorter
-                            paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-                            zIndex: 1,
-                        }}
-                    >
+                    {/* Content */}
+                    <View style={styles.contentContainer}>
                         {/* Drag handle */}
-                        <View
-                            style={{
-                                width: 40,
-                                height: 5,
-                                borderRadius: 3,
-                                backgroundColor: '#ccc',
-                                alignSelf: 'center',
-                                marginBottom: 12,
-                            }}
-                        />
+                        <View style={styles.dragHandle} />
 
+                        {/* Content */}
                         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                            <View>{children}</View>
+                            <View style={styles.childrenContainer}>
+                                {children}
+                            </View>
                         </TouchableWithoutFeedback>
                     </View>
                 </Animated.View>
             </PanGestureHandler>
-
-
-        </Animated.View>
+        </View>
     );
 };

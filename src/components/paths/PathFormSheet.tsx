@@ -1,10 +1,15 @@
 // src/components/paths/PathFormSheet.tsx
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
-import FormBottomSheet from '../../components/common/FormBottomSheet';
+import { View, Alert, TouchableWithoutFeedback, Keyboard, Platform, KeyboardAvoidingView, Dimensions } from 'react-native';
+import { BottomSheet } from '../../components/common/BottomSheet';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useStyles } from '../../hooks/useStyles';
+import { Typography } from '../common/Typography';
 import PathForm from './PathForm';
 import { useSagas } from '../../hooks/useSagas';
 import { usePaths } from '../../hooks/usePaths';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 interface PathFormSheetProps {
     visible: boolean;
@@ -19,9 +24,35 @@ export default function PathFormSheet({
     initialSagaId,
     onSuccess
 }: PathFormSheetProps) {
+    const { theme } = useTheme();
     const { sagas } = useSagas();
     const { addPath } = usePaths();
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const styles = useStyles((theme) => ({
+        container: {
+            backgroundColor: theme.colors.background,
+            borderTopLeftRadius: theme.shape.radius.l,
+            borderTopRightRadius: theme.shape.radius.l,
+            paddingTop: theme.spacing.m,
+            paddingHorizontal: theme.spacing.m,
+            paddingBottom: theme.spacing.xl * 2,
+            maxHeight: SCREEN_HEIGHT * 0.8,
+            width: '100%',
+        },
+        header: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: theme.spacing.m,
+        },
+        closeButton: {
+            padding: theme.spacing.s,
+        },
+        content: {
+            width: '100%',
+        }
+    }));
 
     const handleSubmit = async (data: any) => {
         try {
@@ -42,18 +73,40 @@ export default function PathFormSheet({
         }
     };
 
+    // Dismiss keyboard when tapping outside input
+    const dismissKeyboard = () => {
+        Keyboard.dismiss();
+    };
+
+    if (!visible) return null;
+
     return (
-        <FormBottomSheet
-            visible={visible}
-            onClose={onClose}
-            title="Create Path"
-            showSubmitButton={false} // Form has its own submit button
-        >
-            <PathForm
-                onSubmit={handleSubmit}
-                sagas={sagas}
-                initialData={{ sagaId: initialSagaId || '' }}
-            />
-        </FormBottomSheet>
+        <BottomSheet visible={visible} onClose={onClose}>
+            <TouchableWithoutFeedback onPress={dismissKeyboard}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    style={{ width: '100%' }}
+                >
+                    <View style={styles.container}>
+                        <View style={styles.header}>
+                            <Typography variant="h3">Create Path</Typography>
+                            <TouchableWithoutFeedback onPress={onClose}>
+                                <View style={styles.closeButton}>
+                                    <Typography color="secondary">Cancel</Typography>
+                                </View>
+                            </TouchableWithoutFeedback>
+                        </View>
+
+                        <View style={styles.content}>
+                            <PathForm
+                                onSubmit={handleSubmit}
+                                sagas={sagas}
+                                initialData={{ sagaId: initialSagaId || '' }}
+                            />
+                        </View>
+                    </View>
+                </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
+        </BottomSheet>
     );
 }
