@@ -1,13 +1,24 @@
 // src/components/captures/CaptureFormSheet.tsx
-import React, { useState, useEffect } from 'react';
-import { View, Alert, TouchableWithoutFeedback, Keyboard, Platform, KeyboardAvoidingView, Dimensions } from 'react-native';
-import { BottomSheet } from '../../components/common/BottomSheet';
+import React, { useEffect, useState } from 'react';
+import {
+    View,
+    Keyboard,
+    TouchableWithoutFeedback,
+    Platform,
+    KeyboardAvoidingView,
+    TouchableOpacity,
+    Dimensions,
+    Alert,
+} from 'react-native';
+import { BottomSheet } from '../common/BottomSheet';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../common/Typography';
 import { Button } from '../common/Button';
-import CaptureForm from './CaptureForm';
-import { Capture, CaptureSubType } from '../../types/capture';
+import { FormInput } from '../form';
+import { Form } from '../form';
+import { useForm } from 'react-hook-form';
+import { CaptureSubType } from '../../types/capture';
 import { useSagas } from '../../hooks/useSagas';
 import { useCaptures } from '../../hooks/useCaptures';
 
@@ -21,23 +32,40 @@ interface CaptureFormSheetProps {
     onSuccess?: () => void;
 }
 
+type FormValues = {
+    title: string;
+};
+
 export default function CaptureFormSheet({
     visible,
     onClose,
     initialSubType = CaptureSubType.NOTE,
     initialSagaId,
-    onSuccess
+    onSuccess,
 }: CaptureFormSheetProps) {
     const { theme } = useTheme();
-    const { sagas } = useSagas();
     const { addCapture } = useCaptures();
+    const { sagas } = useSagas();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [captureType, setCaptureType] = useState<CaptureSubType>(initialSubType);
 
-    // Reset capture type when props change
+    const {
+        control,
+        handleSubmit,
+        formState: { isValid },
+        reset,
+    } = useForm<FormValues>({
+        defaultValues: {
+            title: '',
+        },
+        mode: 'onChange',
+    });
+
     useEffect(() => {
-        setCaptureType(initialSubType);
-    }, [initialSubType]);
+        if (visible) {
+            reset({ title: '' });
+            setIsSubmitting(false);
+        }
+    }, [visible]);
 
     const styles = useStyles((theme) => ({
         container: {
@@ -59,87 +87,80 @@ export default function CaptureFormSheet({
         closeButton: {
             padding: theme.spacing.s,
         },
-        content: {
+        formContainer: {
             width: '100%',
-        }
+        },
+        buttonContainer: {
+            marginTop: theme.spacing.l,
+            paddingBottom: 100,
+        },
     }));
 
-    const getFormTitle = (): string => {
-        switch (captureType) {
-            case CaptureSubType.NOTE:
-                return 'Create Note';
-            case CaptureSubType.SPARK:
-                return 'Capture Insight';
-            case CaptureSubType.ACTION:
-                return 'Add Action';
-            case CaptureSubType.REFLECTION:
-                return 'New Reflection';
-            default:
-                return 'New Capture';
-        }
-    };
+    const onSubmit = async (data: FormValues) => {
+        if (isSubmitting) return;
 
-    const handleSubmit = async (data: any) => {
         try {
             setIsSubmitting(true);
+
             const success = await addCapture({
                 type: 'capture',
-                ...data,
+                subType: initialSubType,
+                title: data.title.trim(),
+                sagaId: initialSagaId || '',
             });
 
             if (success) {
                 if (onSuccess) onSuccess();
                 onClose();
             } else {
-                Alert.alert('Error', 'Failed to save the capture. Please try again.');
+                Alert.alert('Error', 'Failed to save the capture.');
             }
         } catch (error) {
-            console.error('Error creating capture:', error);
-            Alert.alert('Error', 'An unexpected error occurred.');
+            console.error('Capture save error:', error);
+            Alert.alert('Error', 'Something went wrong.');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleCaptureTypeChange = (type: CaptureSubType) => {
-        setCaptureType(type);
-    };
-
-    // Dismiss keyboard when tapping outside input
-    const dismissKeyboard = () => {
-        Keyboard.dismiss();
-    };
-
-    if (!visible) return null;
-
     return (
         <BottomSheet visible={visible} onClose={onClose}>
-            <TouchableWithoutFeedback onPress={dismissKeyboard}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={{ width: '100%' }}
                 >
                     <View style={styles.container}>
                         <View style={styles.header}>
-                            <Typography variant="h3">{getFormTitle()}</Typography>
-                            <TouchableWithoutFeedback onPress={onClose}>
-                                <View style={styles.closeButton}>
-                                    <Typography color="secondary">Cancel</Typography>
-                                </View>
-                            </TouchableWithoutFeedback>
+                            <Typography variant="h3">Create Capture</Typography>
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={onClose}
+                                disabled={isSubmitting}
+                            >
+                                <Typography color="secondary">Cancel</Typography>
+                            </TouchableOpacity>
                         </View>
 
-                        <View style={styles.content}>
-                            <CaptureForm
-                                onSubmit={handleSubmit}
-                                sagas={sagas}
-                                initialData={{
-                                    subType: initialSubType,
-                                    sagaId: initialSagaId || ''
-                                }}
-                                onCaptureTypeChange={handleCaptureTypeChange}
+                        <Form style={styles.formContainer}>
+                            <FormInput
+                                control={control}
+                                name="title"
+                                label="Title"
+                                placeholder="Enter a title..."
+                                rules={{ required: 'Title is required' }}
+                                autoFocus
                             />
-                        </View>
+
+                            <View style={styles.buttonContainer}>
+                                <Button
+                                    label={isSubmitting ? 'Saving...' : 'Save Capture'}
+                                    onPress={handleSubmit(onSubmit)}
+                                    isLoading={isSubmitting}
+                                    disabled={!isValid || isSubmitting}
+                                />
+                            </View>
+                        </Form>
                     </View>
                 </KeyboardAvoidingView>
             </TouchableWithoutFeedback>

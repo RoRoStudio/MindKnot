@@ -1,6 +1,15 @@
 // src/components/paths/PathFormSheet.tsx
 import React, { useState } from 'react';
-import { View, Alert, TouchableWithoutFeedback, Keyboard, Platform, KeyboardAvoidingView, Dimensions } from 'react-native';
+import {
+    View,
+    Alert,
+    TouchableWithoutFeedback,
+    Keyboard,
+    Platform,
+    KeyboardAvoidingView,
+    TouchableOpacity,
+    Dimensions,
+} from 'react-native';
 import { BottomSheet } from '../../components/common/BottomSheet';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStyles } from '../../hooks/useStyles';
@@ -49,9 +58,6 @@ export default function PathFormSheet({
         closeButton: {
             padding: theme.spacing.s,
         },
-        content: {
-            width: '100%',
-        }
     }));
 
     const handleSubmit = async (data: any) => {
@@ -73,16 +79,11 @@ export default function PathFormSheet({
         }
     };
 
-    // Dismiss keyboard when tapping outside input
-    const dismissKeyboard = () => {
-        Keyboard.dismiss();
-    };
-
     if (!visible) return null;
 
     return (
         <BottomSheet visible={visible} onClose={onClose}>
-            <TouchableWithoutFeedback onPress={dismissKeyboard}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                     style={{ width: '100%' }}
@@ -90,20 +91,20 @@ export default function PathFormSheet({
                     <View style={styles.container}>
                         <View style={styles.header}>
                             <Typography variant="h3">Create Path</Typography>
-                            <TouchableWithoutFeedback onPress={onClose}>
-                                <View style={styles.closeButton}>
-                                    <Typography color="secondary">Cancel</Typography>
-                                </View>
-                            </TouchableWithoutFeedback>
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={onClose}
+                                disabled={isSubmitting}
+                            >
+                                <Typography color="secondary">Cancel</Typography>
+                            </TouchableOpacity>
                         </View>
 
-                        <View style={styles.content}>
-                            <PathForm
-                                onSubmit={handleSubmit}
-                                sagas={sagas}
-                                initialData={{ sagaId: initialSagaId || '' }}
-                            />
-                        </View>
+                        <PathForm
+                            onSubmit={handleSubmit}
+                            sagas={sagas}
+                            initialData={{ sagaId: initialSagaId || '' }}
+                        />
                     </View>
                 </KeyboardAvoidingView>
             </TouchableWithoutFeedback>

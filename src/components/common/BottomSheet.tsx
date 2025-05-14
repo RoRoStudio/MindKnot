@@ -43,6 +43,12 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     // Animation values
     const translateY = useSharedValue(SCREEN_HEIGHT);
 
+    //TEMPORARY FOR DEBUGGING SMALL WIDTH BOTTOMSHEET
+    useEffect(() => {
+        console.log('BottomSheet mounted, visible:', visible);
+    }, [visible]);
+
+
     // Update animation when visibility changes
     useEffect(() => {
         if (visible) {
@@ -162,7 +168,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
             {/* Sheet */}
             <PanGestureHandler onGestureEvent={gestureHandler}>
-                <Animated.View style={[styles.sheetContainer, animatedStyle]}>
+                <Animated.View
+                    style={[styles.sheetContainer, animatedStyle]}
+                    onLayout={(e) =>
+                        console.log('📦 [BottomSheet sheetContainer] layout:', e.nativeEvent.layout)
+                    }
+                >
+
                     {/* Background decoration */}
                     <View style={styles.decorationLayer} />
 
@@ -173,8 +185,19 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
                         {/* Content */}
                         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                            <View style={styles.childrenContainer}>
-                                {children}
+                            <View
+                                style={styles.childrenContainer}
+                                onLayout={(e) =>
+                                    console.log('🧩 [BottomSheet childrenContainer] layout:', e.nativeEvent.layout)
+                                }
+                            >
+                                <View
+                                    onLayout={(e) =>
+                                        console.log('Sheet content height:', e.nativeEvent.layout.height)
+                                    }
+                                >
+                                    {children}
+                                </View>
                             </View>
                         </TouchableWithoutFeedback>
                     </View>

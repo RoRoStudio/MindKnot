@@ -15,3 +15,6 @@ find . -type f \( -name "*.ts" -o -name "*.tsx" \) \
 npx expo start --android
 
 npx expo run:android (for sqlite)
+
+# with clear cache
+npx expo start -c

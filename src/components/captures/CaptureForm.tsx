@@ -123,132 +123,140 @@ export default function CaptureForm({ onSubmit, initialData, sagas = [], onCaptu
     };
 
     return (
-        <View style={styles.container}>
-            <ScrollView contentContainerStyle={styles.formContainer}>
-                <Form onSubmit={(data: any) => handleSubmit(handleFormSubmit)(data)}>
-                    <FormSelect
-                        name="subType"
-                        control={control}
-                        label="Capture Type"
-                        options={CAPTURE_TYPE_OPTIONS}
-                        rules={{ required: 'Capture type is required' }}
-                        onChange={(value: CaptureSubType) => {
-                            setCaptureType(value);
-                            if (onCaptureTypeChange) {
-                                onCaptureTypeChange(value);
-                            }
-                        }}
-                    />
+    <ScrollView
+        contentContainerStyle={[
+            styles.formContainer,
+            { minHeight: 500, width: '100%' }, // ✅ key fix here
+        ]}
+        keyboardShouldPersistTaps="handled"
+        onLayout={(e) =>
+            console.log('📦 [CaptureForm] layout:', e.nativeEvent.layout)
+        }
+    >
+        <Form onSubmit={(data: any) => handleSubmit(handleFormSubmit)(data)}>
+            <FormSelect
+                name="subType"
+                control={control}
+                label="Capture Type"
+                options={CAPTURE_TYPE_OPTIONS}
+                rules={{ required: 'Capture type is required' }}
+                onChange={(value: CaptureSubType) => {
+                    setCaptureType(value);
+                    if (onCaptureTypeChange) {
+                        onCaptureTypeChange(value);
+                    }
+                }}
+            />
 
-                    <FormSelect
-                        name="sagaId"
-                        control={control}
-                        label="Saga"
-                        options={sagaOptions}
-                        placeholder="Select a saga (optional)"
-                    />
+            <FormSelect
+                name="sagaId"
+                control={control}
+                label="Saga"
+                options={sagaOptions}
+                placeholder="Select a saga (optional)"
+            />
 
+            <FormInput
+                name="title"
+                control={control}
+                label="Title"
+                placeholder="Enter a title..."
+                rules={{ required: 'Title is required' }}
+            />
+
+            {captureType === CaptureSubType.NOTE && (
+                <FormTextarea
+                    name="body"
+                    control={control}
+                    label="Note"
+                    placeholder="Write your note..."
+                    rules={{ required: 'Note content is required' }}
+                    numberOfLines={6}
+                />
+            )}
+
+            {captureType === CaptureSubType.SPARK && (
+                <FormTextarea
+                    name="body"
+                    control={control}
+                    label="Spark"
+                    placeholder="Capture your insight..."
+                    rules={{ required: 'Spark content is required' }}
+                    numberOfLines={3}
+                />
+            )}
+
+            {captureType === CaptureSubType.REFLECTION && (
+                <>
                     <FormInput
-                        name="title"
+                        name="prompt"
                         control={control}
-                        label="Title"
-                        placeholder="Enter a title..."
-                        rules={{ required: 'Title is required' }}
+                        label="Reflection Prompt (optional)"
+                        placeholder="What prompted this reflection?"
                     />
 
-                    {captureType === CaptureSubType.NOTE && (
-                        <FormTextarea
-                            name="body"
-                            control={control}
-                            label="Note"
-                            placeholder="Write your note..."
-                            rules={{ required: 'Note content is required' }}
-                            numberOfLines={6}
-                        />
-                    )}
+                    <FormMoodSelector
+                        name="mood"
+                        control={control}
+                        label="How are you feeling?"
+                        rules={{ required: 'Please select a mood' }}
+                    />
 
-                    {captureType === CaptureSubType.SPARK && (
-                        <FormTextarea
-                            name="body"
-                            control={control}
-                            label="Spark"
-                            placeholder="Capture your insight..."
-                            rules={{ required: 'Spark content is required' }}
-                            numberOfLines={3}
-                        />
-                    )}
+                    <FormTextarea
+                        name="body"
+                        control={control}
+                        label="Reflection"
+                        placeholder="Write your reflection..."
+                        rules={{ required: 'Reflection content is required' }}
+                        numberOfLines={6}
+                    />
+                </>
+            )}
 
-                    {captureType === CaptureSubType.REFLECTION && (
-                        <>
-                            <FormInput
-                                name="prompt"
-                                control={control}
-                                label="Reflection Prompt (optional)"
-                                placeholder="What prompted this reflection?"
-                            />
+            {captureType === CaptureSubType.ACTION && (
+                <>
+                    <FormTextarea
+                        name="body"
+                        control={control}
+                        label="Action Details"
+                        placeholder="Describe the action..."
+                        rules={{ required: 'Action description is required' }}
+                        numberOfLines={3}
+                    />
 
-                            <FormMoodSelector
-                                name="mood"
-                                control={control}
-                                label="How are you feeling?"
-                                rules={{ required: 'Please select a mood' }}
-                            />
+                    <FormDatePicker
+                        name="dueDate"
+                        control={control}
+                        label="Due Date (optional)"
+                        placeholder="Select a due date"
+                    />
 
-                            <FormTextarea
-                                name="body"
-                                control={control}
-                                label="Reflection"
-                                placeholder="Write your reflection..."
-                                rules={{ required: 'Reflection content is required' }}
-                                numberOfLines={6}
-                            />
-                        </>
-                    )}
+                    <FormCheckbox
+                        name="done"
+                        control={control}
+                        label="Complete"
+                    />
 
-                    {captureType === CaptureSubType.ACTION && (
-                        <>
-                            <FormTextarea
-                                name="body"
-                                control={control}
-                                label="Action Details"
-                                placeholder="Describe the action..."
-                                rules={{ required: 'Action description is required' }}
-                                numberOfLines={3}
-                            />
+                    <FormArrayField
+                        name="subActions"
+                        control={control}
+                        label="Sub-Actions"
+                        renderItem={renderSubAction}
+                        addButtonLabel="Add Sub-Action"
+                        defaultValue={{ text: '', done: false }}
+                    />
+                </>
+            )}
 
-                            <FormDatePicker
-                                name="dueDate"
-                                control={control}
-                                label="Due Date (optional)"
-                                placeholder="Select a due date"
-                            />
+            <View style={styles.buttonContainer}>
+                <Button
+                    label="Save Capture"
+                    variant="primary"
+                    onPress={handleSubmit(handleFormSubmit)}
+                />
+            </View>
+        </Form>
+    </ScrollView>
+);
 
-                            <FormCheckbox
-                                name="done"
-                                control={control}
-                                label="Complete"
-                            />
-
-                            <FormArrayField
-                                name="subActions"
-                                control={control}
-                                label="Sub-Actions"
-                                renderItem={renderSubAction}
-                                addButtonLabel="Add Sub-Action"
-                                defaultValue={{ text: '', done: false }}
-                            />
-                        </>
-                    )}
-
-                    <View style={styles.buttonContainer}>
-                        <Button
-                            label="Save Capture"
-                            variant="primary"
-                            onPress={handleSubmit(handleFormSubmit)}
-                        />
-                    </View>
-                </Form>
-            </ScrollView>
-        </View>
-    );
 }
