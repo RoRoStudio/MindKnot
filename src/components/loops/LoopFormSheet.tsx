@@ -1,7 +1,7 @@
 // src/components/loops/LoopFormSheet.tsx
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import FormBottomSheet from '../common/FormBottomSheet';
+import FormBottomSheet from '../../components/common/FormBottomSheet';
 import LoopForm from './LoopForm';
 import { useSagas } from '../../hooks/useSagas';
 import { useLoops } from '../../hooks/useLoops';

@@ -38,7 +38,7 @@ export default function LoopForm({ onSubmit, initialData, sagas = [] }: LoopForm
     }));
 
     // Add an empty option
-    sagaOptions.unshift({ label: 'None', value: '' });
+    sagaOptions.unshift({ label: 'None', value: '', icon: undefined });
 
     const styles = useStyles((theme) => ({
         container: {
@@ -148,7 +148,7 @@ export default function LoopForm({ onSubmit, initialData, sagas = [] }: LoopForm
     return (
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.formContainer}>
-                <Form onSubmit={handleSubmit(handleFormSubmit)}>
+                <Form onSubmit={(data: any) => handleSubmit(handleFormSubmit)(data)}>
                     <FormSelect
                         name="sagaId"
                         control={control}

@@ -30,7 +30,7 @@ export default function PathForm({ onSubmit, initialData, sagas = [] }: PathForm
     }));
 
     // Add an empty option
-    sagaOptions.unshift({ label: 'None', value: '' });
+    sagaOptions.unshift({ label: 'None', value: '', icon: undefined });
 
     const styles = useStyles((theme) => ({
         container: {
@@ -200,7 +200,7 @@ export default function PathForm({ onSubmit, initialData, sagas = [] }: PathForm
     return (
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.formContainer}>
-                <Form onSubmit={handleSubmit(handleFormSubmit)}>
+                <Form onSubmit={(data: any) => handleSubmit(handleFormSubmit)(data)}>
                     <FormSelect
                         name="sagaId"
                         control={control}

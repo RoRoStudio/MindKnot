@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Alert } from 'react-native';
 import { useForm } from 'react-hook-form';
-import FormBottomSheet from '../common/FormBottomSheet';
+import FormBottomSheet from '../../components/common/FormBottomSheet';
 import CaptureForm from './CaptureForm';
 import { Capture, CaptureSubType } from '../../types/capture';
 import { useSagas } from '../../hooks/useSagas';

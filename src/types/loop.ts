@@ -8,6 +8,7 @@ export interface Loop {
     frequency: string; // JSON stringified object, e.g. { type: 'daily' }
     startTimeByDay?: Record<string, string>; // e.g. { mon: '08:00', tue: '09:00' }
     sagaId?: string;
+    items?: LoopItem[]; // Add this missing property
     createdAt: string;
     updatedAt: string;
 }

@@ -9,6 +9,7 @@ export interface Path {
     startDate?: string;
     targetDate?: string;
     sagaId?: string;
+    milestones?: Milestone[]; // Add this missing property
     createdAt: string;
     updatedAt: string;
 }
@@ -18,6 +19,7 @@ export interface Milestone {
     pathId: string;
     title: string;
     description?: string;
+    actions?: PathAction[]; // Add this missing property
     createdAt: string;
     updatedAt: string;
 }

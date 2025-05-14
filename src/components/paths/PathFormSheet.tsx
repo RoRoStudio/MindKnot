@@ -1,7 +1,7 @@
 // src/components/paths/PathFormSheet.tsx
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import FormBottomSheet from '../common/FormBottomSheet';
+import FormBottomSheet from '../../components/common/FormBottomSheet';
 import PathForm from './PathForm';
 import { useSagas } from '../../hooks/useSagas';
 import { usePaths } from '../../hooks/usePaths';

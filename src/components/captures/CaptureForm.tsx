@@ -46,7 +46,7 @@ export default function CaptureForm({ onSubmit, initialData, sagas = [], onCaptu
     }));
 
     // Add an empty option
-    sagaOptions.unshift({ label: 'None', value: '' });
+    sagaOptions.unshift({ label: 'None', value: '', icon: undefined });
 
     const styles = useStyles((theme) => ({
         container: {

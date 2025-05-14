@@ -1,44 +1,71 @@
-// src/database/database.ts - updated executeSql function
+import * as SQLite from 'expo-sqlite';
+import { createSchemaSQL } from './schema';
+
+let db: SQLite.SQLiteDatabase | null = null;
+
+export const initDatabase = async (): Promise<void> => {
+    try {
+        db = await SQLite.openDatabaseAsync('mindknot.db');
+        console.log('✅ SQLite is available and the database has been opened.');
+
+        // For multi-statement schema: manually substitute parameters
+        await db.execAsync(buildSqlWithParams(createSchemaSQL, []));
+        console.log('✅ Database schema created successfully.');
+    } catch (error) {
+        console.error('❌ Failed to initialize the database:', error);
+        throw error;
+    }
+};
+
 export const executeSql = async (
     sql: string,
     params: any[] = []
-): Promise<any> => {
+): Promise<{
+    rows: { _array: any[]; length: number; item: (i: number) => any };
+    rowsAffected: number;
+}> => {
     if (!db) {
         throw new Error('Database not initialized. Call initDatabase() first.');
     }
 
     try {
-        console.log(`Executing SQL: ${sql}`);
-        console.log('With params:', params);
-
-        // Build SQL with params for logging purpose
         const preparedSql = buildSqlWithParams(sql, params);
-        console.log('Prepared SQL:', preparedSql);
+        console.log('🟡 Executing SQL:\n', sql);
+        console.log('🟡 With params:', params);
+        console.log('🟡 Prepared SQL:\n', preparedSql);
 
-        // Execute the SQL with proper params
-        // Fix the TypeScript error by providing the correct type
-        const result = await db.execAsync([{ sql, args: params }] as any);
-        console.log('SQL execution result:', result);
+        const result = await db.execAsync(preparedSql);
 
-        // Return structured data that matches expectations of consuming code
-        // Format for SELECT queries
-        if (sql.trim().toLowerCase().startsWith('select')) {
-            return {
-                // Fix the TypeScript error by using optional chaining and fallback
-                rows: result?.[0]?.rows || [],
-                rowsAffected: 0
-            };
-        }
-
-        // Format for other queries (INSERT, UPDATE, DELETE)
+        // Wrap result in rows-like structure for SELECTs
         return {
-            rowsAffected: 1, // Assume 1 row affected if no error
-            insertId: null
+            rows: {
+                _array: Array.isArray(result) ? result : [],
+                length: Array.isArray(result) ? result.length : 0,
+                item: (index: number) =>
+                    Array.isArray(result) && index < result.length ? result[index] : null,
+            },
+            rowsAffected: 0, // You can extend this if needed for non-SELECTs
         };
     } catch (error) {
-        console.error('SQL execution error:', error);
-        console.error('Failed SQL:', sql);
-        console.error('Failed params:', params);
+        console.error('❌ SQL execution failed:', error);
+        console.error('🔴 SQL:', sql);
+        console.error('🔴 Params:', params);
         throw error;
     }
 };
+
+function buildSqlWithParams(sql: string, params: any[]): string {
+    let index = 0;
+    return sql.replace(/\?/g, () => {
+        const param = params[index++];
+        if (param === null || param === undefined) {
+            return 'NULL';
+        } else if (typeof param === 'string') {
+            return `'${param.replace(/'/g, "''")}'`; // escape single quotes
+        } else if (typeof param === 'number' || typeof param === 'boolean') {
+            return param.toString();
+        } else {
+            return `'${JSON.stringify(param).replace(/'/g, "''")}'`;
+        }
+    });
+}
