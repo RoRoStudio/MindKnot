@@ -105,6 +105,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             right: 0,
             justifyContent: 'flex-end',
             zIndex: 1000,
+            width: '100%', // Force full width
+            height: '100%', // Force full height
         },
         backdrop: {
             position: 'absolute',

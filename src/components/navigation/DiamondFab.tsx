@@ -29,6 +29,9 @@ import CaptureFormSheet from '../captures/CaptureFormSheet';
 import LoopFormSheet from '../loops/LoopFormSheet';
 import PathFormSheet from '../paths/PathFormSheet';
 
+// Import bottom sheet context provider
+import { useBottomSheet } from '../../contexts/BottomSheetContext';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const FAB_SIZE = 56;
 
@@ -42,6 +45,9 @@ interface DiamondFabProps {
 }
 
 export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress, onCreateSuccess }, ref) => {
+    // Get the bottom sheet methods from context
+    const { showCaptureForm, showLoopForm, showPathForm } = useBottomSheet();
+
     const [menuOpen, setMenuOpen] = useState(false);
     const progress = useSharedValue(0);
     const rotation = useSharedValue(0);
@@ -126,28 +132,27 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress,
         closeMenuExternally: closeMenu,
     }));
 
+    const showCaptureFormHandler = (type: CaptureSubType) => {
+        closeMenu();
+        showCaptureForm(type, undefined, onCreateSuccess);
+    };
+
+    const showLoopFormHandler = () => {
+        closeMenu();
+        showLoopForm(undefined, onCreateSuccess);
+    };
+
+    const showPathFormHandler = () => {
+        closeMenu();
+        showPathForm(undefined, onCreateSuccess);
+    };
+
     // Updated menu items
     const menuItems = [
-        { icon: 'file-text', label: 'Create Capture', action: () => showCaptureForm(CaptureSubType.NOTE) },
-        { icon: 'calendar-sync', label: 'Create Loop', action: () => showLoopForm() },
-        { icon: 'compass', label: 'Create Path', action: () => showPathForm() },
+        { icon: 'file-text', label: 'Create Capture', action: () => showCaptureFormHandler(CaptureSubType.NOTE) },
+        { icon: 'calendar-sync', label: 'Create Loop', action: () => showLoopFormHandler() },
+        { icon: 'compass', label: 'Create Path', action: () => showPathFormHandler() },
     ];
-    // Show creation forms
-    const showCaptureForm = (type: CaptureSubType) => {
-        closeMenu();
-        setCaptureType(type);
-        setCaptureFormVisible(true);
-    };
-
-    const showLoopForm = () => {
-        closeMenu();
-        setLoopFormVisible(true);
-    };
-
-    const showPathForm = () => {
-        closeMenu();
-        setPathFormVisible(true);
-    };
 
     // Handle form success
     const handleFormSuccess = () => {
@@ -245,26 +250,6 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress,
                     </Animated.View>
                 </TouchableOpacity>
             </Animated.View>
-
-            {/* Bottom sheets */}
-            <CaptureFormSheet
-                visible={captureFormVisible}
-                onClose={() => setCaptureFormVisible(false)}
-                initialSubType={captureType}
-                onSuccess={handleFormSuccess}
-            />
-
-            <LoopFormSheet
-                visible={loopFormVisible}
-                onClose={() => setLoopFormVisible(false)}
-                onSuccess={handleFormSuccess}
-            />
-
-            <PathFormSheet
-                visible={pathFormVisible}
-                onClose={() => setPathFormVisible(false)}
-                onSuccess={handleFormSuccess}
-            />
         </View>
     );
 });
