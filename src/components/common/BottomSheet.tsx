@@ -1,5 +1,5 @@
 // src/components/common/BottomSheet.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Dimensions,
     View,
@@ -43,20 +43,22 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     // Animation values
     const translateY = useSharedValue(SCREEN_HEIGHT);
 
-    //TEMPORARY FOR DEBUGGING SMALL WIDTH BOTTOMSHEET
-    useEffect(() => {
-        console.log('BottomSheet mounted, visible:', visible);
-    }, [visible]);
-
+    const [shouldRender, setShouldRender] = useState(visible);
 
     // Update animation when visibility changes
     useEffect(() => {
         if (visible) {
+            setShouldRender(true);
             translateY.value = withTiming(0, { duration: 300 });
         } else {
-            translateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 });
+            translateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 }, (isFinished) => {
+                if (isFinished) {
+                    runOnJS(setShouldRender)(false);
+                }
+            });
         }
-    }, [visible, translateY]);
+    }, [visible]);
+
 
     // Main content animation
     const animatedStyle = useAnimatedStyle(() => ({
@@ -154,10 +156,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         }
     });
 
-    // Don't render anything if not visible
-    if (!visible) {
+    if (!shouldRender) {
         return null;
     }
+
 
     return (
         <View style={styles.container} pointerEvents="box-none">
@@ -169,42 +171,31 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             </Animated.View>
 
             {/* Sheet */}
-            <PanGestureHandler onGestureEvent={gestureHandler}>
-                <Animated.View
-                    style={[styles.sheetContainer, animatedStyle]}
-                    onLayout={(e) =>
-                        console.log('📦 [BottomSheet sheetContainer] layout:', e.nativeEvent.layout)
-                    }
-                >
+            <Animated.View style={[styles.sheetContainer, animatedStyle]}>
+                {/* Background decoration */}
+                <View style={styles.decorationLayer} />
 
-                    {/* Background decoration */}
-                    <View style={styles.decorationLayer} />
-
-                    {/* Content */}
-                    <View style={styles.contentContainer}>
-                        {/* Drag handle */}
-                        <View style={styles.dragHandle} />
-
-                        {/* Content */}
-                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                            <View
-                                style={styles.childrenContainer}
-                                onLayout={(e) =>
-                                    console.log('🧩 [BottomSheet childrenContainer] layout:', e.nativeEvent.layout)
-                                }
-                            >
-                                <View
-                                    onLayout={(e) =>
-                                        console.log('Sheet content height:', e.nativeEvent.layout.height)
-                                    }
-                                >
-                                    {children}
-                                </View>
+                {/* Content */}
+                <View style={styles.contentContainer}>
+                    {/* 👉 Drag handle only is gesture-enabled */}
+                    <PanGestureHandler onGestureEvent={gestureHandler}>
+                        <Animated.View>
+                            <View style={{ paddingVertical: 10, alignItems: 'center' }}>
+                                <View style={styles.dragHandle} />
                             </View>
-                        </TouchableWithoutFeedback>
-                    </View>
-                </Animated.View>
-            </PanGestureHandler>
+                        </Animated.View>
+                    </PanGestureHandler>
+
+
+                    {/* Content area (no longer draggable) */}
+                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                        <View style={styles.childrenContainer}>
+                            <View>{children}</View>
+                        </View>
+                    </TouchableWithoutFeedback>
+                </View>
+            </Animated.View>
         </View>
     );
+
 };

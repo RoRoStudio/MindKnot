@@ -22,6 +22,7 @@ import BookOpen from '../../assets/icons/lucide/book-open.svg';
 import Eye from '../../assets/icons/lucide/eye.svg';
 import EyeOff from '../../assets/icons/lucide/eye-off.svg';
 import ChevronDown from '../../assets/icons/lucide/chevron-down.svg';
+import ChevronUp from '../../assets/icons/lucide/chevron-up.svg';
 import CircleAlert from '../../assets/icons/lucide/circle-alert.svg';
 import X from '../../assets/icons/lucide/x.svg';
 import Calendar from '../../assets/icons/lucide/calendar.svg';
@@ -57,6 +58,7 @@ const iconMap = {
     eye: Eye,
     'eye-off': EyeOff,
     'chevron-down': ChevronDown,
+    'chevron-up': ChevronUp,
     'circle-alert': CircleAlert,
     x: X,
     calendar: Calendar,
