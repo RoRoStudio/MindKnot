@@ -1,6 +1,4 @@
-// ----------------------------
 // src/services/pathService.ts
-// ----------------------------
 import { executeSql } from '../database/database';
 import { generateUUID } from '../utils/uuidUtil';
 import { Path, Milestone, PathAction } from '../types/path';
@@ -23,6 +21,48 @@ export const createPath = async (path: Omit<Path, 'id' | 'createdAt' | 'updatedA
         ]
     );
 
+    // If path has milestones, create them as well
+    if (path.milestones && Array.isArray(path.milestones) && path.milestones.length > 0) {
+        for (const milestone of path.milestones) {
+            const milestoneId = await generateUUID();
+            await executeSql(
+                'INSERT INTO milestones (id, pathId, title, description, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+                [
+                    milestoneId,
+                    id,
+                    milestone.title,
+                    milestone.description ?? null,
+                    now,
+                    now
+                ]
+            );
+
+            // If milestone has actions, create them as well
+            if (milestone.actions && Array.isArray(milestone.actions) && milestone.actions.length > 0) {
+                for (const action of milestone.actions) {
+                    const actionId = await generateUUID();
+                    await executeSql(
+                        `INSERT INTO path_actions (id, milestoneId, name, description, done, dueDate,
+                        sagaId, icon, subActions, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [
+                            actionId,
+                            milestoneId,
+                            action.name,
+                            action.description ?? null,
+                            action.done ? 1 : 0,
+                            action.dueDate ?? null,
+                            action.sagaId ?? null,
+                            action.icon ?? null,
+                            action.subActions ? JSON.stringify(action.subActions) : null,
+                            now,
+                            now
+                        ]
+                    );
+                }
+            }
+        }
+    }
+
     return { ...path, id, createdAt: now, updatedAt: now };
 };
 
@@ -32,17 +72,92 @@ export const getPathsBySaga = async (sagaId: string): Promise<Path[]> => {
         [sagaId]
     );
 
-    let paths: Path[] = [];
+    // Check for valid result structure
+    if (result && result.rows && Array.isArray(result.rows)) {
+        const paths = result.rows as Path[];
 
-    // Check if result has rows property
-    if (result && result.rows) {
-        // Check if rows is an array or has _array property
-        const rowsData = Array.isArray(result.rows) ? result.rows : result.rows._array;
+        // For each path, fetch its milestones and actions
+        for (const path of paths) {
+            const milestonesResult = await executeSql(
+                'SELECT * FROM milestones WHERE pathId = ? ORDER BY createdAt ASC',
+                [path.id]
+            );
 
-        if (Array.isArray(rowsData)) {
-            paths = rowsData as Path[];
+            if (milestonesResult && milestonesResult.rows && Array.isArray(milestonesResult.rows)) {
+                path.milestones = milestonesResult.rows as Milestone[];
+
+                // For each milestone, fetch its actions
+                for (const milestone of path.milestones) {
+                    const actionsResult = await executeSql(
+                        'SELECT * FROM path_actions WHERE milestoneId = ? ORDER BY createdAt ASC',
+                        [milestone.id]
+                    );
+
+                    if (actionsResult && actionsResult.rows && Array.isArray(actionsResult.rows)) {
+                        milestone.actions = actionsResult.rows.map((action: any) => ({
+                            ...action,
+                            done: Boolean(action.done),
+                            subActions: action.subActions ? JSON.parse(action.subActions) : []
+                        }));
+                    } else {
+                        milestone.actions = [];
+                    }
+                }
+            } else {
+                path.milestones = [];
+            }
         }
+
+        return paths;
     }
 
-    return paths;
+    return [];
+};
+
+export const getAllPaths = async (): Promise<Path[]> => {
+    const result = await executeSql(
+        'SELECT * FROM paths ORDER BY createdAt DESC',
+        []
+    );
+
+    // Check for valid result structure
+    if (result && result.rows && Array.isArray(result.rows)) {
+        const paths = result.rows as Path[];
+
+        // For each path, fetch its milestones and actions
+        for (const path of paths) {
+            const milestonesResult = await executeSql(
+                'SELECT * FROM milestones WHERE pathId = ? ORDER BY createdAt ASC',
+                [path.id]
+            );
+
+            if (milestonesResult && milestonesResult.rows && Array.isArray(milestonesResult.rows)) {
+                path.milestones = milestonesResult.rows as Milestone[];
+
+                // For each milestone, fetch its actions
+                for (const milestone of path.milestones) {
+                    const actionsResult = await executeSql(
+                        'SELECT * FROM path_actions WHERE milestoneId = ? ORDER BY createdAt ASC',
+                        [milestone.id]
+                    );
+
+                    if (actionsResult && actionsResult.rows && Array.isArray(actionsResult.rows)) {
+                        milestone.actions = actionsResult.rows.map((action: any) => ({
+                            ...action,
+                            done: Boolean(action.done),
+                            subActions: action.subActions ? JSON.parse(action.subActions) : []
+                        }));
+                    } else {
+                        milestone.actions = [];
+                    }
+                }
+            } else {
+                path.milestones = [];
+            }
+        }
+
+        return paths;
+    }
+
+    return [];
 };

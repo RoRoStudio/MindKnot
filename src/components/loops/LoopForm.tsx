@@ -13,7 +13,7 @@ import {
     FormSelect,
     FormArrayField,
 } from '../form';
-import { v4 as uuidv4 } from 'uuid';
+import { generateSimpleId } from '../../utils/uuidUtil';
 
 // Frequency options
 const FREQUENCY_OPTIONS = [
@@ -27,13 +27,14 @@ const FREQUENCY_OPTIONS = [
 interface LoopFormProps {
     onSubmit: (data: any) => void;
     initialData?: any;
-    sagas?: Array<{ id: string; name: string }>;
+    sagas?: Array<{ id: string; name: string; icon?: string }>;
 }
 
 export default function LoopForm({ onSubmit, initialData, sagas = [] }: LoopFormProps) {
     const sagaOptions = sagas.map(saga => ({
         label: saga.name,
-        value: saga.id
+        value: saga.id,
+        icon: saga.icon
     }));
 
     // Add an empty option
@@ -83,7 +84,7 @@ export default function LoopForm({ onSubmit, initialData, sagas = [] }: LoopForm
             ...data,
             items: data.items?.map((item: any) => ({
                 ...item,
-                id: item.id || uuidv4(),
+                id: item.id || generateSimpleId(),
             })),
         });
     };
@@ -148,6 +149,14 @@ export default function LoopForm({ onSubmit, initialData, sagas = [] }: LoopForm
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.formContainer}>
                 <Form onSubmit={handleSubmit(handleFormSubmit)}>
+                    <FormSelect
+                        name="sagaId"
+                        control={control}
+                        label="Link to Saga (optional)"
+                        options={sagaOptions}
+                        placeholder="Select a saga"
+                    />
+
                     <FormInput
                         name="title"
                         control={control}
@@ -172,21 +181,13 @@ export default function LoopForm({ onSubmit, initialData, sagas = [] }: LoopForm
                         rules={{ required: 'Frequency is required' }}
                     />
 
-                    <FormSelect
-                        name="sagaId"
-                        control={control}
-                        label="Link to Saga (optional)"
-                        options={sagaOptions}
-                        placeholder="Select a saga"
-                    />
-
                     <FormArrayField
                         name="items"
                         control={control}
                         label="Loop Items"
                         renderItem={renderLoopItem}
                         addButtonLabel="Add Loop Item"
-                        defaultValue={{ id: uuidv4(), name: '', description: '' }}
+                        defaultValue={{ name: '', description: '' }}
                     />
 
                     <View style={styles.buttonContainer}>

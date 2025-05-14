@@ -1,152 +1,151 @@
-import React, { useEffect } from 'react';
+// src/components/common/FormBottomSheet.tsx
+import React, { useState, useRef, useEffect } from 'react';
 import {
-    Dimensions,
     View,
-    TouchableWithoutFeedback,
     Keyboard,
+    TouchableWithoutFeedback,
     Platform,
+    KeyboardAvoidingView,
+    Dimensions,
+    StyleSheet,
 } from 'react-native';
-import Animated, {
-    useSharedValue,
-    useAnimatedStyle,
-    withTiming,
-    interpolate,
-    useAnimatedGestureHandler,
-    runOnJS,
-} from 'react-native-reanimated';
-import {
-    PanGestureHandler,
-    PanGestureHandlerGestureEvent,
-} from 'react-native-gesture-handler';
+import { BottomSheet } from './BottomSheet';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useStyles } from '../../hooks/useStyles';
+import { Typography } from './Typography';
+import { Button } from './Button';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// ✅ Define props at the top
-interface BottomSheetProps {
+interface FormBottomSheetProps {
     visible: boolean;
     onClose: () => void;
+    title: string;
     children: React.ReactNode;
+    submitLabel?: string;
+    onSubmit?: () => void;
+    isSubmitting?: boolean;
+    showSubmitButton?: boolean;
 }
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-const DRAG_DISMISS_THRESHOLD = 100;
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// ✅ Component starts here
-export const BottomSheet: React.FC<BottomSheetProps> = ({
+const FormBottomSheet: React.FC<FormBottomSheetProps> = ({
     visible,
     onClose,
+    title,
     children,
+    submitLabel = 'Save',
+    onSubmit,
+    isSubmitting = false,
+    showSubmitButton = true,
 }) => {
-    const { theme } = useTheme(); // ✅ Now valid hook usage
+    const { theme } = useTheme();
+    const insets = useSafeAreaInsets();
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
 
-    const translateY = useSharedValue(SCREEN_HEIGHT);
+    const styles = useStyles((theme) => ({
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.background,
+            borderTopLeftRadius: theme.shape.radius.l,
+            borderTopRightRadius: theme.shape.radius.l,
+            maxHeight: SCREEN_HEIGHT * 0.9,
+        },
+        header: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingHorizontal: theme.spacing.m,
+            paddingTop: theme.spacing.m,
+            paddingBottom: theme.spacing.s,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.divider,
+        },
+        content: {
+            padding: theme.spacing.xs,
+            paddingBottom: insets.bottom || theme.spacing.m,
+        },
+        buttonContainer: {
+            padding: theme.spacing.m,
+            paddingBottom: Math.max(insets.bottom, theme.spacing.m),
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.divider,
+        },
+    }));
 
+    // Handle keyboard events
     useEffect(() => {
-        translateY.value = withTiming(visible ? 0 : SCREEN_HEIGHT, { duration: 300 });
-    }, [visible]);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: translateY.value }],
-    }));
-
-    const gestureHandler = useAnimatedGestureHandler<
-        PanGestureHandlerGestureEvent,
-        { startY: number }
-    >({
-        onStart: (_, ctx) => {
-            ctx.startY = translateY.value;
-        },
-        onActive: (event, ctx) => {
-            translateY.value = Math.max(0, ctx.startY + event.translationY);
-        },
-        onEnd: (event) => {
-            if (event.translationY > DRAG_DISMISS_THRESHOLD) {
-                translateY.value = withTiming(SCREEN_HEIGHT, { duration: 250 }, (isFinished) => {
-                    if (isFinished) runOnJS(onClose)();
-                });
-            } else {
-                translateY.value = withTiming(0, { duration: 200 });
+        const keyboardWillShowListener = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            (e) => {
+                setKeyboardHeight(e.endCoordinates.height);
+                setKeyboardVisible(true);
             }
-        },
-    });
+        );
+        const keyboardWillHideListener = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => {
+                setKeyboardHeight(0);
+                setKeyboardVisible(false);
+            }
+        );
 
-    if (!visible) return null;
+        return () => {
+            keyboardWillShowListener.remove();
+            keyboardWillHideListener.remove();
+        };
+    }, []);
 
-    const backdropStyle = useAnimatedStyle(() => ({
-        backgroundColor: `rgba(0,0,0,${interpolate(
-            translateY.value,
-            [0, SCREEN_HEIGHT],
-            [0.5, 0],
-            'clamp'
-        )})`,
-    }));
+    // Dismiss keyboard when tapping outside input
+    const dismissKeyboard = () => {
+        Keyboard.dismiss();
+    };
 
     return (
-        <Animated.View
-            style={[
-                {
-                    position: 'absolute',
-                    top: 0,
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    justifyContent: 'flex-end',
-                },
-                backdropStyle,
-            ]}
-        >
-            <TouchableWithoutFeedback onPress={onClose}>
-                <View style={{ flex: 1 }} />
-            </TouchableWithoutFeedback>
+        <BottomSheet visible={visible} onClose={onClose}>
+            <TouchableWithoutFeedback onPress={dismissKeyboard}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+                    style={{ width: '100%' }}
+                >
+                    <View style={styles.container}>
+                        <View style={styles.header}>
+                            <Typography variant="h3">{title}</Typography>
+                            <Button
+                                variant="text"
+                                label="Cancel"
+                                onPress={onClose}
+                                disabled={isSubmitting}
+                            />
+                        </View>
 
-            <PanGestureHandler onGestureEvent={gestureHandler}>
-                <Animated.View style={[{ position: 'relative' }, animatedStyle]}>
-                    {/* Background layer that peeks out on top */}
-                    <View
-                        style={{
-                            position: 'absolute',
-                            top: -6, // Offset upward to peek above
-                            left: -2,
-                            right: -2,
-                            bottom: 0, // Full height of parent
-                            backgroundColor: theme.colors.primary,
-                            borderTopLeftRadius: 18,
-                            borderTopRightRadius: 18,
-                            zIndex: 0,
-                        }}
-                    />
+                        <View style={[
+                            styles.content,
+                            // Add extra padding at the bottom when keyboard is visible on Android
+                            Platform.OS === 'android' && keyboardVisible && { paddingBottom: keyboardHeight }
+                        ]}>
+                            {children}
+                        </View>
 
-                    {/* Foreground white sheet */}
-                    <View
-                        style={{
-                            backgroundColor: 'white',
-                            borderTopLeftRadius: 20,
-                            borderTopRightRadius: 20,
-                            padding: 20,
-                            minHeight: 180, // Slightly shorter
-                            paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-                            zIndex: 1,
-                        }}
-                    >
-                        {/* Drag handle */}
-                        <View
-                            style={{
-                                width: 40,
-                                height: 5,
-                                borderRadius: 3,
-                                backgroundColor: '#ccc',
-                                alignSelf: 'center',
-                                marginBottom: 12,
-                            }}
-                        />
-
-                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                            <View>{children}</View>
-                        </TouchableWithoutFeedback>
+                        {showSubmitButton && (
+                            <View style={styles.buttonContainer}>
+                                <Button
+                                    label={isSubmitting ? "Saving..." : submitLabel}
+                                    variant="primary"
+                                    onPress={onSubmit}
+                                    disabled={isSubmitting}
+                                    isLoading={isSubmitting}
+                                    fullWidth
+                                />
+                            </View>
+                        )}
                     </View>
-                </Animated.View>
-            </PanGestureHandler>
-
-
-        </Animated.View>
+                </KeyboardAvoidingView>
+            </TouchableWithoutFeedback>
+        </BottomSheet>
     );
 };
+
+export default FormBottomSheet;

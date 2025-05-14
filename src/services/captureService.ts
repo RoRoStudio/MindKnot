@@ -1,12 +1,10 @@
-// ----------------------------
 // src/services/captureService.ts
-// ----------------------------
 import { executeSql } from '../database/database';
 import { generateUUID } from '../utils/uuidUtil';
 import { Capture } from '../types/capture';
 import { getActiveChapterForSaga } from './sagaService';
 
-export const createCapture = async (capture: Omit<Capture, 'id' | 'createdAt' | 'updatedAt' | 'chapterId'>): Promise<void> => {
+export const createCapture = async (capture: Omit<Capture, 'id' | 'createdAt' | 'updatedAt' | 'chapterId'>): Promise<Capture> => {
     const id = await generateUUID();
     const now = new Date().toISOString();
 
@@ -38,6 +36,26 @@ export const createCapture = async (capture: Omit<Capture, 'id' | 'createdAt' | 
             now,
         ]
     );
+
+    // Return the newly created capture with its ID and timestamps
+    return {
+        id,
+        type: 'capture',
+        subType: capture.subType,
+        title: capture.title,
+        sagaId: capture.sagaId,
+        chapterId: chapterId || undefined,
+        tags: capture.tags,
+        linkedCaptureIds: capture.linkedCaptureIds,
+        body: capture.body,
+        mood: capture.mood,
+        prompt: capture.prompt,
+        done: capture.done,
+        dueDate: capture.dueDate,
+        subActions: capture.subActions,
+        createdAt: now,
+        updatedAt: now
+    };
 };
 
 export const getCapturesBySaga = async (sagaId: string): Promise<Capture[]> => {
@@ -46,23 +64,38 @@ export const getCapturesBySaga = async (sagaId: string): Promise<Capture[]> => {
         [sagaId]
     );
 
-    let captures: Capture[] = [];
-
-    // Check if result has rows property
-    if (result && result.rows) {
-        // Check if rows is an array or has _array property
-        const rowsData = Array.isArray(result.rows) ? result.rows : result.rows._array;
-
-        if (Array.isArray(rowsData)) {
-            captures = rowsData.map((row: any) => ({
-                ...row,
-                tags: row.tags ? JSON.parse(row.tags) : [],
-                linkedCaptureIds: row.linkedCaptureIds ? JSON.parse(row.linkedCaptureIds) : [],
-                subActions: row.subActions ? JSON.parse(row.subActions) : [],
-                done: Boolean(row.done),
-            })) as Capture[];
-        }
+    // Handle the result structure from our updated executeSql function
+    if (result && result.rows && Array.isArray(result.rows)) {
+        return result.rows.map((row: any) => ({
+            ...row,
+            tags: row.tags ? JSON.parse(row.tags) : [],
+            linkedCaptureIds: row.linkedCaptureIds ? JSON.parse(row.linkedCaptureIds) : [],
+            subActions: row.subActions ? JSON.parse(row.subActions) : [],
+            done: Boolean(row.done),
+        })) as Capture[];
     }
 
-    return captures;
+    return [];
 };
+
+export const getAllCaptures = async (): Promise<Capture[]> => {
+    const result = await executeSql(
+        'SELECT * FROM captures ORDER BY createdAt DESC',
+        []
+    );
+
+    // Handle the result structure from our updated executeSql function
+    if (result && result.rows && Array.isArray(result.rows)) {
+        return result.rows.map((row: any) => ({
+            ...row,
+            tags: row.tags ? JSON.parse(row.tags) : [],
+            linkedCaptureIds: row.linkedCaptureIds ? JSON.parse(row.linkedCaptureIds) : [],
+            subActions: row.subActions ? JSON.parse(row.subActions) : [],
+            done: Boolean(row.done),
+        })) as Capture[];
+    }
+
+    return [];
+};
+
+// Add more functions as needed

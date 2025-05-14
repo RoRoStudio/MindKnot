@@ -22,20 +22,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useStyles } from '../../hooks/useStyles';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { CaptureSubType } from '../../types/capture';
 
-type RootStackParamList = {
-    Capture: { type: string, sagaId?: string };
-    Loop: { sagaId?: string };
-    Path: { sagaId?: string };
-    SagaDetail: { sagaId: string };
-    Main: undefined;
-    ThemeInspector: undefined;
-};
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
+// Import form sheets
+import CaptureFormSheet from '../captures/CaptureFormSheet';
+import LoopFormSheet from '../loops/LoopFormSheet';
+import PathFormSheet from '../paths/PathFormSheet';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const FAB_SIZE = 56;
@@ -46,15 +38,21 @@ export interface DiamondFabRef {
 
 interface DiamondFabProps {
     onPress: () => void;
+    onCreateSuccess?: () => void;
 }
 
-export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress }, ref) => {
+export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress, onCreateSuccess }, ref) => {
     const [menuOpen, setMenuOpen] = useState(false);
     const progress = useSharedValue(0);
     const rotation = useSharedValue(0);
     const scale = useSharedValue(1);
     const { theme } = useTheme();
-    const navigation = useNavigation<NavigationProp>();
+    
+    // State for form sheets
+    const [captureFormVisible, setCaptureFormVisible] = useState(false);
+    const [captureType, setCaptureType] = useState<CaptureSubType>(CaptureSubType.NOTE);
+    const [loopFormVisible, setLoopFormVisible] = useState(false);
+    const [pathFormVisible, setPathFormVisible] = useState(false);
 
     const styles = useStyles((theme) => ({
         fabContainer: {
@@ -128,39 +126,38 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress 
         closeMenuExternally: closeMenu,
     }));
 
-    // Updated menu items according to the UI/UX blueprint
+    // Updated menu items
     const menuItems = [
-        { icon: 'scroll-text', label: 'Create Capture', action: () => navigateToCreationScreen('Capture') },
-        { icon: 'calendar-sync', label: 'Create Loop', action: () => navigateToCreationScreen('Loop') },
-        { icon: 'compass', label: 'Create Path', action: () => navigateToCreationScreen('Path') },
-        { icon: 'circle-help', label: 'Help', action: () => showHelpPlaceholder() },
+        { icon: 'scroll-text', label: 'Create Capture', action: () => showCaptureForm(CaptureSubType.NOTE) },
+        { icon: 'lightbulb', label: 'Create Spark', action: () => showCaptureForm(CaptureSubType.SPARK) },
+        { icon: 'check', label: 'Create Action', action: () => showCaptureForm(CaptureSubType.ACTION) },
+        { icon: 'sparkles', label: 'Create Reflection', action: () => showCaptureForm(CaptureSubType.REFLECTION) },
+        { icon: 'calendar-sync', label: 'Create Loop', action: () => showLoopForm() },
+        { icon: 'compass', label: 'Create Path', action: () => showPathForm() },
     ];
 
-    const navigateToCreationScreen = (type: string) => {
+    // Show creation forms
+    const showCaptureForm = (type: CaptureSubType) => {
         closeMenu();
-
-        switch (type) {
-            case 'Capture':
-                navigation.navigate('Capture', { type: 'note' });
-                break;
-            case 'Loop':
-                navigation.navigate('Loop', {});
-                break;
-            case 'Path':
-                navigation.navigate('Path', {});
-                break;
-            default:
-                showHelpPlaceholder();
-        }
+        setCaptureType(type);
+        setCaptureFormVisible(true);
     };
 
-    const showHelpPlaceholder = () => {
+    const showLoopForm = () => {
         closeMenu();
-        Alert.alert(
-            "Help Feature",
-            "This help feature will be implemented in a future update.",
-            [{ text: 'OK' }]
-        );
+        setLoopFormVisible(true);
+    };
+
+    const showPathForm = () => {
+        closeMenu();
+        setPathFormVisible(true);
+    };
+
+    // Handle form success
+    const handleFormSuccess = () => {
+        if (onCreateSuccess) {
+            onCreateSuccess();
+        }
     };
 
     // rotate icon: closed = + (0°), open = x (45°)
@@ -174,7 +171,6 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress 
         };
     });
 
-
     const fabAnimStyle = useAnimatedStyle(() => ({
         transform: [
             { rotate: '45deg' },
@@ -182,22 +178,13 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress 
         ],
     }));
 
-
-
-
     return (
         <View style={styles.fabContainer}>
-            {/* Radial items */}
+            {/* Radial menu items */}
             {menuItems.map((item, index) => {
                 const radius = 100;
-                const spread = 110; // degrees between first and last item
-                const baseAngle = -90; // straight up
-                const startAngle = baseAngle - spread / 2;
-                // Custom spacing bias for 4 items: tweak as needed
-                const angleOffsets = [-150, -112, -68, -30]; // better manual layout
-
-                const angle = angleOffsets[index];
-
+                // Custom angular positioning to create a semi-circle above the FAB
+                const angle = -180 + (180 / (menuItems.length - 1)) * index;
                 const angleRad = (angle * Math.PI) / 180;
 
                 const animatedStyle = useAnimatedStyle(() => {
@@ -260,11 +247,28 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress 
                             />
                         </View>
                     </Animated.View>
-
-
                 </TouchableOpacity>
-            </Animated.View >
+            </Animated.View>
 
-        </View >
+            {/* Bottom sheets */}
+            <CaptureFormSheet
+                visible={captureFormVisible}
+                onClose={() => setCaptureFormVisible(false)}
+                initialSubType={captureType}
+                onSuccess={handleFormSuccess}
+            />
+
+            <LoopFormSheet
+                visible={loopFormVisible}
+                onClose={() => setLoopFormVisible(false)}
+                onSuccess={handleFormSuccess}
+            />
+
+            <PathFormSheet
+                visible={pathFormVisible}
+                onClose={() => setPathFormVisible(false)}
+                onSuccess={handleFormSuccess}
+            />
+        </View>
     );
 });

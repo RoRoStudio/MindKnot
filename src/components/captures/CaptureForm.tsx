@@ -17,7 +17,7 @@ import {
     FormArrayField
 } from '../form';
 import { CaptureSubType } from '../../types/capture';
-import { v4 as uuidv4 } from 'uuid';
+import { generateSimpleId } from '../../utils/uuidUtil';
 
 // Options for capture type dropdown
 const CAPTURE_TYPE_OPTIONS = [
@@ -30,17 +30,19 @@ const CAPTURE_TYPE_OPTIONS = [
 interface CaptureFormProps {
     onSubmit: (data: any) => void;
     initialData?: any;
-    sagas?: Array<{ id: string; name: string }>;
+    sagas?: Array<{ id: string; name: string; icon?: string }>;
+    onCaptureTypeChange?: (type: CaptureSubType) => void;
 }
 
-export default function CaptureForm({ onSubmit, initialData, sagas = [] }: CaptureFormProps) {
+export default function CaptureForm({ onSubmit, initialData, sagas = [], onCaptureTypeChange }: CaptureFormProps) {
     const [captureType, setCaptureType] = useState<CaptureSubType>(
         initialData?.subType || CaptureSubType.NOTE
     );
 
     const sagaOptions = sagas.map(saga => ({
         label: saga.name,
-        value: saga.id
+        value: saga.id,
+        icon: saga.icon // Include icon for rendering in the select
     }));
 
     // Add an empty option
@@ -93,7 +95,7 @@ export default function CaptureForm({ onSubmit, initialData, sagas = [] }: Captu
             ...data,
             subActions: data.subActions?.map((action: any) => ({
                 ...action,
-                id: action.id || uuidv4(),
+                id: action.id || generateSimpleId(),
             })),
         });
     };
@@ -130,15 +132,12 @@ export default function CaptureForm({ onSubmit, initialData, sagas = [] }: Captu
                         label="Capture Type"
                         options={CAPTURE_TYPE_OPTIONS}
                         rules={{ required: 'Capture type is required' }}
-                        onChange={(value: CaptureSubType) => setCaptureType(value)}
-                    />
-
-                    <FormInput
-                        name="title"
-                        control={control}
-                        label="Title"
-                        placeholder="Enter a title..."
-                        rules={{ required: 'Title is required' }}
+                        onChange={(value: CaptureSubType) => {
+                            setCaptureType(value);
+                            if (onCaptureTypeChange) {
+                                onCaptureTypeChange(value);
+                            }
+                        }}
                     />
 
                     <FormSelect
@@ -147,6 +146,14 @@ export default function CaptureForm({ onSubmit, initialData, sagas = [] }: Captu
                         label="Saga"
                         options={sagaOptions}
                         placeholder="Select a saga (optional)"
+                    />
+
+                    <FormInput
+                        name="title"
+                        control={control}
+                        label="Title"
+                        placeholder="Enter a title..."
+                        rules={{ required: 'Title is required' }}
                     />
 
                     {captureType === CaptureSubType.NOTE && (
@@ -228,7 +235,7 @@ export default function CaptureForm({ onSubmit, initialData, sagas = [] }: Captu
                                 label="Sub-Actions"
                                 renderItem={renderSubAction}
                                 addButtonLabel="Add Sub-Action"
-                                defaultValue={{ id: uuidv4(), text: '', done: false }}
+                                defaultValue={{ text: '', done: false }}
                             />
                         </>
                     )}

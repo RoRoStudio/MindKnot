@@ -12,12 +12,13 @@ import {
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../common/Typography';
-import { Icon } from '../common/Icon';
+import { Icon, IconName } from '../common/Icon';
 import FormErrorMessage from './FormErrorMessage';
 
 interface Option {
     label: string;
     value: string | number;
+    icon?: IconName | string;
 }
 
 interface FormSelectProps<T extends FieldValues> {
@@ -76,6 +77,15 @@ export default function FormSelect<T extends FieldValues>({
         },
         selectedValue: {
             color: theme.components.inputs.text,
+            flex: 1,
+        },
+        selectedValueWithIcon: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+        },
+        selectedIcon: {
+            marginRight: theme.spacing.s,
         },
         modalContainer: {
             flex: 1,
@@ -107,6 +117,14 @@ export default function FormSelect<T extends FieldValues>({
             justifyContent: 'space-between',
             alignItems: 'center',
         },
+        optionContent: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+        },
+        optionIcon: {
+            marginRight: theme.spacing.s,
+        },
         selectedOption: {
             backgroundColor: theme.colors.surfaceVariant,
         },
@@ -114,6 +132,22 @@ export default function FormSelect<T extends FieldValues>({
             marginTop: 4,
         },
     }));
+
+    // Helper function to render an icon if present in the option
+    const renderIcon = (iconName?: IconName | string, color?: string) => {
+        if (!iconName) return null;
+        
+        return (
+            <View style={styles.optionIcon}>
+                <Icon 
+                    name={iconName as IconName} 
+                    width={20} 
+                    height={20} 
+                    color={color || styles.selectedValue.color}
+                />
+            </View>
+        );
+    };
 
     return (
         <Controller
@@ -161,11 +195,18 @@ export default function FormSelect<T extends FieldValues>({
                             ref={selectedOptionRef}
                         >
                             <View style={styles.selectContent}>
-                                <Typography
-                                    style={selectedOption ? styles.selectedValue : styles.placeholder}
-                                >
-                                    {selectedOption ? selectedOption.label : placeholder}
-                                </Typography>
+                                {selectedOption ? (
+                                    <View style={styles.selectedValueWithIcon}>
+                                        {renderIcon(selectedOption.icon)}
+                                        <Typography style={styles.selectedValue}>
+                                            {selectedOption.label}
+                                        </Typography>
+                                    </View>
+                                ) : (
+                                    <Typography style={styles.placeholder}>
+                                        {placeholder}
+                                    </Typography>
+                                )}
                                 <Icon
                                     name="chevron-down"
                                     width={16}
@@ -226,7 +267,11 @@ export default function FormSelect<T extends FieldValues>({
                                                 ]}
                                                 onPress={() => handleSelect(item)}
                                             >
-                                                <Typography>{item.label}</Typography>
+                                                <View style={styles.optionContent}>
+                                                    {renderIcon(item.icon)}
+                                                    <Typography>{item.label}</Typography>
+                                                </View>
+                                                
                                                 {item.value === value && (
                                                     <Icon
                                                         name="check"

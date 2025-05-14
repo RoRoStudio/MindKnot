@@ -1,5 +1,5 @@
+// src/database/database.ts
 import * as SQLite from 'expo-sqlite';
-import { createSchemaSQL } from './schema';
 
 // Create a database instance
 let db: SQLite.SQLiteDatabase | null = null;
@@ -20,6 +20,9 @@ export const initDatabase = async (): Promise<void> => {
     }
 };
 
+// Import schema
+import { createSchemaSQL } from './schema';
+
 // Function to execute SQL with parameters
 export const executeSql = async (
     sql: string,
@@ -33,21 +36,27 @@ export const executeSql = async (
         console.log(`Executing SQL: ${sql}`);
         console.log('With params:', params);
 
-        // Build SQL with params
+        // Build SQL with params for logging purpose
         const preparedSql = buildSqlWithParams(sql, params);
         console.log('Prepared SQL:', preparedSql);
 
-        // Execute the SQL
-        const result = await db.execAsync(preparedSql);
+        // Execute the SQL with proper params
+        const result = await db.execAsync([{ sql, args: params }]);
         console.log('SQL execution result:', result);
 
+        // Return structured data that matches expectations of consuming code
+        // Format for SELECT queries
+        if (sql.trim().toLowerCase().startsWith('select')) {
+            return {
+                rows: result?.[0]?.rows || [],
+                rowsAffected: 0
+            };
+        }
+
+        // Format for other queries (INSERT, UPDATE, DELETE)
         return {
-            rows: {
-                _array: Array.isArray(result) ? result : [],
-                length: Array.isArray(result) ? result.length : 0,
-                item: (index: number) => (Array.isArray(result) && index < result.length) ? result[index] : null
-            },
-            rowsAffected: 0
+            rowsAffected: 1, // Assume 1 row affected if no error
+            insertId: null
         };
     } catch (error) {
         console.error('SQL execution error:', error);
@@ -57,8 +66,8 @@ export const executeSql = async (
     }
 };
 
-// Helper function to build SQL with parameters
-// Note: This is a simple implementation. For production code, use proper prepared statements
+// Helper function to build SQL with parameters for logging only
+// This is just for debug logs - actual parameters are passed to db.execAsync
 function buildSqlWithParams(sql: string, params: any[]): string {
     let index = 0;
     return sql.replace(/\?/g, () => {

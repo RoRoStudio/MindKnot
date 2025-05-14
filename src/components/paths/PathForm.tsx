@@ -14,18 +14,19 @@ import {
     FormSelect,
     FormArrayField,
 } from '../form';
-import { v4 as uuidv4 } from 'uuid';
+import { generateSimpleId } from '../../utils/uuidUtil';
 
 interface PathFormProps {
     onSubmit: (data: any) => void;
     initialData?: any;
-    sagas?: Array<{ id: string; name: string }>;
+    sagas?: Array<{ id: string; name: string; icon?: string }>;
 }
 
 export default function PathForm({ onSubmit, initialData, sagas = [] }: PathFormProps) {
     const sagaOptions = sagas.map(saga => ({
         label: saga.name,
-        value: saga.id
+        value: saga.id,
+        icon: saga.icon
     }));
 
     // Add an empty option
@@ -88,10 +89,10 @@ export default function PathForm({ onSubmit, initialData, sagas = [] }: PathForm
             ...data,
             milestones: data.milestones?.map((milestone: any) => ({
                 ...milestone,
-                id: milestone.id || uuidv4(),
+                id: milestone.id || generateSimpleId(),
                 actions: milestone.actions?.map((action: any) => ({
                     ...action,
-                    id: action.id || uuidv4(),
+                    id: action.id || generateSimpleId(),
                 })) || [],
             })),
         });
@@ -190,7 +191,7 @@ export default function PathForm({ onSubmit, initialData, sagas = [] }: PathForm
                     label="Actions"
                     renderItem={renderActionsArray}
                     addButtonLabel="Add Action"
-                    defaultValue={{ id: uuidv4(), name: '', description: '', done: false }}
+                    defaultValue={{ name: '', description: '', done: false }}
                 />
             </View>
         );
@@ -200,6 +201,14 @@ export default function PathForm({ onSubmit, initialData, sagas = [] }: PathForm
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.formContainer}>
                 <Form onSubmit={handleSubmit(handleFormSubmit)}>
+                    <FormSelect
+                        name="sagaId"
+                        control={control}
+                        label="Link to Saga (optional)"
+                        options={sagaOptions}
+                        placeholder="Select a saga"
+                    />
+
                     <FormInput
                         name="title"
                         control={control}
@@ -230,21 +239,13 @@ export default function PathForm({ onSubmit, initialData, sagas = [] }: PathForm
                         placeholder="Select a target date"
                     />
 
-                    <FormSelect
-                        name="sagaId"
-                        control={control}
-                        label="Link to Saga (optional)"
-                        options={sagaOptions}
-                        placeholder="Select a saga"
-                    />
-
                     <FormArrayField
                         name="milestones"
                         control={control}
                         label="Milestones"
                         renderItem={renderMilestone}
                         addButtonLabel="Add Milestone"
-                        defaultValue={{ id: uuidv4(), title: '', description: '', actions: [] }}
+                        defaultValue={{ title: '', description: '', actions: [] }}
                     />
 
                     <View style={styles.buttonContainer}>

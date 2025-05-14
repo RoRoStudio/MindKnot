@@ -1,7 +1,7 @@
 // src/hooks/useCaptures.ts
 import { useState, useEffect, useCallback } from 'react';
 import { Capture, CaptureSubType } from '../types/capture';
-import { createCapture, getCapturesBySaga } from '../services/captureService';
+import { createCapture, getCapturesBySaga, getAllCaptures } from '../services/captureService';
 import { useSagaStore } from '../state/sagaStore';
 
 export function useCaptures() {
@@ -20,8 +20,9 @@ export function useCaptures() {
                 const sagaCaptures = await getCapturesBySaga(targetSagaId);
                 setCaptures(sagaCaptures);
             } else {
-                // In the future, implement getAllCaptures() to fetch all captures
-                setCaptures([]);
+                // Load all captures when no saga is selected
+                const allCaptures = await getAllCaptures();
+                setCaptures(allCaptures);
             }
         } catch (err) {
             console.error('Failed to load captures:', err);
@@ -32,17 +33,19 @@ export function useCaptures() {
     }, [selectedSagaId]);
 
     useEffect(() => {
-        if (selectedSagaId) {
-            loadCaptures();
-        }
+        // Load captures when the component mounts, regardless of whether a saga is selected
+        loadCaptures();
     }, [selectedSagaId, loadCaptures]);
 
     const addCapture = async (capture: Omit<Capture, 'id' | 'createdAt' | 'updatedAt' | 'chapterId'>) => {
         try {
             setLoading(true);
             setError(null);
-            await createCapture(capture);
-            await loadCaptures();
+            const newCapture = await createCapture(capture);
+
+            // Update the state with the new capture
+            setCaptures(prev => [newCapture, ...prev]);
+
             return true;
         } catch (err) {
             console.error('Failed to create capture:', err);

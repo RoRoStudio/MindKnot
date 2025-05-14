@@ -10,6 +10,7 @@ import { Typography } from '../common/Typography';
 import { Icon } from '../common/Icon';
 import { Button } from '../common/Button';
 import FormErrorMessage from './FormErrorMessage';
+import { generateSimpleId } from '../../utils/uuidUtil';
 
 interface FormArrayFieldProps<TFieldValues extends FieldValues = FieldValues> {
     name: string;
@@ -83,7 +84,12 @@ export default function FormArrayField<TFieldValues extends FieldValues = FieldV
         if (maxItems && fields.length >= maxItems) {
             return;
         }
-        append(defaultValue || {});
+        // Ensure we always have an ID in the defaultValue using our synchronous ID generator
+        const itemToAdd = defaultValue
+            ? { ...defaultValue, id: defaultValue.id || generateSimpleId() }
+            : { id: generateSimpleId() };
+
+        append(itemToAdd);
     };
 
     const isMaxItems = maxItems ? fields.length >= maxItems : false;

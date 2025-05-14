@@ -1,7 +1,7 @@
 // src/hooks/usePaths.ts
 import { useState, useEffect, useCallback } from 'react';
 import { Path } from '../types/path';
-import { createPath, getPathsBySaga } from '../services/pathService';
+import { createPath, getPathsBySaga, getAllPaths } from '../services/pathService';
 import { useSagaStore } from '../state/sagaStore';
 
 export function usePaths() {
@@ -20,8 +20,9 @@ export function usePaths() {
                 const sagaPaths = await getPathsBySaga(targetSagaId);
                 setPaths(sagaPaths);
             } else {
-                // In the future, implement getAllPaths() to fetch all paths
-                setPaths([]);
+                // Load all paths when no saga is selected
+                const allPaths = await getAllPaths();
+                setPaths(allPaths);
             }
         } catch (err) {
             console.error('Failed to load paths:', err);
@@ -32,17 +33,19 @@ export function usePaths() {
     }, [selectedSagaId]);
 
     useEffect(() => {
-        if (selectedSagaId) {
-            loadPaths();
-        }
+        // Load paths when the component mounts, regardless of whether a saga is selected
+        loadPaths();
     }, [selectedSagaId, loadPaths]);
 
     const addPath = async (path: Omit<Path, 'id' | 'createdAt' | 'updatedAt'>) => {
         try {
             setLoading(true);
             setError(null);
-            await createPath(path);
-            await loadPaths();
+            const newPath = await createPath(path);
+
+            // Update the state with the new path
+            setPaths(prev => [newPath, ...prev]);
+
             return true;
         } catch (err) {
             console.error('Failed to create path:', err);
