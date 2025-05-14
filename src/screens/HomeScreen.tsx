@@ -22,18 +22,16 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Typography } from '../components/common/Typography';
 import { Icon } from '../components/common/Icon';
 import { Card } from '../components/common/Card';
+import { useCaptures } from '../hooks/useCaptures';
+import { useLoops } from '../hooks/useLoops';
+import { usePaths } from '../hooks/usePaths';
+import { CaptureSubType } from '../types/capture';
 
 interface HomeScreenProps {
     navigation: NavigationProp<ParamListBase>;
 }
 
-// Sample data for recent entries
-const recentEntries = [
-    { id: '1', title: 'Morning Reflection', type: 'reflection', date: 'Today, 9:15 AM', saga: 'Personal Growth' },
-    { id: '2', title: 'Weekly Plan', type: 'action', date: 'Yesterday, 7:30 PM', saga: 'Startup Journey' },
-    { id: '3', title: 'New Product Idea', type: 'idea', date: '2 days ago', saga: 'Startup Journey' },
-    { id: '4', title: 'Exercise Log', type: 'note', date: '3 days ago', saga: 'Health & Fitness' },
-];
+const { width } = Dimensions.get('window');
 
 // Sample data for quick actions
 const quickActions = [
@@ -43,10 +41,11 @@ const quickActions = [
     { id: '4', title: 'Write Note', icon: 'file-text', color: '#27AE60' },
 ];
 
-const { width } = Dimensions.get('window');
-
 export default function HomeScreen({ navigation }: HomeScreenProps) {
     const { theme, isDark } = useTheme();
+    const { captures, loadCaptures } = useCaptures();
+    const { loops, loadLoops } = useLoops();
+    const { paths, loadPaths } = usePaths();
 
     // Animation values
     const headerOpacity = useSharedValue(0);
@@ -81,6 +80,52 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             withTiming(0, { duration: 800, easing: Easing.out(Easing.elastic(1)) })
         );
     }, []);
+
+    // Load data when component mounts
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                await Promise.all([
+                    loadCaptures(),
+                    loadLoops(),
+                    loadPaths()
+                ]);
+            } catch (error) {
+                console.error('Failed to load data:', error);
+            }
+        };
+
+        loadData();
+    }, [loadCaptures, loadLoops, loadPaths]);
+
+    // Format relative date for entries
+    const formatRelativeDate = (dateString: string): string => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+            return 'Today, ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else if (diffDays === 1) {
+            return 'Yesterday, ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else if (diffDays < 7) {
+            return `${diffDays} days ago`;
+        } else {
+            return date.toLocaleDateString();
+        }
+    };
+
+    // Get recent entries from captures
+    const recentEntries = captures
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 4)
+        .map(capture => ({
+            id: capture.id,
+            title: capture.title || `Untitled ${capture.subType}`,
+            type: capture.subType || 'note',
+            date: formatRelativeDate(capture.createdAt),
+            saga: capture.sagaId ? 'Linked Saga' : 'Unlinked',
+        }));
 
     // Define styles using theme
     const styles = StyleSheet.create({
@@ -148,11 +193,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     });
 
     // Get entry type icon
-    const getEntryTypeIcon = (type: string) => {
+    const getEntryTypeIcon = (type: string): string => {
         switch (type) {
             case 'reflection': return 'sparkles';
             case 'action': return 'check';
-            case 'idea': return 'lightbulb';
+            case 'spark': return 'lightbulb';
             case 'note': return 'file-text';
             default: return 'file-text';
         }
@@ -160,7 +205,28 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
     // Navigate to a saga
     const navigateToSaga = () => {
+        // This would be updated to navigate to a specific saga once we have saga data
         navigation.navigate('Sagas');
+    };
+
+    // Quick action handlers
+    const handleQuickAction = (index: number) => {
+        switch (index) {
+            case 0:
+                navigation.navigate('Capture', { type: CaptureSubType.REFLECTION });
+                break;
+            case 1:
+                navigation.navigate('Capture', { type: CaptureSubType.ACTION });
+                break;
+            case 2:
+                navigation.navigate('Capture', { type: CaptureSubType.SPARK });
+                break;
+            case 3:
+                navigation.navigate('Capture', { type: CaptureSubType.NOTE });
+                break;
+            default:
+                break;
+        }
     };
 
     return (
@@ -188,38 +254,44 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                     <Typography variant="h2" style={styles.sectionTitle}>Recent Entries</Typography>
 
                     <View style={styles.cardList}>
-                        {recentEntries.map(entry => (
-                            <Card
-                                key={entry.id}
-                                style={styles.entryCard}
-                                elevated
-                                onPress={() => console.log(`View entry ${entry.id}`)}
-                            >
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Icon
-                                        name={getEntryTypeIcon(entry.type)}
-                                        width={20}
-                                        height={20}
-                                        color={theme.colors.primary}
-                                        style={{ marginRight: theme.spacing.s }}
-                                    />
-                                    <Typography variant="h3">{entry.title}</Typography>
-                                </View>
+                        {recentEntries.length > 0 ? (
+                            recentEntries.map((entry) => (
+                                <Card
+                                    key={entry.id}
+                                    style={styles.entryCard}
+                                    elevated
+                                    onPress={() => console.log(`View entry ${entry.id}`)}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <Icon
+                                            name={getEntryTypeIcon(entry.type)}
+                                            width={20}
+                                            height={20}
+                                            color={theme.colors.primary}
+                                            style={{ marginRight: theme.spacing.s }}
+                                        />
+                                        <Typography variant="h3">{entry.title}</Typography>
+                                    </View>
 
-                                <View style={styles.entryInfo}>
-                                    <Typography variant="caption" style={styles.entryMeta}>
-                                        {entry.date}
-                                    </Typography>
-                                    <Typography
-                                        variant="caption"
-                                        style={styles.entryMeta}
-                                        onPress={navigateToSaga}
-                                    >
-                                        {entry.saga}
-                                    </Typography>
-                                </View>
+                                    <View style={styles.entryInfo}>
+                                        <Typography variant="caption" style={styles.entryMeta}>
+                                            {entry.date}
+                                        </Typography>
+                                        <Typography
+                                            variant="caption"
+                                            style={styles.entryMeta}
+                                            onPress={navigateToSaga}
+                                        >
+                                            {entry.saga}
+                                        </Typography>
+                                    </View>
+                                </Card>
+                            ))
+                        ) : (
+                            <Card style={styles.entryCard}>
+                                <Typography>No recent entries yet. Create your first one!</Typography>
                             </Card>
-                        ))}
+                        )}
                     </View>
                 </Animated.View>
 
@@ -228,14 +300,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                     <Typography variant="h2" style={styles.sectionTitle}>Quick Actions</Typography>
 
                     <View style={styles.quickActionsContainer}>
-                        {quickActions.map(action => (
+                        {quickActions.map((action, index) => (
                             <TouchableOpacity
                                 key={action.id}
                                 style={[
                                     styles.actionCard,
                                     { backgroundColor: action.color }
                                 ]}
-                                onPress={() => console.log(`Action ${action.title}`)}
+                                onPress={() => handleQuickAction(index)}
                                 activeOpacity={0.8}
                             >
                                 <View style={styles.actionIcon}>

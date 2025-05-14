@@ -23,6 +23,19 @@ import Animated, {
 import { useStyles } from '../../hooks/useStyles';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type RootStackParamList = {
+    Capture: { type: string, sagaId?: string };
+    Loop: { sagaId?: string };
+    Path: { sagaId?: string };
+    SagaDetail: { sagaId: string };
+    Main: undefined;
+    ThemeInspector: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const FAB_SIZE = 56;
@@ -41,7 +54,7 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress 
     const rotation = useSharedValue(0);
     const scale = useSharedValue(1);
     const { theme } = useTheme();
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp>();
 
     const styles = useStyles((theme) => ({
         fabContainer: {
@@ -124,16 +137,21 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress 
     ];
 
     const navigateToCreationScreen = (type: string) => {
-        console.log(`Navigate to create ${type}`);
         closeMenu();
-        // Future implementation: navigation.navigate(`Create${type}`);
 
-        // For now, show an alert as a placeholder
-        Alert.alert(
-            `Create ${type}`,
-            `This will navigate to the ${type} creation screen in the future update.`,
-            [{ text: 'OK' }]
-        );
+        switch (type) {
+            case 'Capture':
+                navigation.navigate('Capture', { type: 'note' });
+                break;
+            case 'Loop':
+                navigation.navigate('Loop', {});
+                break;
+            case 'Path':
+                navigation.navigate('Path', {});
+                break;
+            default:
+                showHelpPlaceholder();
+        }
     };
 
     const showHelpPlaceholder = () => {
