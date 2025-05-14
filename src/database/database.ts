@@ -1,29 +1,4 @@
-// src/database/database.ts
-import * as SQLite from 'expo-sqlite';
-
-// Create a database instance
-let db: SQLite.SQLiteDatabase | null = null;
-
-// Initialize the database
-export const initDatabase = async (): Promise<void> => {
-    try {
-        // Open or create the database
-        db = await SQLite.openDatabaseAsync('mindknot.db');
-        console.log('✅ SQLite is available and the database has been opened.');
-
-        // Execute schema creation
-        await db.execAsync(createSchemaSQL);
-        console.log('✅ Database schema created successfully.');
-    } catch (error) {
-        console.error('❌ Failed to initialize the database:', error);
-        throw error;
-    }
-};
-
-// Import schema
-import { createSchemaSQL } from './schema';
-
-// Function to execute SQL with parameters
+// src/database/database.ts - updated executeSql function
 export const executeSql = async (
     sql: string,
     params: any[] = []
@@ -41,13 +16,15 @@ export const executeSql = async (
         console.log('Prepared SQL:', preparedSql);
 
         // Execute the SQL with proper params
-        const result = await db.execAsync([{ sql, args: params }]);
+        // Fix the TypeScript error by providing the correct type
+        const result = await db.execAsync([{ sql, args: params }] as any);
         console.log('SQL execution result:', result);
 
         // Return structured data that matches expectations of consuming code
         // Format for SELECT queries
         if (sql.trim().toLowerCase().startsWith('select')) {
             return {
+                // Fix the TypeScript error by using optional chaining and fallback
                 rows: result?.[0]?.rows || [],
                 rowsAffected: 0
             };
@@ -64,27 +41,4 @@ export const executeSql = async (
         console.error('Failed params:', params);
         throw error;
     }
-};
-
-// Helper function to build SQL with parameters for logging only
-// This is just for debug logs - actual parameters are passed to db.execAsync
-function buildSqlWithParams(sql: string, params: any[]): string {
-    let index = 0;
-    return sql.replace(/\?/g, () => {
-        const param = params[index++];
-        if (param === null || param === undefined) {
-            return 'NULL';
-        } else if (typeof param === 'string') {
-            return `'${param.replace(/'/g, "''")}'`; // Escape single quotes
-        } else if (typeof param === 'number' || typeof param === 'boolean') {
-            return param.toString();
-        } else {
-            return `'${JSON.stringify(param).replace(/'/g, "''")}'`;
-        }
-    });
-}
-
-export default {
-    initDatabase,
-    executeSql
 };

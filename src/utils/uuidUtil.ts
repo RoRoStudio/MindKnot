@@ -3,7 +3,12 @@ import * as Crypto from 'expo-crypto';
 
 // Async UUID generation using Expo's Crypto module
 export const generateUUID = async (): Promise<string> => {
-    return await Crypto.randomUUID();
+    try {
+        return await Crypto.randomUUID();
+    } catch (error) {
+        console.warn('Error generating UUID with Crypto, using fallback method', error);
+        return generateSimpleId();
+    }
 };
 
 // Simple synchronous fallback for when we can't use async
