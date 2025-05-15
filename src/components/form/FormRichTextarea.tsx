@@ -61,6 +61,7 @@ export default function FormRichTextarea<T extends FieldValues>({
     const actualMinHeight = minHeight || defaultMinHeight;
     const actualMaxHeight = maxHeight || defaultMaxHeight;
 
+    const [activeFormats, setActiveFormats] = useState<string[]>([]);
     const [isFocused, setIsFocused] = useState(false);
     const [useRichEditor, setUseRichEditor] = useState(editorMode !== 'optional');
     const [height, setHeight] = useState<number>(actualMinHeight);
@@ -73,6 +74,31 @@ export default function FormRichTextarea<T extends FieldValues>({
     useEffect(() => {
         setUseRichEditor(editorMode !== 'optional');
     }, [editorMode]);
+
+    // After the existing useEffect
+    useEffect(() => {
+        // Ensure editor is properly initialized and focusable
+        if (editorRef.current) {
+            // Give it a moment to fully initialize
+            setTimeout(() => {
+                if (useRichEditor) {
+                    editorRef.current?.commandDOM(`
+                        // Make sure the editor is focusable
+                        document.body.style.userSelect = 'text';
+                        document.body.style.webkitUserSelect = 'text';
+                        document.body.style.MozUserSelect = 'text';
+                        
+                        // Make sure the content is editable
+                        document.body.contentEditable = 'true';
+                        
+                        // Allow native text selection
+                        document.documentElement.style.webkitTouchCallout = 'default';
+                        document.documentElement.style.webkitUserSelect = 'text';
+                    `);
+                }
+            }, 500);
+        }
+    }, [useRichEditor, editorRef.current]);
 
     const styles = useStyles((theme) => ({
         container: {
@@ -193,16 +219,22 @@ export default function FormRichTextarea<T extends FieldValues>({
 
     // Map editor actions to icon names
     const formatActions = [
+        // Text styling (most commonly used)
         { action: 'bold', icon: 'bold', tooltip: 'Bold' },
         { action: 'italic', icon: 'italic', tooltip: 'Italic' },
-        { action: 'insertBulletsList', icon: 'list', tooltip: 'Bullet List' },
-        { action: 'insertOrderedList', icon: 'list', tooltip: 'Ordered List' },
-        { action: 'insertLink', icon: 'link', tooltip: 'Insert Link' },
-        { action: 'keyboard', icon: 'keyboard', tooltip: 'Show/Hide Keyboard' },
-        { action: 'strikeThrough', icon: 'strikethrough', tooltip: 'Strikethrough' },
         { action: 'underline', icon: 'underline', tooltip: 'Underline' },
+        { action: 'strikethrough', icon: 'strikethrough', tooltip: 'Strikethrough' },
+
+        // List formatting
+        { action: 'insertUnorderedList', icon: 'list', tooltip: 'Bullet List' },
+        { action: 'insertOrderedList', icon: 'list-ordered', tooltip: 'Ordered List' },
+        { action: 'insertHTML', icon: 'square-check', tooltip: 'Checkbox List', param: '<ul style="list-style-type: none; margin-left: 0; padding-left: 20px;"><li><input type="checkbox"> New item</li></ul>' },
+
+        // Additional formatting
+        { action: 'createLink', icon: 'link', tooltip: 'Insert Link', param: 'https://' },
         { action: 'removeFormat', icon: 'x', tooltip: 'Remove Formatting' },
-        { action: 'insertCheckboxList', icon: 'square-check', tooltip: 'Checkbox List' },
+
+        // Undo/Redo
         { action: 'undo', icon: 'undo', tooltip: 'Undo' },
         { action: 'redo', icon: 'redo', tooltip: 'Redo' }
     ];
@@ -211,16 +243,33 @@ export default function FormRichTextarea<T extends FieldValues>({
     const getFormatActions = () => {
         // Light mode has fewer options
         if (editorMode === 'light') {
-            return formatActions.slice(0, 4); // Just bold, italic, bullets, ordered lists
+            // Just the basic formatting options
+            return formatActions.filter(action =>
+                ['bold', 'italic', 'underline', 'insertUnorderedList', 'insertOrderedList'].includes(action.action)
+            );
         }
         return formatActions; // Full set for full mode
     };
 
     // Function to handle formatting commands
-    const handleFormat = (action: string) => {
+    const handleFormat = (action: string, param: string | null = null) => {
         if (editorRef.current) {
-            // Call the proper method directly on the editor
-            editorRef.current.commandDOM(action);
+            if (action === 'insertHTML' && param) {
+                // Insert HTML content (like for checkbox list)
+                editorRef.current.commandDOM(`document.execCommand('${action}', false, '${param}')`);
+            } else if (action === 'createLink' && param) {
+                // Handle link insertion with prompt
+                editorRef.current.commandDOM(`
+                    var url = prompt('Enter a URL:', '${param}');
+                    if (url) {
+                        document.execCommand('${action}', false, url);
+                    }
+                `);
+            } else {
+                // Standard execCommand
+                editorRef.current.commandDOM(`document.execCommand('${action}', false, null)`);
+            }
+
             // Focus after executing the command
             setTimeout(() => {
                 editorRef.current?.focusContentEditor();
@@ -241,7 +290,7 @@ export default function FormRichTextarea<T extends FieldValues>({
                         <TouchableOpacity
                             key={index}
                             style={styles.formatButton}
-                            onPress={() => handleFormat(item.action)}
+                            onPress={() => handleFormat(item.action, item.param || null)}
                             accessibilityLabel={item.tooltip}
                         >
                             <Icon
@@ -310,6 +359,22 @@ export default function FormRichTextarea<T extends FieldValues>({
         return '';
     };
 
+    // Handle editor initialization
+    const handleEditorInitialized = () => {
+        console.log('Rich Editor initialized');
+        // Make sure editor is editable right from the start
+        if (editorRef.current) {
+            editorRef.current.commandDOM(`
+                // Enable text selection and editing
+                document.documentElement.style.userSelect = 'text';
+                document.documentElement.style.webkitUserSelect = 'text';
+                document.body.style.userSelect = 'text';
+                document.body.style.webkitUserSelect = 'text';
+                document.body.contentEditable = 'true';
+            `);
+        }
+    };
+
     return (
         <Controller
             control={control}
@@ -344,6 +409,10 @@ export default function FormRichTextarea<T extends FieldValues>({
                                 onFocus={() => setIsFocused(true)}
                                 placeholder={placeholder}
                                 initialHeight={actualMinHeight}
+                                initialFocus={false}
+                                pasteAsPlainText={false}
+                                useContainer={false}
+                                editorInitializedCallback={handleEditorInitialized}
                                 editorStyle={{
                                     backgroundColor: theme.components.inputs.background,
                                     color: theme.components.inputs.text,
@@ -352,8 +421,14 @@ export default function FormRichTextarea<T extends FieldValues>({
                                         font-family: System; 
                                         font-size: ${theme.typography.fontSize.m}px;
                                         padding: ${theme.spacing.m}px;
+                                        user-select: text;
+                                        -webkit-user-select: text;
+                                        -moz-user-select: text;
+                                        -webkit-touch-callout: default;
+                                        p { margin: 0; } /* Prevent line skip */
                                     `
                                 }}
+
                                 containerStyle={styles.richEditor}
                             />
                         ) : (

@@ -9,6 +9,7 @@ import Map from '../../assets/icons/lucide/map.svg';
 import Settings from '../../assets/icons/lucide/settings.svg';
 import FileText from '../../assets/icons/lucide/file-text.svg';
 import List from '../../assets/icons/lucide/list.svg';
+import ListOrdered from '../../assets/icons/lucide/list-ordered.svg';
 import GitBranch from '../../assets/icons/lucide/git-branch.svg';
 import Link from '../../assets/icons/lucide/link.svg';
 import ArrowRight from '../../assets/icons/lucide/arrow-right.svg';
@@ -60,6 +61,7 @@ const iconMap = {
     settings: Settings,
     'file-text': FileText,
     list: List,
+    'list-ordered': ListOrdered,
     'git-branch': GitBranch,
     link: Link,
     minus: Minus,
