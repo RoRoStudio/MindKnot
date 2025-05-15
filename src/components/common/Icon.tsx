@@ -42,6 +42,13 @@ import Bold from '../../assets/icons/lucide/bold.svg';
 import Italic from '../../assets/icons/lucide/italic.svg';
 import Underline from '../../assets/icons/lucide/underline.svg';
 import Heading from '../../assets/icons/lucide/heading.svg';
+import Keyboard from '../../assets/icons/lucide/keyboard.svg';
+import Strikethrough from '../../assets/icons/lucide/strikethrough.svg';
+import SquareCheck from '../../assets/icons/lucide/square-check.svg';
+import Undo from '../../assets/icons/lucide/undo.svg';
+import Redo from '../../assets/icons/lucide/redo.svg';
+import Type from '../../assets/icons/lucide/type.svg';
+
 
 const iconMap = {
     plus: Plus,
@@ -82,6 +89,12 @@ const iconMap = {
     italic: Italic,
     underline: Underline,
     heading: Heading,
+    type: Type,
+    keyboard: Keyboard,
+    strikethrough: Strikethrough,
+    'square-check': SquareCheck,
+    undo: Undo,
+    redo: Redo,
 };
 
 export type IconName = keyof typeof iconMap;

@@ -1,32 +1,24 @@
 // src/components/form/FormRichTextarea.tsx
-// NOTE: This is a placeholder implementation of a rich text editor with visual formatting.
-// We need to integrate with a WYSIWYG library like:
-// - react-native-pell-rich-editor
-
-// That library provides true visual formatting (bold, italic, etc.) rather than just showing the formatting buttons.
-// The current implementation only shows the UI elements but alerts when formatting would be applied which should be deleted once the full implementation is done.
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     TextInput,
-    TouchableOpacity,
     ScrollView,
-    Pressable,
-    PanResponder,
+    TouchableOpacity,
+    Text,
     StyleSheet,
+    Keyboard,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../common/Typography';
 import { Icon, IconName } from '../common/Icon';
 import FormErrorMessage from './FormErrorMessage';
+import { RichEditor } from 'react-native-pell-rich-editor';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // Define the editor modes
 export type EditorMode = 'full' | 'light' | 'optional';
-
-// All possible formatting options
-export type FormatOption = 'bold' | 'italic' | 'underline' | 'bullet' | 'heading' | 'quote';
 
 interface FormRichTextareaProps<T extends FieldValues> {
     name: Path<T>;
@@ -43,15 +35,13 @@ interface FormRichTextareaProps<T extends FieldValues> {
     minHeight?: number;
     editorMode?: EditorMode;
     resizable?: boolean;
-    // Optionally provide format options to enable (defaults to all for full mode)
-    formatOptions?: FormatOption[];
 }
 
 export default function FormRichTextarea<T extends FieldValues>({
     name,
     control,
     label,
-    placeholder,
+    placeholder = 'Enter text...',
     rules,
     showCharCount,
     maxLength,
@@ -62,7 +52,6 @@ export default function FormRichTextarea<T extends FieldValues>({
     minHeight = 100,
     editorMode = 'full',
     resizable = true,
-    formatOptions,
 }: FormRichTextareaProps<T>) {
     // Dynamic defaults based on editor mode
     const defaultNumberOfLines = editorMode === 'light' ? 2 : 4;
@@ -75,9 +64,10 @@ export default function FormRichTextarea<T extends FieldValues>({
     const [isFocused, setIsFocused] = useState(false);
     const [useRichEditor, setUseRichEditor] = useState(editorMode !== 'optional');
     const [height, setHeight] = useState<number>(actualMinHeight);
-    const [selection, setSelection] = useState({ start: 0, end: 0 });
     const [isResizing, setIsResizing] = useState(false);
-    const inputRef = useRef<TextInput>(null);
+    const [charCount, setCharCount] = useState(0);
+    const editorRef = useRef<RichEditor>(null);
+    const { theme } = useTheme();
 
     // Reset useRichEditor when editorMode changes
     useEffect(() => {
@@ -100,6 +90,10 @@ export default function FormRichTextarea<T extends FieldValues>({
             borderBottomWidth: 0,
             borderColor: theme.components.inputs.border,
             padding: theme.spacing.xs,
+            overflow: 'hidden',
+        },
+        toolbarScroll: {
+            flexDirection: 'row',
         },
         formatButton: {
             width: 36,
@@ -112,29 +106,36 @@ export default function FormRichTextarea<T extends FieldValues>({
         formatButtonActive: {
             backgroundColor: theme.colors.primaryLight,
         },
-        inputWrapper: {
-            backgroundColor: theme.components.inputs.background,
+        editorContainer: {
             borderWidth: 1,
             borderColor: theme.components.inputs.border,
             borderRadius: theme.components.inputs.radius,
             ...(isFocused && {
                 borderColor: theme.components.inputs.focusBorder,
             }),
-            // For toolbar, only round the bottom if toolbar is visible and not resizable
+            // For toolbar, only round the bottom if toolbar is visible
             borderTopLeftRadius: useRichEditor ? 0 : theme.components.inputs.radius,
             borderTopRightRadius: useRichEditor ? 0 : theme.components.inputs.radius,
             borderBottomLeftRadius: resizable ? 0 : theme.components.inputs.radius,
             borderBottomRightRadius: resizable ? 0 : theme.components.inputs.radius,
             borderBottomWidth: resizable ? 0 : 1,
+            backgroundColor: theme.components.inputs.background,
+            overflow: 'hidden',
         },
-        input: {
+        editorError: {
+            borderColor: theme.colors.error,
+        },
+        richEditor: {
+            minHeight: actualMinHeight,
+            maxHeight: actualMaxHeight,
+        },
+        plainTextInput: {
             padding: theme.spacing.m,
             color: theme.components.inputs.text,
             fontSize: theme.typography.fontSize.m,
             textAlignVertical: 'top',
-        },
-        inputError: {
-            borderColor: theme.colors.error,
+            minHeight: actualMinHeight,
+            maxHeight: actualMaxHeight,
         },
         charCounter: {
             alignSelf: 'flex-end',
@@ -190,133 +191,69 @@ export default function FormRichTextarea<T extends FieldValues>({
         },
     }));
 
-    // Create the pan responder for resizing
-    const panResponder = PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onPanResponderGrant: () => {
-            setIsResizing(true);
-            if (inputRef.current) {
-                inputRef.current.focus();
-            }
-        },
-        onPanResponderMove: (_, gestureState) => {
-            const newHeight = height + gestureState.dy;
-            if (newHeight >= actualMinHeight && newHeight <= actualMaxHeight) {
-                setHeight(newHeight);
-            }
-        },
-        onPanResponderRelease: () => {
-            setIsResizing(false);
-        },
-    });
+    // Map editor actions to icon names
+    const formatActions = [
+        { action: 'bold', icon: 'bold', tooltip: 'Bold' },
+        { action: 'italic', icon: 'italic', tooltip: 'Italic' },
+        { action: 'insertBulletsList', icon: 'list', tooltip: 'Bullet List' },
+        { action: 'insertOrderedList', icon: 'list', tooltip: 'Ordered List' },
+        { action: 'insertLink', icon: 'link', tooltip: 'Insert Link' },
+        { action: 'keyboard', icon: 'keyboard', tooltip: 'Show/Hide Keyboard' },
+        { action: 'strikeThrough', icon: 'strikethrough', tooltip: 'Strikethrough' },
+        { action: 'underline', icon: 'underline', tooltip: 'Underline' },
+        { action: 'removeFormat', icon: 'x', tooltip: 'Remove Formatting' },
+        { action: 'insertCheckboxList', icon: 'square-check', tooltip: 'Checkbox List' },
+        { action: 'undo', icon: 'undo', tooltip: 'Undo' },
+        { action: 'redo', icon: 'redo', tooltip: 'Redo' }
+    ];
 
-    const handleContentSizeChange = (event: any) => {
-        if (autoGrow && !isResizing) {
-            const contentHeight = event.nativeEvent.contentSize.height;
-            setHeight(Math.min(Math.max(contentHeight, actualMinHeight), actualMaxHeight));
-        }
-    };
-
-    // Handle selection change
-    const handleSelectionChange = (event: any) => {
-        setSelection(event.nativeEvent.selection);
-    };
-
-    // Apply formatting to text (this would need to integrate with a WYSIWYG library in a real implementation)
-    // For this example, we'll simulate it by showing buttons that can apply simple inline styles
-    const applyFormatting = (format: FormatOption, value: string, onChange: (text: string) => void) => {
-        // In a real implementation, you would integrate with a WYSIWYG library
-        // Here we'll just demonstrate the button UI without actual formatting
-
-        if (!inputRef.current) return;
-
-        // Focus input to prepare for formatting
-        inputRef.current.focus();
-
-        // Show that the button was clicked (in a real implementation, this would apply formatting)
-        console.log(`Applied ${format} formatting`);
-
-        // Simulate formatting by adding a tag to indicate what was done
-        // In a real implementation, this would be replaced with actual visual formatting
-        const selectionStart = selection.start;
-        const selectionEnd = selection.end;
-        const selectedText = value.substring(selectionStart, selectionEnd);
-
-        if (selectedText.length === 0) {
-            // No text selected, just focus
-            return;
-        }
-
-        // In a real implementation with a WYSIWYG library, you would apply formats directly
-        // This is just a placeholder to show the UI functionality
-        alert(`Applied ${format} formatting to "${selectedText}"`);
-    };
-
-    // Get the appropriate format options based on editor mode
-    const getFormatOptions = (): Array<{ name: FormatOption; icon: IconName; tooltip: string }> => {
-        // If custom format options are provided, use those
-        if (formatOptions) {
-            return formatOptions.map(option => {
-                switch (option) {
-                    case 'bold': return { name: 'bold', icon: 'bold', tooltip: 'Bold' };
-                    case 'italic': return { name: 'italic', icon: 'italic', tooltip: 'Italic' };
-                    case 'underline': return { name: 'underline', icon: 'underline', tooltip: 'Underline' };
-                    case 'bullet': return { name: 'bullet', icon: 'list', tooltip: 'Bullet List' };
-                    case 'heading': return { name: 'heading', icon: 'heading', tooltip: 'Heading' };
-                    case 'quote': return { name: 'quote', icon: 'file-text', tooltip: 'Quote' };
-                    default: return { name: 'bold', icon: 'bold', tooltip: 'Bold' };
-                }
-            });
-        }
-
-        // Default options based on mode
+    // Get icons based on editor mode
+    const getFormatActions = () => {
+        // Light mode has fewer options
         if (editorMode === 'light') {
-            return [
-                { name: 'bold', icon: 'bold', tooltip: 'Bold' },
-                { name: 'italic', icon: 'italic', tooltip: 'Italic' },
-            ];
+            return formatActions.slice(0, 4); // Just bold, italic, bullets, ordered lists
         }
-
-        // Full mode
-        return [
-            { name: 'bold', icon: 'bold', tooltip: 'Bold' },
-            { name: 'italic', icon: 'italic', tooltip: 'Italic' },
-            { name: 'underline', icon: 'underline', tooltip: 'Underline' },
-            { name: 'bullet', icon: 'list', tooltip: 'Bullet List' },
-            { name: 'heading', icon: 'heading', tooltip: 'Heading' },
-            { name: 'quote', icon: 'file-text', tooltip: 'Quote' },
-        ];
+        return formatActions; // Full set for full mode
     };
 
-    // Render format buttons
-    const renderFormatButtons = (
-        value: string,
-        onChange: (text: string) => void
-    ) => {
+    // Function to handle formatting commands
+    const handleFormat = (action: string) => {
+        if (editorRef.current) {
+            // Call the proper method directly on the editor
+            editorRef.current.commandDOM(action);
+            // Focus after executing the command
+            setTimeout(() => {
+                editorRef.current?.focusContentEditor();
+            }, 100);
+        }
+    };
+
+    // Create custom formatting toolbar
+    const renderFormatToolbar = () => {
         return (
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.formatToolbar}
-            >
-                {getFormatOptions().map((option) => (
-                    <TouchableOpacity
-                        key={option.name}
-                        style={[
-                            styles.formatButton,
-                            // This would be based on current selection formatting in a real implementation
-                        ]}
-                        onPress={() => applyFormatting(option.name, value, onChange)}
-                    >
-                        <Icon
-                            name={option.icon}
-                            width={20}
-                            height={20}
-                            color={styles.input.color}
-                        />
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
+            <View style={styles.formatToolbar}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.toolbarScroll}
+                >
+                    {getFormatActions().map((item, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            style={styles.formatButton}
+                            onPress={() => handleFormat(item.action)}
+                            accessibilityLabel={item.tooltip}
+                        >
+                            <Icon
+                                name={item.icon as IconName}
+                                width={20}
+                                height={20}
+                                color={theme.colors.textPrimary}
+                            />
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
         );
     };
 
@@ -331,9 +268,10 @@ export default function FormRichTextarea<T extends FieldValues>({
                     onPress={() => setUseRichEditor(!useRichEditor)}
                 >
                     <Icon
-                        name={useRichEditor ? 'file-text' : 'list'}
+                        name={useRichEditor ? 'file-text' : 'type'}
                         width={16}
                         height={16}
+                        color={theme.colors.primary}
                     />
                     <Typography variant="body2" style={styles.toggleText}>
                         {useRichEditor ? 'Use simple editor' : 'Use rich editor'}
@@ -341,6 +279,35 @@ export default function FormRichTextarea<T extends FieldValues>({
                 </TouchableOpacity>
             </View>
         );
+    };
+
+    // Handle HTML content changes
+    const handleContentChange = (html: string, onChange: (value: string) => void) => {
+        // Check character limit
+        if (maxLength) {
+            // Strip HTML to count characters
+            const plainText = html.replace(/<[^>]*>/g, '');
+            setCharCount(plainText.length);
+
+            if (plainText.length > maxLength) {
+                // Too many characters, don't update
+                return;
+            }
+        }
+
+        onChange(html);
+    };
+
+    // Helper to ensure the value is always a valid string
+    const ensureStringValue = (value: any): string => {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        if (typeof value === 'string') {
+            return value;
+        }
+        // If it's an array or object, convert to empty string to avoid type errors
+        return '';
     };
 
     return (
@@ -358,57 +325,86 @@ export default function FormRichTextarea<T extends FieldValues>({
 
                     {renderToggleButton()}
 
-                    {useRichEditor && renderFormatButtons(value, onChange)}
+                    {useRichEditor && renderFormatToolbar()}
 
-                    <View style={[styles.inputWrapper, error && styles.inputError]}>
-                        <TextInput
-                            ref={inputRef}
-                            style={[
-                                styles.input,
-                                { height: height },
-                            ]}
-                            value={value}
-                            onChangeText={(text) => {
-                                if (maxLength && text.length > maxLength) {
-                                    return;
-                                }
-                                onChange(text);
-                            }}
-                            onBlur={() => {
-                                setIsFocused(false);
-                                onBlur();
-                            }}
-                            onFocus={() => setIsFocused(true)}
-                            maxLength={maxLength}
-                            placeholder={placeholder}
-                            multiline
-                            numberOfLines={actualNumberOfLines}
-                            textAlignVertical="top"
-                            onContentSizeChange={handleContentSizeChange}
-                            onSelectionChange={handleSelectionChange}
-                        />
+                    <View style={[
+                        styles.editorContainer,
+                        error && styles.editorError
+                    ]}>
+                        {useRichEditor ? (
+                            // Rich Text Editor
+                            <RichEditor
+                                ref={editorRef}
+                                initialContentHTML={ensureStringValue(value)}
+                                onChange={(content) => handleContentChange(content, onChange)}
+                                onBlur={() => {
+                                    setIsFocused(false);
+                                    onBlur();
+                                }}
+                                onFocus={() => setIsFocused(true)}
+                                placeholder={placeholder}
+                                initialHeight={actualMinHeight}
+                                editorStyle={{
+                                    backgroundColor: theme.components.inputs.background,
+                                    color: theme.components.inputs.text,
+                                    placeholderColor: theme.components.inputs.placeholder,
+                                    contentCSSText: `
+                                        font-family: System; 
+                                        font-size: ${theme.typography.fontSize.m}px;
+                                        padding: ${theme.spacing.m}px;
+                                    `
+                                }}
+                                containerStyle={styles.richEditor}
+                            />
+                        ) : (
+                            // Plain Text Input
+                            <TextInput
+                                style={[
+                                    styles.plainTextInput,
+                                    { height: Math.max(actualMinHeight, height) }
+                                ]}
+                                value={value}
+                                onChangeText={(text) => {
+                                    if (maxLength && text.length > maxLength) {
+                                        return;
+                                    }
+                                    onChange(text);
+                                    setCharCount(text.length);
+                                }}
+                                onBlur={() => {
+                                    setIsFocused(false);
+                                    onBlur();
+                                }}
+                                onFocus={() => setIsFocused(true)}
+                                maxLength={maxLength}
+                                placeholder={placeholder}
+                                multiline
+                                numberOfLines={actualNumberOfLines}
+                                onContentSizeChange={(event) => {
+                                    if (autoGrow && !isResizing) {
+                                        const contentHeight = event.nativeEvent.contentSize.height;
+                                        setHeight(Math.min(Math.max(contentHeight, actualMinHeight), actualMaxHeight));
+                                    }
+                                }}
+                            />
+                        )}
                     </View>
 
+                    {/* Resize handle */}
                     {resizable && (
-                        <Pressable
-                            style={styles.resizeHandle}
-                            {...panResponder.panHandlers}
-                        >
+                        <View style={styles.resizeHandle}>
                             <View style={styles.resizeBar} />
-                        </Pressable>
+                        </View>
                     )}
 
+                    {/* Character counter */}
                     {showCharCount && maxLength && (
                         <Typography
                             variant="caption"
                             style={styles.charCounter}
-                            color={
-                                value && typeof value === 'string' && value.length === maxLength
-                                    ? 'error'
-                                    : 'secondary'
-                            }
+                            color={charCount === maxLength ? 'error' : 'secondary'}
                         >
-                            {value && typeof value === 'string' ? value.length : 0}/{maxLength}
+                            {charCount}/{maxLength}
                         </Typography>
                     )}
 

@@ -62,7 +62,7 @@ export default function NoteFormSheet({
 
     const defaultValues: NoteFormValues = {
         title: noteToEdit?.title || '',
-        body: noteToEdit?.body || '',
+        body: typeof noteToEdit?.body === 'string' ? noteToEdit.body : '',
         tags: noteToEdit?.tags || [],
         categoryId: noteToEdit?.categoryId || null,
     };
