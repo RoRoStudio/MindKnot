@@ -16,9 +16,42 @@ export const LoopCard: React.FC<LoopCardProps> = ({ loop, onPress }) => {
     let frequencyText = 'Custom schedule';
 
     try {
-        if (loop.frequency) {
-            const frequency = typeof loop.frequency === 'string' ?
-                JSON.parse(loop.frequency) : loop.frequency;
+        if (!loop.frequency) {
+            frequencyText = 'Custom schedule';
+        } else if (typeof loop.frequency === 'string') {
+            // Check if it's a simple string first
+            if (loop.frequency === 'daily') {
+                frequencyText = 'Daily';
+            } else if (loop.frequency === 'weekly') {
+                frequencyText = 'Weekly';
+            } else if (loop.frequency === 'weekdays') {
+                frequencyText = 'Weekdays';
+            } else if (loop.frequency === 'weekends') {
+                frequencyText = 'Weekends';
+            } else {
+                // Try to parse as JSON
+                try {
+                    const frequency = JSON.parse(loop.frequency);
+
+                    if (frequency.type === 'daily') {
+                        frequencyText = 'Daily';
+                    } else if (frequency.type === 'weekly') {
+                        frequencyText = `Weekly on ${frequency.day || 'Monday'}`;
+                    } else if (frequency.type === 'weekdays') {
+                        frequencyText = 'Weekdays';
+                    } else if (frequency.type === 'weekends') {
+                        frequencyText = 'Weekends';
+                    } else if (frequency.type === 'custom' && frequency.days) {
+                        frequencyText = `Custom: ${frequency.days.join(', ')}`;
+                    }
+                } catch (e) {
+                    // Not a valid JSON, use the string as is
+                    frequencyText = `${loop.frequency}`;
+                }
+            }
+        } else if (typeof loop.frequency === 'object' && loop.frequency !== null) {
+            // It's already an object
+            const frequency = loop.frequency as any;
 
             if (frequency.type === 'daily') {
                 frequencyText = 'Daily';

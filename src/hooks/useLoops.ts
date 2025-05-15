@@ -61,38 +61,78 @@ export function useLoops() {
             // Default to showing all loops if there's an issue
             if (!loop.frequency) return true;
 
-            let frequencyObj;
+            let frequencyType = '';
 
             try {
+                // Check if it's a simple string frequency first
                 if (typeof loop.frequency === 'string') {
-                    // Check if it's a simple string frequency
-                    if (loop.frequency === 'daily' ||
-                        loop.frequency === 'weekdays' ||
-                        loop.frequency === 'weekends' ||
-                        loop.frequency === 'weekly') {
-                        frequencyObj = { type: loop.frequency };
+                    // Check if it's already a simple string type
+                    if (['daily', 'weekdays', 'weekends', 'weekly'].includes(loop.frequency)) {
+                        frequencyType = loop.frequency;
                     } else {
-                        // Try to parse as JSON
+                        // Try to parse as JSON, but gracefully handle non-JSON strings
                         try {
-                            frequencyObj = JSON.parse(loop.frequency);
+                            const parsed = JSON.parse(loop.frequency);
+                            frequencyType = parsed.type || '';
                         } catch (e) {
                             // If not valid JSON, treat as simple string value
-                            frequencyObj = { type: loop.frequency };
+                            frequencyType = loop.frequency;
                         }
                     }
-                } else {
-                    frequencyObj = loop.frequency;
+                } else if (typeof loop.frequency === 'object' && loop.frequency !== null) {
+                    // It's already an object, get the type directly
+                    frequencyType = (loop.frequency as any).type || '';
                 }
             } catch (e) {
                 console.error('Error processing frequency:', e, loop.frequency);
                 return true; // Show the loop if we can't process the frequency
             }
 
-            if (frequencyObj.type === 'daily') return true;
-            if (frequencyObj.type === 'weekdays' && dayOfWeek !== 'sat' && dayOfWeek !== 'sun') return true;
-            if (frequencyObj.type === 'weekends' && (dayOfWeek === 'sat' || dayOfWeek === 'sun')) return true;
-            if (frequencyObj.type === 'weekly' && frequencyObj.day === dayOfWeek) return true;
-            if (frequencyObj.type === 'custom' && frequencyObj.days && frequencyObj.days.includes(dayOfWeek)) return true;
+            if (frequencyType === 'daily') return true;
+            if (frequencyType === 'weekdays' && dayOfWeek !== 'sat' && dayOfWeek !== 'sun') return true;
+            if (frequencyType === 'weekends' && (dayOfWeek === 'sat' || dayOfWeek === 'sun')) return true;
+
+            // For weekly, we need to check the day property from the frequency object
+            if (frequencyType === 'weekly') {
+                let day = '';
+                try {
+                    if (typeof loop.frequency === 'string') {
+                        try {
+                            const parsed = JSON.parse(loop.frequency);
+                            day = parsed.day || '';
+                        } catch (e) {
+                            // Not JSON, so no day specified
+                        }
+                    } else if (typeof loop.frequency === 'object' && loop.frequency !== null) {
+                        day = (loop.frequency as any).day || '';
+                    }
+
+                    return day.toLowerCase() === dayOfWeek;
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            // For custom, we need to check the days array from the frequency object
+            if (frequencyType === 'custom') {
+                try {
+                    let days: string[] = [];
+                    if (typeof loop.frequency === 'string') {
+                        try {
+                            const parsed = JSON.parse(loop.frequency);
+                            days = parsed.days || [];
+                        } catch (e) {
+                            // Not JSON, so no days specified
+                        }
+                    } else if (typeof loop.frequency === 'object' && loop.frequency !== null) {
+                        days = (loop.frequency as any).days || [];
+                    }
+
+                    return days.some(d => d.toLowerCase() === dayOfWeek);
+                } catch (e) {
+                    return false;
+                }
+            }
 
             return false;
         });

@@ -3,6 +3,8 @@ import * as SQLite from 'expo-sqlite';
 import { createSchemaSQL } from './schema';
 
 let db: SQLite.SQLiteDatabase | null = null;
+// Debug flag to control SQL logging - set to false to disable excessive logging
+const DEBUG_SQL = false;
 
 export const initDatabase = async (): Promise<void> => {
     try {
@@ -51,11 +53,16 @@ export const executeSql = async (
     }
 
     try {
-        console.log('🟡 Executing SQL:\n', sql);
-        console.log('🟡 With params:', params);
+        // Only log SQL statements when debug flag is enabled
+        if (DEBUG_SQL) {
+            console.log('🟡 Executing SQL:\n', sql);
+            console.log('🟡 With params:', params);
+
+            const preparedSql = buildSqlWithParams(sql, params);
+            console.log('🟡 Prepared SQL:\n', preparedSql);
+        }
 
         const preparedSql = buildSqlWithParams(sql, params);
-        console.log('🟡 Prepared SQL:\n', preparedSql);
 
         // For SELECT queries, use the promised-based query method
         if (sql.trim().toUpperCase().startsWith('SELECT')) {

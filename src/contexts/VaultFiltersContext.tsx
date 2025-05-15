@@ -1,5 +1,5 @@
-// src/contexts/VaultFiltersContext.tsx
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+// src/contexts/VaultFiltersContext.tsx - Updated with additional functionality
+import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 
 interface VaultFiltersContextType {
     searchTerm: string;
@@ -12,6 +12,7 @@ interface VaultFiltersContextType {
     sort: 'newest' | 'oldest' | 'alphabetical';
     setSort: (sort: 'newest' | 'oldest' | 'alphabetical') => void;
     clearFilters: () => void;
+    isFiltered: boolean;
 }
 
 const VaultFiltersContext = createContext<VaultFiltersContextType | undefined>(undefined);
@@ -34,20 +35,23 @@ export const VaultFiltersProvider: React.FC<VaultFiltersProviderProps> = ({ chil
     const [categoryId, setCategoryId] = useState<string | null>(null);
     const [sort, setSort] = useState<'newest' | 'oldest' | 'alphabetical'>('newest');
 
-    const toggleTag = (tag: string) => {
+    const toggleTag = useCallback((tag: string) => {
         setSelectedTags(prev =>
             prev.includes(tag)
                 ? prev.filter(t => t !== tag)
                 : [...prev, tag]
         );
-    };
+    }, []);
 
-    const clearFilters = () => {
+    const clearFilters = useCallback(() => {
         setSearchTerm('');
         setSelectedTags([]);
         setCategoryId(null);
         setSort('newest');
-    };
+    }, []);
+
+    // Check if any filters are applied
+    const isFiltered = searchTerm !== '' || selectedTags.length > 0 || categoryId !== null;
 
     return (
         <VaultFiltersContext.Provider
@@ -62,6 +66,7 @@ export const VaultFiltersProvider: React.FC<VaultFiltersProviderProps> = ({ chil
                 sort,
                 setSort,
                 clearFilters,
+                isFiltered
             }}
         >
             {children}

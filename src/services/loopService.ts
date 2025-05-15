@@ -3,6 +3,9 @@ import { executeSql } from '../database/database';
 import { generateUUID } from '../utils/uuidUtil';
 import { Loop, LoopItem } from '../types/loop';
 
+// Debug flag to control logging - set to false for production
+const DEBUG_LOG = false;
+
 export const createLoop = async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedAt'>): Promise<Loop> => {
     const id = await generateUUID();
     const now = new Date().toISOString();
@@ -60,14 +63,14 @@ export const createLoop = async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedA
 };
 
 export const getAllLoops = async (): Promise<Loop[]> => {
-    console.log("📣 Fetching all loops");
+    if (DEBUG_LOG) console.log("📣 Fetching all loops");
     try {
         const result = await executeSql(
             'SELECT * FROM loops ORDER BY createdAt DESC',
             []
         );
 
-        console.log("📣 Loops query result:", result);
+        if (DEBUG_LOG) console.log("📣 Loops query result:", result);
 
         if (result && result.rows && result.rows._array) {
             const loops = result.rows._array.map((row: any) => ({
@@ -77,11 +80,11 @@ export const getAllLoops = async (): Promise<Loop[]> => {
                 startTimeByDay: row.startTimeByDay ? JSON.parse(row.startTimeByDay) : undefined,
             })) as Loop[];
 
-            console.log(`📣 Found ${loops.length} loops`);
+            if (DEBUG_LOG) console.log(`📣 Found ${loops.length} loops`);
 
             // For each loop, fetch its items
             for (const loop of loops) {
-                console.log(`📣 Fetching items for loop ${loop.id}`);
+                if (DEBUG_LOG) console.log(`📣 Fetching items for loop ${loop.id}`);
                 const itemsResult = await executeSql(
                     'SELECT * FROM loop_items WHERE loopId = ? ORDER BY createdAt ASC',
                     [loop.id]
@@ -89,17 +92,17 @@ export const getAllLoops = async (): Promise<Loop[]> => {
 
                 if (itemsResult && itemsResult.rows && itemsResult.rows._array) {
                     loop.items = itemsResult.rows._array as LoopItem[];
-                    console.log(`📣 Found ${loop.items.length} items for loop ${loop.id}`);
+                    if (DEBUG_LOG) console.log(`📣 Found ${loop.items.length} items for loop ${loop.id}`);
                 } else {
                     loop.items = [];
-                    console.log(`📣 No items found for loop ${loop.id}`);
+                    if (DEBUG_LOG) console.log(`📣 No items found for loop ${loop.id}`);
                 }
             }
 
             return loops;
         }
 
-        console.log("📣 No loops found");
+        if (DEBUG_LOG) console.log("📣 No loops found");
         return [];
     } catch (error) {
         console.error("📣 Error fetching loops:", error);

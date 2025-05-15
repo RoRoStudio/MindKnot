@@ -71,7 +71,7 @@ export function BaseVaultScreen<T>({
         filtered.sort((a, b) => sortItems(a, b, sort));
 
         setFilteredData(filtered);
-    }, [data, searchTerm, selectedTags, categoryId, sort]);
+    }, [data, searchTerm, selectedTags, categoryId, sort, filterPredicate, sortItems]);
 
     // Pull-to-refresh handler
     const onRefresh = useCallback(async () => {
@@ -81,11 +81,6 @@ export function BaseVaultScreen<T>({
         } finally {
             setRefreshing(false);
         }
-    }, [loadData]);
-
-    // Load data on mount
-    useEffect(() => {
-        loadData();
     }, [loadData]);
 
     // Handle create button press
