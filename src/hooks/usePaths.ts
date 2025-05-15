@@ -10,17 +10,19 @@ export function usePaths() {
     const [error, setError] = useState<string | null>(null);
     const selectedSagaId = useSagaStore(state => state.selectedSagaId);
 
-    const loadPaths = useCallback(async (sagaId?: string) => {
+    const loadPaths = useCallback(async () => {
         try {
+            console.log('Loading paths...');
             setLoading(true);
             setError(null);
-
-            // Load all paths regardless of saga selection
             const allPaths = await getAllPaths();
+            console.log(`Loaded ${allPaths.length} paths`, allPaths);
             setPaths(allPaths);
+            return allPaths;
         } catch (err) {
             console.error('Failed to load paths:', err);
             setError('Failed to load paths');
+            throw err;
         } finally {
             setLoading(false);
         }

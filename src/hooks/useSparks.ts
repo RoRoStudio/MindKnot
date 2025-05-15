@@ -10,13 +10,17 @@ export function useSparks() {
 
     const loadSparks = useCallback(async () => {
         try {
+            console.log('Loading sparks...');
             setLoading(true);
             setError(null);
             const allSparks = await getAllSparks();
+            console.log(`Loaded ${allSparks.length} sparks`, allSparks);
             setSparks(allSparks);
+            return allSparks;
         } catch (err) {
             console.error('Failed to load sparks:', err);
             setError('Failed to load sparks');
+            throw err;
         } finally {
             setLoading(false);
         }
@@ -53,7 +57,7 @@ export function useSparks() {
 
             if (success) {
                 // Update the local state
-                setSparks(prev => prev.map(spark => 
+                setSparks(prev => prev.map(spark =>
                     spark.id === id ? { ...spark, ...updates } : spark
                 ));
             }
@@ -94,7 +98,7 @@ export function useSparks() {
             setLoading(true);
             setError(null);
             const unlinkedSparks = await getUnlinkedSparks();
-            
+
             // We can choose to set these to state or just return them
             return unlinkedSparks;
         } catch (err) {

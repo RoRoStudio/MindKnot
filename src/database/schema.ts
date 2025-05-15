@@ -1,5 +1,3 @@
-// src/database/schema.ts
-
 export const createSchemaSQL = `
   CREATE TABLE IF NOT EXISTS sagas (
     id TEXT PRIMARY KEY,
@@ -21,14 +19,25 @@ export const createSchemaSQL = `
     FOREIGN KEY (sagaId) REFERENCES sagas(id)
   );
 
+  -- Add categories table
+  CREATE TABLE IF NOT EXISTS categories (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    color TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  );
+
   -- Create separate tables for each entry type
   CREATE TABLE IF NOT EXISTS notes (
     id TEXT PRIMARY KEY,
     title TEXT,
     body TEXT,
     tags TEXT,
+    categoryId TEXT,
     createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (categoryId) REFERENCES categories(id)
   );
 
   CREATE TABLE IF NOT EXISTS sparks (
@@ -37,8 +46,10 @@ export const createSchemaSQL = `
     body TEXT,
     tags TEXT,
     linkedEntryIds TEXT,
+    categoryId TEXT,
     createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (categoryId) REFERENCES categories(id)
   );
 
   CREATE TABLE IF NOT EXISTS actions (
@@ -51,8 +62,10 @@ export const createSchemaSQL = `
     subActions TEXT,
     parentId TEXT,
     parentType TEXT,
+    categoryId TEXT,
     createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (categoryId) REFERENCES categories(id)
   );
 
   CREATE TABLE IF NOT EXISTS loops (
@@ -62,8 +75,10 @@ export const createSchemaSQL = `
     frequency TEXT, -- JSON string (e.g. { type: 'daily' })
     startTimeByDay TEXT, -- JSON string (e.g. { mon: '08:00', tue: '09:00' })
     tags TEXT,
+    categoryId TEXT,
     createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (categoryId) REFERENCES categories(id)
   );
 
   CREATE TABLE IF NOT EXISTS loop_items (
@@ -86,8 +101,10 @@ export const createSchemaSQL = `
     startDate TEXT,
     targetDate TEXT,
     tags TEXT,
+    categoryId TEXT,
     createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL
+    updatedAt TEXT NOT NULL,
+    FOREIGN KEY (categoryId) REFERENCES categories(id)
   );
 
   CREATE TABLE IF NOT EXISTS milestones (

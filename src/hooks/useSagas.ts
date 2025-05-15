@@ -12,18 +12,22 @@ export function useSagas() {
     const { selectedSagaId, setSelectedSaga } = useSagaStore();
 
     const loadSagas = useCallback(async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const allSagas = await getAllSagas();
-            setSagas(allSagas);
-        } catch (err) {
-            console.error('Failed to load sagas:', err);
-            setError('Failed to load sagas');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+            try {
+                console.log('Loading sagas...');
+                setLoading(true);
+                setError(null);
+                const allSagas = await getAllSagas();
+                console.log(`Loaded ${allSagas.length} sagas`, allSagas);
+                setSagas(allSagas);
+                return allSagas;
+            } catch (err) {
+                console.error('Failed to load sagas:', err);
+                setError('Failed to load sagas');
+                throw err;
+            } finally {
+                setLoading(false);
+            }
+        }, []);
 
     useEffect(() => {
         loadSagas();

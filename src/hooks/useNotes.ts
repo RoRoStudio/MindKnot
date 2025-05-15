@@ -10,13 +10,17 @@ export function useNotes() {
 
     const loadNotes = useCallback(async () => {
         try {
+            console.log('Loading notes...');
             setLoading(true);
             setError(null);
             const allNotes = await getAllNotes();
+            console.log(`Loaded ${allNotes.length} notes`, allNotes);
             setNotes(allNotes);
+            return allNotes; // Return notes for promise chaining
         } catch (err) {
             console.error('Failed to load notes:', err);
             setError('Failed to load notes');
+            throw err; // Rethrow for proper error handling
         } finally {
             setLoading(false);
         }
@@ -53,7 +57,7 @@ export function useNotes() {
 
             if (success) {
                 // Update the local state
-                setNotes(prev => prev.map(note => 
+                setNotes(prev => prev.map(note =>
                     note.id === id ? { ...note, ...updates } : note
                 ));
             }

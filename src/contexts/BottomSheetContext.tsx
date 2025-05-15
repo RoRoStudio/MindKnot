@@ -60,30 +60,70 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
     const { loadPaths } = usePaths();
     const { loadLoops } = useLoops();
 
-    // Custom success handlers that refresh data
+    // Enhanced success handlers with better logging
     const handleNoteSuccess = useCallback(() => {
-        loadNotes();
-        if (noteOnSuccess) noteOnSuccess();
+        console.log('Note success callback triggered');
+        loadNotes().then(() => {
+            console.log('Notes reloaded successfully');
+            if (noteOnSuccess) {
+                console.log('Calling additional onSuccess callback');
+                noteOnSuccess();
+            }
+        }).catch(err => {
+            console.error('Error reloading notes:', err);
+        });
     }, [loadNotes, noteOnSuccess]);
 
     const handleSparkSuccess = useCallback(() => {
-        loadSparks();
-        if (sparkOnSuccess) sparkOnSuccess();
+        console.log('Spark success callback triggered');
+        loadSparks().then(() => {
+            console.log('Sparks reloaded successfully');
+            if (sparkOnSuccess) {
+                console.log('Calling additional onSuccess callback');
+                sparkOnSuccess();
+            }
+        }).catch(err => {
+            console.error('Error reloading sparks:', err);
+        });
     }, [loadSparks, sparkOnSuccess]);
 
     const handleActionSuccess = useCallback(() => {
-        loadActions();
-        if (actionOnSuccess) actionOnSuccess();
+        console.log('Action success callback triggered');
+        loadActions().then(() => {
+            console.log('Actions reloaded successfully');
+            if (actionOnSuccess) {
+                console.log('Calling additional onSuccess callback');
+                actionOnSuccess();
+            }
+        }).catch(err => {
+            console.error('Error reloading actions:', err);
+        });
     }, [loadActions, actionOnSuccess]);
 
     const handleLoopSuccess = useCallback(() => {
-        loadLoops();
-        if (loopOnSuccess) loopOnSuccess();
+        console.log('Loop success callback triggered');
+        loadLoops().then(() => {
+            console.log('Loops reloaded successfully');
+            if (loopOnSuccess) {
+                console.log('Calling additional onSuccess callback');
+                loopOnSuccess();
+            }
+        }).catch(err => {
+            console.error('Error reloading loops:', err);
+        });
     }, [loadLoops, loopOnSuccess]);
 
     const handlePathSuccess = useCallback(() => {
-        loadPaths();
-        if (pathOnSuccess) pathOnSuccess();
+        console.log('Path success callback triggered');
+        loadPaths().then(() => {
+            console.log('Paths reloaded successfully');
+            if (pathOnSuccess) {
+                console.log('Calling additional onSuccess callback');
+                pathOnSuccess();
+            }
+        }).catch(err => {
+            console.error('Error reloading paths:', err);
+        });
     }, [loadPaths, pathOnSuccess]);
 
     // Functions to show/hide different form types

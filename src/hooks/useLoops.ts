@@ -1,4 +1,3 @@
-// src/hooks/useLoops.ts
 import { useState, useEffect, useCallback } from 'react';
 import { Loop } from '../types/loop';
 import { createLoop, getAllLoops } from '../services/loopService';
@@ -62,20 +61,38 @@ export function useLoops() {
             // Default to showing all loops if there's an issue
             if (!loop.frequency) return true;
 
-            let frequency;
+            let frequencyObj;
+
             try {
-                frequency = typeof loop.frequency === 'string' ?
-                    JSON.parse(loop.frequency) : loop.frequency;
+                if (typeof loop.frequency === 'string') {
+                    // Check if it's a simple string frequency
+                    if (loop.frequency === 'daily' ||
+                        loop.frequency === 'weekdays' ||
+                        loop.frequency === 'weekends' ||
+                        loop.frequency === 'weekly') {
+                        frequencyObj = { type: loop.frequency };
+                    } else {
+                        // Try to parse as JSON
+                        try {
+                            frequencyObj = JSON.parse(loop.frequency);
+                        } catch (e) {
+                            // If not valid JSON, treat as simple string value
+                            frequencyObj = { type: loop.frequency };
+                        }
+                    }
+                } else {
+                    frequencyObj = loop.frequency;
+                }
             } catch (e) {
-                console.error('Error parsing frequency:', e, loop.frequency);
-                return true; // Show the loop if we can't parse the frequency
+                console.error('Error processing frequency:', e, loop.frequency);
+                return true; // Show the loop if we can't process the frequency
             }
 
-            if (frequency.type === 'daily') return true;
-            if (frequency.type === 'weekdays' && dayOfWeek !== 'sat' && dayOfWeek !== 'sun') return true;
-            if (frequency.type === 'weekends' && (dayOfWeek === 'sat' || dayOfWeek === 'sun')) return true;
-            if (frequency.type === 'weekly' && frequency.day === dayOfWeek) return true;
-            if (frequency.type === 'custom' && frequency.days && frequency.days.includes(dayOfWeek)) return true;
+            if (frequencyObj.type === 'daily') return true;
+            if (frequencyObj.type === 'weekdays' && dayOfWeek !== 'sat' && dayOfWeek !== 'sun') return true;
+            if (frequencyObj.type === 'weekends' && (dayOfWeek === 'sat' || dayOfWeek === 'sun')) return true;
+            if (frequencyObj.type === 'weekly' && frequencyObj.day === dayOfWeek) return true;
+            if (frequencyObj.type === 'custom' && frequencyObj.days && frequencyObj.days.includes(dayOfWeek)) return true;
 
             return false;
         });

@@ -1,6 +1,6 @@
 // src/screens/VaultScreen.tsx
-import React, { useState, useEffect } from 'react';
-import { View, SafeAreaView, ScrollView, FlatList, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, SafeAreaView, ScrollView, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useStyles } from '../hooks/useStyles';
 import { Typography } from '../components/common/Typography';
 import { Button } from '../components/common/Button';
@@ -23,6 +23,7 @@ import { Spark } from '../types/spark';
 import { Action } from '../types/action';
 import { Path } from '../types/path';
 import { Loop } from '../types/loop';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Define a union type for all entry types
 type EntryType =
@@ -36,7 +37,6 @@ type EntryType =
 type FilterType = 'all' | 'notes' | 'sparks' | 'actions' | 'paths' | 'loops' | 'tag';
 
 export default function VaultScreen() {
-
   const navigation = useNavigation();
   const {
     showNoteForm,
@@ -45,6 +45,7 @@ export default function VaultScreen() {
     showPathForm,
     showLoopForm
   } = useBottomSheet();
+  const { theme } = useTheme();
 
   // Use our custom hooks for each entry type
   const { notes, loadNotes } = useNotes();
@@ -58,7 +59,157 @@ export default function VaultScreen() {
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [entries, setEntries] = useState<EntryType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [allTags, setAllTags] = useState<string[]>([]);
+
+  // Function to refresh all data - defined BEFORE it's used to avoid TypeScript errors
+  const refreshAllData = useCallback(async () => {
+    console.log('Manual refresh triggered');
+    setLoading(true);
+    try {
+      await Promise.all([
+        loadNotes(),
+        loadSparks(),
+        loadActions(),
+        loadPaths(),
+        loadLoops()
+      ]);
+      console.log('All data refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadNotes, loadSparks, loadActions, loadPaths, loadLoops]);
+
+  // Pull-to-refresh handler
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshAllData();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshAllData]);
+
+  // Load all data when the component mounts
+  useEffect(() => {
+    refreshAllData();
+  }, [refreshAllData]);
+
+  // Set up a refresh interval as a fallback
+  useEffect(() => {
+    // Periodic refresh to ensure data is up to date
+    const refreshInterval = setInterval(() => {
+      console.log('Automatic refresh triggered');
+      refreshAllData();
+    }, 15000); // Refresh every 15 seconds as a fallback
+
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, [refreshAllData]);
+
+  // Collect all unique tags
+  useEffect(() => {
+    const tagSet = new Set<string>();
+
+    // Process tags from all entry types
+    notes.forEach(note => note.tags?.forEach(tag => tagSet.add(tag)));
+    sparks.forEach(spark => spark.tags?.forEach(tag => tagSet.add(tag)));
+    actions.forEach(action => action.tags?.forEach(tag => tagSet.add(tag)));
+    paths.forEach(path => path.tags?.forEach(tag => tagSet.add(tag)));
+    loops.forEach(loop => loop.tags?.forEach(tag => tagSet.add(tag)));
+
+    setAllTags(Array.from(tagSet).sort());
+  }, [notes, sparks, actions, paths, loops]);
+
+  // Filter and combine entries when filter changes or data updates
+  useEffect(() => {
+    console.log('Entries filtering effect triggered', {
+      filterType,
+      filterTag,
+      noteCount: notes.length,
+      sparkCount: sparks.length,
+      actionCount: actions.length,
+      pathCount: paths.length,
+      loopCount: loops.length
+    });
+
+    const filtered: EntryType[] = [];
+
+    const addEntries = <T,>(type: EntryType['type'], items: T[]) => {
+      items.forEach((item) => {
+        filtered.push({ type, data: item } as EntryType);
+      });
+    };
+
+    if (filterType === 'all' || filterType === 'notes') addEntries('note', notes);
+    if (filterType === 'all' || filterType === 'sparks') addEntries('spark', sparks);
+    if (filterType === 'all' || filterType === 'actions') addEntries('action', actions);
+    if (filterType === 'all' || filterType === 'paths') addEntries('path', paths);
+    if (filterType === 'all' || filterType === 'loops') addEntries('loop', loops);
+
+    const finalFiltered = filterTag
+      ? filtered.filter((entry) => entry.data.tags?.includes(filterTag))
+      : filtered;
+
+    finalFiltered.sort(
+      (a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime()
+    );
+
+    console.log(`Final filtered entries: ${finalFiltered.length}`);
+    setEntries(finalFiltered);
+  }, [filterType, filterTag, notes, sparks, actions, paths, loops]);
+
+
+  // Handle "Create" button
+  const handleCreateEntry = () => {
+    switch (filterType) {
+      case 'notes':
+        showNoteForm();
+        break;
+      case 'sparks':
+        showSparkForm();
+        break;
+      case 'actions':
+        showActionForm();
+        break;
+      case 'paths':
+        showPathForm();
+        break;
+      case 'loops':
+        showLoopForm();
+        break;
+      default:
+        // For 'all' or other options, use the same as for 'notes'
+        showNoteForm();
+        break;
+    }
+  };
+
+  // Render an entry based on its type
+  const renderEntry = ({ item }: { item: EntryType }) => {
+    switch (item.type) {
+      case 'note':
+        return <NoteCard note={item.data} />;
+      case 'spark':
+        return <SparkCard spark={item.data} />;
+      case 'action':
+        return (
+          <ActionCard
+            action={item.data}
+            onToggleDone={toggleActionDone}
+          />
+        );
+      case 'path':
+        return <PathCard path={item.data} />;
+      case 'loop':
+        return <LoopCard loop={item.data} />;
+      default:
+        return null;
+    }
+  };
 
   const styles = useStyles((theme) => ({
     container: {
@@ -141,118 +292,6 @@ export default function VaultScreen() {
       color: theme.colors.white,
     },
   }));
-
-  // Load all data when the component mounts
-  useEffect(() => {
-    const loadAllData = async () => {
-      setLoading(true);
-      try {
-        await Promise.all([
-          loadNotes(),
-          loadSparks(),
-          loadActions(),
-          loadPaths(),
-          loadLoops()
-        ]);
-      } catch (error) {
-        console.error('Error loading entries:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAllData();
-  }, []);
-
-  // Collect all unique tags
-  useEffect(() => {
-    const tagSet = new Set<string>();
-
-    // Process tags from all entry types
-    notes.forEach(note => note.tags?.forEach(tag => tagSet.add(tag)));
-    sparks.forEach(spark => spark.tags?.forEach(tag => tagSet.add(tag)));
-    actions.forEach(action => action.tags?.forEach(tag => tagSet.add(tag)));
-    paths.forEach(path => path.tags?.forEach(tag => tagSet.add(tag)));
-    loops.forEach(loop => loop.tags?.forEach(tag => tagSet.add(tag)));
-
-    setAllTags(Array.from(tagSet).sort());
-  }, [notes, sparks, actions, paths, loops]);
-
-  // Filter and combine entries when filter changes or data updates
-  useEffect(() => {
-    const filtered: EntryType[] = [];
-
-    const addEntries = <T,>(type: EntryType['type'], items: T[]) => {
-      items.forEach((item) => {
-        filtered.push({ type, data: item } as EntryType);
-      });
-    };
-
-    if (filterType === 'all' || filterType === 'notes') addEntries('note', notes);
-    if (filterType === 'all' || filterType === 'sparks') addEntries('spark', sparks);
-    if (filterType === 'all' || filterType === 'actions') addEntries('action', actions);
-    if (filterType === 'all' || filterType === 'paths') addEntries('path', paths);
-    if (filterType === 'all' || filterType === 'loops') addEntries('loop', loops);
-
-    const finalFiltered = filterTag
-      ? filtered.filter((entry) => entry.data.tags?.includes(filterTag))
-      : filtered;
-
-    finalFiltered.sort(
-      (a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime()
-    );
-
-    setEntries(finalFiltered);
-  }, [filterType, filterTag, notes, sparks, actions, paths, loops]);
-
-
-  // Handle "Create" button
-  const handleCreateEntry = () => {
-    switch (filterType) {
-      case 'notes':
-        showNoteForm();
-        break;
-      case 'sparks':
-        showSparkForm();
-        break;
-      case 'actions':
-        showActionForm();
-        break;
-      case 'paths':
-        showPathForm();
-        break;
-      case 'loops':
-        showLoopForm();
-        break;
-      default:
-        // For 'all' or other options, use the same as for 'notes'
-        showNoteForm();
-        break;
-    }
-  };
-
-  // Render an entry based on its type
-  const renderEntry = ({ item }: { item: EntryType }) => {
-    switch (item.type) {
-      case 'note':
-        return <NoteCard note={item.data} />;
-      case 'spark':
-        return <SparkCard spark={item.data} />;
-      case 'action':
-        return (
-          <ActionCard
-            action={item.data}
-            onToggleDone={toggleActionDone}
-          />
-        );
-      case 'path':
-        return <PathCard path={item.data} />;
-      case 'loop':
-        return <LoopCard loop={item.data} />;
-      default:
-        return null;
-    }
-  };
 
   // Render empty state
   const renderEmptyState = () => (
@@ -463,6 +502,14 @@ export default function VaultScreen() {
             keyExtractor={(item) => `${item.type}-${item.data.id}`}
             ListEmptyComponent={renderEmptyState()}
             contentContainerStyle={{ flexGrow: 1 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme.colors.primary]}
+                tintColor={theme.colors.primary}
+              />
+            }
           />
         )}
       </View>

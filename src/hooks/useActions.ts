@@ -17,13 +17,17 @@ export function useActions() {
 
     const loadActions = useCallback(async () => {
         try {
+            console.log('Loading actions...');
             setLoading(true);
             setError(null);
             const allActions = await getAllActions();
+            console.log(`Loaded ${allActions.length} actions`, allActions);
             setActions(allActions);
+            return allActions;
         } catch (err) {
             console.error('Failed to load actions:', err);
             setError('Failed to load actions');
+            throw err;
         } finally {
             setLoading(false);
         }
