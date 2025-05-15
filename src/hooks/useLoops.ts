@@ -12,33 +12,37 @@ export function useLoops() {
 
     const loadLoops = useCallback(async (sagaId?: string) => {
         try {
+            console.log("Loading loops...");
             setLoading(true);
             setError(null);
 
-            const targetSagaId = sagaId || selectedSagaId;
             const allLoops = await getAllLoops();
+            console.log(`Loaded ${allLoops.length} loops`);
             setLoops(allLoops);
-
+            return allLoops;
         } catch (err) {
             console.error('Failed to load loops:', err);
             setError('Failed to load loops');
+            return [];
         } finally {
             setLoading(false);
         }
-    }, [selectedSagaId]);
+    }, []);
 
+    // Load loops when the component mounts
     useEffect(() => {
-        if (selectedSagaId) {
-            loadLoops();
-        }
-    }, [selectedSagaId, loadLoops]);
+        loadLoops();
+    }, [loadLoops]);
 
     const addLoop = async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedAt'>) => {
         try {
             setLoading(true);
             setError(null);
-            await createLoop(loop);
-            await loadLoops();
+            const newLoop = await createLoop(loop);
+
+            // Update state with the new loop
+            setLoops(prev => [newLoop, ...prev]);
+
             return true;
         } catch (err) {
             console.error('Failed to create loop:', err);
@@ -55,8 +59,17 @@ export function useLoops() {
         const dayOfWeek = today.toLocaleString('en-US', { weekday: 'short' }).toLowerCase();
 
         return loops.filter(loop => {
-            const frequency = typeof loop.frequency === 'string' ?
-                JSON.parse(loop.frequency) : loop.frequency;
+            // Default to showing all loops if there's an issue
+            if (!loop.frequency) return true;
+
+            let frequency;
+            try {
+                frequency = typeof loop.frequency === 'string' ?
+                    JSON.parse(loop.frequency) : loop.frequency;
+            } catch (e) {
+                console.error('Error parsing frequency:', e, loop.frequency);
+                return true; // Show the loop if we can't parse the frequency
+            }
 
             if (frequency.type === 'daily') return true;
             if (frequency.type === 'weekdays' && dayOfWeek !== 'sat' && dayOfWeek !== 'sun') return true;

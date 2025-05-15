@@ -36,6 +36,7 @@ type EntryType =
 type FilterType = 'all' | 'notes' | 'sparks' | 'actions' | 'paths' | 'loops' | 'tag';
 
 export default function VaultScreen() {
+
   const navigation = useNavigation();
   const {
     showNoteForm,

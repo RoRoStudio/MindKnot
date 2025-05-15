@@ -1,10 +1,15 @@
 // src/contexts/BottomSheetContext.tsx
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import NoteFormSheet from '../components/notes/NoteFormSheet';
 import SparkFormSheet from '../components/sparks/SparkFormSheet';
 import ActionFormSheet from '../components/actions/ActionFormSheet';
 import LoopFormSheet from '../components/loops/LoopFormSheet';
 import PathFormSheet from '../components/paths/PathFormSheet';
+import { useNotes } from '../hooks/useNotes';
+import { useSparks } from '../hooks/useSparks';
+import { useActions } from '../hooks/useActions';
+import { usePaths } from '../hooks/usePaths';
+import { useLoops } from '../hooks/useLoops';
 
 interface BottomSheetContextType {
     showNoteForm: (onSuccess?: () => void) => void;
@@ -47,6 +52,39 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
 
     const [pathFormVisible, setPathFormVisible] = useState(false);
     const [pathOnSuccess, setPathOnSuccess] = useState<(() => void) | undefined>(undefined);
+
+    // Get data loading functions from hooks
+    const { loadNotes } = useNotes();
+    const { loadSparks } = useSparks();
+    const { loadActions } = useActions();
+    const { loadPaths } = usePaths();
+    const { loadLoops } = useLoops();
+
+    // Custom success handlers that refresh data
+    const handleNoteSuccess = useCallback(() => {
+        loadNotes();
+        if (noteOnSuccess) noteOnSuccess();
+    }, [loadNotes, noteOnSuccess]);
+
+    const handleSparkSuccess = useCallback(() => {
+        loadSparks();
+        if (sparkOnSuccess) sparkOnSuccess();
+    }, [loadSparks, sparkOnSuccess]);
+
+    const handleActionSuccess = useCallback(() => {
+        loadActions();
+        if (actionOnSuccess) actionOnSuccess();
+    }, [loadActions, actionOnSuccess]);
+
+    const handleLoopSuccess = useCallback(() => {
+        loadLoops();
+        if (loopOnSuccess) loopOnSuccess();
+    }, [loadLoops, loopOnSuccess]);
+
+    const handlePathSuccess = useCallback(() => {
+        loadPaths();
+        if (pathOnSuccess) pathOnSuccess();
+    }, [loadPaths, pathOnSuccess]);
 
     // Functions to show/hide different form types
     const showNoteForm = (onSuccess?: () => void) => {
@@ -105,13 +143,13 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
             <NoteFormSheet
                 visible={noteFormVisible}
                 onClose={() => setNoteFormVisible(false)}
-                onSuccess={noteOnSuccess}
+                onSuccess={handleNoteSuccess}
             />
 
             <SparkFormSheet
                 visible={sparkFormVisible}
                 onClose={() => setSparkFormVisible(false)}
-                onSuccess={sparkOnSuccess}
+                onSuccess={handleSparkSuccess}
             />
 
             <ActionFormSheet
@@ -119,19 +157,19 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
                 onClose={() => setActionFormVisible(false)}
                 parentId={actionParentId}
                 parentType={actionParentType}
-                onSuccess={actionOnSuccess}
+                onSuccess={handleActionSuccess}
             />
 
             <LoopFormSheet
                 visible={loopFormVisible}
                 onClose={() => setLoopFormVisible(false)}
-                onSuccess={loopOnSuccess}
+                onSuccess={handleLoopSuccess}
             />
 
             <PathFormSheet
                 visible={pathFormVisible}
                 onClose={() => setPathFormVisible(false)}
-                onSuccess={pathOnSuccess}
+                onSuccess={handlePathSuccess}
             />
         </BottomSheetContext.Provider>
     );

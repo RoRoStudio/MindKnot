@@ -61,6 +61,7 @@ export const createSchemaSQL = `
     description TEXT,
     frequency TEXT, -- JSON string (e.g. { type: 'daily' })
     startTimeByDay TEXT, -- JSON string (e.g. { mon: '08:00', tue: '09:00' })
+    tags TEXT,
     createdAt TEXT NOT NULL,
     updatedAt TEXT NOT NULL
   );

@@ -7,42 +7,82 @@ export const createPath = async (path: Omit<Path, 'id' | 'type' | 'createdAt' | 
     const id = await generateUUID();
     const now = new Date().toISOString();
 
-    await executeSql(
-        'INSERT INTO paths (id, title, description, startDate, targetDate, tags, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [
-            id,
-            path.title,
-            path.description ?? null,
-            path.startDate ?? null,
-            path.targetDate ?? null,
-            path.tags ? JSON.stringify(path.tags) : null,
-            now,
-            now
-        ]
-    );
+    try {
+        // First, check if the tags column exists in the paths table
+        const tableInfoResult = await executeSql(
+            "PRAGMA table_info(paths)",
+            []
+        );
 
-    // If path has milestones, create them as well
-    if (path.milestones && Array.isArray(path.milestones) && path.milestones.length > 0) {
-        for (const milestone of path.milestones) {
-            const milestoneId = await generateUUID();
+        // Check if tags column exists in the table structure
+        const hasTagsColumn = tableInfoResult.rows._array.some(
+            (column: any) => column.name === 'tags'
+        );
+
+        // Insert path with or without tags column
+        if (hasTagsColumn) {
             await executeSql(
-                'INSERT INTO milestones (id, pathId, title, description, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+                'INSERT INTO paths (id, title, description, startDate, targetDate, tags, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
                 [
-                    milestoneId,
                     id,
-                    milestone.title,
-                    milestone.description ?? null,
+                    path.title,
+                    path.description ?? null,
+                    path.startDate ?? null,
+                    path.targetDate ?? null,
+                    path.tags ? JSON.stringify(path.tags) : null,
+                    now,
+                    now
+                ]
+            );
+        } else {
+            // Insert without the tags column
+            await executeSql(
+                'INSERT INTO paths (id, title, description, startDate, targetDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [
+                    id,
+                    path.title,
+                    path.description ?? null,
+                    path.startDate ?? null,
+                    path.targetDate ?? null,
                     now,
                     now
                 ]
             );
 
-            // If milestone has actions, link them to the milestone
-            if (milestone.actions && Array.isArray(milestone.actions)) {
-                for (const action of milestone.actions) {
-                    try {
-                        // Create a new action record with the milestone as parent
-                        if (typeof action === 'object' && action.id) {
+            // Optionally: Try to add the tags column to the table for future inserts
+            try {
+                await executeSql(
+                    'ALTER TABLE paths ADD COLUMN tags TEXT',
+                    []
+                );
+                console.log("Added tags column to paths table");
+            } catch (alterError) {
+                console.log("Could not add tags column:", alterError);
+                // Continue without the column
+            }
+        }
+
+        // If path has milestones, create them as well
+        if (path.milestones && Array.isArray(path.milestones) && path.milestones.length > 0) {
+            for (const milestone of path.milestones) {
+                const milestoneId = await generateUUID();
+                await executeSql(
+                    'INSERT INTO milestones (id, pathId, title, description, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+                    [
+                        milestoneId,
+                        id,
+                        milestone.title,
+                        milestone.description ?? null,
+                        now,
+                        now
+                    ]
+                );
+
+                // If milestone has actions, link them to the milestone
+                if (milestone.actions && Array.isArray(milestone.actions)) {
+                    for (const action of milestone.actions) {
+                        try {
+                            // Create a new action record with the milestone as parent
                             const actionId = await generateUUID();
                             await executeSql(
                                 `INSERT INTO actions (
@@ -60,27 +100,30 @@ export const createPath = async (path: Omit<Path, 'id' | 'type' | 'createdAt' | 
                                     now
                                 ]
                             );
+                        } catch (error) {
+                            console.error('Error linking action to milestone:', error);
                         }
-                    } catch (error) {
-                        console.error('Error linking action to milestone:', error);
                     }
                 }
             }
         }
-    }
 
-    return {
-        id,
-        type: 'path',
-        title: path.title,
-        description: path.description,
-        startDate: path.startDate,
-        targetDate: path.targetDate,
-        milestones: path.milestones || [],
-        tags: path.tags || [],
-        createdAt: now,
-        updatedAt: now
-    };
+        return {
+            id,
+            type: 'path',
+            title: path.title,
+            description: path.description,
+            startDate: path.startDate,
+            targetDate: path.targetDate,
+            milestones: path.milestones || [],
+            tags: path.tags || [],
+            createdAt: now,
+            updatedAt: now
+        };
+    } catch (error) {
+        console.error('Error creating path:', error);
+        throw error;
+    }
 };
 
 export const getAllPaths = async (): Promise<Path[]> => {

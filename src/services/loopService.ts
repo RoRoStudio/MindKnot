@@ -44,38 +44,65 @@ export const createLoop = async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedA
         }
     }
 
-    return { ...loop, id, createdAt: now, updatedAt: now };
+    // Return the created loop
+    return {
+        id,
+        type: 'loop',
+        title: loop.title,
+        description: loop.description,
+        frequency: loop.frequency,
+        startTimeByDay: loop.startTimeByDay,
+        items: loop.items || [],
+        tags: loop.tags || [],
+        createdAt: now,
+        updatedAt: now
+    };
 };
 
 export const getAllLoops = async (): Promise<Loop[]> => {
-    const result = await executeSql(
-        'SELECT * FROM loops ORDER BY createdAt DESC',
-        []
-    );
+    console.log("📣 Fetching all loops");
+    try {
+        const result = await executeSql(
+            'SELECT * FROM loops ORDER BY createdAt DESC',
+            []
+        );
 
-    // Check for valid result structure
-    if (result && result.rows && Array.isArray(result.rows)) {
-        const loops = result.rows.map((row: any) => ({
-            ...row,
-            startTimeByDay: row.startTimeByDay ? JSON.parse(row.startTimeByDay) : undefined,
-        })) as Loop[];
+        console.log("📣 Loops query result:", result);
 
-        // For each loop, fetch its items
-        for (const loop of loops) {
-            const itemsResult = await executeSql(
-                'SELECT * FROM loop_items WHERE loopId = ? ORDER BY createdAt ASC',
-                [loop.id]
-            );
+        if (result && result.rows && result.rows._array) {
+            const loops = result.rows._array.map((row: any) => ({
+                ...row,
+                type: 'loop',
+                tags: row.tags ? JSON.parse(row.tags) : [],
+                startTimeByDay: row.startTimeByDay ? JSON.parse(row.startTimeByDay) : undefined,
+            })) as Loop[];
 
-            if (itemsResult && itemsResult.rows && Array.isArray(itemsResult.rows)) {
-                loop.items = itemsResult.rows as LoopItem[];
-            } else {
-                loop.items = [];
+            console.log(`📣 Found ${loops.length} loops`);
+
+            // For each loop, fetch its items
+            for (const loop of loops) {
+                console.log(`📣 Fetching items for loop ${loop.id}`);
+                const itemsResult = await executeSql(
+                    'SELECT * FROM loop_items WHERE loopId = ? ORDER BY createdAt ASC',
+                    [loop.id]
+                );
+
+                if (itemsResult && itemsResult.rows && itemsResult.rows._array) {
+                    loop.items = itemsResult.rows._array as LoopItem[];
+                    console.log(`📣 Found ${loop.items.length} items for loop ${loop.id}`);
+                } else {
+                    loop.items = [];
+                    console.log(`📣 No items found for loop ${loop.id}`);
+                }
             }
+
+            return loops;
         }
 
-        return loops;
+        console.log("📣 No loops found");
+        return [];
+    } catch (error) {
+        console.error("📣 Error fetching loops:", error);
+        return [];
     }
-
-    return [];
 };

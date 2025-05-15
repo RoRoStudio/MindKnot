@@ -33,9 +33,6 @@ async function migrateDataIfNeeded() {
         // If old captures table exists, perform migration
         if (result && result.rows && result.rows._array && result.rows._array.length > 0) {
             console.log('⚠️ Old captures table found. Migration needed.');
-
-            // You would implement your migration logic here
-            // For this fix, we're going with a fresh start instead of migration
         }
     } catch (error) {
         console.log('No migration needed or migration failed:', error);
@@ -54,23 +51,32 @@ export const executeSql = async (
     }
 
     try {
-        const preparedSql = buildSqlWithParams(sql, params);
         console.log('🟡 Executing SQL:\n', sql);
         console.log('🟡 With params:', params);
+
+        const preparedSql = buildSqlWithParams(sql, params);
         console.log('🟡 Prepared SQL:\n', preparedSql);
 
-        const result = await db.execAsync(preparedSql);
-
-        // Wrap result in rows-like structure for SELECTs
-        return {
-            rows: {
-                _array: Array.isArray(result) ? result : [],
-                length: Array.isArray(result) ? result.length : 0,
-                item: (index: number) =>
-                    Array.isArray(result) && index < result.length ? result[index] : null,
-            },
-            rowsAffected: 0, // You can extend this if needed for non-SELECTs
-        };
+        // For SELECT queries, use the promised-based query method
+        if (sql.trim().toUpperCase().startsWith('SELECT')) {
+            const result = await db.getAllAsync(preparedSql);
+            return {
+                rows: {
+                    _array: result,
+                    length: result.length,
+                    item: (index: number) => index < result.length ? result[index] : null,
+                },
+                rowsAffected: 0
+            };
+        }
+        // For non-SELECT queries, use the exec method
+        else {
+            await db.execAsync(preparedSql);
+            return {
+                rows: { _array: [], length: 0, item: () => null },
+                rowsAffected: 1 // Assuming at least one row was affected
+            };
+        }
     } catch (error) {
         console.error('❌ SQL execution failed:', error);
         console.error('🔴 SQL:', sql);
@@ -89,7 +95,11 @@ function buildSqlWithParams(sql: string, params: any[]): string {
             return `'${param.replace(/'/g, "''")}'`; // escape single quotes
         } else if (typeof param === 'number' || typeof param === 'boolean') {
             return param.toString();
+        } else if (param instanceof Date) {
+            // Handle Date objects
+            return `'${param.toISOString()}'`;
         } else {
+            // For objects, arrays, etc.
             return `'${JSON.stringify(param).replace(/'/g, "''")}'`;
         }
     });

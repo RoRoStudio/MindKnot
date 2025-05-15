@@ -14,7 +14,12 @@ export interface Milestone {
     pathId: string;
     title: string;
     description?: string;
-    actions?: string[]; // Action IDs
+    actions?: Array<{
+        id: string;
+        name: string;
+        description?: string;
+        done: boolean
+    }>;
     createdAt: string;
     updatedAt: string;
 }
