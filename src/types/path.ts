@@ -1,17 +1,12 @@
-//Paths, milestones, and actions
-// ----------------------------
 // src/types/path.ts
-// ----------------------------
-export interface Path {
-    id: string;
-    title: string;
+import { BaseEntry } from './baseEntry';
+
+export interface Path extends BaseEntry {
+    type: 'path';
     description?: string;
     startDate?: string;
     targetDate?: string;
-    sagaId?: string;
-    milestones?: Milestone[]; // Add this missing property
-    createdAt: string;
-    updatedAt: string;
+    milestones?: Milestone[];
 }
 
 export interface Milestone {
@@ -19,21 +14,7 @@ export interface Milestone {
     pathId: string;
     title: string;
     description?: string;
-    actions?: PathAction[]; // Add this missing property
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface PathAction {
-    id: string;
-    milestoneId: string;
-    name: string;
-    description?: string;
-    done: boolean;
-    dueDate?: string;
-    sagaId?: string;
-    icon?: string;
-    subActions?: { id: string; text: string; done: boolean }[];
+    actions?: string[]; // Action IDs
     createdAt: string;
     updatedAt: string;
 }

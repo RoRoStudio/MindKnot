@@ -1,14 +1,17 @@
 // src/contexts/BottomSheetContext.tsx
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import CaptureFormSheet from '../components/captures/CaptureFormSheet';
+import NoteFormSheet from '../components/notes/NoteFormSheet';
+import SparkFormSheet from '../components/sparks/SparkFormSheet';
+import ActionFormSheet from '../components/actions/ActionFormSheet';
 import LoopFormSheet from '../components/loops/LoopFormSheet';
 import PathFormSheet from '../components/paths/PathFormSheet';
-import { CaptureSubType } from '../types/capture';
 
 interface BottomSheetContextType {
-    showCaptureForm: (initialSubType?: CaptureSubType, initialSagaId?: string, onSuccess?: () => void) => void;
-    showLoopForm: (initialSagaId?: string, onSuccess?: () => void) => void;
-    showPathForm: (initialSagaId?: string, onSuccess?: () => void) => void;
+    showNoteForm: (onSuccess?: () => void) => void;
+    showSparkForm: (onSuccess?: () => void) => void;
+    showActionForm: (parentId?: string, parentType?: 'path' | 'milestone' | 'loop-item', onSuccess?: () => void) => void;
+    showLoopForm: (onSuccess?: () => void) => void;
+    showPathForm: (onSuccess?: () => void) => void;
     hideAllSheets: () => void;
 }
 
@@ -28,45 +31,59 @@ interface BottomSheetProviderProps {
 
 export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ children }) => {
     // Track visibility of each sheet type
-    const [captureFormVisible, setCaptureFormVisible] = useState(false);
-    const [captureType, setCaptureType] = useState<CaptureSubType>(CaptureSubType.NOTE);
-    const [captureInitialSagaId, setCaptureInitialSagaId] = useState<string | undefined>(undefined);
-    const [captureOnSuccess, setCaptureOnSuccess] = useState<(() => void) | undefined>(undefined);
+    const [noteFormVisible, setNoteFormVisible] = useState(false);
+    const [noteOnSuccess, setNoteOnSuccess] = useState<(() => void) | undefined>(undefined);
+
+    const [sparkFormVisible, setSparkFormVisible] = useState(false);
+    const [sparkOnSuccess, setSparkOnSuccess] = useState<(() => void) | undefined>(undefined);
+
+    const [actionFormVisible, setActionFormVisible] = useState(false);
+    const [actionParentId, setActionParentId] = useState<string | undefined>(undefined);
+    const [actionParentType, setActionParentType] = useState<'path' | 'milestone' | 'loop-item' | undefined>(undefined);
+    const [actionOnSuccess, setActionOnSuccess] = useState<(() => void) | undefined>(undefined);
 
     const [loopFormVisible, setLoopFormVisible] = useState(false);
-    const [loopInitialSagaId, setLoopInitialSagaId] = useState<string | undefined>(undefined);
     const [loopOnSuccess, setLoopOnSuccess] = useState<(() => void) | undefined>(undefined);
 
     const [pathFormVisible, setPathFormVisible] = useState(false);
-    const [pathInitialSagaId, setPathInitialSagaId] = useState<string | undefined>(undefined);
     const [pathOnSuccess, setPathOnSuccess] = useState<(() => void) | undefined>(undefined);
 
     // Functions to show/hide different form types
-    const showCaptureForm = (
-        initialSubType: CaptureSubType = CaptureSubType.NOTE,
-        initialSagaId?: string,
-        onSuccess?: () => void
-    ) => {
-        setCaptureType(initialSubType);
-        setCaptureInitialSagaId(initialSagaId);
-        setCaptureOnSuccess(() => onSuccess);
-        setCaptureFormVisible(true);
+    const showNoteForm = (onSuccess?: () => void) => {
+        setNoteOnSuccess(() => onSuccess);
+        setNoteFormVisible(true);
     };
 
-    const showLoopForm = (initialSagaId?: string, onSuccess?: () => void) => {
-        setLoopInitialSagaId(initialSagaId);
+    const showSparkForm = (onSuccess?: () => void) => {
+        setSparkOnSuccess(() => onSuccess);
+        setSparkFormVisible(true);
+    };
+
+    const showActionForm = (
+        parentId?: string,
+        parentType?: 'path' | 'milestone' | 'loop-item',
+        onSuccess?: () => void
+    ) => {
+        setActionParentId(parentId);
+        setActionParentType(parentType);
+        setActionOnSuccess(() => onSuccess);
+        setActionFormVisible(true);
+    };
+
+    const showLoopForm = (onSuccess?: () => void) => {
         setLoopOnSuccess(() => onSuccess);
         setLoopFormVisible(true);
     };
 
-    const showPathForm = (initialSagaId?: string, onSuccess?: () => void) => {
-        setPathInitialSagaId(initialSagaId);
+    const showPathForm = (onSuccess?: () => void) => {
         setPathOnSuccess(() => onSuccess);
         setPathFormVisible(true);
     };
 
     const hideAllSheets = () => {
-        setCaptureFormVisible(false);
+        setNoteFormVisible(false);
+        setSparkFormVisible(false);
+        setActionFormVisible(false);
         setLoopFormVisible(false);
         setPathFormVisible(false);
     };
@@ -74,7 +91,9 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
     return (
         <BottomSheetContext.Provider
             value={{
-                showCaptureForm,
+                showNoteForm,
+                showSparkForm,
+                showActionForm,
                 showLoopForm,
                 showPathForm,
                 hideAllSheets,
@@ -83,25 +102,35 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
             {children}
 
             {/* Render bottom sheets outside of the normal component hierarchy */}
-            <CaptureFormSheet
-                visible={captureFormVisible}
-                onClose={() => setCaptureFormVisible(false)}
-                initialSubType={captureType}
-                initialSagaId={captureInitialSagaId}
-                onSuccess={captureOnSuccess}
+            <NoteFormSheet
+                visible={noteFormVisible}
+                onClose={() => setNoteFormVisible(false)}
+                onSuccess={noteOnSuccess}
+            />
+
+            <SparkFormSheet
+                visible={sparkFormVisible}
+                onClose={() => setSparkFormVisible(false)}
+                onSuccess={sparkOnSuccess}
+            />
+
+            <ActionFormSheet
+                visible={actionFormVisible}
+                onClose={() => setActionFormVisible(false)}
+                parentId={actionParentId}
+                parentType={actionParentType}
+                onSuccess={actionOnSuccess}
             />
 
             <LoopFormSheet
                 visible={loopFormVisible}
                 onClose={() => setLoopFormVisible(false)}
-                initialSagaId={loopInitialSagaId}
                 onSuccess={loopOnSuccess}
             />
 
             <PathFormSheet
                 visible={pathFormVisible}
                 onClose={() => setPathFormVisible(false)}
-                initialSagaId={pathInitialSagaId}
                 onSuccess={pathOnSuccess}
             />
         </BottomSheetContext.Provider>

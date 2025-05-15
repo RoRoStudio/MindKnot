@@ -1,16 +1,12 @@
-// ----------------------------
 // src/types/loop.ts
-// ----------------------------
-export interface Loop {
-    id: string;
-    title: string;
+import { BaseEntry } from './baseEntry';
+
+export interface Loop extends BaseEntry {
+    type: 'loop';
     description?: string;
     frequency: string; // JSON stringified object, e.g. { type: 'daily' }
     startTimeByDay?: Record<string, string>; // e.g. { mon: '08:00', tue: '09:00' }
-    sagaId?: string;
-    items?: LoopItem[]; // Add this missing property
-    createdAt: string;
-    updatedAt: string;
+    items?: LoopItem[];
 }
 
 export interface LoopItem {
@@ -21,8 +17,7 @@ export interface LoopItem {
     durationMinutes?: number;
     quantity?: string;
     icon?: string;
-    subActions?: { id: string; text: string; done: boolean }[];
-    sagaId?: string;
+    actionIds?: string[]; // References to actions
     createdAt: string;
     updatedAt: string;
 }

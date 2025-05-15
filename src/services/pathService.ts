@@ -1,21 +1,20 @@
 // src/services/pathService.ts
 import { executeSql } from '../database/database';
 import { generateUUID } from '../utils/uuidUtil';
-import { Path, Milestone, PathAction } from '../types/path';
+import { Path, Milestone } from '../types/path';
 
-export const createPath = async (path: Omit<Path, 'id' | 'createdAt' | 'updatedAt'>): Promise<Path> => {
+export const createPath = async (path: Omit<Path, 'id' | 'type' | 'createdAt' | 'updatedAt'>): Promise<Path> => {
     const id = await generateUUID();
     const now = new Date().toISOString();
 
     await executeSql(
-        'INSERT INTO paths (id, title, description, startDate, targetDate, sagaId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO paths (id, title, description, startDate, targetDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [
             id,
             path.title,
             path.description ?? null,
             path.startDate ?? null,
             path.targetDate ?? null,
-            path.sagaId ?? null,
             now,
             now
         ]
@@ -37,25 +36,19 @@ export const createPath = async (path: Omit<Path, 'id' | 'createdAt' | 'updatedA
                 ]
             );
 
-            // If milestone has actions, create them as well
+            // If milestone has action IDs, link them to the milestone
             if (milestone.actions && Array.isArray(milestone.actions) && milestone.actions.length > 0) {
-                for (const action of milestone.actions) {
-                    const actionId = await generateUUID();
+                // Update each action to set parentId and parentType
+                for (const actionId of milestone.actions) {
                     await executeSql(
-                        `INSERT INTO path_actions (id, milestoneId, name, description, done, dueDate,
-                        sagaId, icon, subActions, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        `UPDATE captures 
+                         SET parentId = ?, parentType = ?
+                         WHERE id = ? AND type = ?`,
                         [
-                            actionId,
                             milestoneId,
-                            action.name,
-                            action.description ?? null,
-                            action.done ? 1 : 0,
-                            action.dueDate ?? null,
-                            action.sagaId ?? null,
-                            action.icon ?? null,
-                            action.subActions ? JSON.stringify(action.subActions) : null,
-                            now,
-                            now
+                            'milestone',
+                            actionId,
+                            'action'
                         ]
                     );
                 }
@@ -63,55 +56,18 @@ export const createPath = async (path: Omit<Path, 'id' | 'createdAt' | 'updatedA
         }
     }
 
-    return { ...path, id, createdAt: now, updatedAt: now };
-};
-
-export const getPathsBySaga = async (sagaId: string): Promise<Path[]> => {
-    const result = await executeSql(
-        'SELECT * FROM paths WHERE sagaId = ? ORDER BY createdAt DESC',
-        [sagaId]
-    );
-
-    // Check for valid result structure
-    if (result && result.rows && Array.isArray(result.rows)) {
-        const paths = result.rows as Path[];
-
-        // For each path, fetch its milestones and actions
-        for (const path of paths) {
-            const milestonesResult = await executeSql(
-                'SELECT * FROM milestones WHERE pathId = ? ORDER BY createdAt ASC',
-                [path.id]
-            );
-
-            if (milestonesResult && milestonesResult.rows && Array.isArray(milestonesResult.rows)) {
-                path.milestones = milestonesResult.rows as Milestone[];
-
-                // For each milestone, fetch its actions
-                for (const milestone of path.milestones) {
-                    const actionsResult = await executeSql(
-                        'SELECT * FROM path_actions WHERE milestoneId = ? ORDER BY createdAt ASC',
-                        [milestone.id]
-                    );
-
-                    if (actionsResult && actionsResult.rows && Array.isArray(actionsResult.rows)) {
-                        milestone.actions = actionsResult.rows.map((action: any) => ({
-                            ...action,
-                            done: Boolean(action.done),
-                            subActions: action.subActions ? JSON.parse(action.subActions) : []
-                        }));
-                    } else {
-                        milestone.actions = [];
-                    }
-                }
-            } else {
-                path.milestones = [];
-            }
-        }
-
-        return paths;
-    }
-
-    return [];
+    return {
+        id,
+        type: 'path',
+        title: path.title,
+        description: path.description,
+        startDate: path.startDate,
+        targetDate: path.targetDate,
+        milestones: path.milestones,
+        tags: path.tags,
+        createdAt: now,
+        updatedAt: now
+    };
 };
 
 export const getAllPaths = async (): Promise<Path[]> => {
@@ -120,33 +76,30 @@ export const getAllPaths = async (): Promise<Path[]> => {
         []
     );
 
-    // Check for valid result structure
-    if (result && result.rows && Array.isArray(result.rows)) {
-        const paths = result.rows as Path[];
+    if (result && result.rows && result.rows._array) {
+        const paths = result.rows._array as Path[];
 
-        // For each path, fetch its milestones and actions
+        // For each path, fetch its milestones
         for (const path of paths) {
             const milestonesResult = await executeSql(
                 'SELECT * FROM milestones WHERE pathId = ? ORDER BY createdAt ASC',
                 [path.id]
             );
 
-            if (milestonesResult && milestonesResult.rows && Array.isArray(milestonesResult.rows)) {
-                path.milestones = milestonesResult.rows as Milestone[];
+            if (milestonesResult && milestonesResult.rows && milestonesResult.rows._array) {
+                path.milestones = milestonesResult.rows._array as Milestone[];
 
-                // For each milestone, fetch its actions
+                // For each milestone, fetch the linked action IDs
                 for (const milestone of path.milestones) {
                     const actionsResult = await executeSql(
-                        'SELECT * FROM path_actions WHERE milestoneId = ? ORDER BY createdAt ASC',
-                        [milestone.id]
+                        `SELECT id FROM captures 
+                         WHERE parentId = ? AND parentType = ? AND type = ?
+                         ORDER BY createdAt ASC`,
+                        [milestone.id, 'milestone', 'action']
                     );
 
-                    if (actionsResult && actionsResult.rows && Array.isArray(actionsResult.rows)) {
-                        milestone.actions = actionsResult.rows.map((action: any) => ({
-                            ...action,
-                            done: Boolean(action.done),
-                            subActions: action.subActions ? JSON.parse(action.subActions) : []
-                        }));
+                    if (actionsResult && actionsResult.rows && actionsResult.rows._array) {
+                        milestone.actions = actionsResult.rows._array.map(row => row.id);
                     } else {
                         milestone.actions = [];
                     }
@@ -154,6 +107,9 @@ export const getAllPaths = async (): Promise<Path[]> => {
             } else {
                 path.milestones = [];
             }
+
+            // Add type field
+            path.type = 'path';
         }
 
         return paths;

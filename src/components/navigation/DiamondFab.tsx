@@ -6,7 +6,6 @@ import {
     StyleSheet,
     Platform,
     Dimensions,
-    Alert,
 } from 'react-native';
 import { Icon } from '../common/Icon';
 import Animated, {
@@ -22,12 +21,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useStyles } from '../../hooks/useStyles';
 import { useTheme } from '../../contexts/ThemeContext';
-import { CaptureSubType } from '../../types/capture';
-
-// Import form sheets
-import CaptureFormSheet from '../captures/CaptureFormSheet';
-import LoopFormSheet from '../loops/LoopFormSheet';
-import PathFormSheet from '../paths/PathFormSheet';
 
 // Import bottom sheet context provider
 import { useBottomSheet } from '../../contexts/BottomSheetContext';
@@ -46,19 +39,19 @@ interface DiamondFabProps {
 
 export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress, onCreateSuccess }, ref) => {
     // Get the bottom sheet methods from context
-    const { showCaptureForm, showLoopForm, showPathForm } = useBottomSheet();
+    const {
+        showNoteForm,
+        showSparkForm,
+        showActionForm,
+        showLoopForm,
+        showPathForm
+    } = useBottomSheet();
 
     const [menuOpen, setMenuOpen] = useState(false);
     const progress = useSharedValue(0);
     const rotation = useSharedValue(0);
     const scale = useSharedValue(1);
     const { theme } = useTheme();
-
-    // State for form sheets
-    const [captureFormVisible, setCaptureFormVisible] = useState(false);
-    const [captureType, setCaptureType] = useState<CaptureSubType>(CaptureSubType.NOTE);
-    const [loopFormVisible, setLoopFormVisible] = useState(false);
-    const [pathFormVisible, setPathFormVisible] = useState(false);
 
     const styles = useStyles((theme) => ({
         fabContainer: {
@@ -132,34 +125,39 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress,
         closeMenuExternally: closeMenu,
     }));
 
-    const showCaptureFormHandler = (type: CaptureSubType) => {
+    const showNoteFormHandler = () => {
         closeMenu();
-        showCaptureForm(type, undefined, onCreateSuccess);
+        showNoteForm(onCreateSuccess);
     };
 
-    const showLoopFormHandler = () => {
+    const showSparkFormHandler = () => {
         closeMenu();
-        showLoopForm(undefined, onCreateSuccess);
+        showSparkForm(onCreateSuccess);
+    };
+
+    const showActionFormHandler = () => {
+        closeMenu();
+        showActionForm(undefined, undefined, onCreateSuccess);
     };
 
     const showPathFormHandler = () => {
         closeMenu();
-        showPathForm(undefined, onCreateSuccess);
+        showPathForm(onCreateSuccess);
+    };
+
+    const showLoopFormHandler = () => {
+        closeMenu();
+        showLoopForm(onCreateSuccess);
     };
 
     // Updated menu items
     const menuItems = [
-        { icon: 'file-text', label: 'Create Capture', action: () => showCaptureFormHandler(CaptureSubType.NOTE) },
-        { icon: 'calendar-sync', label: 'Create Loop', action: () => showLoopFormHandler() },
-        { icon: 'compass', label: 'Create Path', action: () => showPathFormHandler() },
+        { icon: 'file-text', label: 'Create Note', action: showNoteFormHandler },
+        { icon: 'lightbulb', label: 'Create Spark', action: showSparkFormHandler },
+        { icon: 'check', label: 'Create Action', action: showActionFormHandler },
+        { icon: 'compass', label: 'Create Path', action: showPathFormHandler },
+        { icon: 'calendar-sync', label: 'Create Loop', action: showLoopFormHandler },
     ];
-
-    // Handle form success
-    const handleFormSuccess = () => {
-        if (onCreateSuccess) {
-            onCreateSuccess();
-        }
-    };
 
     // rotate icon: closed = + (0°), open = x (45°)
     const iconAnimStyle = useAnimatedStyle(() => {
@@ -183,9 +181,13 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress,
         <View style={styles.fabContainer}>
             {/* Radial menu items */}
             {menuItems.map((item, index) => {
-                const radius = 100;
+                const radius = 120;
                 // Custom angular positioning to create a semi-circle above the FAB
-                const angle = -180 + (180 / (menuItems.length - 1)) * index;
+                const totalItems = menuItems.length;
+                const startAngle = -180;
+                const endAngle = 0;
+                const angleRange = endAngle - startAngle;
+                const angle = startAngle + (angleRange / (totalItems - 1)) * index;
                 const angleRad = (angle * Math.PI) / 180;
 
                 const animatedStyle = useAnimatedStyle(() => {

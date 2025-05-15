@@ -10,6 +10,7 @@ import FormDatePicker from './FormDatePicker';
 import FormArrayField from './FormArrayField';
 import FormErrorMessage from './FormErrorMessage';
 import FormMoodSelector from './FormMoodSelector';
+import FormTagInput from './FormTagInput';
 
 export {
     Form,
@@ -23,4 +24,5 @@ export {
     FormArrayField,
     FormErrorMessage,
     FormMoodSelector,
+    FormTagInput,
 };

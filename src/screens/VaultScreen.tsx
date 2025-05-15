@@ -3,43 +3,61 @@ import React, { useState, useEffect } from 'react';
 import { View, SafeAreaView, ScrollView, FlatList, TouchableOpacity } from 'react-native';
 import { useStyles } from '../hooks/useStyles';
 import { Typography } from '../components/common/Typography';
-import { Card } from '../components/common/Card';
-import { Icon } from '../components/common/Icon';
 import { Button } from '../components/common/Button';
-import { FormSelect } from '../components/form';
-import { useCaptures } from '../hooks/useCaptures';
-import { useLoops } from '../hooks/useLoops';
+import { useNotes } from '../hooks/useNotes';
+import { useSparks } from '../hooks/useSparks';
+import { useActions } from '../hooks/useActions';
 import { usePaths } from '../hooks/usePaths';
-import { useSagas } from '../hooks/useSagas';
-import { CaptureSubType } from '../types/capture';
-import { useForm } from 'react-hook-form';
+import { useLoops } from '../hooks/useLoops';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useBottomSheet } from '../contexts/BottomSheetContext';
+import {
+  NoteCard,
+  SparkCard,
+  ActionCard,
+  PathCard,
+  LoopCard
+} from '../components/entries';
+import { Note } from '../types/note';
+import { Spark } from '../types/spark';
+import { Action } from '../types/action';
+import { Path } from '../types/path';
+import { Loop } from '../types/loop';
 
-// Same type definition
-type RootStackParamList = {
-  Capture: { type: string, sagaId?: string };
-  Loop: { sagaId?: string };
-  Path: { sagaId?: string };
-  SagaDetail: { sagaId: string };
-  Main: undefined;
-  ThemeInspector: undefined;
-};
+// Define a union type for all entry types
+type EntryType =
+  | { type: 'note'; data: Note }
+  | { type: 'spark'; data: Spark }
+  | { type: 'action'; data: Action }
+  | { type: 'path'; data: Path }
+  | { type: 'loop'; data: Loop };
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+// Define filter options
+type FilterType = 'all' | 'notes' | 'sparks' | 'actions' | 'paths' | 'loops' | 'tag';
 
 export default function VaultScreen() {
-  const navigation = useNavigation<NavigationProp>();
-  const { captures, loadCaptures } = useCaptures();
-  const { loops, loadLoops } = useLoops();
+  const navigation = useNavigation();
+  const {
+    showNoteForm,
+    showSparkForm,
+    showActionForm,
+    showPathForm,
+    showLoopForm
+  } = useBottomSheet();
+
+  // Use our custom hooks for each entry type
+  const { notes, loadNotes } = useNotes();
+  const { sparks, loadSparks } = useSparks();
+  const { actions, loadActions, toggleActionDone } = useActions();
   const { paths, loadPaths } = usePaths();
-  const { sagas } = useSagas();
+  const { loops, loadLoops } = useLoops();
 
-  const [contentType, setContentType] = useState('all');
-  const [filteredContent, setFilteredContent] = useState<any[]>([]);
+  // State for filtering and display
+  const [filterType, setFilterType] = useState<FilterType>('all');
+  const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [entries, setEntries] = useState<EntryType[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const { control } = useForm();
+  const [allTags, setAllTags] = useState<string[]>([]);
 
   const styles = useStyles((theme) => ({
     container: {
@@ -86,53 +104,57 @@ export default function VaultScreen() {
       flex: 1,
       padding: theme.spacing.m,
     },
-    card: {
-      marginBottom: theme.spacing.m,
-    },
-    cardContent: {
-      flex: 1,
-    },
-    itemHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: theme.spacing.xs,
-    },
-    itemIcon: {
-      marginRight: theme.spacing.xs,
-    },
-    tagContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      marginTop: theme.spacing.xs,
-    },
-    tag: {
-      backgroundColor: theme.colors.surfaceVariant,
-      borderRadius: theme.shape.radius.s,
-      paddingHorizontal: theme.spacing.s,
-      paddingVertical: 2,
-      marginRight: theme.spacing.xs,
-      marginBottom: theme.spacing.xs,
-    },
     emptyState: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
       padding: theme.spacing.xl,
     },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    tagsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      marginTop: theme.spacing.xs,
+      marginBottom: theme.spacing.s,
+    },
+    tagFilter: {
+      backgroundColor: theme.colors.surfaceVariant,
+      borderRadius: theme.shape.radius.s,
+      paddingHorizontal: theme.spacing.s,
+      paddingVertical: 4,
+      marginRight: theme.spacing.xs,
+      marginBottom: theme.spacing.xs,
+    },
+    tagFilterActive: {
+      backgroundColor: theme.colors.primary,
+    },
+    tagText: {
+      fontSize: theme.typography.fontSize.xs,
+      color: theme.colors.textSecondary,
+    },
+    tagTextActive: {
+      color: theme.colors.white,
+    },
   }));
 
+  // Load all data when the component mounts
   useEffect(() => {
     const loadAllData = async () => {
       setLoading(true);
       try {
-        // Load all data without filtering by saga
         await Promise.all([
-          loadCaptures(),
-          loadLoops(),
+          loadNotes(),
+          loadSparks(),
+          loadActions(),
           loadPaths(),
+          loadLoops()
         ]);
       } catch (error) {
-        console.error('Error loading data:', error);
+        console.error('Error loading entries:', error);
       } finally {
         setLoading(false);
       }
@@ -141,178 +163,151 @@ export default function VaultScreen() {
     loadAllData();
   }, []);
 
+  // Collect all unique tags
   useEffect(() => {
-    // Filter content based on selected type
-    let filtered: any[] = [];
+    const tagSet = new Set<string>();
 
-    if (contentType === 'all' || contentType === 'captures') {
-      filtered = [...filtered, ...captures.map(c => ({ ...c, itemType: 'capture' }))];
-    } else if (contentType === 'notes') {
-      filtered = [...filtered, ...captures.filter(c => c.subType === CaptureSubType.NOTE).map(c => ({ ...c, itemType: 'capture' }))];
-    } else if (contentType === 'sparks') {
-      filtered = [...filtered, ...captures.filter(c => c.subType === CaptureSubType.SPARK).map(c => ({ ...c, itemType: 'capture' }))];
-    } else if (contentType === 'actions') {
-      filtered = [...filtered, ...captures.filter(c => c.subType === CaptureSubType.ACTION).map(c => ({ ...c, itemType: 'capture' }))];
-    } else if (contentType === 'reflections') {
-      filtered = [...filtered, ...captures.filter(c => c.subType === CaptureSubType.REFLECTION).map(c => ({ ...c, itemType: 'capture' }))];
+    // Process tags from all entry types
+    notes.forEach(note => note.tags?.forEach(tag => tagSet.add(tag)));
+    sparks.forEach(spark => spark.tags?.forEach(tag => tagSet.add(tag)));
+    actions.forEach(action => action.tags?.forEach(tag => tagSet.add(tag)));
+    paths.forEach(path => path.tags?.forEach(tag => tagSet.add(tag)));
+    loops.forEach(loop => loop.tags?.forEach(tag => tagSet.add(tag)));
+
+    setAllTags(Array.from(tagSet).sort());
+  }, [notes, sparks, actions, paths, loops]);
+
+  // Filter and combine entries when filter changes or data updates
+  useEffect(() => {
+    const filtered: EntryType[] = [];
+
+    const addEntries = <T,>(type: EntryType['type'], items: T[]) => {
+      items.forEach((item) => {
+        filtered.push({ type, data: item } as EntryType);
+      });
+    };
+
+    if (filterType === 'all' || filterType === 'notes') addEntries('note', notes);
+    if (filterType === 'all' || filterType === 'sparks') addEntries('spark', sparks);
+    if (filterType === 'all' || filterType === 'actions') addEntries('action', actions);
+    if (filterType === 'all' || filterType === 'paths') addEntries('path', paths);
+    if (filterType === 'all' || filterType === 'loops') addEntries('loop', loops);
+
+    const finalFiltered = filterTag
+      ? filtered.filter((entry) => entry.data.tags?.includes(filterTag))
+      : filtered;
+
+    finalFiltered.sort(
+      (a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime()
+    );
+
+    setEntries(finalFiltered);
+  }, [filterType, filterTag, notes, sparks, actions, paths, loops]);
+
+
+  // Handle "Create" button
+  const handleCreateEntry = () => {
+    switch (filterType) {
+      case 'notes':
+        showNoteForm();
+        break;
+      case 'sparks':
+        showSparkForm();
+        break;
+      case 'actions':
+        showActionForm();
+        break;
+      case 'paths':
+        showPathForm();
+        break;
+      case 'loops':
+        showLoopForm();
+        break;
+      default:
+        // For 'all' or other options, use the same as for 'notes'
+        showNoteForm();
+        break;
     }
-
-    if (contentType === 'all' || contentType === 'loops') {
-      filtered = [...filtered, ...loops.map(l => ({ ...l, itemType: 'loop' }))];
-    }
-
-    if (contentType === 'all' || contentType === 'paths') {
-      filtered = [...filtered, ...paths.map(p => ({ ...p, itemType: 'path' }))];
-    }
-
-    // Sort by creation date (newest first)
-    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    setFilteredContent(filtered);
-  }, [contentType, captures, loops, paths]);
-
-  const getItemIcon = (item: any) => {
-    if (item.itemType === 'capture') {
-      switch (item.subType) {
-        case CaptureSubType.NOTE: return 'file-text';
-        case CaptureSubType.SPARK: return 'lightbulb';
-        case CaptureSubType.ACTION: return 'check';
-        case CaptureSubType.REFLECTION: return 'sparkles';
-        default: return 'file-text';
-      }
-    } else if (item.itemType === 'loop') {
-      return 'calendar-sync';
-    } else if (item.itemType === 'path') {
-      return 'compass';
-    }
-    return 'file-text';
   };
 
-  const getItemColor = (item: any, themeObj: any) => {
-    if (item.itemType === 'capture') {
-      switch (item.subType) {
-        case CaptureSubType.NOTE: return themeObj.colors.primary;
-        case CaptureSubType.SPARK: return '#FFB800';
-        case CaptureSubType.ACTION: return themeObj.colors.success;
-        case CaptureSubType.REFLECTION: return themeObj.colors.accent;
-        default: return themeObj.colors.primary;
-      }
-    } else if (item.itemType === 'loop') {
-      return themeObj.colors.secondary;
-    } else if (item.itemType === 'path') {
-      return themeObj.colors.info;
-    }
-    return themeObj.colors.primary;
-  };
-
-  const getSagaName = (sagaId: string) => {
-    const saga = sagas.find(s => s.id === sagaId);
-    return saga ? saga.name : 'Unlinked';
-  };
-
-  const getItemTitle = (item: any) => {
-    if (item.title) return item.title;
-
-    if (item.itemType === 'capture') {
-      switch (item.subType) {
-        case CaptureSubType.NOTE: return 'Untitled Note';
-        case CaptureSubType.SPARK: return 'Untitled Insight';
-        case CaptureSubType.ACTION: return 'Untitled Action';
-        case CaptureSubType.REFLECTION: return 'Untitled Reflection';
-        default: return 'Untitled Capture';
-      }
-    } else if (item.itemType === 'loop') {
-      return 'Untitled Loop';
-    } else if (item.itemType === 'path') {
-      return 'Untitled Path';
-    }
-    return 'Untitled Item';
-  };
-
-  const renderContent = () => {
-    if (filteredContent.length === 0) {
-      return (
-        <View style={styles.emptyState}>
-          <Icon name="vault" width={64} height={64} color="#CCCCCC" />
-          <Typography variant="h3" style={{ marginTop: 16, marginBottom: 8 }}>Your Vault is Empty</Typography>
-          <Typography style={{ textAlign: 'center', marginBottom: 24 }}>
-            Start creating notes, insights, loops, and paths to build your personal knowledge vault.
-          </Typography>
-          <Button
-            label="Create Something New"
-            leftIcon="plus"
-            onPress={() => navigation.navigate('Capture', { type: 'note' })}
+  // Render an entry based on its type
+  const renderEntry = ({ item }: { item: EntryType }) => {
+    switch (item.type) {
+      case 'note':
+        return <NoteCard note={item.data} />;
+      case 'spark':
+        return <SparkCard spark={item.data} />;
+      case 'action':
+        return (
+          <ActionCard
+            action={item.data}
+            onToggleDone={toggleActionDone}
           />
-        </View>
-      );
+        );
+      case 'path':
+        return <PathCard path={item.data} />;
+      case 'loop':
+        return <LoopCard loop={item.data} />;
+      default:
+        return null;
     }
+  };
+
+  // Render empty state
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <Typography variant="h3" style={{ marginBottom: 16 }}>
+        No Entries Found
+      </Typography>
+      <Typography style={{ textAlign: 'center', marginBottom: 24 }}>
+        {filterType === 'all'
+          ? "You haven't created any entries yet."
+          : `No ${filterType} found.`}
+      </Typography>
+      <Button
+        label={`Create ${filterType === 'all' ? 'Entry' : filterType.slice(0, -1)}`}
+        leftIcon="plus"
+        onPress={handleCreateEntry}
+      />
+    </View>
+  );
+
+  // Render tag filters
+  const renderTagFilters = () => {
+    if (allTags.length === 0) return null;
 
     return (
-      <FlatList
-        data={filteredContent}
-        keyExtractor={(item) => `${item.itemType}-${item.id}`}
-        renderItem={({ item }) => (
-          <Card
-            style={styles.card}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.tagsContainer}
+      >
+        {allTags.map((tag) => (
+          <TouchableOpacity
+            key={tag}
+            style={[
+              styles.tagFilter,
+              filterTag === tag && styles.tagFilterActive
+            ]}
             onPress={() => {
-              // Navigate to detail view based on item type (to be implemented)
-              console.log('View item:', item);
+              if (filterTag === tag) {
+                setFilterTag(null);
+              } else {
+                setFilterTag(tag);
+              }
             }}
           >
-            <View style={styles.cardContent}>
-              <View style={styles.itemHeader}>
-                <Icon
-                  name={getItemIcon(item)}
-                  width={18}
-                  height={18}
-                  color={getItemColor(item, theme)}
-                  style={styles.itemIcon}
-                />
-                <Typography variant="h4">{getItemTitle(item)}</Typography>
-              </View>
-
-              {item.body && (
-                <Typography variant="body2" numberOfLines={2}>
-                  {item.body}
-                </Typography>
-              )}
-
-              {item.description && (
-                <Typography variant="body2" numberOfLines={2}>
-                  {item.description}
-                </Typography>
-              )}
-
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                <Typography variant="caption" color="secondary">
-                  {new Date(item.createdAt).toLocaleDateString()}
-                </Typography>
-
-                {item.sagaId && (
-                  <Typography
-                    variant="caption"
-                    color="secondary"
-                    onPress={() => navigation.navigate('SagaDetail', { sagaId: item.sagaId })}
-                  >
-                    {getSagaName(item.sagaId)}
-                  </Typography>
-                )}
-              </View>
-
-              {item.tags && item.tags.length > 0 && (
-                <View style={styles.tagContainer}>
-                  {JSON.parse(item.tags).map((tag: string, index: number) => (
-                    <View key={index} style={styles.tag}>
-                      <Typography variant="caption">{tag}</Typography>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          </Card >
-        )
-        }
-      />
+            <Typography
+              style={[
+                styles.tagText,
+                filterTag === tag && styles.tagTextActive
+              ]}
+            >
+              #{tag}
+            </Typography>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
     );
   };
 
@@ -320,69 +315,155 @@ export default function VaultScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Typography variant="h1" style={styles.title}>Vault</Typography>
-        <Typography variant="body1">Your complete archive of ideas, goals, and reflections</Typography>
+        <Typography variant="body1">
+          Your archive of ideas, actions, and plans
+        </Typography>
 
         <View style={styles.filterContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
             <TouchableOpacity
-              style={[styles.filterButton, contentType === 'all' && styles.filterButtonActive]}
-              onPress={() => setContentType('all')}
+              style={[
+                styles.filterButton,
+                filterType === 'all' && styles.filterButtonActive
+              ]}
+              onPress={() => {
+                setFilterType('all');
+                setFilterTag(null);
+              }}
             >
-              <Typography style={[styles.filterButtonText, contentType === 'all' && styles.filterButtonTextActive]}>
+              <Typography
+                style={[
+                  styles.filterButtonText,
+                  filterType === 'all' && styles.filterButtonTextActive
+                ]}
+              >
                 All
               </Typography>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.filterButton, contentType === 'notes' && styles.filterButtonActive]}
-              onPress={() => setContentType('notes')}
+              style={[
+                styles.filterButton,
+                filterType === 'notes' && styles.filterButtonActive
+              ]}
+              onPress={() => {
+                setFilterType('notes');
+                setFilterTag(null);
+              }}
             >
-              <Typography style={[styles.filterButtonText, contentType === 'notes' && styles.filterButtonTextActive]}>
+              <Typography
+                style={[
+                  styles.filterButtonText,
+                  filterType === 'notes' && styles.filterButtonTextActive
+                ]}
+              >
                 Notes
               </Typography>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.filterButton, contentType === 'sparks' && styles.filterButtonActive]}
-              onPress={() => setContentType('sparks')}
+              style={[
+                styles.filterButton,
+                filterType === 'sparks' && styles.filterButtonActive
+              ]}
+              onPress={() => {
+                setFilterType('sparks');
+                setFilterTag(null);
+              }}
             >
-              <Typography style={[styles.filterButtonText, contentType === 'sparks' && styles.filterButtonTextActive]}>
-                Insights
+              <Typography
+                style={[
+                  styles.filterButtonText,
+                  filterType === 'sparks' && styles.filterButtonTextActive
+                ]}
+              >
+                Sparks
               </Typography>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.filterButton, contentType === 'actions' && styles.filterButtonActive]}
-              onPress={() => setContentType('actions')}
+              style={[
+                styles.filterButton,
+                filterType === 'actions' && styles.filterButtonActive
+              ]}
+              onPress={() => {
+                setFilterType('actions');
+                setFilterTag(null);
+              }}
             >
-              <Typography style={[styles.filterButtonText, contentType === 'actions' && styles.filterButtonTextActive]}>
+              <Typography
+                style={[
+                  styles.filterButtonText,
+                  filterType === 'actions' && styles.filterButtonTextActive
+                ]}
+              >
                 Actions
               </Typography>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.filterButton, contentType === 'loops' && styles.filterButtonActive]}
-              onPress={() => setContentType('loops')}
+              style={[
+                styles.filterButton,
+                filterType === 'loops' && styles.filterButtonActive
+              ]}
+              onPress={() => {
+                setFilterType('loops');
+                setFilterTag(null);
+              }}
             >
-              <Typography style={[styles.filterButtonText, contentType === 'loops' && styles.filterButtonTextActive]}>
+              <Typography
+                style={[
+                  styles.filterButtonText,
+                  filterType === 'loops' && styles.filterButtonTextActive
+                ]}
+              >
                 Loops
               </Typography>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.filterButton, contentType === 'paths' && styles.filterButtonActive]}
-              onPress={() => setContentType('paths')}
+              style={[
+                styles.filterButton,
+                filterType === 'paths' && styles.filterButtonActive
+              ]}
+              onPress={() => {
+                setFilterType('paths');
+                setFilterTag(null);
+              }}
             >
-              <Typography style={[styles.filterButtonText, contentType === 'paths' && styles.filterButtonTextActive]}>
+              <Typography
+                style={[
+                  styles.filterButtonText,
+                  filterType === 'paths' && styles.filterButtonTextActive
+                ]}
+              >
                 Paths
               </Typography>
             </TouchableOpacity>
           </ScrollView>
         </View>
+
+        {/* Show tag filters */}
+        {renderTagFilters()}
       </View>
 
       <View style={styles.content}>
-        {renderContent()}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <Typography>Loading entries...</Typography>
+          </View>
+        ) : (
+          <FlatList
+            data={entries}
+            renderItem={renderEntry}
+            keyExtractor={(item) => `${item.type}-${item.data.id}`}
+            ListEmptyComponent={renderEmptyState()}
+            contentContainerStyle={{ flexGrow: 1 }}
+          />
+        )}
       </View>
     </SafeAreaView>
   );

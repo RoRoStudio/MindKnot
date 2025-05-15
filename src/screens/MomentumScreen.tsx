@@ -6,177 +6,88 @@ import { useStyles } from '../hooks/useStyles';
 import { Typography } from '../components/common/Typography';
 import { Card } from '../components/common/Card';
 import { Icon } from '../components/common/Icon';
-import { useCaptures } from '../hooks/useCaptures';
-import { useLoops } from '../hooks/useLoops';
+import { useNotes } from '../hooks/useNotes';
+import { useSparks } from '../hooks/useSparks';
+import { useActions } from '../hooks/useActions';
 import { usePaths } from '../hooks/usePaths';
-import { CaptureSubType } from '../types/capture';
+import { useLoops } from '../hooks/useLoops';
+import { ActionCard } from '../components/entries';
 
 export default function MomentumScreen() {
     const { theme } = useTheme();
-    const { captures, loadCaptures } = useCaptures();
-    const { loops, loadLoops } = useLoops();
+    const { notes, loadNotes } = useNotes();
+    const { sparks, loadSparks } = useSparks();
+    const { actions, loadActions, toggleActionDone } = useActions();
     const { paths, loadPaths } = usePaths();
+    const { loops, loadLoops } = useLoops();
 
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
-        totalCaptures: 0,
         totalNotes: 0,
         totalSparks: 0,
         totalActions: 0,
-        totalReflections: 0,
         completedActions: 0,
         activePaths: 0,
         activeLoops: 0,
-        capturesThisWeek: 0,
+        entriesThisWeek: 0,
     });
 
     const styles = useStyles((theme) => ({
-        container: {
-            flex: 1,
-            backgroundColor: theme.colors.background,
-        },
-        header: {
-            padding: theme.spacing.m,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.colors.divider,
-        },
-        title: {
-            marginBottom: theme.spacing.s,
-        },
-        content: {
-            flex: 1,
-            padding: theme.spacing.m,
-        },
-        section: {
-            marginBottom: theme.spacing.l,
-        },
-        sectionTitle: {
-            marginBottom: theme.spacing.s,
-        },
-        statsCard: {
-            marginBottom: theme.spacing.m,
-        },
-        statsRow: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginBottom: theme.spacing.s,
-        },
-        statBox: {
-            flex: 1,
-            alignItems: 'center',
-            backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: theme.shape.radius.m,
-            padding: theme.spacing.m,
-            marginHorizontal: theme.spacing.xs,
-        },
-        statValue: {
-            fontSize: 24,
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-            marginBottom: theme.spacing.xs,
-        },
-        streakCard: {
-            marginBottom: theme.spacing.m,
-            padding: theme.spacing.m,
-        },
-        streakDays: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: theme.spacing.m,
-        },
-        streakDay: {
-            alignItems: 'center',
-            width: 40,
-        },
-        streakDot: {
-            width: 24,
-            height: 24,
-            borderRadius: 12,
-            marginBottom: theme.spacing.xs,
-        },
-        recentActivity: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: theme.spacing.s,
-            marginBottom: theme.spacing.s,
-            backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: theme.shape.radius.m,
-        },
-        activityIcon: {
-            marginRight: theme.spacing.s,
-        },
-        activityText: {
-            flex: 1,
-        },
+        container: { flex: 1, backgroundColor: theme.colors.background },
+        header: { padding: theme.spacing.m, borderBottomWidth: 1, borderBottomColor: theme.colors.divider },
+        title: { marginBottom: theme.spacing.s },
+        content: { flex: 1, padding: theme.spacing.m },
+        section: { marginBottom: theme.spacing.l },
+        sectionTitle: { marginBottom: theme.spacing.s },
+        statsCard: { marginBottom: theme.spacing.m },
+        statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: theme.spacing.s },
+        statBox: { flex: 1, alignItems: 'center', backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.shape.radius.m, padding: theme.spacing.m, marginHorizontal: theme.spacing.xs },
+        statValue: { fontSize: 24, fontWeight: 'bold', color: theme.colors.primary, marginBottom: theme.spacing.xs },
+        recentActivity: { flexDirection: 'row', alignItems: 'center', padding: theme.spacing.s, marginBottom: theme.spacing.s, backgroundColor: theme.colors.surfaceVariant, borderRadius: theme.shape.radius.m },
+        activityIcon: { marginRight: theme.spacing.s },
+        activityText: { flex: 1 },
+        emptyCard: { padding: theme.spacing.m, alignItems: 'center' },
     }));
 
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
             try {
-                // Load all data for stats
-                await Promise.all([
-                    loadCaptures(),
-                    loadLoops(),
-                    loadPaths(),
-                ]);
+                await Promise.all([loadNotes(), loadSparks(), loadActions(), loadPaths(), loadLoops()]);
             } catch (error) {
                 console.error('Error loading data:', error);
             } finally {
                 setLoading(false);
             }
         };
-
         loadData();
     }, []);
 
     useEffect(() => {
-        // Calculate stats from loaded data
         const now = new Date();
         const oneWeekAgo = new Date(now);
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-        const notes = captures.filter(c => c.subType === CaptureSubType.NOTE);
-        const sparks = captures.filter(c => c.subType === CaptureSubType.SPARK);
-        const actions = captures.filter(c => c.subType === CaptureSubType.ACTION);
-        const reflections = captures.filter(c => c.subType === CaptureSubType.REFLECTION);
-
         const completedActions = actions.filter(a => a.done).length;
-
-        const capturesThisWeek = captures.filter(c =>
-            new Date(c.createdAt) >= oneWeekAgo
-        ).length;
+        const recentNotes = notes.filter(n => new Date(n.createdAt) >= oneWeekAgo).length;
+        const recentSparks = sparks.filter(s => new Date(s.createdAt) >= oneWeekAgo).length;
+        const recentActions = actions.filter(a => new Date(a.createdAt) >= oneWeekAgo).length;
+        const entriesThisWeek = recentNotes + recentSparks + recentActions;
 
         const activePaths = paths.filter(p => {
             const startDate = p.startDate ? new Date(p.startDate) : null;
             const targetDate = p.targetDate ? new Date(p.targetDate) : null;
-
-            return (startDate && startDate <= now) &&
-                (!targetDate || targetDate >= now);
+            return (startDate && startDate <= now) && (!targetDate || targetDate >= now);
         }).length;
 
-        const activeLoops = loops.length; // Simplified for now
+        const activeLoops = loops.length;
 
-        setStats({
-            totalCaptures: captures.length,
-            totalNotes: notes.length,
-            totalSparks: sparks.length,
-            totalActions: actions.length,
-            totalReflections: reflections.length,
-            completedActions,
-            activePaths,
-            activeLoops,
-            capturesThisWeek,
-        });
-    }, [captures, loops, paths]);
+        setStats({ totalNotes: notes.length, totalSparks: sparks.length, totalActions: actions.length, completedActions, activePaths, activeLoops, entriesThisWeek });
+    }, [notes, sparks, actions, paths, loops]);
 
-    // Generate mock streak data
     const generateMockStreak = () => {
         const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        return days.map(day => {
-            const active = Math.random() > 0.3; // 70% chance of being active
-            return { day, active };
-        });
+        return days.map(day => ({ day, active: Math.random() > 0.3 }));
     };
 
     const streakData = generateMockStreak();
@@ -195,22 +106,19 @@ export default function MomentumScreen() {
                     <Card style={styles.statsCard}>
                         <View style={styles.statsRow}>
                             <View style={styles.statBox}>
-                                <Typography style={styles.statValue}>{stats.capturesThisWeek}</Typography>
-                                <Typography>Total Captures</Typography>
+                                <Typography style={styles.statValue}>{stats.entriesThisWeek}</Typography>
+                                <Typography>Total Entries</Typography>
                             </View>
-
                             <View style={styles.statBox}>
                                 <Typography style={styles.statValue}>{stats.completedActions}</Typography>
                                 <Typography>Actions Done</Typography>
                             </View>
                         </View>
-
                         <View style={styles.statsRow}>
                             <View style={styles.statBox}>
                                 <Typography style={styles.statValue}>{stats.activePaths}</Typography>
                                 <Typography>Active Paths</Typography>
                             </View>
-
                             <View style={styles.statBox}>
                                 <Typography style={styles.statValue}>{stats.activeLoops}</Typography>
                                 <Typography>Active Loops</Typography>
@@ -219,69 +127,45 @@ export default function MomentumScreen() {
                     </Card>
                 </View>
 
-                {/* Streaks */}
-                <View style={styles.section}>
-                    <Typography variant="h3" style={styles.sectionTitle}>Daily Streak</Typography>
-                    <Card style={styles.streakCard}>
-                        <Typography variant="h4">Your Writing Streak</Typography>
-                        <Typography variant="body2" color="secondary">
-                            Consistency builds momentum. Keep writing daily!
-                        </Typography>
-
-                        <View style={styles.streakDays}>
-                            {streakData.map((day, index) => (
-                                <View key={index} style={styles.streakDay}>
-                                    <View
-                                        style={[
-                                            styles.streakDot,
-                                            {
-                                                backgroundColor: day.active ?
-                                                    theme.colors.primary :
-                                                    theme.colors.surfaceVariant,
-                                                borderWidth: 1,
-                                                borderColor: day.active ?
-                                                    theme.colors.primary :
-                                                    theme.colors.border,
-                                            }
-                                        ]}
-                                    />
-                                    <Typography variant="caption">{day.day}</Typography>
-                                </View>
-                            ))}
-                        </View>
-                    </Card>
-                </View>
-
-                {/* Totals */}
+                {/* Progress */}
                 <View style={styles.section}>
                     <Typography variant="h3" style={styles.sectionTitle}>Progress</Typography>
                     <Card style={styles.statsCard}>
                         <Typography variant="h4" style={{ marginBottom: 12 }}>Entry Totals</Typography>
-
                         <View style={styles.recentActivity}>
                             <Icon name="file-text" width={20} height={20} color={theme.colors.primary} style={styles.activityIcon} />
                             <Typography style={styles.activityText}>Notes</Typography>
                             <Typography variant="h4">{stats.totalNotes}</Typography>
                         </View>
-
                         <View style={styles.recentActivity}>
                             <Icon name="lightbulb" width={20} height={20} color="#FFB800" style={styles.activityIcon} />
-                            <Typography style={styles.activityText}>Insights</Typography>
+                            <Typography style={styles.activityText}>Sparks</Typography>
                             <Typography variant="h4">{stats.totalSparks}</Typography>
                         </View>
-
                         <View style={styles.recentActivity}>
                             <Icon name="check" width={20} height={20} color={theme.colors.success} style={styles.activityIcon} />
                             <Typography style={styles.activityText}>Actions</Typography>
                             <Typography variant="h4">{stats.totalActions}</Typography>
                         </View>
-
-                        <View style={styles.recentActivity}>
-                            <Icon name="sparkles" width={20} height={20} color={theme.colors.accent} style={styles.activityIcon} />
-                            <Typography style={styles.activityText}>Reflections</Typography>
-                            <Typography variant="h4">{stats.totalReflections}</Typography>
-                        </View>
                     </Card>
+                </View>
+
+                {/* Upcoming Actions */}
+                <View style={styles.section}>
+                    <Typography variant="h3" style={styles.sectionTitle}>Upcoming Actions</Typography>
+                    {actions.filter(a => !a.done && a.dueDate).length > 0 ? (
+                        actions
+                            .filter(a => !a.done && a.dueDate)
+                            .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
+                            .slice(0, 3)
+                            .map(action => (
+                                <ActionCard key={action.id} action={action} onToggleDone={toggleActionDone} />
+                            ))
+                    ) : (
+                        <Card style={styles.emptyCard}>
+                            <Typography>No upcoming actions</Typography>
+                        </Card>
+                    )}
                 </View>
             </ScrollView>
         </SafeAreaView>
