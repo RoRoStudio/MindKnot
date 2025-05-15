@@ -1,8 +1,8 @@
 // src/components/entries/PathCard.tsx
 import React from 'react';
-import { Path } from '../../types/path';
-import { EntryCard } from './EntryCard';
-import { useTheme } from '../../contexts/ThemeContext';
+import { Path } from '../../../types/path';
+import { EntryCard } from '../EntryCard';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 interface PathCardProps {
     path: Path;

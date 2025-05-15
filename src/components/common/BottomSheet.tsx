@@ -1,5 +1,5 @@
 // src/components/common/BottomSheet.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     Dimensions,
     View,
@@ -7,6 +7,7 @@ import {
     Keyboard,
     Platform,
     StyleSheet,
+    ScrollView,
 } from 'react-native';
 import Animated, {
     useSharedValue,
@@ -23,10 +24,19 @@ import {
 import { useTheme } from '../../contexts/ThemeContext';
 
 // Define props type
-interface BottomSheetProps {
+export interface BottomSheetProps {
     visible: boolean;
     onClose: () => void;
     children: React.ReactNode;
+    footerContent?: React.ReactNode;
+    snapPoints?: number[];
+    showDragIndicator?: boolean;
+    animationDuration?: number;
+    maxHeight?: number;
+    minHeight?: number;
+    dismissible?: boolean;
+    backdropOpacity?: number;
+    footerHeight?: number;
 }
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -36,6 +46,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     visible,
     onClose,
     children,
+    footerContent,
+    snapPoints = [0.9, 0.5],
+    showDragIndicator = true,
+    animationDuration = 300,
+    maxHeight = SCREEN_HEIGHT * 0.9,
+    minHeight = 180,
+    dismissible = true,
+    backdropOpacity = 0.5,
+    footerHeight = 80,
 }) => {
     // Get theme
     const { theme } = useTheme();
@@ -49,16 +68,21 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     useEffect(() => {
         if (visible) {
             setShouldRender(true);
-            translateY.value = withTiming(0, { duration: 300 });
+            translateY.value = withTiming(0, { duration: animationDuration });
         } else {
-            translateY.value = withTiming(SCREEN_HEIGHT, { duration: 300 }, (isFinished) => {
+            translateY.value = withTiming(SCREEN_HEIGHT, { duration: animationDuration }, (isFinished) => {
                 if (isFinished) {
                     runOnJS(setShouldRender)(false);
                 }
             });
         }
-    }, [visible]);
+    }, [visible, animationDuration]);
 
+    // Calculate sheet heights
+    const calculateSnapPoint = useCallback((percentage: number) => {
+        const value = SCREEN_HEIGHT * percentage;
+        return Math.min(Math.max(value, minHeight), maxHeight);
+    }, [minHeight, maxHeight]);
 
     // Main content animation
     const animatedStyle = useAnimatedStyle(() => ({
@@ -70,7 +94,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         opacity: interpolate(
             translateY.value,
             [0, SCREEN_HEIGHT],
-            [1, 0],
+            [backdropOpacity, 0],
             'clamp'
         ),
     }));
@@ -84,15 +108,33 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             ctx.startY = translateY.value;
         },
         onActive: (event, ctx) => {
-            translateY.value = Math.max(0, ctx.startY + event.translationY);
+            if (dismissible) {
+                translateY.value = Math.max(0, ctx.startY + event.translationY);
+            }
         },
         onEnd: (event) => {
-            if (event.translationY > DRAG_DISMISS_THRESHOLD) {
-                translateY.value = withTiming(SCREEN_HEIGHT, { duration: 250 }, (isFinished) => {
+            if (dismissible && event.translationY > DRAG_DISMISS_THRESHOLD) {
+                translateY.value = withTiming(SCREEN_HEIGHT, { duration: animationDuration }, (isFinished) => {
                     if (isFinished) runOnJS(onClose)();
                 });
             } else {
-                translateY.value = withTiming(0, { duration: 200 });
+                // Snap to nearest point
+                const snapPointValues = snapPoints.map(point => calculateSnapPoint(point));
+                const currentPosition = translateY.value;
+
+                // Find nearest snap point
+                let closestPoint = snapPointValues[0];
+                let minDistance = Math.abs(currentPosition - closestPoint);
+
+                for (const point of snapPointValues) {
+                    const distance = Math.abs(currentPosition - point);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestPoint = point;
+                    }
+                }
+
+                translateY.value = withTiming(closestPoint, { duration: 200 });
             }
         },
     });
@@ -107,8 +149,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             right: 0,
             justifyContent: 'flex-end',
             zIndex: 1000,
-            width: '100%', // Force full width
-            height: '100%', // Force full height
+            width: '100%',
+            height: '100%',
         },
         backdrop: {
             position: 'absolute',
@@ -116,11 +158,12 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: `rgba(0,0,0,${backdropOpacity})`,
         },
         sheetContainer: {
             position: 'relative',
             width: '100%',
+            maxHeight: maxHeight,
         },
         decorationLayer: {
             position: 'absolute',
@@ -137,11 +180,12 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             backgroundColor: 'white',
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
-            padding: 20,
-            minHeight: 180,
-            paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+            paddingTop: 20,
+            paddingHorizontal: 20,
+            minHeight: minHeight,
             zIndex: 1,
             width: '100%',
+            maxHeight: maxHeight,
         },
         dragHandle: {
             width: 40,
@@ -151,21 +195,37 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             alignSelf: 'center',
             marginBottom: 12,
         },
-        childrenContainer: {
-            width: '100%',
-        }
+        scrollViewContent: {
+            flexGrow: 1,
+            paddingBottom: footerContent ? footerHeight + 20 : Platform.OS === 'ios' ? 40 : 20,
+        },
+        footer: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: footerHeight,
+            backgroundColor: 'white',
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.divider || '#eee',
+            paddingHorizontal: 20,
+            paddingVertical: 10,
+            justifyContent: 'center',
+            zIndex: 2,
+            borderBottomLeftRadius: 20,
+            borderBottomRightRadius: 20,
+        },
     });
 
     if (!shouldRender) {
         return null;
     }
 
-
     return (
         <View style={styles.container} pointerEvents="box-none">
             {/* Backdrop */}
             <Animated.View style={[styles.backdrop, backdropStyle]}>
-                <TouchableWithoutFeedback onPress={onClose}>
+                <TouchableWithoutFeedback onPress={dismissible ? onClose : undefined}>
                     <View style={{ flex: 1 }} />
                 </TouchableWithoutFeedback>
             </Animated.View>
@@ -177,25 +237,37 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
                 {/* Content */}
                 <View style={styles.contentContainer}>
-                    {/* 👉 Drag handle only is gesture-enabled */}
-                    <PanGestureHandler onGestureEvent={gestureHandler}>
+                    {/* Drag handle */}
+                    <PanGestureHandler onGestureEvent={gestureHandler} enabled={dismissible}>
                         <Animated.View>
                             <View style={{ paddingVertical: 10, alignItems: 'center' }}>
-                                <View style={styles.dragHandle} />
+                                {showDragIndicator && <View style={styles.dragHandle} />}
                             </View>
                         </Animated.View>
                     </PanGestureHandler>
 
+                    {/* Content area with ScrollView to enable scrolling throughout */}
+                    <ScrollView
+                        style={{ width: '100%', maxHeight: maxHeight - (footerContent ? footerHeight : 0) - 40 }}
+                        contentContainerStyle={styles.scrollViewContent}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={true}
+                    >
+                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                            <View style={{ width: '100%' }}>
+                                {children}
+                            </View>
+                        </TouchableWithoutFeedback>
+                    </ScrollView>
 
-                    {/* Content area (no longer draggable) */}
-                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                        <View style={styles.childrenContainer}>
-                            <View>{children}</View>
+                    {/* Fixed Footer Content */}
+                    {footerContent && (
+                        <View style={styles.footer}>
+                            {footerContent}
                         </View>
-                    </TouchableWithoutFeedback>
+                    )}
                 </View>
             </Animated.View>
         </View>
     );
-
 };

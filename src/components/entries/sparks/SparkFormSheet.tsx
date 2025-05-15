@@ -1,4 +1,4 @@
-// src/components/actions/ActionFormSheet.tsx
+// src/components/sparks/SparkFormSheet.tsx
 import React, { useState, useEffect } from 'react';
 import {
     View,
@@ -12,43 +12,34 @@ import {
     Alert,
 } from 'react-native';
 import { useForm } from 'react-hook-form';
-import { BottomSheet } from '../common/BottomSheet';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Button } from '../common/Button';
-import { Icon } from '../common/Icon';
+import { BottomSheet } from '../../common/BottomSheet';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { useStyles } from '../../../hooks/useStyles';
+import { Typography } from '../../common/Typography';
+import { Button } from '../../common/Button';
 import {
     Form,
     FormInput,
     FormTextarea,
-    FormDatePicker,
-    FormCheckbox,
-    FormArrayField,
     FormTagInput,
     FormCategorySelector
-} from '../form';
-import { createAction } from '../../services/actionService';
-import { generateSimpleId } from '../../utils/uuidUtil';
-import { useBottomSheet } from '../../contexts/BottomSheetContext';
+} from '../../form';
+import { createSpark } from '../../../services/sparkService';
+import { useBottomSheet } from '../../../contexts/BottomSheetContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-interface ActionFormSheetProps {
+interface SparkFormSheetProps {
     visible: boolean;
     onClose: () => void;
-    parentId?: string;
-    parentType?: 'path' | 'milestone' | 'loop-item';
     onSuccess?: () => void;
 }
 
-export default function ActionFormSheet({
+export default function SparkFormSheet({
     visible,
     onClose,
-    parentId,
-    parentType,
     onSuccess,
-}: ActionFormSheetProps) {
+}: SparkFormSheetProps) {
     const { theme } = useTheme();
     const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,35 +71,11 @@ export default function ActionFormSheet({
             marginTop: theme.spacing.l,
             paddingBottom: 100,
         },
-        subAction: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: theme.spacing.s,
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.m,
-        },
-        subActionContent: {
-            flex: 1,
-        },
-        deleteButton: {
-            padding: theme.spacing.xs,
-        },
-        fixedButtonContainer: {
-            paddingVertical: theme.spacing.m,
-            backgroundColor: theme.colors.background,
-            borderTopWidth: 1,
-            borderTopColor: theme.colors.divider,
-            paddingHorizontal: theme.spacing.m,
-            width: '100%',
-        },
     }));
 
     const defaultValues = {
         title: '',
         body: '',
-        done: false,
-        dueDate: undefined,
-        subActions: [],
         tags: [],
         categoryId: null,
     };
@@ -132,56 +99,25 @@ export default function ActionFormSheet({
         try {
             setIsSubmitting(true);
 
-            const success = await createAction({
+            const success = await createSpark({
                 title: data.title,
                 body: data.body,
-                done: data.done,
-                dueDate: data.dueDate,
                 tags: data.tags,
-                categoryId: data.categoryId,
-                parentId,
-                parentType,
-                subActions: data.subActions?.map((action: any) => ({
-                    ...action,
-                    id: action.id || generateSimpleId(),
-                    done: false,
-                })),
+                categoryId: data.categoryId
             });
 
             if (success) {
                 if (onSuccess) onSuccess();
                 onClose();
             } else {
-                Alert.alert('Error', 'Failed to save the action. Please try again.');
+                Alert.alert('Error', 'Failed to save the spark. Please try again.');
             }
         } catch (error) {
-            console.error('Error creating action:', error);
+            console.error('Error creating spark:', error);
             Alert.alert('Error', 'An unexpected error occurred.');
         } finally {
             setIsSubmitting(false);
         }
-    };
-
-    const renderSubAction = (item: any, index: number, remove: (index: number) => void) => {
-        return (
-            <View style={styles.subAction}>
-                <View style={styles.subActionContent}>
-                    <FormInput
-                        name={`subActions.${index}.text` as any}
-                        control={control}
-                        placeholder="Sub-action"
-                        rules={{ required: 'Sub-action text is required' }}
-                    />
-                </View>
-                <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => remove(index)}
-                    hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-                >
-                    <Icon name="minus" width={16} height={16} color="red" />
-                </TouchableOpacity>
-            </View>
-        );
     };
 
     // Dismiss keyboard when tapping outside input
@@ -195,7 +131,7 @@ export default function ActionFormSheet({
         // Then show the category form
         setTimeout(() => {
             showCategoryForm(undefined, () => {
-                // Re-open the action form after creating a category
+                // Re-open the spark form after creating a category
                 setTimeout(() => {
                     if (onSuccess) onSuccess();
                 }, 100);
@@ -214,7 +150,7 @@ export default function ActionFormSheet({
                 >
                     <View style={styles.container}>
                         <View style={styles.header}>
-                            <Typography variant="h3">Create Action</Typography>
+                            <Typography variant="h3">Create Spark</Typography>
                             <TouchableOpacity
                                 style={styles.closeButton}
                                 onPress={onClose}
@@ -225,8 +161,8 @@ export default function ActionFormSheet({
                         </View>
 
                         <ScrollView
-                            style={{ width: '100%', maxHeight: SCREEN_HEIGHT * 0.65 }}
-                            contentContainerStyle={{ paddingBottom: 20 }}
+                            style={{ width: '100%' }}
+                            contentContainerStyle={{ paddingBottom: 100 }}
                             keyboardShouldPersistTaps="handled"
                         >
                             <Form>
@@ -241,32 +177,10 @@ export default function ActionFormSheet({
                                 <FormTextarea
                                     name="body"
                                     control={control}
-                                    label="Action Details"
-                                    placeholder="Describe the action..."
-                                    rules={{ required: 'Action description is required' }}
+                                    label="Spark"
+                                    placeholder="Capture your insight..."
+                                    rules={{ required: 'Spark content is required' }}
                                     numberOfLines={3}
-                                />
-
-                                <FormDatePicker
-                                    name="dueDate"
-                                    control={control}
-                                    label="Due Date (optional)"
-                                    placeholder="Select a due date"
-                                />
-
-                                <FormCheckbox
-                                    name="done"
-                                    control={control}
-                                    label="Complete"
-                                />
-
-                                <FormArrayField
-                                    name="subActions"
-                                    control={control}
-                                    label="Sub-Actions"
-                                    renderItem={renderSubAction}
-                                    addButtonLabel="Add Sub-Action"
-                                    defaultValue={{ text: '', done: false }}
                                 />
 
                                 <FormCategorySelector
@@ -285,7 +199,7 @@ export default function ActionFormSheet({
 
                                 <View style={styles.buttonContainer}>
                                     <Button
-                                        label={isSubmitting ? "Saving..." : "Save Action"}
+                                        label={isSubmitting ? "Saving..." : "Save Spark"}
                                         variant="primary"
                                         onPress={handleSubmit(handleFormSubmit)}
                                         isLoading={isSubmitting}
@@ -294,17 +208,6 @@ export default function ActionFormSheet({
                                 </View>
                             </Form>
                         </ScrollView>
-                        {/* Fixed button at the bottom */}
-                        <View style={styles.fixedButtonContainer}>
-                            <Button
-                                label={isSubmitting ? "Saving..." : "Save Action"}
-                                variant="primary"
-                                onPress={handleSubmit(handleFormSubmit)}
-                                isLoading={isSubmitting}
-                                disabled={isSubmitting}
-                                fullWidth
-                            />
-                        </View>
                     </View>
                 </KeyboardAvoidingView>
             </TouchableWithoutFeedback>

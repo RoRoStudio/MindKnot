@@ -1,8 +1,8 @@
 // src/components/entries/LoopCard.tsx
 import React from 'react';
-import { Loop } from '../../types/loop';
-import { EntryCard } from './EntryCard';
-import { useTheme } from '../../contexts/ThemeContext';
+import { Loop } from '../../../types/loop';
+import { EntryCard } from '../EntryCard';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 interface LoopCardProps {
     loop: Loop;

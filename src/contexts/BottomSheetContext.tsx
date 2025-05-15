@@ -1,10 +1,10 @@
 // src/contexts/BottomSheetContext.tsx
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import NoteFormSheet from '../components/notes/NoteFormSheet';
-import SparkFormSheet from '../components/sparks/SparkFormSheet';
-import ActionFormSheet from '../components/actions/ActionFormSheet';
-import LoopFormSheet from '../components/loops/LoopFormSheet';
-import PathFormSheet from '../components/paths/PathFormSheet';
+import NoteFormSheet from '../components/entries/notes/NoteFormSheet';
+import SparkFormSheet from '../components/entries/sparks/SparkFormSheet';
+import ActionFormSheet from '../components/entries/actions/ActionFormSheet';
+import LoopFormSheet from '../components/entries/loops/LoopFormSheet';
+import PathFormSheet from '../components/entries/paths/PathFormSheet';
 import CategoryFormSheet from '../components/categories/CategoryFormSheet';
 import { useNotes } from '../hooks/useNotes';
 import { useSparks } from '../hooks/useSparks';
