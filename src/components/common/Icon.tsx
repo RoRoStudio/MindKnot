@@ -18,6 +18,7 @@ import Moon from '../../assets/icons/lucide/moon.svg';
 import Sun from '../../assets/icons/lucide/sun.svg';
 import House from '../../assets/icons/lucide/house.svg';
 import BookOpen from '../../assets/icons/lucide/book-open.svg';
+import Search from '../../assets/icons/lucide/search.svg';
 // Add new icons needed by form components
 import Eye from '../../assets/icons/lucide/eye.svg';
 import EyeOff from '../../assets/icons/lucide/eye-off.svg';
@@ -54,6 +55,7 @@ const iconMap = {
     sun: Sun,
     house: House,
     'book-open': BookOpen,
+    search: Search,
     // Add new icons
     eye: Eye,
     'eye-off': EyeOff,
