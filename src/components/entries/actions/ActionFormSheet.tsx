@@ -2,22 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import {
     View,
-    ScrollView,
     Keyboard,
-    TouchableWithoutFeedback,
     TouchableOpacity,
     Platform,
-    KeyboardAvoidingView,
     Dimensions,
     Alert,
 } from 'react-native';
-import { useForm } from 'react-hook-form';
-import { BottomSheet } from '../../common/BottomSheet';
+import { useForm, Control, FieldValues } from 'react-hook-form';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useStyles } from '../../../hooks/useStyles';
 import { Typography } from '../../common/Typography';
-import { Button } from '../../common/Button';
 import { Icon } from '../../common/Icon';
+import { FormSheet } from '../../common/FormSheet';
 import {
     Form,
     FormInput,
@@ -28,11 +24,23 @@ import {
     FormTagInput,
     FormCategorySelector
 } from '../../form';
-import { createAction } from '../../../services/actionService';
+import { createAction, updateAction } from '../../../services/actionService';
 import { generateSimpleId } from '../../../utils/uuidUtil';
 import { useBottomSheet } from '../../../contexts/BottomSheetContext';
+import { Action, SubAction } from '../../../types/action';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Define the shape of form values
+interface ActionFormValues {
+    title: string;
+    body: string;
+    done: boolean;
+    dueDate?: Date;
+    subActions: Array<{ id?: string; text: string; done: boolean }>;
+    tags: string[];
+    categoryId: string | null;
+}
 
 interface ActionFormSheetProps {
     visible: boolean;
@@ -40,6 +48,7 @@ interface ActionFormSheetProps {
     parentId?: string;
     parentType?: 'path' | 'milestone' | 'loop-item';
     onSuccess?: () => void;
+    actionToEdit?: Partial<ActionFormValues> & { id?: string };
 }
 
 export default function ActionFormSheet({
@@ -48,44 +57,21 @@ export default function ActionFormSheet({
     parentId,
     parentType,
     onSuccess,
+    actionToEdit,
 }: ActionFormSheetProps) {
     const { theme } = useTheme();
     const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isEditMode = !!actionToEdit;
 
     const styles = useStyles((theme) => ({
-        container: {
-            backgroundColor: theme.colors.background,
-            borderTopLeftRadius: theme.shape.radius.l,
-            borderTopRightRadius: theme.shape.radius.l,
-            paddingTop: theme.spacing.m,
-            paddingHorizontal: theme.spacing.m,
-            paddingBottom: theme.spacing.xl * 2,
-            maxHeight: SCREEN_HEIGHT * 0.8,
-            width: '100%',
-        },
-        header: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: theme.spacing.m,
-        },
-        closeButton: {
-            padding: theme.spacing.s,
-        },
-        formContainer: {
-            padding: theme.spacing.m,
-        },
-        buttonContainer: {
-            marginTop: theme.spacing.l,
-            paddingBottom: 100,
-        },
         subAction: {
             flexDirection: 'row',
             alignItems: 'center',
             padding: theme.spacing.s,
             backgroundColor: theme.colors.surface,
             borderRadius: theme.shape.radius.m,
+            marginBottom: theme.spacing.xs,
         },
         subActionContent: {
             flex: 1,
@@ -93,27 +79,22 @@ export default function ActionFormSheet({
         deleteButton: {
             padding: theme.spacing.xs,
         },
-        fixedButtonContainer: {
-            paddingVertical: theme.spacing.m,
-            backgroundColor: theme.colors.background,
-            borderTopWidth: 1,
-            borderTopColor: theme.colors.divider,
-            paddingHorizontal: theme.spacing.m,
+        formContainer: {
             width: '100%',
         },
     }));
 
-    const defaultValues = {
-        title: '',
-        body: '',
-        done: false,
-        dueDate: undefined,
-        subActions: [],
-        tags: [],
-        categoryId: null,
+    const defaultValues: ActionFormValues = {
+        title: actionToEdit?.title || '',
+        body: actionToEdit?.body || '',
+        done: actionToEdit?.done || false,
+        dueDate: actionToEdit?.dueDate,
+        subActions: actionToEdit?.subActions || [],
+        tags: actionToEdit?.tags || [],
+        categoryId: actionToEdit?.categoryId || null,
     };
 
-    const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm({
+    const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm<ActionFormValues>({
         defaultValues,
         mode: 'onChange'
     });
@@ -124,29 +105,40 @@ export default function ActionFormSheet({
             reset(defaultValues);
             setIsSubmitting(false);
         }
-    }, [visible]);
+    }, [visible, actionToEdit]);
 
-    const handleFormSubmit = async (data: any) => {
+    const handleFormSubmit = async (data: ActionFormValues) => {
         if (isSubmitting) return;
 
         try {
             setIsSubmitting(true);
 
-            const success = await createAction({
+            // Convert Date to ISO string for API
+            const dueDateString = data.dueDate ? data.dueDate.toISOString() : undefined;
+
+            const actionData = {
                 title: data.title,
                 body: data.body,
                 done: data.done,
-                dueDate: data.dueDate,
+                dueDate: dueDateString,
                 tags: data.tags,
-                categoryId: data.categoryId,
+                categoryId: data.categoryId || undefined,
                 parentId,
                 parentType,
-                subActions: data.subActions?.map((action: any) => ({
+                subActions: data.subActions?.map((action) => ({
                     ...action,
                     id: action.id || generateSimpleId(),
-                    done: false,
+                    done: action.done || false,
                 })),
-            });
+            };
+
+            let success;
+            if (isEditMode && actionToEdit?.id) {
+                success = await updateAction(actionToEdit.id, actionData);
+            } else {
+                await createAction(actionData);
+                success = true;
+            }
 
             if (success) {
                 if (onSuccess) onSuccess();
@@ -155,7 +147,7 @@ export default function ActionFormSheet({
                 Alert.alert('Error', 'Failed to save the action. Please try again.');
             }
         } catch (error) {
-            console.error('Error creating action:', error);
+            console.error('Error handling action:', error);
             Alert.alert('Error', 'An unexpected error occurred.');
         } finally {
             setIsSubmitting(false);
@@ -167,8 +159,8 @@ export default function ActionFormSheet({
             <View style={styles.subAction}>
                 <View style={styles.subActionContent}>
                     <FormInput
-                        name={`subActions.${index}.text` as any}
-                        control={control}
+                        name={`subActions.${index}.text`}
+                        control={control as unknown as Control<FieldValues>}
                         placeholder="Sub-action"
                         rules={{ required: 'Sub-action text is required' }}
                     />
@@ -182,11 +174,6 @@ export default function ActionFormSheet({
                 </TouchableOpacity>
             </View>
         );
-    };
-
-    // Dismiss keyboard when tapping outside input
-    const dismissKeyboard = () => {
-        Keyboard.dismiss();
     };
 
     const handleCreateCategory = () => {
@@ -206,108 +193,69 @@ export default function ActionFormSheet({
     if (!visible) return null;
 
     return (
-        <BottomSheet visible={visible} onClose={onClose}>
-            <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    style={{ width: '100%' }}
-                >
-                    <View style={styles.container}>
-                        <View style={styles.header}>
-                            <Typography variant="h3">Create Action</Typography>
-                            <TouchableOpacity
-                                style={styles.closeButton}
-                                onPress={onClose}
-                                disabled={isSubmitting}
-                            >
-                                <Typography color="secondary">Cancel</Typography>
-                            </TouchableOpacity>
-                        </View>
+        <FormSheet
+            visible={visible}
+            onClose={onClose}
+            title={isEditMode ? "Edit Action" : "Create Action"}
+            onSubmit={handleSubmit(handleFormSubmit)}
+            isSubmitting={isSubmitting}
+            isEdit={isEditMode}
+            submitLabel={isEditMode ? "Update" : "Create"}
+        >
+            <View style={styles.formContainer}>
+                <Form>
+                    <FormInput
+                        name="title"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Title"
+                        placeholder="Enter a title..."
+                        rules={{ required: 'Title is required' }}
+                    />
 
-                        <ScrollView
-                            style={{ width: '100%', maxHeight: SCREEN_HEIGHT * 0.65 }}
-                            contentContainerStyle={{ paddingBottom: 20 }}
-                            keyboardShouldPersistTaps="handled"
-                        >
-                            <Form>
-                                <FormInput
-                                    name="title"
-                                    control={control}
-                                    label="Title"
-                                    placeholder="Enter a title..."
-                                    rules={{ required: 'Title is required' }}
-                                />
+                    <FormTextarea
+                        name="body"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Action Details"
+                        placeholder="Describe the action..."
+                        rules={{ required: 'Action description is required' }}
+                        numberOfLines={3}
+                    />
 
-                                <FormTextarea
-                                    name="body"
-                                    control={control}
-                                    label="Action Details"
-                                    placeholder="Describe the action..."
-                                    rules={{ required: 'Action description is required' }}
-                                    numberOfLines={3}
-                                />
+                    <FormDatePicker
+                        name="dueDate"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Due Date (Optional)"
+                    />
 
-                                <FormDatePicker
-                                    name="dueDate"
-                                    control={control}
-                                    label="Due Date (optional)"
-                                    placeholder="Select a due date"
-                                />
+                    <FormCheckbox
+                        name="done"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Completed"
+                    />
 
-                                <FormCheckbox
-                                    name="done"
-                                    control={control}
-                                    label="Complete"
-                                />
+                    <FormArrayField
+                        name="subActions"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Sub-actions"
+                        renderItem={renderSubAction}
+                        addButtonLabel="Add Sub-action"
+                        defaultValue={{ text: '', done: false }}
+                    />
 
-                                <FormArrayField
-                                    name="subActions"
-                                    control={control}
-                                    label="Sub-Actions"
-                                    renderItem={renderSubAction}
-                                    addButtonLabel="Add Sub-Action"
-                                    defaultValue={{ text: '', done: false }}
-                                />
+                    <FormTagInput
+                        name="tags"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Tags"
+                    />
 
-                                <FormCategorySelector
-                                    name="categoryId"
-                                    control={control}
-                                    onCreateCategory={handleCreateCategory}
-                                />
-
-                                <FormTagInput
-                                    name="tags"
-                                    control={control}
-                                    label="Tags"
-                                    placeholder="Add a tag..."
-                                    helperText="Press Enter or tap + to add a tag"
-                                />
-
-                                <View style={styles.buttonContainer}>
-                                    <Button
-                                        label={isSubmitting ? "Saving..." : "Save Action"}
-                                        variant="primary"
-                                        onPress={handleSubmit(handleFormSubmit)}
-                                        isLoading={isSubmitting}
-                                        disabled={isSubmitting}
-                                    />
-                                </View>
-                            </Form>
-                        </ScrollView>
-                        {/* Fixed button at the bottom */}
-                        <View style={styles.fixedButtonContainer}>
-                            <Button
-                                label={isSubmitting ? "Saving..." : "Save Action"}
-                                variant="primary"
-                                onPress={handleSubmit(handleFormSubmit)}
-                                isLoading={isSubmitting}
-                                disabled={isSubmitting}
-                                fullWidth
-                            />
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </TouchableWithoutFeedback>
-        </BottomSheet>
+                    <FormCategorySelector
+                        name="categoryId"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Category"
+                        onCreateCategory={handleCreateCategory}
+                    />
+                </Form>
+            </View>
+        </FormSheet>
     );
 }

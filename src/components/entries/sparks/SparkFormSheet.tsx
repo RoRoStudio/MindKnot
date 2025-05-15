@@ -2,21 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import {
     View,
-    ScrollView,
-    Keyboard,
-    TouchableWithoutFeedback,
-    TouchableOpacity,
-    Platform,
-    KeyboardAvoidingView,
-    Dimensions,
     Alert,
+    Dimensions,
 } from 'react-native';
-import { useForm } from 'react-hook-form';
-import { BottomSheet } from '../../common/BottomSheet';
+import { useForm, Control, FieldValues } from 'react-hook-form';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useStyles } from '../../../hooks/useStyles';
-import { Typography } from '../../common/Typography';
-import { Button } from '../../common/Button';
+import { FormSheet } from '../../common/FormSheet';
 import {
     Form,
     FormInput,
@@ -24,63 +16,51 @@ import {
     FormTagInput,
     FormCategorySelector
 } from '../../form';
-import { createSpark } from '../../../services/sparkService';
+import { createSpark, updateSpark } from '../../../services/sparkService';
 import { useBottomSheet } from '../../../contexts/BottomSheetContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Define the shape of form values
+interface SparkFormValues {
+    title: string;
+    body: string;
+    tags: string[];
+    categoryId: string | null;
+}
 
 interface SparkFormSheetProps {
     visible: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+    sparkToEdit?: Partial<SparkFormValues> & { id?: string };
 }
 
 export default function SparkFormSheet({
     visible,
     onClose,
     onSuccess,
+    sparkToEdit
 }: SparkFormSheetProps) {
     const { theme } = useTheme();
     const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isEditMode = !!sparkToEdit;
 
     const styles = useStyles((theme) => ({
-        container: {
-            backgroundColor: theme.colors.background,
-            borderTopLeftRadius: theme.shape.radius.l,
-            borderTopRightRadius: theme.shape.radius.l,
-            paddingTop: theme.spacing.m,
-            paddingHorizontal: theme.spacing.m,
-            paddingBottom: theme.spacing.xl * 2,
-            maxHeight: SCREEN_HEIGHT * 0.8,
-            width: '100%',
-        },
-        header: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: theme.spacing.m,
-        },
-        closeButton: {
-            padding: theme.spacing.s,
-        },
         formContainer: {
-            padding: theme.spacing.m,
-        },
-        buttonContainer: {
-            marginTop: theme.spacing.l,
-            paddingBottom: 100,
+            width: '100%',
         },
     }));
 
-    const defaultValues = {
-        title: '',
-        body: '',
-        tags: [],
-        categoryId: null,
+    const defaultValues: SparkFormValues = {
+        title: sparkToEdit?.title || '',
+        body: sparkToEdit?.body || '',
+        tags: sparkToEdit?.tags || [],
+        categoryId: sparkToEdit?.categoryId || null,
     };
 
-    const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm({
+    const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm<SparkFormValues>({
         defaultValues,
         mode: 'onChange'
     });
@@ -91,20 +71,27 @@ export default function SparkFormSheet({
             reset(defaultValues);
             setIsSubmitting(false);
         }
-    }, [visible]);
+    }, [visible, sparkToEdit]);
 
-    const handleFormSubmit = async (data: any) => {
+    const handleFormSubmit = async (data: SparkFormValues) => {
         if (isSubmitting) return;
 
         try {
             setIsSubmitting(true);
 
-            const success = await createSpark({
+            const sparkData = {
                 title: data.title,
                 body: data.body,
                 tags: data.tags,
-                categoryId: data.categoryId
-            });
+                categoryId: data.categoryId || undefined
+            };
+
+            let success;
+            if (isEditMode && sparkToEdit?.id) {
+                success = await updateSpark(sparkToEdit.id, sparkData);
+            } else {
+                success = await createSpark(sparkData);
+            }
 
             if (success) {
                 if (onSuccess) onSuccess();
@@ -113,16 +100,11 @@ export default function SparkFormSheet({
                 Alert.alert('Error', 'Failed to save the spark. Please try again.');
             }
         } catch (error) {
-            console.error('Error creating spark:', error);
+            console.error('Error handling spark:', error);
             Alert.alert('Error', 'An unexpected error occurred.');
         } finally {
             setIsSubmitting(false);
         }
-    };
-
-    // Dismiss keyboard when tapping outside input
-    const dismissKeyboard = () => {
-        Keyboard.dismiss();
     };
 
     const handleCreateCategory = () => {
@@ -142,75 +124,48 @@ export default function SparkFormSheet({
     if (!visible) return null;
 
     return (
-        <BottomSheet visible={visible} onClose={onClose}>
-            <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    style={{ width: '100%' }}
-                >
-                    <View style={styles.container}>
-                        <View style={styles.header}>
-                            <Typography variant="h3">Create Spark</Typography>
-                            <TouchableOpacity
-                                style={styles.closeButton}
-                                onPress={onClose}
-                                disabled={isSubmitting}
-                            >
-                                <Typography color="secondary">Cancel</Typography>
-                            </TouchableOpacity>
-                        </View>
+        <FormSheet
+            visible={visible}
+            onClose={onClose}
+            title={isEditMode ? "Edit Spark" : "Create Spark"}
+            onSubmit={handleSubmit(handleFormSubmit)}
+            isSubmitting={isSubmitting}
+            isEdit={isEditMode}
+            submitLabel={isEditMode ? "Update" : "Create"}
+        >
+            <View style={styles.formContainer}>
+                <Form>
+                    <FormInput
+                        name="title"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Title"
+                        placeholder="Enter a title..."
+                        rules={{ required: 'Title is required' }}
+                    />
 
-                        <ScrollView
-                            style={{ width: '100%' }}
-                            contentContainerStyle={{ paddingBottom: 100 }}
-                            keyboardShouldPersistTaps="handled"
-                        >
-                            <Form>
-                                <FormInput
-                                    name="title"
-                                    control={control}
-                                    label="Title"
-                                    placeholder="Enter a title..."
-                                    rules={{ required: 'Title is required' }}
-                                />
+                    <FormTextarea
+                        name="body"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Spark"
+                        placeholder="Capture your insight..."
+                        rules={{ required: 'Spark content is required' }}
+                        numberOfLines={3}
+                    />
 
-                                <FormTextarea
-                                    name="body"
-                                    control={control}
-                                    label="Spark"
-                                    placeholder="Capture your insight..."
-                                    rules={{ required: 'Spark content is required' }}
-                                    numberOfLines={3}
-                                />
+                    <FormCategorySelector
+                        name="categoryId"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Category"
+                        onCreateCategory={handleCreateCategory}
+                    />
 
-                                <FormCategorySelector
-                                    name="categoryId"
-                                    control={control}
-                                    onCreateCategory={handleCreateCategory}
-                                />
-
-                                <FormTagInput
-                                    name="tags"
-                                    control={control}
-                                    label="Tags"
-                                    placeholder="Add a tag..."
-                                    helperText="Press Enter or tap + to add a tag"
-                                />
-
-                                <View style={styles.buttonContainer}>
-                                    <Button
-                                        label={isSubmitting ? "Saving..." : "Save Spark"}
-                                        variant="primary"
-                                        onPress={handleSubmit(handleFormSubmit)}
-                                        isLoading={isSubmitting}
-                                        disabled={isSubmitting}
-                                    />
-                                </View>
-                            </Form>
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
-            </TouchableWithoutFeedback>
-        </BottomSheet>
+                    <FormTagInput
+                        name="tags"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Tags"
+                    />
+                </Form>
+            </View>
+        </FormSheet>
     );
 }

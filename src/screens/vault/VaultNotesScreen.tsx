@@ -16,7 +16,7 @@ export default function VaultNotesScreen() {
     }, [notes]);
 
     // Function to filter notes based on search term, tags, and category
-    const filterNotes = (note: Note, searchTerm: string, selectedTags: string[], categoryId: string | null) => {
+    const filterNotes = (note: Note, searchTerm: string, selectedTags: string[], categoryId: string | null): boolean => {
         // Filter by category
         if (categoryId && note.categoryId !== categoryId) {
             return false;
@@ -31,8 +31,8 @@ export default function VaultNotesScreen() {
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
             return (
-                note.title?.toLowerCase().includes(searchLower) ||
-                note.body?.toLowerCase().includes(searchLower)
+                (note.title?.toLowerCase().includes(searchLower) ||
+                    note.body?.toLowerCase().includes(searchLower)) ? true : false
             );
         }
 

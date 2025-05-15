@@ -3,5 +3,6 @@ import { BaseEntry } from './baseEntry';
 
 export interface Note extends BaseEntry {
     type: 'note';
-    body: string;
+    title: string;
+    body?: string;
 }

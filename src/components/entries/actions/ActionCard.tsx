@@ -1,8 +1,8 @@
-// src/components/entries/ActionCard.tsx
+// src/components/entries/actions/ActionCard.tsx
 import React from 'react';
-import { Action } from '../../types/action';
-import { EntryCard } from './EntryCard';
-import { useTheme } from '../../contexts/ThemeContext';
+import { Action } from '../../../types/action';
+import { EntryCard } from '../EntryCard';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 interface ActionCardProps {
     action: Action;

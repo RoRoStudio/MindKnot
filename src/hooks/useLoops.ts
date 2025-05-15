@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Loop } from '../types/loop';
-import { createLoop, getAllLoops } from '../services/loopService';
+import { createLoop, getAllLoops, updateLoop as updateLoopService } from '../services/loopService';
 import { useSagaStore } from '../state/sagaStore';
 
 export function useLoops() {
@@ -138,12 +138,41 @@ export function useLoops() {
         });
     };
 
+    const updateLoop = async (id: string, loopData: Omit<Loop, 'id' | 'createdAt' | 'updatedAt'>) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Add the type field to ensure it matches the required type in the LoopFormSheet
+            const loopWithType = {
+                ...loopData,
+                type: 'loop' as const,
+            };
+
+            const success = await updateLoopService(id, loopWithType);
+
+            if (success) {
+                // Reload loops to get the updated state
+                await loadLoops();
+                return true;
+            }
+            return false;
+        } catch (err) {
+            console.error('Failed to update loop:', err);
+            setError('Failed to update loop');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         loops,
         loading,
         error,
         loadLoops,
         addLoop,
-        getTodayLoops
+        getTodayLoops,
+        updateLoop
     };
 }

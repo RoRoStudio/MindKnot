@@ -1,23 +1,16 @@
-// src/components/loops/LoopFormSheet.tsx
 import React, { useState, useEffect } from 'react';
 import {
     View,
-    ScrollView,
     Alert,
-    TouchableWithoutFeedback,
     TouchableOpacity,
-    Keyboard,
-    Platform,
-    KeyboardAvoidingView,
     Dimensions,
 } from 'react-native';
-import { useForm } from 'react-hook-form';
-import { BottomSheet } from '../../components/common/BottomSheet';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Button } from '../common/Button';
-import { Icon, IconName } from '../common/Icon';
+import { useForm, Control, FieldValues } from 'react-hook-form';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { useStyles } from '../../../hooks/useStyles';
+import { Typography } from '../../common/Typography';
+import { Icon } from '../../common/Icon';
+import { FormSheet } from '../../common/FormSheet';
 import {
     Form,
     FormInput,
@@ -26,57 +19,51 @@ import {
     FormArrayField,
     FormCategorySelector,
     FormTagInput
-} from '../form';
-import { useSagas } from '../../hooks/useSagas';
-import { useLoops } from '../../hooks/useLoops';
-import { generateSimpleId } from '../../utils/uuidUtil';
-import { useBottomSheet } from '../../contexts/BottomSheetContext';
+} from '../../form';
+import { useLoops } from '../../../hooks/useLoops';
+import { generateSimpleId } from '../../../utils/uuidUtil';
+import { useBottomSheet } from '../../../contexts/BottomSheetContext';
+import { Loop, LoopItem } from '../../../types/loop';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+interface LoopItemForm {
+    id?: string;
+    name: string;
+    description?: string;
+    durationMinutes?: string;
+    quantity?: string;
+}
+
+interface LoopFormValues {
+    title: string;
+    description: string;
+    frequency: string;
+    items: LoopItemForm[];
+    tags: string[];
+    categoryId: string | null;
+}
 
 interface LoopFormSheetProps {
     visible: boolean;
     onClose: () => void;
-    initialSagaId?: string;
     onSuccess?: () => void;
+    loopToEdit?: Partial<LoopFormValues> & { id?: string };
 }
 
 export default function LoopFormSheet({
     visible,
     onClose,
-    initialSagaId,
-    onSuccess
+    onSuccess,
+    loopToEdit
 }: LoopFormSheetProps) {
     const { theme } = useTheme();
-    const { sagas } = useSagas();
-    const { addLoop } = useLoops();
+    const { addLoop, updateLoop } = useLoops();
     const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isEditMode = !!loopToEdit;
 
     const styles = useStyles((theme) => ({
-        container: {
-            backgroundColor: theme.colors.background,
-            borderTopLeftRadius: theme.shape.radius.l,
-            borderTopRightRadius: theme.shape.radius.l,
-            paddingTop: theme.spacing.m,
-            paddingHorizontal: theme.spacing.m,
-            paddingBottom: theme.spacing.xl * 2,
-            maxHeight: SCREEN_HEIGHT * 0.8,
-            width: '100%',
-        },
-        header: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: theme.spacing.m,
-        },
-        closeButton: {
-            padding: theme.spacing.s,
-        },
-        content: {
-            flex: 1,
-            width: '100%',
-        },
         loopItem: {
             backgroundColor: theme.colors.surface,
             borderRadius: theme.shape.radius.m,
@@ -92,9 +79,8 @@ export default function LoopFormSheet({
         deleteButton: {
             padding: theme.spacing.xs,
         },
-        buttonContainer: {
-            marginTop: theme.spacing.l,
-            paddingBottom: 100,
+        formContainer: {
+            width: '100%',
         },
     }));
 
@@ -107,27 +93,16 @@ export default function LoopFormSheet({
         { label: 'Custom', value: 'custom' },
     ];
 
-    // Setup saga options
-    const sagaOptions = sagas.map(saga => ({
-        label: saga.name,
-        value: saga.id,
-        icon: saga.icon
-    }));
-
-    // Add an empty option with an empty string icon instead of undefined
-    sagaOptions.unshift({ label: 'None', value: '', icon: '' as IconName });
-
-    const defaultValues = {
-        title: '',
-        description: '',
-        frequency: 'daily',
-        sagaId: initialSagaId || '',
-        items: [],
-        tags: [],
-        categoryId: null,
+    const defaultValues: LoopFormValues = {
+        title: loopToEdit?.title || '',
+        description: loopToEdit?.description || '',
+        frequency: loopToEdit?.frequency || 'daily',
+        items: loopToEdit?.items || [],
+        tags: loopToEdit?.tags || [],
+        categoryId: loopToEdit?.categoryId || null,
     };
 
-    const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm({
+    const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm<LoopFormValues>({
         defaultValues,
         mode: 'onChange'
     });
@@ -135,28 +110,46 @@ export default function LoopFormSheet({
     // Reset form when modal opens
     useEffect(() => {
         if (visible) {
-            reset({
-                ...defaultValues,
-                sagaId: initialSagaId || ''
-            });
+            reset(defaultValues);
             setIsSubmitting(false);
         }
-    }, [visible, initialSagaId]);
+    }, [visible, loopToEdit]);
 
-    const handleFormSubmit = async (data: any) => {
+    const handleFormSubmit = async (data: LoopFormValues) => {
         if (isSubmitting) return;
 
         try {
             setIsSubmitting(true);
 
-            const success = await addLoop({
-                ...data,
+            // Convert form items to Loop items with proper types
+            const formattedItems: LoopItem[] = data.items.map((item) => ({
+                id: item.id || generateSimpleId(),
+                loopId: loopToEdit?.id || 'temp', // Will be set by the service for new items
+                name: item.name,
+                description: item.description,
+                durationMinutes: item.durationMinutes ? parseInt(item.durationMinutes, 10) : undefined,
+                quantity: item.quantity,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }));
+
+            // Create the loop data object with the required type field
+            const loopData: Omit<Loop, 'id' | 'createdAt' | 'updatedAt'> = {
+                type: 'loop',
+                title: data.title,
+                description: data.description,
                 frequency: typeof data.frequency === 'string' ? data.frequency : JSON.stringify(data.frequency),
-                items: data.items?.map((item: any) => ({
-                    ...item,
-                    id: item.id || generateSimpleId(),
-                })),
-            });
+                items: formattedItems,
+                tags: data.tags,
+                categoryId: data.categoryId || undefined
+            };
+
+            let success;
+            if (isEditMode && loopToEdit?.id) {
+                success = await updateLoop(loopToEdit.id, loopData);
+            } else {
+                success = await addLoop(loopData);
+            }
 
             if (success) {
                 if (onSuccess) onSuccess();
@@ -165,7 +158,7 @@ export default function LoopFormSheet({
                 Alert.alert('Error', 'Failed to save the loop. Please try again.');
             }
         } catch (error) {
-            console.error('Error creating loop:', error);
+            console.error('Error handling loop:', error);
             Alert.alert('Error', 'An unexpected error occurred.');
         } finally {
             setIsSubmitting(false);
@@ -187,50 +180,37 @@ export default function LoopFormSheet({
                 </View>
 
                 <FormInput
-                    name={`items.${index}.name` as any}
-                    control={control}
+                    name={`items.${index}.name`}
+                    control={control as unknown as Control<FieldValues>}
                     label="Name"
                     placeholder="Item name"
                     rules={{ required: 'Name is required' }}
                 />
 
                 <FormTextarea
-                    name={`items.${index}.description` as any}
-                    control={control}
+                    name={`items.${index}.description`}
+                    control={control as unknown as Control<FieldValues>}
                     label="Description (optional)"
                     placeholder="Describe this item..."
                     numberOfLines={3}
                 />
 
                 <FormInput
-                    name={`items.${index}.durationMinutes` as any}
-                    control={control}
+                    name={`items.${index}.durationMinutes`}
+                    control={control as unknown as Control<FieldValues>}
                     label="Duration (minutes, optional)"
                     placeholder="e.g. 30"
                     keyboardType="numeric"
                 />
 
                 <FormInput
-                    name={`items.${index}.quantity` as any}
-                    control={control}
+                    name={`items.${index}.quantity`}
+                    control={control as unknown as Control<FieldValues>}
                     label="Quantity (optional)"
                     placeholder="e.g. 3 sets"
                 />
-
-                <FormSelect
-                    name={`items.${index}.sagaId` as any}
-                    control={control}
-                    label="Link to Saga (optional)"
-                    options={sagaOptions}
-                    placeholder="Select a saga"
-                />
             </View>
         );
-    };
-
-    // Dismiss keyboard when tapping outside input
-    const dismissKeyboard = () => {
-        Keyboard.dismiss();
     };
 
     const handleCreateCategory = () => {
@@ -250,99 +230,69 @@ export default function LoopFormSheet({
     if (!visible) return null;
 
     return (
-        <BottomSheet visible={visible} onClose={onClose}>
-            <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    style={{ width: '100%' }}
-                >
-                    <View style={styles.container}>
-                        <View style={styles.header}>
-                            <Typography variant="h3">Create Loop</Typography>
-                            <TouchableOpacity
-                                style={styles.closeButton}
-                                onPress={onClose}
-                                disabled={isSubmitting}
-                            >
-                                <Typography color="secondary">Cancel</Typography>
-                            </TouchableOpacity>
-                        </View>
+        <FormSheet
+            visible={visible}
+            onClose={onClose}
+            title={isEditMode ? "Edit Loop" : "Create Loop"}
+            onSubmit={handleSubmit(handleFormSubmit)}
+            isSubmitting={isSubmitting}
+            isEdit={isEditMode}
+            submitLabel={isEditMode ? "Update" : "Create"}
+        >
+            <View style={styles.formContainer}>
+                <Form>
+                    <FormInput
+                        name="title"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Title"
+                        placeholder="Enter a title..."
+                        rules={{ required: 'Title is required' }}
+                    />
 
-                        <ScrollView
-                            style={{ width: '100%' }}
-                            contentContainerStyle={{ paddingBottom: 100 }}
-                            keyboardShouldPersistTaps="handled"
-                        >
-                            <Form>
-                                <FormSelect
-                                    name="sagaId"
-                                    control={control}
-                                    label="Link to Saga (optional)"
-                                    options={sagaOptions}
-                                    placeholder="Select a saga"
-                                />
+                    <FormTextarea
+                        name="description"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Description"
+                        placeholder="Describe the loop..."
+                        rules={{ required: 'Description is required' }}
+                        numberOfLines={3}
+                    />
 
-                                <FormInput
-                                    name="title"
-                                    control={control}
-                                    label="Loop Title"
-                                    placeholder="E.g. Morning Routine"
-                                    rules={{ required: 'Title is required' }}
-                                />
+                    <FormSelect
+                        name="frequency"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Frequency"
+                        options={FREQUENCY_OPTIONS}
+                        rules={{ required: 'Frequency is required' }}
+                    />
 
-                                <FormTextarea
-                                    name="description"
-                                    control={control}
-                                    label="Description (optional)"
-                                    placeholder="Describe this loop..."
-                                    numberOfLines={3}
-                                />
+                    <FormCategorySelector
+                        name="categoryId"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Category (optional)"
+                        onCreateCategory={handleCreateCategory}
+                    />
 
-                                <FormSelect
-                                    name="frequency"
-                                    control={control}
-                                    label="Frequency"
-                                    options={FREQUENCY_OPTIONS}
-                                    rules={{ required: 'Frequency is required' }}
-                                />
+                    <FormTagInput
+                        name="tags"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Tags (optional)"
+                    />
 
-                                <FormCategorySelector
-                                    name="categoryId"
-                                    control={control}
-                                    onCreateCategory={handleCreateCategory}
-                                />
-
-                                <FormTagInput
-                                    name="tags"
-                                    control={control}
-                                    label="Tags"
-                                    placeholder="Add a tag..."
-                                    helperText="Press Enter or tap + to add a tag"
-                                />
-
-                                <FormArrayField
-                                    name="items"
-                                    control={control}
-                                    label="Loop Items"
-                                    renderItem={renderLoopItem}
-                                    addButtonLabel="Add Loop Item"
-                                    defaultValue={{ name: '', description: '' }}
-                                />
-
-                                <View style={styles.buttonContainer}>
-                                    <Button
-                                        label={isSubmitting ? "Saving..." : "Save Loop"}
-                                        variant="primary"
-                                        onPress={handleSubmit(handleFormSubmit)}
-                                        isLoading={isSubmitting}
-                                        disabled={isSubmitting}
-                                    />
-                                </View>
-                            </Form>
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
-            </TouchableWithoutFeedback>
-        </BottomSheet>
+                    <FormArrayField
+                        name="items"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Items"
+                        renderItem={renderLoopItem}
+                        addButtonLabel="Add Item"
+                        defaultItem={{
+                            id: generateSimpleId(),
+                            name: '',
+                            description: '',
+                        }}
+                    />
+                </Form>
+            </View>
+        </FormSheet>
     );
-}
+} 

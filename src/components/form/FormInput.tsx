@@ -26,6 +26,11 @@ interface FormInputProps<T extends FieldValues> extends Omit<TextInputProps, 'on
     leadingText?: string;
 }
 
+interface LabelProps {
+    label: string;
+    style?: any;
+}
+
 export default function FormInput<T extends FieldValues>({
     name,
     control,
@@ -192,3 +197,18 @@ export default function FormInput<T extends FieldValues>({
         />
     );
 }
+
+// Static Label component to allow FormInput.Label usage
+FormInput.Label = function Label({ label, style }: LabelProps) {
+    const styles = useStyles((theme) => ({
+        label: {
+            marginBottom: theme.spacing.xs,
+        }
+    }));
+
+    return (
+        <Typography variant="body1" style={[styles.label, style]}>
+            {label}
+        </Typography>
+    );
+};

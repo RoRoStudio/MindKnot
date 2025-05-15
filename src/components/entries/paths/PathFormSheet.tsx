@@ -1,78 +1,80 @@
-// src/components/paths/PathFormSheet.tsx
 import React, { useState, useEffect } from 'react';
 import {
     View,
-    ScrollView,
     Alert,
-    TouchableWithoutFeedback,
     TouchableOpacity,
-    Keyboard,
-    Platform,
-    KeyboardAvoidingView,
     Dimensions,
 } from 'react-native';
-import { useForm } from 'react-hook-form';
-import { BottomSheet } from '../../components/common/BottomSheet';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Button } from '../common/Button';
-import { Icon, IconName } from '../common/Icon';
+import { useForm, Control, FieldValues } from 'react-hook-form';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { useStyles } from '../../../hooks/useStyles';
+import { Typography } from '../../common/Typography';
+import { Icon } from '../../common/Icon';
+import { FormSheet } from '../../common/FormSheet';
 import {
     Form,
     FormInput,
     FormTextarea,
     FormDatePicker,
-    FormSelect,
     FormArrayField,
     FormCategorySelector,
     FormTagInput
-} from '../form';
-import { useSagas } from '../../hooks/useSagas';
-import { usePaths } from '../../hooks/usePaths';
-import { generateSimpleId } from '../../utils/uuidUtil';
-import { useBottomSheet } from '../../contexts/BottomSheetContext';
+} from '../../form';
+import { usePaths } from '../../../hooks/usePaths';
+import { generateSimpleId } from '../../../utils/uuidUtil';
+import { useBottomSheet } from '../../../contexts/BottomSheetContext';
+import { Path, Milestone } from '../../../types/path';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+interface PathAction {
+    id?: string;
+    name: string;
+    description?: string;
+    dueDate?: Date;
+    done?: boolean;
+}
+
+interface MilestoneForm {
+    id?: string;
+    name: string;
+    description?: string;
+    targetDate?: Date;
+    actions: PathAction[];
+}
+
+interface PathFormValues {
+    title: string;
+    description: string;
+    startDate?: Date;
+    targetDate?: Date;
+    milestones: MilestoneForm[];
+    tags: string[];
+    categoryId: string | null;
+}
 
 interface PathFormSheetProps {
     visible: boolean;
     onClose: () => void;
-    initialSagaId?: string;
     onSuccess?: () => void;
+    pathToEdit?: Partial<PathFormValues> & { id?: string };
 }
 
 export default function PathFormSheet({
     visible,
     onClose,
-    initialSagaId,
-    onSuccess
+    onSuccess,
+    pathToEdit
 }: PathFormSheetProps) {
     const { theme } = useTheme();
-    const { sagas } = useSagas();
-    const { addPath } = usePaths();
+    const { addPath, updatePath } = usePaths();
     const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isEditMode = !!pathToEdit;
 
     const styles = useStyles((theme) => ({
-        container: {
-            backgroundColor: theme.colors.background,
-            borderTopLeftRadius: theme.shape.radius.l,
-            borderTopRightRadius: theme.shape.radius.l,
-            paddingTop: theme.spacing.m,
-            paddingHorizontal: theme.spacing.m,
-            paddingBottom: theme.spacing.xl * 2,
-            maxHeight: SCREEN_HEIGHT * 0.8,
+        formContainer: {
             width: '100%',
-        },
-        header: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: theme.spacing.m,
-        },
-        closeButton: {
-            padding: theme.spacing.s,
         },
         milestone: {
             backgroundColor: theme.colors.surface,
@@ -101,34 +103,19 @@ export default function PathFormSheet({
             alignItems: 'center',
             marginBottom: theme.spacing.s,
         },
-        buttonContainer: {
-            marginTop: theme.spacing.l,
-            paddingBottom: 100,
-        },
     }));
 
-    // Setup saga options
-    const sagaOptions = sagas.map(saga => ({
-        label: saga.name,
-        value: saga.id,
-        icon: saga.icon
-    }));
-
-    // Add an empty option with an empty string icon instead of undefined
-    sagaOptions.unshift({ label: 'None', value: '', icon: '' as IconName });
-
-    const defaultValues = {
-        title: '',
-        description: '',
-        startDate: undefined,
-        targetDate: undefined,
-        sagaId: initialSagaId || '',
-        milestones: [],
-        tags: [],
-        categoryId: null,
+    const defaultValues: PathFormValues = {
+        title: pathToEdit?.title || '',
+        description: pathToEdit?.description || '',
+        startDate: pathToEdit?.startDate,
+        targetDate: pathToEdit?.targetDate,
+        milestones: pathToEdit?.milestones || [],
+        tags: pathToEdit?.tags || [],
+        categoryId: pathToEdit?.categoryId || null,
     };
 
-    const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm({
+    const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm<PathFormValues>({
         defaultValues,
         mode: 'onChange'
     });
@@ -136,31 +123,57 @@ export default function PathFormSheet({
     // Reset form when modal opens
     useEffect(() => {
         if (visible) {
-            reset({
-                ...defaultValues,
-                sagaId: initialSagaId || ''
-            });
+            reset(defaultValues);
             setIsSubmitting(false);
         }
-    }, [visible, initialSagaId]);
+    }, [visible, pathToEdit]);
 
-    const handleFormSubmit = async (data: any) => {
+    const handleFormSubmit = async (data: PathFormValues) => {
         if (isSubmitting) return;
 
         try {
             setIsSubmitting(true);
 
-            const success = await addPath({
-                ...data,
-                milestones: data.milestones?.map((milestone: any) => ({
-                    ...milestone,
-                    id: milestone.id || generateSimpleId(),
-                    actions: milestone.actions?.map((action: any) => ({
-                        ...action,
-                        id: action.id || generateSimpleId(),
-                    })) || [],
-                })),
-            });
+            // Convert Date objects to ISO strings
+            const startDateString = data.startDate ? data.startDate.toISOString() : undefined;
+            const targetDateString = data.targetDate ? data.targetDate.toISOString() : undefined;
+
+            // Format milestones with proper types for the API
+            const formattedMilestones = data.milestones.map((milestone) => ({
+                id: milestone.id || generateSimpleId(),
+                pathId: pathToEdit?.id || 'temp', // Will be set by the service for new milestones
+                title: milestone.name,
+                description: milestone.description,
+                targetDate: milestone.targetDate ? milestone.targetDate.toISOString() : undefined,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                actions: milestone.actions.map((action) => ({
+                    id: action.id || generateSimpleId(),
+                    name: action.name,
+                    description: action.description,
+                    dueDate: action.dueDate ? action.dueDate.toISOString() : undefined,
+                    done: action.done || false
+                }))
+            }));
+
+            // Create the path data object with the required type field
+            const pathData: Omit<Path, 'id' | 'createdAt' | 'updatedAt'> = {
+                type: 'path',
+                title: data.title,
+                description: data.description,
+                startDate: startDateString,
+                targetDate: targetDateString,
+                milestones: formattedMilestones,
+                tags: data.tags,
+                categoryId: data.categoryId || undefined
+            };
+
+            let success;
+            if (isEditMode && pathToEdit?.id) {
+                success = await updatePath(pathToEdit.id, pathData);
+            } else {
+                success = await addPath(pathData);
+            }
 
             if (success) {
                 if (onSuccess) onSuccess();
@@ -169,7 +182,7 @@ export default function PathFormSheet({
                 Alert.alert('Error', 'Failed to save the path. Please try again.');
             }
         } catch (error) {
-            console.error('Error creating path:', error);
+            console.error('Error handling path:', error);
             Alert.alert('Error', 'An unexpected error occurred.');
         } finally {
             setIsSubmitting(false);
@@ -196,34 +209,25 @@ export default function PathFormSheet({
                 </View>
 
                 <FormInput
-                    name={`milestones.${milestoneIndex}.actions.${actionIndex}.name` as any}
-                    control={control}
+                    name={`milestones.${milestoneIndex}.actions.${actionIndex}.name`}
+                    control={control as unknown as Control<FieldValues>}
                     label="Name"
                     placeholder="Action name"
                     rules={{ required: 'Name is required' }}
                 />
 
                 <FormTextarea
-                    name={`milestones.${milestoneIndex}.actions.${actionIndex}.description` as any}
-                    control={control}
+                    name={`milestones.${milestoneIndex}.actions.${actionIndex}.description`}
+                    control={control as unknown as Control<FieldValues>}
                     label="Description (optional)"
                     placeholder="Describe this action..."
                     numberOfLines={3}
                 />
 
                 <FormDatePicker
-                    name={`milestones.${milestoneIndex}.actions.${actionIndex}.dueDate` as any}
-                    control={control}
+                    name={`milestones.${milestoneIndex}.actions.${actionIndex}.dueDate`}
+                    control={control as unknown as Control<FieldValues>}
                     label="Due Date (optional)"
-                    placeholder="Select a due date"
-                />
-
-                <FormSelect
-                    name={`milestones.${milestoneIndex}.actions.${actionIndex}.sagaId` as any}
-                    control={control}
-                    label="Link to Saga (optional)"
-                    options={sagaOptions}
-                    placeholder="Select a saga"
                 />
             </View>
         );
@@ -248,36 +252,44 @@ export default function PathFormSheet({
                 </View>
 
                 <FormInput
-                    name={`milestones.${index}.title` as any}
-                    control={control}
-                    label="Title"
-                    placeholder="Milestone title"
-                    rules={{ required: 'Title is required' }}
+                    name={`milestones.${index}.name`}
+                    control={control as unknown as Control<FieldValues>}
+                    label="Name"
+                    placeholder="Milestone name"
+                    rules={{ required: 'Name is required' }}
                 />
 
                 <FormTextarea
-                    name={`milestones.${index}.description` as any}
-                    control={control}
+                    name={`milestones.${index}.description`}
+                    control={control as unknown as Control<FieldValues>}
                     label="Description (optional)"
                     placeholder="Describe this milestone..."
                     numberOfLines={3}
                 />
 
+                <FormDatePicker
+                    name={`milestones.${index}.targetDate`}
+                    control={control as unknown as Control<FieldValues>}
+                    label="Target Date (optional)"
+                />
+
                 <FormArrayField
-                    name={`milestones.${index}.actions` as any}
-                    control={control}
+                    name={`milestones.${index}.actions`}
+                    control={control as unknown as Control<FieldValues>}
                     label="Actions"
-                    renderItem={renderActionsArray}
+                    renderItem={(item, actionIndex, removeAction) =>
+                        renderActionsArray(item, actionIndex, removeAction)
+                    }
                     addButtonLabel="Add Action"
-                    defaultValue={{ name: '', description: '', done: false }}
+                    defaultItem={{
+                        id: generateSimpleId(),
+                        name: '',
+                        description: '',
+                        done: false
+                    }}
                 />
             </View>
         );
-    };
-
-    // Dismiss keyboard when tapping outside input
-    const dismissKeyboard = () => {
-        Keyboard.dismiss();
     };
 
     const handleCreateCategory = () => {
@@ -297,105 +309,74 @@ export default function PathFormSheet({
     if (!visible) return null;
 
     return (
-        <BottomSheet visible={visible} onClose={onClose}>
-            <TouchableWithoutFeedback onPress={dismissKeyboard}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    style={{ width: '100%' }}
-                >
-                    <View style={styles.container}>
-                        <View style={styles.header}>
-                            <Typography variant="h3">Create Path</Typography>
-                            <TouchableOpacity
-                                style={styles.closeButton}
-                                onPress={onClose}
-                                disabled={isSubmitting}
-                            >
-                                <Typography color="secondary">Cancel</Typography>
-                            </TouchableOpacity>
-                        </View>
+        <FormSheet
+            visible={visible}
+            onClose={onClose}
+            title={isEditMode ? "Edit Path" : "Create Path"}
+            onSubmit={handleSubmit(handleFormSubmit)}
+            isSubmitting={isSubmitting}
+            isEdit={isEditMode}
+            submitLabel={isEditMode ? "Update" : "Create"}
+        >
+            <View style={styles.formContainer}>
+                <Form>
+                    <FormInput
+                        name="title"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Title"
+                        placeholder="Enter a title..."
+                        rules={{ required: 'Title is required' }}
+                    />
 
-                        <ScrollView
-                            style={{ width: '100%' }}
-                            contentContainerStyle={{ paddingBottom: 100 }}
-                            keyboardShouldPersistTaps="handled"
-                        >
-                            <Form>
-                                <FormSelect
-                                    name="sagaId"
-                                    control={control}
-                                    label="Link to Saga (optional)"
-                                    options={sagaOptions}
-                                    placeholder="Select a saga"
-                                />
+                    <FormTextarea
+                        name="description"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Description"
+                        placeholder="Describe the path..."
+                        rules={{ required: 'Description is required' }}
+                        numberOfLines={3}
+                    />
 
-                                <FormInput
-                                    name="title"
-                                    control={control}
-                                    label="Path Title"
-                                    placeholder="E.g. Learn React Native"
-                                    rules={{ required: 'Title is required' }}
-                                />
+                    <FormDatePicker
+                        name="startDate"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Start Date (optional)"
+                    />
 
-                                <FormTextarea
-                                    name="description"
-                                    control={control}
-                                    label="Description (optional)"
-                                    placeholder="Describe this path..."
-                                    numberOfLines={3}
-                                />
+                    <FormDatePicker
+                        name="targetDate"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Target Date (optional)"
+                    />
 
-                                <FormDatePicker
-                                    name="startDate"
-                                    control={control}
-                                    label="Start Date (optional)"
-                                    placeholder="Select a start date"
-                                />
+                    <FormCategorySelector
+                        name="categoryId"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Category (optional)"
+                        onCreateCategory={handleCreateCategory}
+                    />
 
-                                <FormDatePicker
-                                    name="targetDate"
-                                    control={control}
-                                    label="Target Date (optional)"
-                                    placeholder="Select a target date"
-                                />
+                    <FormTagInput
+                        name="tags"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Tags (optional)"
+                    />
 
-                                <FormCategorySelector
-                                    name="categoryId"
-                                    control={control}
-                                    onCreateCategory={handleCreateCategory}
-                                />
-
-                                <FormTagInput
-                                    name="tags"
-                                    control={control}
-                                    label="Tags"
-                                    placeholder="Add a tag..."
-                                    helperText="Press Enter or tap + to add a tag"
-                                />
-
-                                <FormArrayField
-                                    name="milestones"
-                                    control={control}
-                                    label="Milestones"
-                                    renderItem={renderMilestone}
-                                    addButtonLabel="Add Milestone"
-                                    defaultValue={{ title: '', description: '', actions: [] }}
-                                />
-
-                                <View style={styles.buttonContainer}>
-                                    <Button
-                                        label={isSubmitting ? "Saving..." : "Save Path"}
-                                        variant="primary"
-                                        onPress={handleSubmit(handleFormSubmit)}
-                                        isLoading={isSubmitting}
-                                        disabled={isSubmitting}
-                                    />
-                                </View>
-                            </Form>
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
-            </TouchableWithoutFeedback>
-        </BottomSheet>
+                    <FormArrayField
+                        name="milestones"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Milestones"
+                        renderItem={renderMilestone}
+                        addButtonLabel="Add Milestone"
+                        defaultItem={{
+                            id: generateSimpleId(),
+                            name: '',
+                            description: '',
+                            actions: []
+                        }}
+                    />
+                </Form>
+            </View>
+        </FormSheet>
     );
-}
+} 

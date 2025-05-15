@@ -24,6 +24,7 @@ interface FormArrayFieldProps<TFieldValues extends FieldValues = FieldValues> {
     maxItems?: number;
     showError?: boolean;
     error?: string;
+    defaultItem?: any;
 }
 
 export default function FormArrayField<TFieldValues extends FieldValues = FieldValues>({
@@ -38,6 +39,7 @@ export default function FormArrayField<TFieldValues extends FieldValues = FieldV
     maxItems,
     showError = true,
     error,
+    defaultItem,
 }: FormArrayFieldProps<TFieldValues>) {
     const { fields, append, remove } = useFieldArray({
         control,
@@ -85,9 +87,11 @@ export default function FormArrayField<TFieldValues extends FieldValues = FieldV
             return;
         }
         // Ensure we always have an ID in the defaultValue using our synchronous ID generator
-        const itemToAdd = defaultValue
-            ? { ...defaultValue, id: defaultValue.id || generateSimpleId() }
-            : { id: generateSimpleId() };
+        const itemToAdd = defaultItem
+            ? { ...defaultItem, id: defaultItem.id || generateSimpleId() }
+            : defaultValue
+                ? { ...defaultValue, id: defaultValue.id || generateSimpleId() }
+                : { id: generateSimpleId() };
 
         append(itemToAdd);
     };

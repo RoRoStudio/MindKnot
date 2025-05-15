@@ -5,7 +5,7 @@ import SparkFormSheet from '../components/entries/sparks/SparkFormSheet';
 import ActionFormSheet from '../components/entries/actions/ActionFormSheet';
 import LoopFormSheet from '../components/entries/loops/LoopFormSheet';
 import PathFormSheet from '../components/entries/paths/PathFormSheet';
-import CategoryFormSheet from '../components/categories/CategoryFormSheet';
+import CategoryFormModal from '../components/categories/CategoryFormModal';
 import { useNotes } from '../hooks/useNotes';
 import { useSparks } from '../hooks/useSparks';
 import { useActions } from '../hooks/useActions';
@@ -252,7 +252,7 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
                 onSuccess={handlePathSuccess}
             />
 
-            <CategoryFormSheet
+            <CategoryFormModal
                 visible={categoryFormVisible}
                 onClose={() => setCategoryFormVisible(false)}
                 onSave={handleSaveCategory}

@@ -1,8 +1,8 @@
-// src/components/entries/NoteCard.tsx
+// src/components/entries/notes/NoteCard.tsx
 import React from 'react';
-import { Note } from '../../types/note';
-import { EntryCard } from './EntryCard';
-import { useTheme } from '../../contexts/ThemeContext';
+import { Note } from '../../../types/note';
+import { EntryCard } from '../EntryCard';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 interface NoteCardProps {
     note: Note;

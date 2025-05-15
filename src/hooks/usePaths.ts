@@ -1,7 +1,7 @@
 // src/hooks/usePaths.ts
 import { useState, useEffect, useCallback } from 'react';
 import { Path } from '../types/path';
-import { createPath, getAllPaths } from '../services/pathService';
+import { createPath, getAllPaths, updatePath as updatePathService } from '../services/pathService';
 import { useSagaStore } from '../state/sagaStore';
 
 export function usePaths() {
@@ -66,12 +66,41 @@ export function usePaths() {
         });
     };
 
+    const updatePath = async (id: string, pathData: Omit<Path, 'id' | 'createdAt' | 'updatedAt'>) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Add the type field to ensure it matches the required type in the PathFormSheet
+            const pathWithType = {
+                ...pathData,
+                type: 'path' as const,
+            };
+
+            const success = await updatePathService(id, pathWithType);
+
+            if (success) {
+                // Reload paths to get the updated state
+                await loadPaths();
+                return true;
+            }
+            return false;
+        } catch (err) {
+            console.error('Failed to update path:', err);
+            setError('Failed to update path');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         paths,
         loading,
         error,
         loadPaths,
         addPath,
-        getActivePaths
+        getActivePaths,
+        updatePath
     };
 }

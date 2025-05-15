@@ -9,9 +9,10 @@ export interface SubAction {
 
 export interface Action extends BaseEntry {
     type: 'action';
-    body: string;
-    done: boolean;
+    title: string;
+    body?: string;
     dueDate?: string;
+    done: boolean;
     subActions?: SubAction[];
     parentId?: string; // For hierarchical actions or when part of Path/Loop
     parentType?: 'path' | 'milestone' | 'loop-item'; // Indicates what contains this action

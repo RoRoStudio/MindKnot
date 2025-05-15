@@ -179,3 +179,166 @@ export const getAllPaths = async (): Promise<Path[]> => {
 
     return [];
 };
+
+export const updatePath = async (
+    pathId: string,
+    pathData: Omit<Path, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<boolean> => {
+    const now = new Date().toISOString();
+
+    try {
+        // Update the path record
+        await executeSql(
+            `UPDATE paths SET 
+            title = ?, 
+            description = ?, 
+            startDate = ?, 
+            targetDate = ?, 
+            tags = ?,
+            updatedAt = ?
+            WHERE id = ?`,
+            [
+                pathData.title,
+                pathData.description || null,
+                pathData.startDate || null,
+                pathData.targetDate || null,
+                pathData.tags ? JSON.stringify(pathData.tags) : null,
+                now,
+                pathId
+            ]
+        );
+
+        // Handle milestones
+        if (pathData.milestones && Array.isArray(pathData.milestones)) {
+            // Get existing milestones to compare
+            const existingMilestonesResult = await executeSql(
+                'SELECT id FROM milestones WHERE pathId = ?',
+                [pathId]
+            );
+
+            const existingMilestoneIds = existingMilestonesResult.rows._array.map((row: any) => row.id);
+            const newMilestoneIds = pathData.milestones.map(m => m.id).filter(Boolean);
+
+            // Delete milestones that are no longer present
+            for (const existingId of existingMilestoneIds) {
+                if (!newMilestoneIds.includes(existingId)) {
+                    // First delete any associated actions
+                    await executeSql(
+                        'DELETE FROM actions WHERE parentId = ? AND parentType = ?',
+                        [existingId, 'milestone']
+                    );
+
+                    // Then delete the milestone
+                    await executeSql(
+                        'DELETE FROM milestones WHERE id = ?',
+                        [existingId]
+                    );
+                }
+            }
+
+            // Update or create milestones
+            for (const milestone of pathData.milestones) {
+                if (milestone.id && existingMilestoneIds.includes(milestone.id)) {
+                    // Update existing milestone
+                    await executeSql(
+                        `UPDATE milestones SET 
+                        title = ?, 
+                        description = ?, 
+                        updatedAt = ?
+                        WHERE id = ?`,
+                        [
+                            milestone.title,
+                            milestone.description || null,
+                            now,
+                            milestone.id
+                        ]
+                    );
+                } else {
+                    // Create new milestone
+                    const milestoneId = milestone.id || await generateUUID();
+                    await executeSql(
+                        'INSERT INTO milestones (id, pathId, title, description, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?)',
+                        [
+                            milestoneId,
+                            pathId,
+                            milestone.title,
+                            milestone.description || null,
+                            now,
+                            now
+                        ]
+                    );
+
+                    milestone.id = milestoneId;
+                }
+
+                // Handle actions for this milestone
+                if (milestone.actions && Array.isArray(milestone.actions)) {
+                    // Get existing actions for this milestone
+                    const existingActionsResult = await executeSql(
+                        'SELECT id FROM actions WHERE parentId = ? AND parentType = ?',
+                        [milestone.id, 'milestone']
+                    );
+
+                    const existingActionIds = existingActionsResult.rows._array.map((row: any) => row.id);
+                    const newActionIds = milestone.actions.map(a => a.id).filter(Boolean);
+
+                    // Delete actions that are no longer present
+                    for (const existingId of existingActionIds) {
+                        if (!newActionIds.includes(existingId)) {
+                            await executeSql(
+                                'DELETE FROM actions WHERE id = ?',
+                                [existingId]
+                            );
+                        }
+                    }
+
+                    // Update or create actions
+                    for (const action of milestone.actions) {
+                        if (action.id && existingActionIds.includes(action.id)) {
+                            // Update existing action
+                            await executeSql(
+                                `UPDATE actions SET 
+                                title = ?, 
+                                body = ?, 
+                                done = ?,
+                                updatedAt = ?
+                                WHERE id = ?`,
+                                [
+                                    action.name,
+                                    action.description || null,
+                                    action.done ? 1 : 0,
+                                    now,
+                                    action.id
+                                ]
+                            );
+                        } else {
+                            // Create new action
+                            const actionId = action.id || await generateUUID();
+                            await executeSql(
+                                `INSERT INTO actions (
+                                    id, title, body, done, parentId, parentType,
+                                    createdAt, updatedAt
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                                [
+                                    actionId,
+                                    action.name,
+                                    action.description || null,
+                                    action.done ? 1 : 0,
+                                    milestone.id,
+                                    'milestone',
+                                    now,
+                                    now
+                                ]
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error updating path:', error);
+        return false;
+    }
+};

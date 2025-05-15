@@ -1,8 +1,8 @@
-// src/components/entries/SparkCard.tsx
+// src/components/entries/sparks/SparkCard.tsx
 import React from 'react';
-import { Spark } from '../../types/spark';
-import { EntryCard } from './EntryCard';
-import { useTheme } from '../../contexts/ThemeContext';
+import { Spark } from '../../../types/spark';
+import { EntryCard } from '../EntryCard';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 interface SparkCardProps {
     spark: Spark;
