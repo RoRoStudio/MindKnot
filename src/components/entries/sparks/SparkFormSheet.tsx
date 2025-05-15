@@ -53,6 +53,13 @@ export default function SparkFormSheet({
         },
     }));
 
+    // Define specific bottom sheet properties to ensure visibility
+    const bottomSheetProps = {
+        maxHeight: 0.85, // 85% of screen height
+        minHeight: 400,  // Minimum height to ensure content is visible
+        snapPoints: [0.85, 0.5], // Snap to 85% or 50% of screen height
+    };
+
     const defaultValues: SparkFormValues = {
         title: sparkToEdit?.title || '',
         body: sparkToEdit?.body || '',
@@ -132,6 +139,7 @@ export default function SparkFormSheet({
             isSubmitting={isSubmitting}
             isEdit={isEditMode}
             submitLabel={isEditMode ? "Update" : "Create"}
+            bottomSheetProps={bottomSheetProps}
         >
             <View style={styles.formContainer}>
                 <Form>

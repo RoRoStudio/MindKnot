@@ -61,14 +61,16 @@ export default function LoopFormSheet({
     const { addLoop, updateLoop } = useLoops();
     const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const isEditMode = !!loopToEdit;
+    const isEditMode = !!loopToEdit?.id;
 
     const styles = useStyles((theme) => ({
         loopItem: {
             backgroundColor: theme.colors.surface,
             borderRadius: theme.shape.radius.m,
             padding: theme.spacing.m,
-            marginBottom: theme.spacing.s,
+            marginBottom: theme.spacing.m,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
         },
         itemHeader: {
             flexDirection: 'row',
@@ -83,6 +85,13 @@ export default function LoopFormSheet({
             width: '100%',
         },
     }));
+
+    // Define specific bottom sheet properties to ensure visibility
+    const bottomSheetProps = {
+        maxHeight: 0.87, // 87% of screen height
+        minHeight: 500,  // Minimum height to ensure content is visible
+        snapPoints: [0.87, 0.5], // Snap to 87% or 50% of screen height
+    };
 
     // Frequency options
     const FREQUENCY_OPTIONS = [
@@ -238,6 +247,7 @@ export default function LoopFormSheet({
             isSubmitting={isSubmitting}
             isEdit={isEditMode}
             submitLabel={isEditMode ? "Update" : "Create"}
+            bottomSheetProps={bottomSheetProps}
         >
             <View style={styles.formContainer}>
                 <Form>

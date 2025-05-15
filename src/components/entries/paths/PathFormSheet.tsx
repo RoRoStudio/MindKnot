@@ -70,7 +70,7 @@ export default function PathFormSheet({
     const { addPath, updatePath } = usePaths();
     const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const isEditMode = !!pathToEdit;
+    const isEditMode = !!pathToEdit?.id;
 
     const styles = useStyles((theme) => ({
         formContainer: {
@@ -81,6 +81,8 @@ export default function PathFormSheet({
             borderRadius: theme.shape.radius.m,
             padding: theme.spacing.m,
             marginBottom: theme.spacing.m,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
         },
         milestoneHeader: {
             flexDirection: 'row',
@@ -92,10 +94,12 @@ export default function PathFormSheet({
             padding: theme.spacing.xs,
         },
         action: {
-            backgroundColor: theme.colors.surfaceVariant,
+            backgroundColor: theme.colors.background,
             borderRadius: theme.shape.radius.m,
             padding: theme.spacing.m,
-            marginTop: theme.spacing.s,
+            marginBottom: theme.spacing.s,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
         },
         actionHeader: {
             flexDirection: 'row',
@@ -104,6 +108,13 @@ export default function PathFormSheet({
             marginBottom: theme.spacing.s,
         },
     }));
+
+    // Define specific bottom sheet properties to ensure visibility
+    const bottomSheetProps = {
+        maxHeight: 0.9,  // 90% of screen height
+        minHeight: 600,  // Higher minimum height due to complex content
+        snapPoints: [0.9, 0.5],  // Snap to 90% or 50% of screen height
+    };
 
     const defaultValues: PathFormValues = {
         title: pathToEdit?.title || '',
@@ -317,6 +328,7 @@ export default function PathFormSheet({
             isSubmitting={isSubmitting}
             isEdit={isEditMode}
             submitLabel={isEditMode ? "Update" : "Create"}
+            bottomSheetProps={bottomSheetProps}
         >
             <View style={styles.formContainer}>
                 <Form>

@@ -40,6 +40,7 @@ export interface BottomSheetProps {
 }
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
+const SCREEN_WIDTH = Dimensions.get('window').width;
 const DRAG_DISMISS_THRESHOLD = 100;
 
 export const BottomSheet: React.FC<BottomSheetProps> = ({
@@ -78,11 +79,16 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         }
     }, [visible, animationDuration]);
 
+    // Convert any percentage values to absolute pixels
+    const actualMaxHeight = typeof maxHeight === 'number'
+        ? (maxHeight <= 1 ? SCREEN_HEIGHT * maxHeight : maxHeight)
+        : SCREEN_HEIGHT * 0.9;
+
     // Calculate sheet heights
     const calculateSnapPoint = useCallback((percentage: number) => {
         const value = SCREEN_HEIGHT * percentage;
-        return Math.min(Math.max(value, minHeight), maxHeight);
-    }, [minHeight, maxHeight]);
+        return Math.min(Math.max(value, minHeight), actualMaxHeight);
+    }, [minHeight, actualMaxHeight]);
 
     // Main content animation
     const animatedStyle = useAnimatedStyle(() => ({
@@ -139,6 +145,10 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         },
     });
 
+    // Calculate the content area height
+    const dragHandleHeight = 30; // Estimated height of drag handle area
+    const contentHeight = actualMaxHeight - (footerContent ? footerHeight : 0) - dragHandleHeight;
+
     // Base styles
     const styles = StyleSheet.create({
         container: {
@@ -162,8 +172,9 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         },
         sheetContainer: {
             position: 'relative',
-            width: '100%',
-            maxHeight: maxHeight,
+            width: SCREEN_WIDTH,
+            maxHeight: actualMaxHeight,
+            minHeight: minHeight,
         },
         decorationLayer: {
             position: 'absolute',
@@ -176,16 +187,19 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             borderTopRightRadius: 18,
             zIndex: 0,
         },
-        contentContainer: {
-            backgroundColor: 'white',
+        contentWrapper: {
+            backgroundColor: theme.colors.background,
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
-            paddingTop: 20,
-            paddingHorizontal: 20,
-            minHeight: minHeight,
             zIndex: 1,
+            overflow: 'hidden',
             width: '100%',
-            maxHeight: maxHeight,
+            minHeight: minHeight,
+            maxHeight: actualMaxHeight,
+        },
+        dragHandleContainer: {
+            paddingVertical: 10,
+            alignItems: 'center',
         },
         dragHandle: {
             width: 40,
@@ -195,23 +209,24 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             alignSelf: 'center',
             marginBottom: 12,
         },
+        contentContainer: {
+            paddingHorizontal: 20,
+            width: '100%',
+            maxHeight: contentHeight,
+        },
         scrollViewContent: {
             flexGrow: 1,
-            paddingBottom: footerContent ? footerHeight + 20 : Platform.OS === 'ios' ? 40 : 20,
+            paddingBottom: footerContent ? 20 : Platform.OS === 'ios' ? 40 : 20,
         },
         footer: {
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
+            width: '100%',
             height: footerHeight,
-            backgroundColor: 'white',
+            backgroundColor: theme.colors.background,
             borderTopWidth: 1,
             borderTopColor: theme.colors.divider || '#eee',
             paddingHorizontal: 20,
             paddingVertical: 10,
             justifyContent: 'center',
-            zIndex: 2,
             borderBottomLeftRadius: 20,
             borderBottomRightRadius: 20,
         },
@@ -236,29 +251,30 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 <View style={styles.decorationLayer} />
 
                 {/* Content */}
-                <View style={styles.contentContainer}>
+                <View style={styles.contentWrapper}>
                     {/* Drag handle */}
                     <PanGestureHandler onGestureEvent={gestureHandler} enabled={dismissible}>
                         <Animated.View>
-                            <View style={{ paddingVertical: 10, alignItems: 'center' }}>
+                            <View style={styles.dragHandleContainer}>
                                 {showDragIndicator && <View style={styles.dragHandle} />}
                             </View>
                         </Animated.View>
                     </PanGestureHandler>
 
-                    {/* Content area with ScrollView to enable scrolling throughout */}
-                    <ScrollView
-                        style={{ width: '100%', maxHeight: maxHeight - (footerContent ? footerHeight : 0) - 40 }}
-                        contentContainerStyle={styles.scrollViewContent}
-                        keyboardShouldPersistTaps="handled"
-                        showsVerticalScrollIndicator={true}
-                    >
-                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                            <View style={{ width: '100%' }}>
-                                {children}
-                            </View>
-                        </TouchableWithoutFeedback>
-                    </ScrollView>
+                    {/* Content area with ScrollView */}
+                    <View style={styles.contentContainer}>
+                        <ScrollView
+                            contentContainerStyle={styles.scrollViewContent}
+                            keyboardShouldPersistTaps="handled"
+                            showsVerticalScrollIndicator={true}
+                        >
+                            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                                <View style={{ width: '100%' }}>
+                                    {children}
+                                </View>
+                            </TouchableWithoutFeedback>
+                        </ScrollView>
+                    </View>
 
                     {/* Fixed Footer Content */}
                     {footerContent && (

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
-import { StyleProp, ViewStyle } from 'react-native';
+import { StyleProp, ViewStyle, Dimensions } from 'react-native';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 // Types for bottom sheet config
 export interface BottomSheetConfigOptions {
@@ -35,13 +37,13 @@ interface BottomSheetConfigContextType {
 // Create context with default values
 const BottomSheetConfigContext = createContext<BottomSheetConfigContextType | undefined>(undefined);
 
-// Default config values
+// Default config values - ensure consistent handling of maxHeight
 const defaultConfig: BottomSheetConfigOptions = {
   animationDuration: 300,
   backdropOpacity: 0.5,
   minHeight: 180,
-  maxHeight: 0.9, // 90% of screen height
-  snapPoints: [0.9, 0.5], // 90% and 50% of screen height
+  maxHeight: 0.8, // 80% of screen height
+  snapPoints: [0.8, 0.5], // 80% and 50% of screen height
   showDragIndicator: true,
   footerHeight: 80,
   dismissible: true,
@@ -62,7 +64,21 @@ export const BottomSheetConfigProvider: React.FC<{children: ReactNode}> = ({ chi
   // Get config with optional overrides
   const getConfig = useMemo(() => (overrides?: Partial<BottomSheetConfigOptions>) => {
     if (!overrides) return config;
-    return { ...config, ...overrides };
+    
+    // Create a new config object with the overrides
+    const mergedConfig = { ...config, ...overrides };
+    
+    // Ensure maxHeight is properly handled
+    if (typeof mergedConfig.maxHeight === 'number' && mergedConfig.maxHeight <= 1) {
+      // This is a percentage value, convert it to actual height value only in the returned object
+      // We keep the original percentage in the stored config
+      return {
+        ...mergedConfig,
+        maxHeight: mergedConfig.maxHeight // Let the BottomSheet component handle the conversion
+      };
+    }
+    
+    return mergedConfig;
   }, [config]);
   
   const contextValue = useMemo(() => ({

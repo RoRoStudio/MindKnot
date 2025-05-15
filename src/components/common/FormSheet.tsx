@@ -54,6 +54,12 @@ export const FormSheet: React.FC<FormSheetProps> = ({
     const defaultSubmitLabel = isEdit ? 'Update' : 'Create';
     const actualSubmitLabel = submitLabel || defaultSubmitLabel;
 
+    // Force maxHeight to a reasonable value to ensure content is visible
+    // Default to 80% of screen height if not set
+    const maxHeight = typeof sheetConfig.maxHeight === 'number'
+        ? (sheetConfig.maxHeight <= 1 ? sheetConfig.maxHeight : sheetConfig.maxHeight)
+        : 0.8; // 80% of screen height
+
     // Base styles
     const styles = StyleSheet.create({
         container: {
@@ -111,9 +117,7 @@ export const FormSheet: React.FC<FormSheetProps> = ({
             animationDuration={sheetConfig.animationDuration}
             backdropOpacity={sheetConfig.backdropOpacity}
             minHeight={sheetConfig.minHeight}
-            maxHeight={typeof sheetConfig.maxHeight === 'number'
-                ? sheetConfig.maxHeight
-                : SCREEN_HEIGHT * sheetConfig.maxHeight}
+            maxHeight={maxHeight}
             snapPoints={sheetConfig.snapPoints}
             showDragIndicator={sheetConfig.showDragIndicator}
             footerHeight={sheetConfig.footerHeight}
