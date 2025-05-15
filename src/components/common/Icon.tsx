@@ -19,7 +19,7 @@ import Sun from '../../assets/icons/lucide/sun.svg';
 import House from '../../assets/icons/lucide/house.svg';
 import BookOpen from '../../assets/icons/lucide/book-open.svg';
 import Search from '../../assets/icons/lucide/search.svg';
-// Add new icons needed by form components
+// Icons needed by form components
 import Eye from '../../assets/icons/lucide/eye.svg';
 import EyeOff from '../../assets/icons/lucide/eye-off.svg';
 import ChevronDown from '../../assets/icons/lucide/chevron-down.svg';
@@ -29,13 +29,19 @@ import X from '../../assets/icons/lucide/x.svg';
 import Calendar from '../../assets/icons/lucide/calendar.svg';
 import Clock from '../../assets/icons/lucide/clock.svg';
 
-// Add new icons for updated navigation
+// Icons for updated navigation
 import Vault from '../../assets/icons/lucide/vault.svg';
 import CircleHelp from '../../assets/icons/lucide/circle-help.svg';
 import Zap from '../../assets/icons/lucide/zap.svg';
 import ScrollText from '../../assets/icons/lucide/scroll-text.svg';
 import CalendarSync from '../../assets/icons/lucide/calendar-sync.svg';
 import Compass from '../../assets/icons/lucide/compass.svg';
+
+// Icons for richtext form component
+import Bold from '../../assets/icons/lucide/bold.svg';
+import Italic from '../../assets/icons/lucide/italic.svg';
+import Underline from '../../assets/icons/lucide/underline.svg';
+import Heading from '../../assets/icons/lucide/heading.svg';
 
 const iconMap = {
     plus: Plus,
@@ -72,6 +78,10 @@ const iconMap = {
     'scroll-text': ScrollText,
     'calendar-sync': CalendarSync,
     compass: Compass,
+    bold: Bold,
+    italic: Italic,
+    underline: Underline,
+    heading: Heading,
 };
 
 export type IconName = keyof typeof iconMap;

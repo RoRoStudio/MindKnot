@@ -12,7 +12,7 @@ import { FormSheet } from '../../common/FormSheet';
 import {
     Form,
     FormInput,
-    FormLightRichTextarea,
+    FormRichTextarea,
     FormTagInput,
     FormCategorySelector
 } from '../../form';
@@ -151,13 +151,16 @@ export default function SparkFormSheet({
                         rules={{ required: 'Title is required' }}
                     />
 
-                    <FormLightRichTextarea
+                    <FormRichTextarea
                         name="body"
                         control={control as unknown as Control<FieldValues>}
                         label="Spark"
                         placeholder="Capture your insight..."
                         rules={{ required: 'Spark content is required' }}
                         numberOfLines={3}
+                        editorMode="light"
+                        resizable={true}
+                        maxHeight={200}
                     />
 
                     <FormCategorySelector

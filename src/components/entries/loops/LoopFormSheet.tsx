@@ -266,6 +266,9 @@ export default function LoopFormSheet({
                         placeholder="Describe the loop..."
                         rules={{ required: 'Description is required' }}
                         numberOfLines={3}
+                        editorMode="full"
+                        resizable={true}
+                        maxHeight={300}
                     />
 
                     <FormSelect

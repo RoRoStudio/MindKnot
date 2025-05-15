@@ -158,6 +158,10 @@ export default function NoteFormSheet({
                         placeholder="Write your note..."
                         rules={{ required: 'Note content is required' }}
                         numberOfLines={6}
+                        editorMode="full"
+                        resizable={true}
+                        minHeight={150}
+                        maxHeight={400}
                     />
 
                     <FormCategorySelector

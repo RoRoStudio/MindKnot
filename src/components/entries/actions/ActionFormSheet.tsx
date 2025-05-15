@@ -17,7 +17,7 @@ import { FormSheet } from '../../common/FormSheet';
 import {
     Form,
     FormInput,
-    FormOptionalRichTextarea,
+    FormRichTextarea,
     FormDatePicker,
     FormCheckbox,
     FormArrayField,
@@ -220,13 +220,16 @@ export default function ActionFormSheet({
                         rules={{ required: 'Title is required' }}
                     />
 
-                    <FormOptionalRichTextarea
+                    <FormRichTextarea
                         name="body"
                         control={control as unknown as Control<FieldValues>}
                         label="Action Details"
                         placeholder="Describe the action..."
                         rules={{ required: 'Action description is required' }}
                         numberOfLines={3}
+                        editorMode="optional"
+                        resizable={true}
+                        maxHeight={300}
                     />
 
                     <FormDatePicker

@@ -233,6 +233,9 @@ export default function PathFormSheet({
                     label="Description (optional)"
                     placeholder="Describe this action..."
                     numberOfLines={3}
+                    editorMode="full"
+                    resizable={true}
+                    maxHeight={300}
                 />
 
                 <FormDatePicker
@@ -276,6 +279,9 @@ export default function PathFormSheet({
                     label="Description (optional)"
                     placeholder="Describe this milestone..."
                     numberOfLines={3}
+                    editorMode="full"
+                    resizable={true}
+                    maxHeight={300}
                 />
 
                 <FormDatePicker
@@ -347,6 +353,9 @@ export default function PathFormSheet({
                         placeholder="Describe the path..."
                         rules={{ required: 'Description is required' }}
                         numberOfLines={3}
+                        editorMode="full"
+                        resizable={true}
+                        maxHeight={300}
                     />
 
                     <FormDatePicker
