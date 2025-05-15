@@ -3,46 +3,16 @@ import { executeSql } from '../database/database';
 import { generateUUID } from '../utils/uuidUtil';
 import { Note } from '../types/note';
 
-// Temporary function for migration
-export const migrateNotesFromCaptures = async (): Promise<void> => {
-    // Fetch all captures with subType NOTE
-    const result = await executeSql(
-        'SELECT * FROM captures WHERE subType = ?',
-        ['note']
-    );
-
-    if (!result || !result.rows || !result.rows._array) {
-        console.log('No notes to migrate');
-        return;
-    }
-
-    // Process each note capture and insert into the captures table with type 'note'
-    for (const capture of result.rows._array) {
-        await executeSql(
-            `UPDATE captures SET 
-                type = ?, 
-                subType = NULL,
-                sagaId = NULL, 
-                chapterId = NULL
-             WHERE id = ?`,
-            ['note', capture.id]
-        );
-    }
-
-    console.log(`Migrated ${result.rows._array.length} notes from captures`);
-};
-
 export const createNote = async (note: Omit<Note, 'id' | 'type' | 'createdAt' | 'updatedAt'>): Promise<Note> => {
     const id = await generateUUID();
     const now = new Date().toISOString();
 
     await executeSql(
-        `INSERT INTO captures (
-            id, type, title, tags, body, createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO notes (
+            id, title, tags, body, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
         [
             id,
-            'note',
             note.title,
             note.tags ? JSON.stringify(note.tags) : null,
             note.body,
@@ -55,7 +25,7 @@ export const createNote = async (note: Omit<Note, 'id' | 'type' | 'createdAt' | 
         id,
         type: 'note',
         title: note.title,
-        tags: note.tags,
+        tags: note.tags || [],
         body: note.body,
         createdAt: now,
         updatedAt: now
@@ -64,8 +34,8 @@ export const createNote = async (note: Omit<Note, 'id' | 'type' | 'createdAt' | 
 
 export const getAllNotes = async (): Promise<Note[]> => {
     const result = await executeSql(
-        'SELECT * FROM captures WHERE type = ? ORDER BY createdAt DESC',
-        ['note']
+        'SELECT * FROM notes ORDER BY createdAt DESC',
+        []
     );
 
     if (result && result.rows && result.rows._array) {
@@ -81,8 +51,8 @@ export const getAllNotes = async (): Promise<Note[]> => {
 
 export const getNoteById = async (id: string): Promise<Note | null> => {
     const result = await executeSql(
-        'SELECT * FROM captures WHERE id = ? AND type = ?',
-        [id, 'note']
+        'SELECT * FROM notes WHERE id = ?',
+        [id]
     );
 
     if (result && result.rows && result.rows._array && result.rows._array.length > 0) {
@@ -111,7 +81,7 @@ export const updateNote = async (id: string, updates: Partial<Omit<Note, 'id' | 
 
     try {
         await executeSql(
-            `UPDATE captures SET 
+            `UPDATE notes SET 
                 title = ?, 
                 body = ?, 
                 tags = ?,
@@ -134,7 +104,7 @@ export const updateNote = async (id: string, updates: Partial<Omit<Note, 'id' | 
 
 export const deleteNote = async (id: string): Promise<boolean> => {
     try {
-        await executeSql('DELETE FROM captures WHERE id = ? AND type = ?', [id, 'note']);
+        await executeSql('DELETE FROM notes WHERE id = ?', [id]);
         return true;
     } catch (error) {
         console.error('Error deleting note:', error);

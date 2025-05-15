@@ -18,3 +18,6 @@ npx expo run:android (for sqlite)
 
 # with clear cache
 npx expo start -c
+
+# find critical errors:
+npx tsc --noEmit

@@ -1,0 +1,10 @@
+{
+    "eslint.validate": [
+        "javascript",
+        "typescript",
+        "typescriptreact"
+    ],
+    "eslint.run": "onType",
+    "eslint.lintTask.enable": true,
+    "typescript.tsdk": "node_modules/typescript/lib"
+}

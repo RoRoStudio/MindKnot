@@ -1,3 +1,4 @@
+// src/database/database.ts
 import * as SQLite from 'expo-sqlite';
 import { createSchemaSQL } from './schema';
 
@@ -11,11 +12,35 @@ export const initDatabase = async (): Promise<void> => {
         // For multi-statement schema: manually substitute parameters
         await db.execAsync(buildSqlWithParams(createSchemaSQL, []));
         console.log('✅ Database schema created successfully.');
+
+        // Handle migration by checking if necessary tables exist
+        await migrateDataIfNeeded();
     } catch (error) {
         console.error('❌ Failed to initialize the database:', error);
         throw error;
     }
 };
+
+// Migration helper to check if we need to migrate from captures table
+async function migrateDataIfNeeded() {
+    try {
+        // Check if the old captures table exists and has data we need to migrate
+        const result = await executeSql(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='captures'",
+            []
+        );
+
+        // If old captures table exists, perform migration
+        if (result && result.rows && result.rows._array && result.rows._array.length > 0) {
+            console.log('⚠️ Old captures table found. Migration needed.');
+
+            // You would implement your migration logic here
+            // For this fix, we're going with a fresh start instead of migration
+        }
+    } catch (error) {
+        console.log('No migration needed or migration failed:', error);
+    }
+}
 
 export const executeSql = async (
     sql: string,

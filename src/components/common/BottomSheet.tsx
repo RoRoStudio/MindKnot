@@ -76,26 +76,29 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     }));
 
     // Pan gesture handler
-    const gestureHandler = useAnimatedGestureHandler<
-        PanGestureHandlerGestureEvent,
+    const gestureHandler = useAnimatedGestureHandler
+    PanGestureHandlerGestureEvent,
         { startY: number }
-    >({
-        onStart: (_, ctx) => {
-            ctx.startY = translateY.value;
-        },
-        onActive: (event, ctx) => {
-            translateY.value = Math.max(0, ctx.startY + event.translationY);
-        },
-        onEnd: (event) => {
-            if (event.translationY > DRAG_DISMISS_THRESHOLD) {
-                translateY.value = withTiming(SCREEN_HEIGHT, { duration: 250 }, (isFinished) => {
-                    if (isFinished) runOnJS(onClose)();
-                });
-            } else {
-                translateY.value = withTiming(0, { duration: 200 });
-            }
-        },
-    });
+        > ({
+            onStart: (_, ctx) => {
+                ctx.startY = translateY.value;
+            },
+            onActive: (event, ctx) => {
+                // Only allow dragging down (positive translation)
+                if (event.translationY > 0) {
+                    translateY.value = Math.max(0, ctx.startY + event.translationY);
+                }
+            },
+            onEnd: (event) => {
+                if (event.translationY > DRAG_DISMISS_THRESHOLD) {
+                    translateY.value = withTiming(SCREEN_HEIGHT, { duration: 250 }, (isFinished) => {
+                        if (isFinished) runOnJS(onClose)();
+                    });
+                } else {
+                    translateY.value = withTiming(0, { duration: 200 });
+                }
+            },
+        });
 
     // Base styles
     const styles = StyleSheet.create({
@@ -107,8 +110,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             right: 0,
             justifyContent: 'flex-end',
             zIndex: 1000,
-            width: '100%', // Force full width
-            height: '100%', // Force full height
+            width: '100%',
+            height: '100%',
         },
         backdrop: {
             position: 'absolute',
@@ -121,6 +124,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         sheetContainer: {
             position: 'relative',
             width: '100%',
+            maxHeight: SCREEN_HEIGHT * 0.9,
         },
         decorationLayer: {
             position: 'absolute',
@@ -138,7 +142,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
             padding: 20,
-            minHeight: 180,
+            maxHeight: SCREEN_HEIGHT * 0.9,
             paddingBottom: Platform.OS === 'ios' ? 40 : 20,
             zIndex: 1,
             width: '100%',
@@ -153,13 +157,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         },
         childrenContainer: {
             width: '100%',
+            flex: 1,
         }
     });
 
     if (!shouldRender) {
         return null;
     }
-
 
     return (
         <View style={styles.container} pointerEvents="box-none">
@@ -177,7 +181,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
                 {/* Content */}
                 <View style={styles.contentContainer}>
-                    {/* 👉 Drag handle only is gesture-enabled */}
+                    {/* Drag handle */}
                     <PanGestureHandler onGestureEvent={gestureHandler}>
                         <Animated.View>
                             <View style={{ paddingVertical: 10, alignItems: 'center' }}>
@@ -186,16 +190,12 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                         </Animated.View>
                     </PanGestureHandler>
 
-
-                    {/* Content area (no longer draggable) */}
-                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                        <View style={styles.childrenContainer}>
-                            <View>{children}</View>
-                        </View>
-                    </TouchableWithoutFeedback>
+                    {/* Content area */}
+                    <View style={styles.childrenContainer}>
+                        {children}
+                    </View>
                 </View>
             </Animated.View>
         </View>
     );
-
 };

@@ -8,15 +8,14 @@ export const createLoop = async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedA
     const now = new Date().toISOString();
 
     await executeSql(
-        `INSERT INTO loops (id, title, description, frequency, startTimeByDay, sagaId, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO loops (id, title, description, frequency, startTimeByDay, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
             id,
             loop.title,
             loop.description ?? null,
             loop.frequency,
             loop.startTimeByDay ? JSON.stringify(loop.startTimeByDay) : null,
-            loop.sagaId ?? null,
             now,
             now
         ]
@@ -28,8 +27,8 @@ export const createLoop = async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedA
             const itemId = await generateUUID();
             await executeSql(
                 `INSERT INTO loop_items (id, loopId, name, description, durationMinutes, 
-                 quantity, icon, subActions, sagaId, createdAt, updatedAt)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 quantity, icon, createdAt, updatedAt)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     itemId,
                     id,
@@ -38,8 +37,6 @@ export const createLoop = async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedA
                     item.durationMinutes ?? null,
                     item.quantity ?? null,
                     item.icon ?? null,
-                    item.subActions ? JSON.stringify(item.subActions) : null,
-                    item.sagaId ?? null,
                     now,
                     now
                 ]
@@ -48,42 +45,6 @@ export const createLoop = async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedA
     }
 
     return { ...loop, id, createdAt: now, updatedAt: now };
-};
-
-export const getLoopsBySaga = async (sagaId: string): Promise<Loop[]> => {
-    const result = await executeSql(
-        'SELECT * FROM loops WHERE sagaId = ? ORDER BY createdAt DESC',
-        [sagaId]
-    );
-
-    // Check for valid result structure
-    if (result && result.rows && Array.isArray(result.rows)) {
-        const loops = result.rows.map((row: any) => ({
-            ...row,
-            startTimeByDay: row.startTimeByDay ? JSON.parse(row.startTimeByDay) : undefined,
-        })) as Loop[];
-
-        // For each loop, fetch its items
-        for (const loop of loops) {
-            const itemsResult = await executeSql(
-                'SELECT * FROM loop_items WHERE loopId = ? ORDER BY createdAt ASC',
-                [loop.id]
-            );
-
-            if (itemsResult && itemsResult.rows && Array.isArray(itemsResult.rows)) {
-                loop.items = itemsResult.rows.map((item: any) => ({
-                    ...item,
-                    subActions: item.subActions ? JSON.parse(item.subActions) : []
-                }));
-            } else {
-                loop.items = [];
-            }
-        }
-
-        return loops;
-    }
-
-    return [];
 };
 
 export const getAllLoops = async (): Promise<Loop[]> => {
@@ -107,10 +68,7 @@ export const getAllLoops = async (): Promise<Loop[]> => {
             );
 
             if (itemsResult && itemsResult.rows && Array.isArray(itemsResult.rows)) {
-                loop.items = itemsResult.rows.map((item: any) => ({
-                    ...item,
-                    subActions: item.subActions ? JSON.parse(item.subActions) : []
-                }));
+                loop.items = itemsResult.rows as LoopItem[];
             } else {
                 loop.items = [];
             }

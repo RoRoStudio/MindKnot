@@ -3,46 +3,16 @@ import { executeSql } from '../database/database';
 import { generateUUID } from '../utils/uuidUtil';
 import { Spark } from '../types/spark';
 
-// Temporary function for migration
-export const migrateSparksFromCaptures = async (): Promise<void> => {
-    // Fetch all captures with subType SPARK
-    const result = await executeSql(
-        'SELECT * FROM captures WHERE subType = ?',
-        ['spark']
-    );
-
-    if (!result || !result.rows || !result.rows._array) {
-        console.log('No sparks to migrate');
-        return;
-    }
-
-    // Process each spark capture and update type
-    for (const capture of result.rows._array) {
-        await executeSql(
-            `UPDATE captures SET 
-                type = ?, 
-                subType = NULL,
-                sagaId = NULL, 
-                chapterId = NULL
-             WHERE id = ?`,
-            ['spark', capture.id]
-        );
-    }
-
-    console.log(`Migrated ${result.rows._array.length} sparks from captures`);
-};
-
 export const createSpark = async (spark: Omit<Spark, 'id' | 'type' | 'createdAt' | 'updatedAt'>): Promise<Spark> => {
     const id = await generateUUID();
     const now = new Date().toISOString();
 
     await executeSql(
-        `INSERT INTO captures (
-            id, type, title, tags, body, linkedCaptureIds, createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO sparks (
+            id, title, tags, body, linkedEntryIds, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
             id,
-            'spark',
             spark.title,
             spark.tags ? JSON.stringify(spark.tags) : null,
             spark.body,
@@ -56,9 +26,9 @@ export const createSpark = async (spark: Omit<Spark, 'id' | 'type' | 'createdAt'
         id,
         type: 'spark',
         title: spark.title,
-        tags: spark.tags,
+        tags: spark.tags || [],
         body: spark.body,
-        linkedEntryIds: spark.linkedEntryIds,
+        linkedEntryIds: spark.linkedEntryIds || [],
         createdAt: now,
         updatedAt: now
     };
@@ -66,15 +36,15 @@ export const createSpark = async (spark: Omit<Spark, 'id' | 'type' | 'createdAt'
 
 export const getAllSparks = async (): Promise<Spark[]> => {
     const result = await executeSql(
-        'SELECT * FROM captures WHERE type = ? ORDER BY createdAt DESC',
-        ['spark']
+        'SELECT * FROM sparks ORDER BY createdAt DESC',
+        []
     );
 
     if (result && result.rows && result.rows._array) {
         return result.rows._array.map((row: any) => ({
             ...row,
             tags: row.tags ? JSON.parse(row.tags) : [],
-            linkedEntryIds: row.linkedCaptureIds ? JSON.parse(row.linkedCaptureIds) : [],
+            linkedEntryIds: row.linkedEntryIds ? JSON.parse(row.linkedEntryIds) : [],
             type: 'spark'
         })) as Spark[];
     }
@@ -84,8 +54,8 @@ export const getAllSparks = async (): Promise<Spark[]> => {
 
 export const getSparkById = async (id: string): Promise<Spark | null> => {
     const result = await executeSql(
-        'SELECT * FROM captures WHERE id = ? AND type = ?',
-        [id, 'spark']
+        'SELECT * FROM sparks WHERE id = ?',
+        [id]
     );
 
     if (result && result.rows && result.rows._array && result.rows._array.length > 0) {
@@ -93,7 +63,7 @@ export const getSparkById = async (id: string): Promise<Spark | null> => {
         return {
             ...row,
             tags: row.tags ? JSON.parse(row.tags) : [],
-            linkedEntryIds: row.linkedCaptureIds ? JSON.parse(row.linkedCaptureIds) : [],
+            linkedEntryIds: row.linkedEntryIds ? JSON.parse(row.linkedEntryIds) : [],
             type: 'spark'
         } as Spark;
     }
@@ -115,11 +85,11 @@ export const updateSpark = async (id: string, updates: Partial<Omit<Spark, 'id' 
 
     try {
         await executeSql(
-            `UPDATE captures SET 
+            `UPDATE sparks SET 
                 title = ?, 
                 body = ?, 
                 tags = ?,
-                linkedCaptureIds = ?,
+                linkedEntryIds = ?,
                 updatedAt = ?
              WHERE id = ?`,
             [
@@ -140,7 +110,7 @@ export const updateSpark = async (id: string, updates: Partial<Omit<Spark, 'id' 
 
 export const deleteSpark = async (id: string): Promise<boolean> => {
     try {
-        await executeSql('DELETE FROM captures WHERE id = ? AND type = ?', [id, 'spark']);
+        await executeSql('DELETE FROM sparks WHERE id = ?', [id]);
         return true;
     } catch (error) {
         console.error('Error deleting spark:', error);
@@ -151,11 +121,10 @@ export const deleteSpark = async (id: string): Promise<boolean> => {
 export const getUnlinkedSparks = async (): Promise<Spark[]> => {
     // Get sparks that aren't linked to any entries
     const result = await executeSql(
-        `SELECT * FROM captures 
-         WHERE type = ? 
-         AND (linkedCaptureIds IS NULL OR linkedCaptureIds = '[]')
+        `SELECT * FROM sparks 
+         WHERE linkedEntryIds IS NULL OR linkedEntryIds = '[]'
          ORDER BY createdAt DESC`,
-        ['spark']
+        []
     );
 
     if (result && result.rows && result.rows._array) {

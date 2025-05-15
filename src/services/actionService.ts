@@ -3,47 +3,17 @@ import { executeSql } from '../database/database';
 import { generateUUID } from '../utils/uuidUtil';
 import { Action, SubAction } from '../types/action';
 
-// Temporary function for migration
-export const migrateActionsFromCaptures = async (): Promise<void> => {
-    // Fetch all captures with subType ACTION
-    const result = await executeSql(
-        'SELECT * FROM captures WHERE subType = ?',
-        ['action']
-    );
-
-    if (!result || !result.rows || !result.rows._array) {
-        console.log('No actions to migrate');
-        return;
-    }
-
-    // Process each action capture and update type
-    for (const capture of result.rows._array) {
-        await executeSql(
-            `UPDATE captures SET 
-                type = ?, 
-                subType = NULL,
-                sagaId = NULL, 
-                chapterId = NULL
-             WHERE id = ?`,
-            ['action', capture.id]
-        );
-    }
-
-    console.log(`Migrated ${result.rows._array.length} actions from captures`);
-};
-
 export const createAction = async (action: Omit<Action, 'id' | 'type' | 'createdAt' | 'updatedAt'>): Promise<Action> => {
     const id = await generateUUID();
     const now = new Date().toISOString();
 
     await executeSql(
-        `INSERT INTO captures (
-            id, type, title, tags, body, done, dueDate, subActions, parentId, parentType,
+        `INSERT INTO actions (
+            id, title, tags, body, done, dueDate, subActions, parentId, parentType,
             createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             id,
-            'action',
             action.title,
             action.tags ? JSON.stringify(action.tags) : null,
             action.body,
@@ -61,11 +31,11 @@ export const createAction = async (action: Omit<Action, 'id' | 'type' | 'created
         id,
         type: 'action',
         title: action.title,
-        tags: action.tags,
+        tags: action.tags || [],
         body: action.body,
-        done: action.done,
+        done: action.done || false,
         dueDate: action.dueDate,
-        subActions: action.subActions,
+        subActions: action.subActions || [],
         parentId: action.parentId,
         parentType: action.parentType,
         createdAt: now,
@@ -75,8 +45,8 @@ export const createAction = async (action: Omit<Action, 'id' | 'type' | 'created
 
 export const getAllActions = async (): Promise<Action[]> => {
     const result = await executeSql(
-        'SELECT * FROM captures WHERE type = ? ORDER BY createdAt DESC',
-        ['action']
+        'SELECT * FROM actions ORDER BY createdAt DESC',
+        []
     );
 
     if (result && result.rows && result.rows._array) {
@@ -94,8 +64,8 @@ export const getAllActions = async (): Promise<Action[]> => {
 
 export const getActionById = async (id: string): Promise<Action | null> => {
     const result = await executeSql(
-        'SELECT * FROM captures WHERE id = ? AND type = ?',
-        [id, 'action']
+        'SELECT * FROM actions WHERE id = ?',
+        [id]
     );
 
     if (result && result.rows && result.rows._array && result.rows._array.length > 0) {
@@ -126,7 +96,7 @@ export const updateAction = async (id: string, updates: Partial<Omit<Action, 'id
 
     try {
         await executeSql(
-            `UPDATE captures SET 
+            `UPDATE actions SET 
                 title = ?, 
                 body = ?, 
                 tags = ?,
@@ -159,7 +129,7 @@ export const updateAction = async (id: string, updates: Partial<Omit<Action, 'id
 
 export const deleteAction = async (id: string): Promise<boolean> => {
     try {
-        await executeSql('DELETE FROM captures WHERE id = ? AND type = ?', [id, 'action']);
+        await executeSql('DELETE FROM actions WHERE id = ?', [id]);
         return true;
     } catch (error) {
         console.error('Error deleting action:', error);
@@ -168,16 +138,13 @@ export const deleteAction = async (id: string): Promise<boolean> => {
 };
 
 export const getActionsWithDueDate = async (): Promise<Action[]> => {
-    const now = new Date().toISOString();
-
     const result = await executeSql(
-        `SELECT * FROM captures 
-         WHERE type = ? 
-         AND dueDate IS NOT NULL
+        `SELECT * FROM actions 
+         WHERE dueDate IS NOT NULL
          AND dueDate != ''
          AND done = 0
          ORDER BY dueDate ASC`,
-        ['action']
+        []
     );
 
     if (result && result.rows && result.rows._array) {
@@ -195,12 +162,11 @@ export const getActionsWithDueDate = async (): Promise<Action[]> => {
 
 export const getActionsByParent = async (parentId: string, parentType: string): Promise<Action[]> => {
     const result = await executeSql(
-        `SELECT * FROM captures 
-         WHERE type = ? 
-         AND parentId = ?
+        `SELECT * FROM actions 
+         WHERE parentId = ?
          AND parentType = ?
          ORDER BY createdAt DESC`,
-        ['action', parentId, parentType]
+        [parentId, parentType]
     );
 
     if (result && result.rows && result.rows._array) {

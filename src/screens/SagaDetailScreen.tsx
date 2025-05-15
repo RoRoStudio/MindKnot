@@ -6,13 +6,15 @@ import { Typography } from '../components/common/Typography';
 import { Button } from '../components/common/Button';
 import { Card } from '../components/common/Card';
 import { Icon } from '../components/common/Icon';
-import { useCaptures } from '../hooks/useCaptures';
 import { useLoops } from '../hooks/useLoops';
 import { usePaths } from '../hooks/usePaths';
 import { useSagas } from '../hooks/useSagas';
-import { CaptureSubType } from '../types/capture';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
+import { useNotes } from '../hooks/useNotes';
+import { useSparks } from '../hooks/useSparks';
+import { useActions } from '../hooks/useActions';
 
 type RootStackParamList = {
     Capture: { type: string, sagaId?: string };
@@ -24,26 +26,22 @@ type RootStackParamList = {
 };
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-
-type RouteParams = {
-    sagaId: string;
-};
+type SagaDetailRouteProp = RouteProp<RootStackParamList, 'SagaDetail'>;
 
 export default function SagaDetailScreen() {
     const navigation = useNavigation<NavigationProp>();
-    const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
+    const route = useRoute<SagaDetailRouteProp>();
     const sagaId = route.params.sagaId;
 
     const { sagas } = useSagas();
-    const { captures, loadCaptures } = useCaptures();
+    const { notes, loadNotes } = useNotes();
+    const { sparks, loadSparks } = useSparks();
+    const { actions, loadActions } = useActions();
     const { loops, loadLoops } = useLoops();
     const { paths, loadPaths } = usePaths();
 
     const [saga, setSaga] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-
-
 
     const styles = useStyles((theme) => ({
         container: {
@@ -109,11 +107,13 @@ export default function SagaDetailScreen() {
                     setSaga(foundSaga);
                 }
 
-                // Load saga-specific data
+                // Load data
                 await Promise.all([
-                    loadCaptures(sagaId),
-                    loadLoops(sagaId),
-                    loadPaths(sagaId)
+                    loadNotes(),
+                    loadSparks(),
+                    loadActions(),
+                    loadLoops(),
+                    loadPaths()
                 ]);
             } catch (error) {
                 console.error('Error loading saga data:', error);
@@ -125,8 +125,16 @@ export default function SagaDetailScreen() {
         fetchData();
     }, [sagaId, sagas]);
 
-    const navigateToNewCapture = (type: CaptureSubType) => {
-        navigation.navigate('Capture', { type, sagaId });
+    const navigateToNewNote = () => {
+        navigation.navigate('Capture', { type: 'note', sagaId });
+    };
+
+    const navigateToNewSpark = () => {
+        navigation.navigate('Capture', { type: 'spark', sagaId });
+    };
+
+    const navigateToNewAction = () => {
+        navigation.navigate('Capture', { type: 'action', sagaId });
     };
 
     const navigateToNewLoop = () => {
@@ -206,21 +214,21 @@ export default function SagaDetailScreen() {
                     <Button
                         label="Note"
                         leftIcon="file-text"
-                        onPress={() => navigateToNewCapture(CaptureSubType.NOTE)}
+                        onPress={navigateToNewNote}
                         style={{ flex: 1, marginRight: 8 }}
                         small
                     />
                     <Button
                         label="Spark"
                         leftIcon="lightbulb"
-                        onPress={() => navigateToNewCapture(CaptureSubType.SPARK)}
+                        onPress={navigateToNewSpark}
                         style={{ flex: 1, marginHorizontal: 4 }}
                         small
                     />
                     <Button
                         label="Action"
                         leftIcon="check"
-                        onPress={() => navigateToNewCapture(CaptureSubType.ACTION)}
+                        onPress={navigateToNewAction}
                         style={{ flex: 1, marginLeft: 8 }}
                         small
                     />
@@ -228,11 +236,10 @@ export default function SagaDetailScreen() {
 
                 {/* Notes Section */}
                 <Typography variant="h3" style={styles.sectionTitle}>Notes</Typography>
-                {captures.filter(c => c.subType === CaptureSubType.NOTE).length > 0 ? (
-                    captures
-                        .filter(c => c.subType === CaptureSubType.NOTE)
+                {notes.length > 0 ? (
+                    notes
                         .slice(0, 3) // Just show the first 3
-                        .map(note => (
+                        .map((note) => (
                             <Card key={note.id} style={styles.card}>
                                 <Typography variant="h4">{note.title || 'Untitled Note'}</Typography>
                                 <Typography variant="body2" numberOfLines={2}>
@@ -256,7 +263,7 @@ export default function SagaDetailScreen() {
                         <Button
                             label="Add Note"
                             leftIcon="plus"
-                            onPress={() => navigateToNewCapture(CaptureSubType.NOTE)}
+                            onPress={navigateToNewNote}
                             variant="secondary"
                             small
                             style={{ marginTop: 8 }}
@@ -266,11 +273,10 @@ export default function SagaDetailScreen() {
 
                 {/* Sparks Section */}
                 <Typography variant="h3" style={styles.sectionTitle}>Insights</Typography>
-                {captures.filter(c => c.subType === CaptureSubType.SPARK).length > 0 ? (
-                    captures
-                        .filter(c => c.subType === CaptureSubType.SPARK)
+                {sparks.length > 0 ? (
+                    sparks
                         .slice(0, 3) // Just show the first 3
-                        .map(spark => (
+                        .map((spark) => (
                             <Card key={spark.id} style={styles.card}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
                                     <Icon name="lightbulb" width={16} height={16} color="#FFB800" style={{ marginRight: 4 }} />
@@ -297,7 +303,7 @@ export default function SagaDetailScreen() {
                         <Button
                             label="Add Insight"
                             leftIcon="plus"
-                            onPress={() => navigateToNewCapture(CaptureSubType.SPARK)}
+                            onPress={navigateToNewSpark}
                             variant="secondary"
                             small
                             style={{ marginTop: 8 }}
@@ -310,7 +316,7 @@ export default function SagaDetailScreen() {
                 {loops.length > 0 ? (
                     loops
                         .slice(0, 3) // Just show the first 3
-                        .map(loop => (
+                        .map((loop) => (
                             <Card key={loop.id} style={styles.card}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
                                     <Icon name="calendar-sync" width={16} height={16} color="#547792" style={{ marginRight: 4 }} />
@@ -350,7 +356,7 @@ export default function SagaDetailScreen() {
                 {paths.length > 0 ? (
                     paths
                         .slice(0, 3) // Just show the first 3
-                        .map(path => (
+                        .map((path) => (
                             <Card key={path.id} style={styles.card}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
                                     <Icon name="compass" width={16} height={16} color="#27AE60" style={{ marginRight: 4 }} />

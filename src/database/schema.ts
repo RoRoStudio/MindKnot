@@ -1,6 +1,4 @@
-// ----------------------------
 // src/database/schema.ts
-// ----------------------------
 
 export const createSchemaSQL = `
   CREATE TABLE IF NOT EXISTS sagas (
@@ -23,25 +21,38 @@ export const createSchemaSQL = `
     FOREIGN KEY (sagaId) REFERENCES sagas(id)
   );
 
-  CREATE TABLE IF NOT EXISTS captures (
+  -- Create separate tables for each entry type
+  CREATE TABLE IF NOT EXISTS notes (
     id TEXT PRIMARY KEY,
-    type TEXT NOT NULL CHECK (type = 'capture'),
-    subType TEXT,
     title TEXT,
-    sagaId TEXT,
-    chapterId TEXT,
-    tags TEXT,
-    linkedCaptureIds TEXT,
     body TEXT,
-    mood TEXT,
-    prompt TEXT,
-    done INTEGER,
+    tags TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS sparks (
+    id TEXT PRIMARY KEY,
+    title TEXT,
+    body TEXT,
+    tags TEXT,
+    linkedEntryIds TEXT,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS actions (
+    id TEXT PRIMARY KEY,
+    title TEXT,
+    body TEXT,
+    tags TEXT,
+    done INTEGER DEFAULT 0,
     dueDate TEXT,
     subActions TEXT,
+    parentId TEXT,
+    parentType TEXT,
     createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL,
-    FOREIGN KEY (sagaId) REFERENCES sagas(id),
-    FOREIGN KEY (chapterId) REFERENCES chapters(id)
+    updatedAt TEXT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS loops (
@@ -50,10 +61,8 @@ export const createSchemaSQL = `
     description TEXT,
     frequency TEXT, -- JSON string (e.g. { type: 'daily' })
     startTimeByDay TEXT, -- JSON string (e.g. { mon: '08:00', tue: '09:00' })
-    sagaId TEXT,
     createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL,
-    FOREIGN KEY (sagaId) REFERENCES sagas(id)
+    updatedAt TEXT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS loop_items (
@@ -64,12 +73,9 @@ export const createSchemaSQL = `
     durationMinutes INTEGER,
     quantity TEXT,
     icon TEXT,
-    subActions TEXT, -- JSON array
-    sagaId TEXT,
     createdAt TEXT NOT NULL,
     updatedAt TEXT NOT NULL,
-    FOREIGN KEY (loopId) REFERENCES loops(id),
-    FOREIGN KEY (sagaId) REFERENCES sagas(id)
+    FOREIGN KEY (loopId) REFERENCES loops(id)
   );
 
   CREATE TABLE IF NOT EXISTS paths (
@@ -78,10 +84,9 @@ export const createSchemaSQL = `
     description TEXT,
     startDate TEXT,
     targetDate TEXT,
-    sagaId TEXT,
+    tags TEXT,
     createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL,
-    FOREIGN KEY (sagaId) REFERENCES sagas(id)
+    updatedAt TEXT NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS milestones (
@@ -94,19 +99,6 @@ export const createSchemaSQL = `
     FOREIGN KEY (pathId) REFERENCES paths(id)
   );
 
-  CREATE TABLE IF NOT EXISTS path_actions (
-    id TEXT PRIMARY KEY,
-    milestoneId TEXT NOT NULL,
-    name TEXT NOT NULL,
-    description TEXT,
-    done INTEGER DEFAULT 0,
-    dueDate TEXT,
-    sagaId TEXT,
-    icon TEXT,
-    subActions TEXT,
-    createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL,
-    FOREIGN KEY (milestoneId) REFERENCES milestones(id),
-    FOREIGN KEY (sagaId) REFERENCES sagas(id)
-  );
+  -- Migration support: drop the old captures table if it exists
+  DROP TABLE IF EXISTS captures;
 `;

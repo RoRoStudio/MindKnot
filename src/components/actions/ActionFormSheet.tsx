@@ -91,6 +91,14 @@ export default function ActionFormSheet({
         deleteButton: {
             padding: theme.spacing.xs,
         },
+        fixedButtonContainer: {
+            paddingVertical: theme.spacing.m,
+            backgroundColor: theme.colors.background,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.divider,
+            paddingHorizontal: theme.spacing.m,
+            width: '100%',
+        },
     }));
 
     const defaultValues = {
@@ -199,8 +207,8 @@ export default function ActionFormSheet({
                         </View>
 
                         <ScrollView
-                            style={{ width: '100%' }}
-                            contentContainerStyle={{ paddingBottom: 100 }}
+                            style={{ width: '100%', maxHeight: SCREEN_HEIGHT * 0.65 }}
+                            contentContainerStyle={{ paddingBottom: 20 }}
                             keyboardShouldPersistTaps="handled"
                         >
                             <Form>
@@ -262,6 +270,17 @@ export default function ActionFormSheet({
                                 </View>
                             </Form>
                         </ScrollView>
+                        {/* Fixed button at the bottom */}
+                        <View style={styles.fixedButtonContainer}>
+                            <Button
+                                label={isSubmitting ? "Saving..." : "Save Action"}
+                                variant="primary"
+                                onPress={handleSubmit(handleFormSubmit)}
+                                isLoading={isSubmitting}
+                                disabled={isSubmitting}
+                                fullWidth
+                            />
+                        </View>
                     </View>
                 </KeyboardAvoidingView>
             </TouchableWithoutFeedback>

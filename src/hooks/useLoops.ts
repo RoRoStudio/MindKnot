@@ -1,7 +1,7 @@
 // src/hooks/useLoops.ts
 import { useState, useEffect, useCallback } from 'react';
 import { Loop } from '../types/loop';
-import { createLoop, getLoopsBySaga } from '../services/loopService';
+import { createLoop, getAllLoops } from '../services/loopService';
 import { useSagaStore } from '../state/sagaStore';
 
 export function useLoops() {
@@ -16,13 +16,9 @@ export function useLoops() {
             setError(null);
 
             const targetSagaId = sagaId || selectedSagaId;
-            if (targetSagaId) {
-                const sagaLoops = await getLoopsBySaga(targetSagaId);
-                setLoops(sagaLoops);
-            } else {
-                // In the future, implement getAllLoops() to fetch all loops
-                setLoops([]);
-            }
+            const allLoops = await getAllLoops();
+            setLoops(allLoops);
+
         } catch (err) {
             console.error('Failed to load loops:', err);
             setError('Failed to load loops');
