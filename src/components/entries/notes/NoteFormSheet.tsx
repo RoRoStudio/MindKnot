@@ -12,7 +12,7 @@ import { FormSheet } from '../../common/FormSheet';
 import {
     Form,
     FormInput,
-    FormTextarea,
+    FormRichTextarea,
     FormTagInput,
     FormCategorySelector
 } from '../../form';
@@ -151,7 +151,7 @@ export default function NoteFormSheet({
                         rules={{ required: 'Title is required' }}
                     />
 
-                    <FormTextarea
+                    <FormRichTextarea
                         name="body"
                         control={control as unknown as Control<FieldValues>}
                         label="Note"

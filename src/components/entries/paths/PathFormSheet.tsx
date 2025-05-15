@@ -14,7 +14,7 @@ import { FormSheet } from '../../common/FormSheet';
 import {
     Form,
     FormInput,
-    FormTextarea,
+    FormRichTextarea,
     FormDatePicker,
     FormArrayField,
     FormCategorySelector,
@@ -227,7 +227,7 @@ export default function PathFormSheet({
                     rules={{ required: 'Name is required' }}
                 />
 
-                <FormTextarea
+                <FormRichTextarea
                     name={`milestones.${milestoneIndex}.actions.${actionIndex}.description`}
                     control={control as unknown as Control<FieldValues>}
                     label="Description (optional)"
@@ -270,7 +270,7 @@ export default function PathFormSheet({
                     rules={{ required: 'Name is required' }}
                 />
 
-                <FormTextarea
+                <FormRichTextarea
                     name={`milestones.${index}.description`}
                     control={control as unknown as Control<FieldValues>}
                     label="Description (optional)"
@@ -340,7 +340,7 @@ export default function PathFormSheet({
                         rules={{ required: 'Title is required' }}
                     />
 
-                    <FormTextarea
+                    <FormRichTextarea
                         name="description"
                         control={control as unknown as Control<FieldValues>}
                         label="Description"

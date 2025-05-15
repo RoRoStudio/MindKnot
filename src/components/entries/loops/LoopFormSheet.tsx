@@ -14,7 +14,7 @@ import { FormSheet } from '../../common/FormSheet';
 import {
     Form,
     FormInput,
-    FormTextarea,
+    FormRichTextarea,
     FormSelect,
     FormArrayField,
     FormCategorySelector,
@@ -196,7 +196,7 @@ export default function LoopFormSheet({
                     rules={{ required: 'Name is required' }}
                 />
 
-                <FormTextarea
+                <FormRichTextarea
                     name={`items.${index}.description`}
                     control={control as unknown as Control<FieldValues>}
                     label="Description (optional)"
@@ -259,7 +259,7 @@ export default function LoopFormSheet({
                         rules={{ required: 'Title is required' }}
                     />
 
-                    <FormTextarea
+                    <FormRichTextarea
                         name="description"
                         control={control as unknown as Control<FieldValues>}
                         label="Description"

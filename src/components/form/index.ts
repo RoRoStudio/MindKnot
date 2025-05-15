@@ -2,6 +2,9 @@
 import Form from './Form';
 import FormInput from './FormInput';
 import FormTextarea from './FormTextarea';
+import FormRichTextarea from './FormRichTextarea';
+import FormLightRichTextarea from './FormLightRichTextarea';
+import FormOptionalRichTextarea from './FormOptionalRichTextarea';
 import FormSelect from './FormSelect';
 import FormCheckbox from './FormCheckbox';
 import FormSwitch from './FormSwitch';
@@ -17,6 +20,9 @@ export {
     Form,
     FormInput,
     FormTextarea,
+    FormRichTextarea,
+    FormLightRichTextarea,
+    FormOptionalRichTextarea,
     FormSelect,
     FormCheckbox,
     FormSwitch,
