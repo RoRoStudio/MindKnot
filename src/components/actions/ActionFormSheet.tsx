@@ -25,11 +25,12 @@ import {
     FormDatePicker,
     FormCheckbox,
     FormArrayField,
-    FormTagInput
-
+    FormTagInput,
+    FormCategorySelector
 } from '../form';
 import { createAction } from '../../services/actionService';
 import { generateSimpleId } from '../../utils/uuidUtil';
+import { useBottomSheet } from '../../contexts/BottomSheetContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -49,6 +50,7 @@ export default function ActionFormSheet({
     onSuccess,
 }: ActionFormSheetProps) {
     const { theme } = useTheme();
+    const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const styles = useStyles((theme) => ({
@@ -108,6 +110,7 @@ export default function ActionFormSheet({
         dueDate: undefined,
         subActions: [],
         tags: [],
+        categoryId: null,
     };
 
     const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm({
@@ -135,6 +138,7 @@ export default function ActionFormSheet({
                 done: data.done,
                 dueDate: data.dueDate,
                 tags: data.tags,
+                categoryId: data.categoryId,
                 parentId,
                 parentType,
                 subActions: data.subActions?.map((action: any) => ({
@@ -183,6 +187,20 @@ export default function ActionFormSheet({
     // Dismiss keyboard when tapping outside input
     const dismissKeyboard = () => {
         Keyboard.dismiss();
+    };
+
+    const handleCreateCategory = () => {
+        // We need to close the current sheet first to avoid UI issues
+        onClose();
+        // Then show the category form
+        setTimeout(() => {
+            showCategoryForm(undefined, () => {
+                // Re-open the action form after creating a category
+                setTimeout(() => {
+                    if (onSuccess) onSuccess();
+                }, 100);
+            });
+        }, 300);
     };
 
     if (!visible) return null;
@@ -249,6 +267,12 @@ export default function ActionFormSheet({
                                     renderItem={renderSubAction}
                                     addButtonLabel="Add Sub-Action"
                                     defaultValue={{ text: '', done: false }}
+                                />
+
+                                <FormCategorySelector
+                                    name="categoryId"
+                                    control={control}
+                                    onCreateCategory={handleCreateCategory}
                                 />
 
                                 <FormTagInput

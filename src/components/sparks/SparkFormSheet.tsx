@@ -21,10 +21,11 @@ import {
     Form,
     FormInput,
     FormTextarea,
-    FormTagInput
-
+    FormTagInput,
+    FormCategorySelector
 } from '../form';
 import { createSpark } from '../../services/sparkService';
+import { useBottomSheet } from '../../contexts/BottomSheetContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -40,6 +41,7 @@ export default function SparkFormSheet({
     onSuccess,
 }: SparkFormSheetProps) {
     const { theme } = useTheme();
+    const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const styles = useStyles((theme) => ({
@@ -75,6 +77,7 @@ export default function SparkFormSheet({
         title: '',
         body: '',
         tags: [],
+        categoryId: null,
     };
 
     const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm({
@@ -100,6 +103,7 @@ export default function SparkFormSheet({
                 title: data.title,
                 body: data.body,
                 tags: data.tags,
+                categoryId: data.categoryId
             });
 
             if (success) {
@@ -119,6 +123,20 @@ export default function SparkFormSheet({
     // Dismiss keyboard when tapping outside input
     const dismissKeyboard = () => {
         Keyboard.dismiss();
+    };
+
+    const handleCreateCategory = () => {
+        // We need to close the current sheet first to avoid UI issues
+        onClose();
+        // Then show the category form
+        setTimeout(() => {
+            showCategoryForm(undefined, () => {
+                // Re-open the spark form after creating a category
+                setTimeout(() => {
+                    if (onSuccess) onSuccess();
+                }, 100);
+            });
+        }, 300);
     };
 
     if (!visible) return null;
@@ -163,6 +181,12 @@ export default function SparkFormSheet({
                                     placeholder="Capture your insight..."
                                     rules={{ required: 'Spark content is required' }}
                                     numberOfLines={3}
+                                />
+
+                                <FormCategorySelector
+                                    name="categoryId"
+                                    control={control}
+                                    onCreateCategory={handleCreateCategory}
                                 />
 
                                 <FormTagInput

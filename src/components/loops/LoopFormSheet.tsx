@@ -24,10 +24,13 @@ import {
     FormTextarea,
     FormSelect,
     FormArrayField,
+    FormCategorySelector,
+    FormTagInput
 } from '../form';
 import { useSagas } from '../../hooks/useSagas';
 import { useLoops } from '../../hooks/useLoops';
 import { generateSimpleId } from '../../utils/uuidUtil';
+import { useBottomSheet } from '../../contexts/BottomSheetContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -47,6 +50,7 @@ export default function LoopFormSheet({
     const { theme } = useTheme();
     const { sagas } = useSagas();
     const { addLoop } = useLoops();
+    const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const styles = useStyles((theme) => ({
@@ -119,6 +123,8 @@ export default function LoopFormSheet({
         frequency: 'daily',
         sagaId: initialSagaId || '',
         items: [],
+        tags: [],
+        categoryId: null,
     };
 
     const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm({
@@ -227,6 +233,20 @@ export default function LoopFormSheet({
         Keyboard.dismiss();
     };
 
+    const handleCreateCategory = () => {
+        // We need to close the current sheet first to avoid UI issues
+        onClose();
+        // Then show the category form
+        setTimeout(() => {
+            showCategoryForm(undefined, () => {
+                // Re-open the loop form after creating a category
+                setTimeout(() => {
+                    if (onSuccess) onSuccess();
+                }, 100);
+            });
+        }, 300);
+    };
+
     if (!visible) return null;
 
     return (
@@ -284,6 +304,20 @@ export default function LoopFormSheet({
                                     label="Frequency"
                                     options={FREQUENCY_OPTIONS}
                                     rules={{ required: 'Frequency is required' }}
+                                />
+
+                                <FormCategorySelector
+                                    name="categoryId"
+                                    control={control}
+                                    onCreateCategory={handleCreateCategory}
+                                />
+
+                                <FormTagInput
+                                    name="tags"
+                                    control={control}
+                                    label="Tags"
+                                    placeholder="Add a tag..."
+                                    helperText="Press Enter or tap + to add a tag"
                                 />
 
                                 <FormArrayField

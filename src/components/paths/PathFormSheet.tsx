@@ -25,10 +25,13 @@ import {
     FormDatePicker,
     FormSelect,
     FormArrayField,
+    FormCategorySelector,
+    FormTagInput
 } from '../form';
 import { useSagas } from '../../hooks/useSagas';
 import { usePaths } from '../../hooks/usePaths';
 import { generateSimpleId } from '../../utils/uuidUtil';
+import { useBottomSheet } from '../../contexts/BottomSheetContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -48,6 +51,7 @@ export default function PathFormSheet({
     const { theme } = useTheme();
     const { sagas } = useSagas();
     const { addPath } = usePaths();
+    const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const styles = useStyles((theme) => ({
@@ -120,6 +124,8 @@ export default function PathFormSheet({
         targetDate: undefined,
         sagaId: initialSagaId || '',
         milestones: [],
+        tags: [],
+        categoryId: null,
     };
 
     const { control, handleSubmit, reset, formState: { errors, isValid } } = useForm({
@@ -274,6 +280,20 @@ export default function PathFormSheet({
         Keyboard.dismiss();
     };
 
+    const handleCreateCategory = () => {
+        // We need to close the current sheet first to avoid UI issues
+        onClose();
+        // Then show the category form
+        setTimeout(() => {
+            showCategoryForm(undefined, () => {
+                // Re-open the path form after creating a category
+                setTimeout(() => {
+                    if (onSuccess) onSuccess();
+                }, 100);
+            });
+        }, 300);
+    };
+
     if (!visible) return null;
 
     return (
@@ -337,6 +357,20 @@ export default function PathFormSheet({
                                     control={control}
                                     label="Target Date (optional)"
                                     placeholder="Select a target date"
+                                />
+
+                                <FormCategorySelector
+                                    name="categoryId"
+                                    control={control}
+                                    onCreateCategory={handleCreateCategory}
+                                />
+
+                                <FormTagInput
+                                    name="tags"
+                                    control={control}
+                                    label="Tags"
+                                    placeholder="Add a tag..."
+                                    helperText="Press Enter or tap + to add a tag"
                                 />
 
                                 <FormArrayField

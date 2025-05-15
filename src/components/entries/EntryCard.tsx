@@ -1,11 +1,13 @@
 // src/components/entries/EntryCard.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../common/Typography';
 import { Card } from '../common/Card';
 import { Icon, IconName } from '../common/Icon';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useCategories } from '../../hooks/useCategories';
+import { Category } from '../../types/category';
 
 interface EntryCardProps {
     id: string;
@@ -16,6 +18,7 @@ interface EntryCardProps {
     iconColor?: string;
     createdAt: string;
     tags?: string[];
+    categoryId?: string;
     onPress?: () => void;
     done?: boolean;
     dueDate?: string;
@@ -30,16 +33,33 @@ export const EntryCard: React.FC<EntryCardProps> = ({
     iconColor,
     createdAt,
     tags,
+    categoryId,
     onPress,
     done,
     dueDate,
 }) => {
     const { theme } = useTheme();
+    const { getCategory } = useCategories();
+    const [category, setCategory] = useState<Category | null>(null);
+
+    useEffect(() => {
+        const fetchCategory = async () => {
+            if (categoryId) {
+                const cat = await getCategory(categoryId);
+                setCategory(cat);
+            } else {
+                setCategory(null);
+            }
+        };
+
+        fetchCategory();
+    }, [categoryId]);
+
     const styles = useStyles((theme) => ({
         card: {
             marginBottom: theme.spacing.m,
             borderLeftWidth: 4,
-            borderLeftColor: iconColor || theme.colors.primary,
+            borderLeftColor: category ? category.color : (iconColor || theme.colors.primary),
         },
         header: {
             flexDirection: 'row',
@@ -85,6 +105,23 @@ export const EntryCard: React.FC<EntryCardProps> = ({
         tagText: {
             fontSize: theme.typography.fontSize.xs,
             color: theme.colors.textSecondary,
+        },
+        categoryTag: {
+            paddingHorizontal: theme.spacing.s,
+            paddingVertical: 2,
+            marginRight: theme.spacing.xs,
+            marginBottom: theme.spacing.xs,
+            borderRadius: theme.shape.radius.s,
+        },
+        categoryDot: {
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            marginRight: 4,
+        },
+        categoryTextContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
         },
         dueDate: {
             flexDirection: 'row',
@@ -138,6 +175,30 @@ export const EntryCard: React.FC<EntryCardProps> = ({
         );
     };
 
+    const renderCategory = () => {
+        if (!category) return null;
+
+        return (
+            <View 
+                style={[
+                    styles.categoryTag, 
+                    { 
+                        backgroundColor: `${category.color}20`,  // 20% opacity
+                        borderColor: category.color,
+                        borderWidth: 1,
+                    }
+                ]}
+            >
+                <View style={styles.categoryTextContainer}>
+                    <View style={[styles.categoryDot, { backgroundColor: category.color }]} />
+                    <Typography style={styles.tagText}>
+                        {category.title}
+                    </Typography>
+                </View>
+            </View>
+        );
+    };
+
     return (
         <Card style={styles.card} onPress={onPress}>
             <View style={styles.header}>
@@ -146,7 +207,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                         name={iconName}
                         width={18}
                         height={18}
-                        color={iconColor || theme.colors.primary}
+                        color={category ? category.color : (iconColor || theme.colors.primary)}
                     />
                     {done !== undefined && done && (
                         <View style={styles.doneIndicator} />
@@ -176,17 +237,17 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                 {renderDueDate()}
             </View>
 
-            {tags && tags.length > 0 && (
-                <View style={styles.tagsContainer}>
-                    {tags.map((tag, index) => (
-                        <View key={index} style={styles.tag}>
-                            <Typography style={styles.tagText}>
-                                {tag}
-                            </Typography>
-                        </View>
-                    ))}
-                </View>
-            )}
+            <View style={styles.tagsContainer}>
+                {renderCategory()}
+                
+                {tags && tags.length > 0 && tags.map((tag, index) => (
+                    <View key={index} style={styles.tag}>
+                        <Typography style={styles.tagText}>
+                            {tag}
+                        </Typography>
+                    </View>
+                ))}
+            </View>
         </Card>
     );
 };

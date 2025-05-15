@@ -11,6 +11,7 @@ import FormArrayField from './FormArrayField';
 import FormErrorMessage from './FormErrorMessage';
 import FormMoodSelector from './FormMoodSelector';
 import FormTagInput from './FormTagInput';
+import FormCategorySelector from './FormCategorySelector';
 
 export {
     Form,
@@ -25,4 +26,5 @@ export {
     FormErrorMessage,
     FormMoodSelector,
     FormTagInput,
+    FormCategorySelector,
 };
