@@ -11,9 +11,7 @@ import {
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Icon } from '../common/Icon';
-import { Button } from '../common/Button';
+import { Typography, Icon, Button } from '../common';
 import FormErrorMessage from './FormErrorMessage';
 
 interface FormDatePickerProps<T extends FieldValues> {

@@ -9,8 +9,8 @@ import {
 } from 'react-native';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Icon } from '../common/Icon';
+import { Typography } from '../atoms/Typography';
+import { Icon } from '../atoms/Icon';
 import FormErrorMessage from './FormErrorMessage';
 import { generateSimpleId } from '../../utils/uuidUtil';
 

@@ -1,11 +1,8 @@
 import React, { useCallback, memo, useState } from 'react';
 import { View, TextInput, ScrollView, TouchableOpacity, Animated, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../atoms/Typography';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Icon } from '../atoms/Icon';
-import { CategoryPill } from '../molecules/CategoryPill';
-import { Tag } from '../atoms/Tag';
+import { Icon, IconName, Typography, Tag, CategoryPill } from '../common';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -448,10 +445,10 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
 
                 <TouchableOpacity style={styles.filtersButton} onPress={toggleFilters}>
                     <Icon
-                        name="filter"
+                        name="sliders-vertical"
                         width={18}
                         height={18}
-                        color={filterCount > 0 ? theme.colors.onPrimary : theme.colors.textSecondary}
+                        color={theme.colors.textPrimary}
                     />
                     {filterCount > 0 && (
                         <View style={styles.badge}>

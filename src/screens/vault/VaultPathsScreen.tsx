@@ -112,11 +112,17 @@ export default function VaultPathsScreen() {
         />
     ), [handlePathPress]);
 
+    // Wrap loadPaths with a function that returns Promise<void>
+    const loadPathsWrapper = async () => {
+        await loadPaths();
+        return Promise.resolve();
+    };
+
     return (
         <>
             <FilterableList
                 data={paths}
-                loadData={loadPaths}
+                loadData={loadPathsWrapper}
                 renderItem={renderItem}
                 allTags={allTags}
                 selectedTags={selectedTags}

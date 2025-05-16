@@ -15,8 +15,7 @@ import {
     ActivityIndicator
 } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
-import { Icon, IconName } from '../atoms/Icon';
-import { Typography } from '../atoms/Typography';
+import { Icon, IconName, Typography } from '../common';
 import { useBottomSheet } from '../../contexts/BottomSheetContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { FilterableListHeader, Category } from './FilterableListHeader';
@@ -189,13 +188,11 @@ export function FilterableList<T>({
     categories = []
 }: FilterableListProps<T>) {
     const { theme } = useTheme();
+    const listRef = React.useRef<FlatList<T>>(null);
     const [refreshing, setRefreshing] = useState(false);
     const [filteredData, setFilteredData] = useState<T[]>([]);
     const windowWidth = Dimensions.get('window').width;
     const windowHeight = Dimensions.get('window').height;
-    const listRef = useRef<FlatList>(null);
-
-    // Handle open action menus
     const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
 
     const styles = useStyles((theme) => ({
@@ -306,7 +303,7 @@ export function FilterableList<T>({
 
     // Apply filters and sorting to data
     useEffect(() => {
-        let result = [...data];
+        let result: T[] = [...data];
 
         // Apply filters if predicate provided
         if (filterPredicate && (searchTerm || selectedTags.length > 0 || categoryId)) {
@@ -410,25 +407,52 @@ export function FilterableList<T>({
 
             <View style={styles.content}>
                 <TouchableWithoutFeedback onPress={() => setActiveActionMenuId(null)}>
-                    <FlatList
-                        ref={listRef}
-                        data={filteredData}
-                        keyExtractor={keyExtractor}
-                        renderItem={renderItem}
-                        ListEmptyComponent={renderEmptyComponent}
-                        ListHeaderComponent={ListHeaderComponent}
-                        onScroll={handleScroll}
-                        refreshControl={
-                            <RefreshControl
-                                refreshing={refreshing}
-                                onRefresh={handleRefresh}
-                                colors={[theme.colors.primary]}
-                                tintColor={theme.colors.primary}
-                            />
-                        }
-                        {...getListProps()}
-                        {...listProps}
-                    />
+                    {isGridView ? (
+                        <FlatList<T>
+                            ref={listRef}
+                            key="grid"
+                            // @ts-ignore - filteredData is properly filtered from data which is of type T[]
+                            data={filteredData}
+                            renderItem={renderItem}
+                            keyExtractor={keyExtractor}
+                            numColumns={2}
+                            ListEmptyComponent={renderEmptyComponent}
+                            ListHeaderComponent={ListHeaderComponent as React.ComponentType<any> | React.ReactElement | null}
+                            onScroll={handleScroll}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={handleRefresh}
+                                    colors={[theme.colors.primary]}
+                                    tintColor={theme.colors.primary}
+                                />
+                            }
+                            {...getListProps()}
+                            {...listProps}
+                        />
+                    ) : (
+                        <FlatList<T>
+                            ref={listRef}
+                            key="list"
+                            // @ts-ignore - filteredData is properly filtered from data which is of type T[]
+                            data={filteredData}
+                            renderItem={renderItem}
+                            keyExtractor={keyExtractor}
+                            ListEmptyComponent={renderEmptyComponent}
+                            ListHeaderComponent={ListHeaderComponent as React.ComponentType<any> | React.ReactElement | null}
+                            onScroll={handleScroll}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={handleRefresh}
+                                    colors={[theme.colors.primary]}
+                                    tintColor={theme.colors.primary}
+                                />
+                            }
+                            {...getListProps()}
+                            {...listProps}
+                        />
+                    )}
                 </TouchableWithoutFeedback>
             </View>
 
@@ -440,7 +464,7 @@ export function FilterableList<T>({
                     activeOpacity={0.8}
                 >
                     <Icon
-                        name={isGridView ? 'list' : 'grid'}
+                        name={isGridView ? 'list' : 'layout-grid'}
                         width={18}
                         height={18}
                         color={theme.colors.textPrimary}

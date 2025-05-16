@@ -119,11 +119,17 @@ export default function VaultNotesScreen() {
         );
     }, [handleNotePress]);
 
+    // Wrap loadNotes with a function that returns Promise<void>
+    const loadNotesWrapper = async () => {
+        await loadNotes();
+        return Promise.resolve();
+    };
+
     return (
         <>
             <FilterableList
                 data={notes}
-                loadData={loadNotes}
+                loadData={loadNotesWrapper}
                 renderItem={renderItem}
                 allTags={allTags}
                 selectedTags={selectedTags}

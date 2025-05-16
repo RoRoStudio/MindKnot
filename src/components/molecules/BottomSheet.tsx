@@ -267,7 +267,7 @@ export const BottomSheet = React.memo<BottomSheetProps>(({
         dragHandle: {
             width: 40,
             height: 5,
-            backgroundColor: theme.colors.text + '50',
+            backgroundColor: theme.colors.textPrimary + '50',
             borderRadius: 10,
         },
         contentContainer: {

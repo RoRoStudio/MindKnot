@@ -9,15 +9,11 @@ import {
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, useForm } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
+import { Typography, Icon, ColorPicker, Button } from '../common';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Icon } from '../common/Icon';
 import FormErrorMessage from './FormErrorMessage';
 import { useCategories } from '../../hooks/useCategories';
 import { Category } from '../../types/category';
-import { ColorPicker } from '../common/ColorPicker';
-import { Button } from '../common/Button';
-
 
 interface FormCategorySelectorProps<T extends FieldValues> {
     name: Path<T>;

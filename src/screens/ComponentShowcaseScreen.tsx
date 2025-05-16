@@ -11,15 +11,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
-import { Typography } from '../components/common/Typography';
-import { Icon, IconName } from '../components/common/Icon';
-import { Button } from '../components/common/Button';
-import { Card } from '../components/common/Card';
-import { ColorPicker } from '../components/common/ColorPicker';
-import { BottomSheet } from '../components/common/BottomSheet';
-import { FormModal } from '../components/common/FormModal';
-import { FormSheet } from '../components/common/FormSheet';
-import IconPicker from '../components/common/IconPicker';
+import {
+    Typography, Icon, IconName, Button, Card, ColorPicker,
+    BottomSheet, FormModal, FormSheet, IconPicker
+} from '../components/common';
 import { NoteCard, SparkCard, ActionCard, PathCard, LoopCard } from '../components/entries';
 import { useForm, Controller } from 'react-hook-form';
 import { BottomSheetConfigProvider } from '../contexts/BottomSheetConfig';
@@ -364,7 +359,7 @@ export default function ComponentShowcaseScreen() {
                             <Typography variant="body1">This is a card with an icon in the header.</Typography>
                             <Button
                                 label="Card Action"
-                                variant="text"
+                                variant="outline"
                                 onPress={() => { }}
                                 style={{ alignSelf: 'flex-end', marginTop: theme.spacing.s }}
                             />

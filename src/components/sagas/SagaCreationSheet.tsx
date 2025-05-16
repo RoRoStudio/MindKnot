@@ -10,15 +10,11 @@ import {
     Dimensions,
     Alert
 } from 'react-native';
-import { BottomSheet } from '../common/BottomSheet';
+import { BottomSheet, Typography, Button, IconName, IconPicker } from '../common';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Button } from '../common/Button';
-import { IconName } from '../common/Icon';
-import IconPicker from '../common/IconPicker';
-import { FormInput } from '../form';
-import { Form } from '../form';
+import FormInput from '../form/FormInput';
+import Form from '../form/Form';
 import { useForm, Controller } from 'react-hook-form';
 
 interface SagaCreationSheetProps {

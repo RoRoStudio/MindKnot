@@ -2,9 +2,8 @@
 import React, { useCallback, memo, useState } from 'react';
 import { View, TextInput, ScrollView, TouchableOpacity, Animated, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../../components/common/Typography';
+import { Typography, Icon } from '../../components/common';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Icon } from '../../components/common/Icon';
 import { useVaultFilters } from '../../contexts/VaultFiltersContext';
 import { useCategories } from '../../hooks/useCategories';
 

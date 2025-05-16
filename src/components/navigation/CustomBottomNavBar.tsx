@@ -6,13 +6,14 @@ import {
     TouchableOpacity,
     StyleSheet,
     Dimensions,
+    Animated,
 } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Icon } from '../common/Icon';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../contexts/ThemeContext';
+import { Icon } from '../common';
 import Svg, { Path } from 'react-native-svg';
 import { DiamondFab } from './DiamondFab';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useStyles } from '../../hooks/useStyles';
 
 const { width } = Dimensions.get('window');

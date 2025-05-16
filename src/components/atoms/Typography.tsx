@@ -122,8 +122,9 @@ export const Typography: React.FC<TypographyProps> = ({
 
     const styles = useThemedStyles((theme, constants) => {
         // Use theme presets if available, otherwise use custom variant styles
-        const variantStyles = presets && presets[getMappedPresetName(variant)] ?
-            presets[getMappedPresetName(variant)] :
+        const mappedPresetName = getMappedPresetName(variant);
+        const variantStyles = presets && mappedPresetName in presets ?
+            presets[mappedPresetName as keyof typeof presets] :
             {
                 h1: {
                     fontSize: theme.typography.fontSize.xxxl,

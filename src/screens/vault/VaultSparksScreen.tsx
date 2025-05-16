@@ -123,7 +123,9 @@ export default function VaultSparksScreen() {
         <>
             <FilterableList
                 data={sparks}
-                loadData={loadSparks}
+                loadData={async () => {
+                    await loadSparks();
+                }}
                 renderItem={renderItem}
                 allTags={allTags}
                 selectedTags={selectedTags}

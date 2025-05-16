@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, SafeAreaView, StyleSheet } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
-import { Typography } from '../components/common/Typography';
+import { Typography } from '../components/common';
 import VaultTabNavigator from '../navigation/VaultTabNavigator';
 import { VaultFiltersProvider } from '../contexts/VaultFiltersContext';
 

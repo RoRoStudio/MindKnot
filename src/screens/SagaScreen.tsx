@@ -11,8 +11,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStyles } from '../hooks/useStyles';
-import { Typography } from '../components/common/Typography';
-import { Icon, IconName } from '../components/common/Icon';
+import { Typography, Icon, IconName } from '../components/common';
 import SagaCreationSheet from '../components/sagas/SagaCreationSheet';
 import AnimatedBookSaga from '../components/sagas/AnimatedBookSaga';
 import { getAllSagas, createSaga } from '../services/sagaService';

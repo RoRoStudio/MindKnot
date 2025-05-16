@@ -112,11 +112,17 @@ export default function VaultActionsScreen() {
         />
     ), [handleActionPress]);
 
+    // Wrap loadActions with a function that returns Promise<void>
+    const loadActionsWrapper = async () => {
+        await loadActions();
+        return Promise.resolve();
+    };
+
     return (
         <>
             <FilterableList
                 data={actions}
-                loadData={loadActions}
+                loadData={loadActionsWrapper}
                 renderItem={renderItem}
                 allTags={allTags}
                 selectedTags={selectedTags}

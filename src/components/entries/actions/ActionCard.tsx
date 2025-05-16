@@ -4,8 +4,7 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Action } from '../../../types/action';
 import { EntryCard } from '../EntryCard';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { Typography } from '../../common/Typography';
-import { Icon } from '../../common/Icon';
+import { Typography, Icon } from '../../common';
 
 interface ActionCardProps {
     action: Action;

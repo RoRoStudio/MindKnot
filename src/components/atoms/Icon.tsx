@@ -143,7 +143,8 @@ const iconMap = {
     'circle-plus': CirclePlus,
     tag: Tag,
     hash: Hash,
-    infinity: Infinity
+    infinity: Infinity,
+    // Additional needed icons
 };
 
 /**

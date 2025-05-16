@@ -1,5 +1,5 @@
 // src/constants/entryTypes.ts
-import { IconName } from '../components/common/Icon';
+import { IconName } from '../components/common';
 
 export enum EntryType {
     NOTE = 'Note',

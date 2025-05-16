@@ -7,7 +7,7 @@ import {
     Platform,
     Dimensions,
 } from 'react-native';
-import { Icon } from '../common/Icon';
+import { Icon } from '../common';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -75,12 +75,12 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress,
             ...Platform.select({
                 ios: {
                     shadowColor: theme.colors.black,
-                    shadowOffset: theme.elevation.z4.shadowOffset,
-                    shadowOpacity: theme.elevation.z4.shadowOpacity,
-                    shadowRadius: theme.elevation.z4.shadowRadius,
+                    shadowOffset: theme.elevation.l.shadowOffset,
+                    shadowOpacity: theme.elevation.l.shadowOpacity,
+                    shadowRadius: theme.elevation.l.shadowRadius,
                 },
                 android: {
-                    elevation: theme.elevation.z4.elevation,
+                    elevation: theme.elevation.l.elevation,
                 },
             }),
         },

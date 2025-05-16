@@ -11,8 +11,9 @@ import Animated, {
   useAnimatedRef,
   runOnJS
 } from 'react-native-reanimated';
-import { Icon, IconName } from '../common/Icon';
+import { Icon, IconName } from '../common';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useStyles } from '../../hooks/useStyles';
 
 // Keep track of the currently open book ID
 let globalOpenBookId: string | null = null;

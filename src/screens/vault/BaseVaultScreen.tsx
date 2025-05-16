@@ -18,7 +18,7 @@ import { useStyles } from '../../hooks/useStyles';
 import { useVaultFilters } from '../../contexts/VaultFiltersContext';
 import { VaultSearchHeader } from './VaultSearchHeader';
 import { VaultEmptyState } from './VaultEmptyState';
-import { Icon, IconName } from '../../components/common/Icon';
+import { Icon, IconName } from '../../components/common';
 import { useBottomSheet } from '../../contexts/BottomSheetContext';
 import { useTheme } from '../../contexts/ThemeContext';
 

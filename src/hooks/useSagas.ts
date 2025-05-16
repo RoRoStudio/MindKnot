@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Saga } from '../types/saga';
 import { getAllSagas, createSaga } from '../services/sagaService';
 import { useSagaStore } from '../state/sagaStore';
-import { IconName } from '../components/common/Icon';
+import { IconName } from '../components/common';
 
 export function useSagas() {
     const [sagas, setSagas] = useState<Saga[]>([]);
@@ -12,22 +12,22 @@ export function useSagas() {
     const { selectedSagaId, setSelectedSaga } = useSagaStore();
 
     const loadSagas = useCallback(async () => {
-            try {
-                console.log('Loading sagas...');
-                setLoading(true);
-                setError(null);
-                const allSagas = await getAllSagas();
-                console.log(`Loaded ${allSagas.length} sagas`, allSagas);
-                setSagas(allSagas);
-                return allSagas;
-            } catch (err) {
-                console.error('Failed to load sagas:', err);
-                setError('Failed to load sagas');
-                throw err;
-            } finally {
-                setLoading(false);
-            }
-        }, []);
+        try {
+            console.log('Loading sagas...');
+            setLoading(true);
+            setError(null);
+            const allSagas = await getAllSagas();
+            console.log(`Loaded ${allSagas.length} sagas`, allSagas);
+            setSagas(allSagas);
+            return allSagas;
+        } catch (err) {
+            console.error('Failed to load sagas:', err);
+            setError('Failed to load sagas');
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
         loadSagas();

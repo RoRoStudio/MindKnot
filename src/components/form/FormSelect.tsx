@@ -10,11 +10,13 @@ import {
     KeyboardAvoidingView,
     TouchableWithoutFeedback,
     Keyboard,
+    Modal,
+    FlatList,
+    SafeAreaView,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Icon, IconName } from '../common/Icon';
+import { Typography, Icon, IconName } from '../common';
 import FormErrorMessage from './FormErrorMessage';
 
 interface Option {

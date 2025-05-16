@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, SafeAreaView } from 'react-native';
-import { FilterableList, type FilterableListProps } from '../organisms/FilterableList';
+import { Icon, IconName } from '../atoms/Icon';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStyles } from '../../hooks/useStyles';
-import { Icon, IconName } from '../atoms/Icon';
+import { FilterableList } from '../common';
+import type { FilterableListProps } from '../organisms/FilterableList';
 
 /**
  * Base props for entity data
@@ -14,6 +15,8 @@ export interface BaseEntity {
     updatedAt: number;
     title?: string;
     name?: string;
+    tags?: string[];
+    categoryId?: string | null;
 }
 
 /**
@@ -162,28 +165,30 @@ export function BaseEntityScreen<T extends BaseEntity>({
         },
     }));
 
-    const defaultFilterPredicate = (item: T, searchTerm: string, selectedTags: string[], categoryId: string | null) => {
+    const keyExtractor = (item: BaseEntity) => item.id;
+
+    const defaultFilterPredicate = (item: BaseEntity, searchTerm: string, selectedTags: string[], categoryId: string | null) => {
         const title = item.title || item.name || '';
         const matchesSearch = searchTerm === '' ||
             title.toLowerCase().includes(searchTerm.toLowerCase());
 
         // If no tags selected, or tags property doesn't exist, proceed with search match only
-        if (!selectedTags.length || !(item as any).tags) {
+        if (!selectedTags.length || !item.tags) {
             return matchesSearch;
         }
 
         // Otherwise, check if any selected tag is in the item's tags
         const matchesTags = selectedTags.some(tag =>
-            (item as any).tags && (item as any).tags.includes(tag)
+            item.tags && item.tags.includes(tag)
         );
 
         // Check category match if applicable
-        const matchesCategory = !categoryId || (item as any).categoryId === categoryId;
+        const matchesCategory = !categoryId || item.categoryId === categoryId;
 
         return matchesSearch && matchesTags && matchesCategory;
     };
 
-    const defaultSortItems = (a: T, b: T, sortOrder: 'newest' | 'oldest' | 'alphabetical') => {
+    const defaultSortItems = (a: BaseEntity, b: BaseEntity, sortOrder: 'newest' | 'oldest' | 'alphabetical') => {
         if (sortOrder === 'newest') {
             return b.updatedAt - a.updatedAt;
         } else if (sortOrder === 'oldest') {
@@ -199,12 +204,12 @@ export function BaseEntityScreen<T extends BaseEntity>({
     return (
         <SafeAreaView style={styles.container}>
             <FilterableList
-                data={data}
+                data={data as any}
                 loadData={loadData}
                 renderItem={renderItem}
                 emptyIcon={emptyIcon}
                 emptyText={emptyText}
-                keyExtractor={(item: T) => item.id}
+                keyExtractor={keyExtractor}
                 filterPredicate={defaultFilterPredicate}
                 sortItems={defaultSortItems}
                 searchTerm={searchTerm}

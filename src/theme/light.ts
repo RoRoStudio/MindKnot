@@ -3,10 +3,22 @@ import { TextStyle } from 'react-native';
 import { ThemeType } from './themeTypes';
 import tokens from './tokens';
 
+// Extended color palette with additional colors needed by components
+export const extendedColorPalette = {
+    ...tokens.color.neutral,
+    white: tokens.color.neutral.white,
+    black: tokens.color.neutral.black,
+    text: tokens.color.neutral.gray[900]
+};
+
 export const lightTheme: ThemeType = {
     name: 'light',
     isDark: false,
+    dark: false, // Adding this property for StatusBar
     colors: {
+        // Extended color palette
+        ...extendedColorPalette,
+
         // Brand color scales
         brand: {
             blue: tokens.color.brand.blue,
@@ -25,9 +37,9 @@ export const lightTheme: ThemeType = {
         onPrimary: tokens.color.neutral.white,
 
         // Secondary colors
-        secondary: tokens.color.brand.green[200],
-        secondaryLight: tokens.color.brand.green[100],
-        secondaryDark: tokens.color.brand.green[400],
+        secondary: tokens.color.brand.green[300],
+        secondaryLight: tokens.color.brand.green[200],
+        secondaryDark: tokens.color.brand.green[500],
         onSecondary: tokens.color.brand.blue[500],
         secondaryContainer: tokens.color.brand.green[100],
 
@@ -38,42 +50,42 @@ export const lightTheme: ThemeType = {
         onTertiary: tokens.color.neutral.white,
 
         // Accent colors
-        accent: tokens.color.brand.teal[300],
-        accentLight: tokens.color.brand.teal[200],
-        accentDark: tokens.color.brand.teal[400],
+        accent: tokens.color.brand.teal[400],
+        accentLight: tokens.color.brand.teal[300],
+        accentDark: tokens.color.brand.teal[500],
         onAccent: tokens.color.neutral.white,
 
-        // Background, surface, and content
-        background: tokens.color.neutral.white,
-        surface: tokens.color.neutral.gray[100],
-        surfaceVariant: tokens.color.neutral.gray[50],
+        // Background, surface, and content colors
+        background: tokens.color.neutral.gray[50],
+        surface: tokens.color.neutral.white,
+        surfaceVariant: tokens.color.neutral.gray[100],
 
         // Text colors
-        textPrimary: tokens.color.brand.blue[500],
-        textSecondary: tokens.color.brand.blue[400],
+        textPrimary: tokens.color.neutral.gray[900],
+        textSecondary: tokens.color.neutral.gray[600],
         textDisabled: tokens.color.neutral.gray[400],
-        textLink: tokens.color.brand.blue[400],
+        textLink: tokens.color.brand.blue[500],
 
         // Border and divider
-        border: tokens.color.brand.green[200],
-        divider: '#E9E9E9',
+        border: tokens.color.neutral.gray[200],
+        divider: tokens.color.neutral.gray[200],
 
         // Feedback colors
-        error: tokens.color.functional.error.main,
-        errorLight: tokens.color.functional.error.light,
-        errorDark: tokens.color.functional.error.dark,
-        warning: tokens.color.functional.warning.main,
-        warningLight: tokens.color.functional.warning.light,
-        warningDark: tokens.color.functional.warning.dark,
-        success: tokens.color.functional.success.main,
-        successLight: tokens.color.functional.success.light,
-        successDark: tokens.color.functional.success.dark,
-        info: tokens.color.functional.info.main,
-        infoLight: tokens.color.functional.info.light,
-        infoDark: tokens.color.functional.info.dark,
+        error: '#EF4444',
+        errorLight: '#FEE2E2',
+        errorDark: '#B91C1C',
+        warning: '#FBBF24',
+        warningLight: '#FEF3C7',
+        warningDark: '#D97706',
+        success: '#22C55E',
+        successLight: '#DCFCE7',
+        successDark: '#16A34A',
+        info: '#3B82F6',
+        infoLight: '#DBEAFE',
+        infoDark: '#1D4ED8',
 
         // Shadow color
-        shadow: 'rgba(0, 0, 0, 0.15)',
+        shadow: tokens.color.neutral.gray[900],
 
         // Utility colors
         transparent: 'transparent',
@@ -82,113 +94,116 @@ export const lightTheme: ThemeType = {
     typography: {
         fontFamily: tokens.typography.fontFamily,
         fontSize: tokens.typography.fontSize,
-        fontWeight: tokens.typography.fontWeight,
+        fontWeight: {
+            regular: "400",
+            medium: "500",
+            semibold: "600",
+            bold: "700",
+        },
         lineHeight: tokens.typography.lineHeight,
         letterSpacing: tokens.typography.letterSpacing,
-
-        // Preset text styles
         preset: {
             heading1: {
                 fontFamily: tokens.typography.fontFamily.bold,
                 fontSize: tokens.typography.fontSize.xxxl,
-                fontWeight: tokens.typography.fontWeight.bold,
+                fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xxxl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
-                color: tokens.color.brand.blue[500],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
             heading2: {
                 fontFamily: tokens.typography.fontFamily.bold,
                 fontSize: tokens.typography.fontSize.xxl,
-                fontWeight: tokens.typography.fontWeight.bold,
+                fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xxl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
-                color: tokens.color.brand.blue[500],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
             heading3: {
                 fontFamily: tokens.typography.fontFamily.bold,
                 fontSize: tokens.typography.fontSize.xl,
-                fontWeight: tokens.typography.fontWeight.bold,
+                fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
-                color: tokens.color.brand.blue[500],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
             heading4: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.l,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.l * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.brand.blue[500],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
             heading5: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.m,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.m * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.brand.blue[500],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
             heading6: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.s,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.brand.blue[500],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
             subtitle1: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.m,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.m * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.brand.blue[400],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
             subtitle2: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.s,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.brand.blue[400],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
             body1: {
                 fontFamily: tokens.typography.fontFamily.regular,
                 fontSize: tokens.typography.fontSize.m,
-                fontWeight: tokens.typography.fontWeight.regular,
+                fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.m * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.brand.blue[500],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
             body2: {
                 fontFamily: tokens.typography.fontFamily.regular,
                 fontSize: tokens.typography.fontSize.s,
-                fontWeight: tokens.typography.fontWeight.regular,
+                fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.brand.blue[500],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
             caption: {
                 fontFamily: tokens.typography.fontFamily.regular,
                 fontSize: tokens.typography.fontSize.xs,
-                fontWeight: tokens.typography.fontWeight.regular,
+                fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.xs * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[500],
+                color: tokens.color.neutral.gray[600],
             } as TextStyle,
             overline: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.xs,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.xs * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.wide,
                 textTransform: 'uppercase',
-                color: tokens.color.neutral.gray[500],
+                color: tokens.color.neutral.gray[600],
             } as TextStyle,
             button: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.m,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.m * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 textTransform: 'none',
@@ -196,10 +211,10 @@ export const lightTheme: ThemeType = {
             label: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.s,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.brand.blue[500],
+                color: tokens.color.neutral.gray[900],
             } as TextStyle,
         },
     },

@@ -3,10 +3,22 @@ import { TextStyle } from 'react-native';
 import { ThemeType } from './themeTypes';
 import tokens from './tokens';
 
+// Extended color palette with additional colors needed by components
+export const extendedColorPalette = {
+    ...tokens.color.neutral,
+    white: tokens.color.neutral.white,
+    black: tokens.color.neutral.black,
+    text: tokens.color.neutral.white
+};
+
 export const darkTheme: ThemeType = {
     name: 'dark',
     isDark: true,
+    dark: true, // Adding this property for StatusBar
     colors: {
+        // Extended color palette
+        ...extendedColorPalette,
+
         // Brand color scales
         brand: {
             blue: tokens.color.brand.blue,
@@ -82,7 +94,12 @@ export const darkTheme: ThemeType = {
     typography: {
         fontFamily: tokens.typography.fontFamily,
         fontSize: tokens.typography.fontSize,
-        fontWeight: tokens.typography.fontWeight,
+        fontWeight: {
+            regular: "400",
+            medium: "500",
+            semibold: "600",
+            bold: "700",
+        },
         lineHeight: tokens.typography.lineHeight,
         letterSpacing: tokens.typography.letterSpacing,
 
@@ -91,7 +108,7 @@ export const darkTheme: ThemeType = {
             heading1: {
                 fontFamily: tokens.typography.fontFamily.bold,
                 fontSize: tokens.typography.fontSize.xxxl,
-                fontWeight: tokens.typography.fontWeight.bold,
+                fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xxxl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
                 color: tokens.color.neutral.white,
@@ -99,7 +116,7 @@ export const darkTheme: ThemeType = {
             heading2: {
                 fontFamily: tokens.typography.fontFamily.bold,
                 fontSize: tokens.typography.fontSize.xxl,
-                fontWeight: tokens.typography.fontWeight.bold,
+                fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xxl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
                 color: tokens.color.neutral.white,
@@ -107,7 +124,7 @@ export const darkTheme: ThemeType = {
             heading3: {
                 fontFamily: tokens.typography.fontFamily.bold,
                 fontSize: tokens.typography.fontSize.xl,
-                fontWeight: tokens.typography.fontWeight.bold,
+                fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
                 color: tokens.color.neutral.white,
@@ -115,7 +132,7 @@ export const darkTheme: ThemeType = {
             heading4: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.l,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.l * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 color: tokens.color.neutral.white,
@@ -123,7 +140,7 @@ export const darkTheme: ThemeType = {
             heading5: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.m,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.m * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 color: tokens.color.neutral.white,
@@ -131,7 +148,7 @@ export const darkTheme: ThemeType = {
             heading6: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.s,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 color: tokens.color.neutral.white,
@@ -139,7 +156,7 @@ export const darkTheme: ThemeType = {
             subtitle1: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.m,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.m * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 color: tokens.color.brand.teal[200],
@@ -147,7 +164,7 @@ export const darkTheme: ThemeType = {
             subtitle2: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.s,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 color: tokens.color.brand.teal[200],
@@ -155,7 +172,7 @@ export const darkTheme: ThemeType = {
             body1: {
                 fontFamily: tokens.typography.fontFamily.regular,
                 fontSize: tokens.typography.fontSize.m,
-                fontWeight: tokens.typography.fontWeight.regular,
+                fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.m * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 color: tokens.color.neutral.gray[300],
@@ -163,7 +180,7 @@ export const darkTheme: ThemeType = {
             body2: {
                 fontFamily: tokens.typography.fontFamily.regular,
                 fontSize: tokens.typography.fontSize.s,
-                fontWeight: tokens.typography.fontWeight.regular,
+                fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 color: tokens.color.neutral.gray[300],
@@ -171,7 +188,7 @@ export const darkTheme: ThemeType = {
             caption: {
                 fontFamily: tokens.typography.fontFamily.regular,
                 fontSize: tokens.typography.fontSize.xs,
-                fontWeight: tokens.typography.fontWeight.regular,
+                fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.xs * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 color: tokens.color.neutral.gray[500],
@@ -179,7 +196,7 @@ export const darkTheme: ThemeType = {
             overline: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.xs,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.xs * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.wide,
                 textTransform: 'uppercase',
@@ -188,7 +205,7 @@ export const darkTheme: ThemeType = {
             button: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.m,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.m * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 textTransform: 'none',
@@ -196,7 +213,7 @@ export const darkTheme: ThemeType = {
             label: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.s,
-                fontWeight: tokens.typography.fontWeight.medium,
+                fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
                 color: tokens.color.neutral.gray[300],

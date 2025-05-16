@@ -2,11 +2,7 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { View, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Card } from '../common/Card';
-import { Icon, IconName } from '../common/Icon';
-import { CategoryPill } from '../common/CategoryPill';
-import { Tag } from '../common/Tag';
+import { Typography, Card, Icon, IconName, CategoryPill, Tag } from '../common';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCategories } from '../../hooks/useCategories';
 import { Category } from '../../types/category';

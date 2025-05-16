@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Icon, IconName } from '../common/Icon';
+import { Typography } from '../atoms/Typography';
+import { Icon, IconName } from '../atoms/Icon';
 import FormErrorMessage from './FormErrorMessage';
 import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -287,7 +287,7 @@ export default function FormRichTextarea<T extends FieldValues>({
             borderRadius: theme.shape.radius.s,
         },
         syncButtonText: {
-            color: theme.colors.white,
+            color: theme.colors.textPrimary,
             fontSize: 12,
         }
     }));

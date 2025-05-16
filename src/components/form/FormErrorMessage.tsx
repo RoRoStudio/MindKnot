@@ -2,8 +2,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Icon } from '../common/Icon';
+import { Typography, Icon } from '../common';
 
 interface FormErrorMessageProps {
     message?: string;

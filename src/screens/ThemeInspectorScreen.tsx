@@ -3,8 +3,7 @@ import React from 'react';
 import { ScrollView, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStyles } from '../hooks/useStyles';
-import { Typography } from '../components/common/Typography';
-import { Card } from '../components/common/Card';
+import { Typography, Card } from '../components/common';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ThemeInspectorScreen() {

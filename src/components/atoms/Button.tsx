@@ -15,25 +15,23 @@ import {
     TextStyle,
 } from 'react-native';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
-import { Icon, IconName } from './Icon';
+import { Icon, IconName } from '../common';
+import { StyleProps, DisableableProps, LoadingProps, SizeVariant } from '../shared-props';
 
 /**
  * Button style variants
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'text';
+export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger' | 'outline';
 
 /**
  * Button size variants
  */
-export type ButtonSize = 'small' | 'medium' | 'large';
+export type ButtonSize = 'small' | 'medium' | 'large' | 'xs';
 
 /**
  * Button component props interface
- *
- * @interface ButtonProps
- * @extends {TouchableOpacityProps}
  */
-export interface ButtonProps extends TouchableOpacityProps {
+export interface ButtonProps extends TouchableOpacityProps, StyleProps, DisableableProps, LoadingProps {
     /**
      * The style variant of the button
      * @default 'primary'
@@ -44,12 +42,6 @@ export interface ButtonProps extends TouchableOpacityProps {
      * The text label of the button
      */
     label: string;
-
-    /**
-     * Whether the button is in loading state
-     * @default false
-     */
-    isLoading?: boolean;
 
     /**
      * Icon to display on the left side of the label
@@ -68,21 +60,10 @@ export interface ButtonProps extends TouchableOpacityProps {
     fullWidth?: boolean;
 
     /**
-     * Whether to use a smaller size for the button
-     * @default false
-     */
-    small?: boolean;
-
-    /**
      * The size variant of the button
      * @default 'medium'
      */
-    size?: ButtonSize;
-
-    /**
-     * Custom style for the button container
-     */
-    style?: StyleProp<ViewStyle>;
+    size?: SizeVariant;
 
     /**
      * Custom style for the button text
@@ -117,71 +98,78 @@ export interface ButtonProps extends TouchableOpacityProps {
  * <Button label="Login" fullWidth onPress={handleLogin} />
  * ```
  */
-export const Button: React.FC<ButtonProps> = ({
+export const Button = React.memo<ButtonProps>(({
     variant = 'primary',
     label,
     isLoading = false,
     leftIcon,
     rightIcon,
-    disabled,
+    disabled = false,
     fullWidth = false,
-    small = false,
     size = 'medium',
     style,
     labelStyle,
     iconStyle,
     ...props
 }) => {
-    // Make small prop work with size prop
-    const buttonSize = small ? 'small' : size;
-
     const styles = useThemedStyles((theme, constants) => ({
         button: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
             paddingVertical:
-                buttonSize === 'small' ? theme.spacing.s :
-                    buttonSize === 'medium' ? theme.spacing.m :
+                size === 'small' || size === 'xs' ? theme.spacing.s :
+                    size === 'medium' ? theme.spacing.m :
                         theme.spacing.l,
             paddingHorizontal:
-                buttonSize === 'small' ? theme.spacing.m :
-                    buttonSize === 'medium' ? theme.spacing.l :
+                size === 'small' || size === 'xs' ? theme.spacing.m :
+                    size === 'medium' ? theme.spacing.l :
                         theme.spacing.xl,
             borderRadius:
-                variant === 'primary'
+                variant === 'primary' || variant === 'danger'
                     ? theme.components.button.primary.radius
-                    : variant === 'secondary'
+                    : variant === 'secondary' || variant === 'outline'
                         ? theme.components.button.secondary.radius
                         : 0,
-            borderWidth: variant === 'secondary' ? 1 : 0,
+            borderWidth: (variant === 'secondary' || variant === 'outline') ? 1 : 0,
             backgroundColor:
                 variant === 'primary'
                     ? theme.components.button.primary.background
                     : variant === 'secondary'
                         ? theme.components.button.secondary.background
+                        : variant === 'danger'
+                            ? theme.colors.error
+                            : 'transparent',
+            borderColor:
+                variant === 'secondary'
+                    ? theme.components.button.secondary.border
+                    : variant === 'outline'
+                        ? theme.components.button.primary.background
                         : 'transparent',
-            borderColor: variant === 'secondary'
-                ? theme.components.button.secondary.border
-                : 'transparent',
             opacity: disabled ? 0.5 : 1,
             width: fullWidth ? '100%' : 'auto',
             minHeight:
-                buttonSize === 'small' ? constants.COMPONENT_SIZES.BUTTON.HEIGHT.SMALL :
-                    buttonSize === 'medium' ? constants.COMPONENT_SIZES.BUTTON.HEIGHT.MEDIUM :
-                        constants.COMPONENT_SIZES.BUTTON.HEIGHT.LARGE,
+                size === 'xs' ? 32 :
+                    size === 'small' ? constants.COMPONENT_SIZES.BUTTON.HEIGHT.SMALL :
+                        size === 'medium' ? constants.COMPONENT_SIZES.BUTTON.HEIGHT.MEDIUM :
+                            size === 'large' ? constants.COMPONENT_SIZES.BUTTON.HEIGHT.LARGE :
+                                70, // xl
         },
         label: {
             color:
-                variant === 'primary'
+                variant === 'primary' || variant === 'danger'
                     ? theme.components.button.primary.text
                     : variant === 'secondary'
                         ? theme.components.button.secondary.text
-                        : theme.components.button.text.color,
+                        : variant === 'outline'
+                            ? theme.components.button.primary.background
+                            : theme.components.button.text.color,
             fontSize:
-                buttonSize === 'small' ? theme.typography.fontSize.s :
-                    buttonSize === 'medium' ? theme.typography.fontSize.m :
-                        theme.typography.fontSize.l,
+                size === 'xs' ? theme.typography.fontSize.xs :
+                    size === 'small' ? theme.typography.fontSize.s :
+                        size === 'medium' ? theme.typography.fontSize.m :
+                            size === 'large' ? theme.typography.fontSize.l :
+                                theme.typography.fontSize.xl,
             fontWeight: theme.typography.fontWeight.medium,
             textAlign: 'center',
         },
@@ -207,7 +195,7 @@ export const Button: React.FC<ButtonProps> = ({
     };
 
     const getIconSize = () => {
-        return buttonSize === 'small' ? 16 : buttonSize === 'medium' ? 18 : 24;
+        return size === 'small' ? 16 : size === 'medium' ? 18 : 24;
     };
 
     return (
@@ -225,7 +213,7 @@ export const Button: React.FC<ButtonProps> = ({
             {isLoading && (
                 <View style={[styles.loaderContainer, iconStyle]}>
                     <ActivityIndicator
-                        size={buttonSize === 'small' ? 'small' : 'small'}
+                        size={size === 'small' ? 'small' : 'small'}
                         color={styles.label.color.toString()}
                     />
                 </View>
@@ -246,6 +234,6 @@ export const Button: React.FC<ButtonProps> = ({
             )}
         </TouchableOpacity>
     );
-};
+});
 
 export default Button; 

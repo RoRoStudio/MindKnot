@@ -56,7 +56,7 @@ export const Card = React.memo<CardProps>(function Card({
             borderColor: theme.components.card.border,
             padding: noPadding ? 0 : theme.spacing.m,
             ...(elevated && {
-                ...theme.elevation.z2,
+                ...theme.elevation.s,
                 borderWidth: 0,
             }),
         },
@@ -76,7 +76,7 @@ export const Card = React.memo<CardProps>(function Card({
                 activeOpacity={0.7}
                 {...props}
             >
-                {title && <Typography variant="title" style={styles.title}>{title}</Typography>}
+                {title && <Typography variant="h4" style={styles.title}>{title}</Typography>}
                 {children}
             </TouchableOpacity>
         );
@@ -87,7 +87,7 @@ export const Card = React.memo<CardProps>(function Card({
             style={[styles.container, style]}
             {...props}
         >
-            {title && <Typography variant="title" style={styles.title}>{title}</Typography>}
+            {title && <Typography variant="h4" style={styles.title}>{title}</Typography>}
             {children}
         </View>
     );

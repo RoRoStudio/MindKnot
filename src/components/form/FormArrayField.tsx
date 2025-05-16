@@ -6,9 +6,7 @@ import {
 } from 'react-native';
 import { Control, FieldValues, useFieldArray, FieldArrayPath, DeepPartial } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
-import { Icon } from '../common/Icon';
-import { Button } from '../common/Button';
+import { Typography, Icon, Button } from '../common';
 import FormErrorMessage from './FormErrorMessage';
 import { generateSimpleId } from '../../utils/uuidUtil';
 
@@ -137,7 +135,7 @@ export default function FormArrayField<TFieldValues extends FieldValues = FieldV
                 onPress={handleAdd}
                 style={styles.addButton}
                 disabled={isMaxItems}
-                small
+                size="small"
             />
 
             {showError && error && <FormErrorMessage message={error} />}

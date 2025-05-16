@@ -4,8 +4,7 @@ import { View, StyleSheet } from 'react-native';
 import { Path } from '../../../types/path';
 import { EntryCard } from '../EntryCard';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { Typography } from '../../common/Typography';
-import { Icon } from '../../common/Icon';
+import { Typography, Icon } from '../../common';
 import { TouchableOpacity } from 'react-native';
 
 interface PathCardProps {

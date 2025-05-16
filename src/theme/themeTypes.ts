@@ -74,6 +74,11 @@ export interface ColorPalette {
         black: string;
     };
 
+    // Additional utility colors
+    white: string;
+    black: string;
+    text: string;
+
     // Semantic mappings (references to color scales)
     primary: string;
     primaryLight: string;
@@ -336,7 +341,7 @@ export interface ComponentTheme {
         textColor: string;
         radius: number;
         padding: number;
-        elevation: typeof ElevationSystem.prototype.s;
+        elevation: ElevationSystem['s'];
     };
 
     // Button variants
@@ -394,7 +399,7 @@ export interface ComponentTheme {
     modal: {
         background: string;
         overlay: string;
-        shadow: typeof ElevationSystem.prototype.l;
+        shadow: ElevationSystem['l'];
         radius: number;
     };
 
@@ -423,6 +428,7 @@ export interface ComponentTheme {
 export interface ThemeType {
     name: string;
     isDark: boolean;
+    dark: boolean; // For StatusBar
     colors: ColorPalette;
     typography: TypographySystem;
     spacing: SpacingSystem;

@@ -2,10 +2,8 @@
 import React from 'react';
 import { View, Animated } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../../components/common/Typography';
+import { Typography, Button, Icon, IconName } from '../../components/common';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Button } from '../../components/common/Button';
-import { Icon, IconName } from '../../components/common/Icon';
 import { useRef, useEffect } from 'react';
 
 interface VaultEmptyStateProps {

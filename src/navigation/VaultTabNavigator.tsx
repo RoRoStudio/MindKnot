@@ -9,7 +9,7 @@ import VaultActionsScreen from '../screens/vault/VaultActionsScreen';
 import VaultPathsScreen from '../screens/vault/VaultPathsScreen';
 import VaultLoopsScreen from '../screens/vault/VaultLoopsScreen';
 import { useTheme } from '../contexts/ThemeContext';
-import { Icon } from '../components/common/Icon';
+import { Icon } from '../components/common';
 import { getVaultEntryTypes, EntryType } from '../constants/entryTypes';
 
 const Tab = createMaterialTopTabNavigator();

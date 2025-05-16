@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
+import { Typography } from '../common';
 import FormErrorMessage from './FormErrorMessage';
 
 interface Option {

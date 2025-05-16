@@ -2,10 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useStyles } from '../hooks/useStyles';
-import { Typography } from '../components/common/Typography';
-import { Button } from '../components/common/Button';
-import { Card } from '../components/common/Card';
-import { Icon } from '../components/common/Icon';
+import { Typography, Button, Card, Icon } from '../components/common';
 import { useLoops } from '../hooks/useLoops';
 import { usePaths } from '../hooks/usePaths';
 import { useSagas } from '../hooks/useSagas';
@@ -216,21 +213,21 @@ export default function SagaDetailScreen() {
                         leftIcon="file-text"
                         onPress={navigateToNewNote}
                         style={{ flex: 1, marginRight: 8 }}
-                        small
+                        size="small"
                     />
                     <Button
                         label="Spark"
                         leftIcon="lightbulb"
                         onPress={navigateToNewSpark}
                         style={{ flex: 1, marginHorizontal: 4 }}
-                        small
+                        size="small"
                     />
                     <Button
                         label="Action"
                         leftIcon="check"
                         onPress={navigateToNewAction}
                         style={{ flex: 1, marginLeft: 8 }}
-                        small
+                        size="small"
                     />
                 </View>
 
@@ -265,7 +262,7 @@ export default function SagaDetailScreen() {
                             leftIcon="plus"
                             onPress={navigateToNewNote}
                             variant="secondary"
-                            small
+                            size="small"
                             style={{ marginTop: 8 }}
                         />
                     </View>
@@ -305,7 +302,7 @@ export default function SagaDetailScreen() {
                             leftIcon="plus"
                             onPress={navigateToNewSpark}
                             variant="secondary"
-                            small
+                            size="small"
                             style={{ marginTop: 8 }}
                         />
                     </View>
@@ -345,7 +342,7 @@ export default function SagaDetailScreen() {
                             leftIcon="plus"
                             onPress={navigateToNewLoop}
                             variant="secondary"
-                            small
+                            size="small"
                             style={{ marginTop: 8 }}
                         />
                     </View>
@@ -392,7 +389,7 @@ export default function SagaDetailScreen() {
                             leftIcon="plus"
                             onPress={navigateToNewPath}
                             variant="secondary"
-                            small
+                            size="small"
                             style={{ marginTop: 8 }}
                         />
                     </View>

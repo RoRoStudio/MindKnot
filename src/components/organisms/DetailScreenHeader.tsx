@@ -2,8 +2,7 @@ import React from 'react';
 import { View, TouchableOpacity, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Typography } from '../atoms/Typography';
-import { Icon, IconName } from '../atoms/Icon';
+import { Typography, Icon, IconName } from '../common';
 import { useStyles } from '../../hooks/useStyles';
 
 /**

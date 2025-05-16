@@ -112,11 +112,17 @@ export default function VaultLoopsScreen() {
         />
     ), [handleLoopPress]);
 
+    // Wrap loadLoops with a function that returns Promise<void>
+    const loadLoopsWrapper = async () => {
+        await loadLoops();
+        return Promise.resolve();
+    };
+
     return (
         <>
             <FilterableList
                 data={loops}
-                loadData={loadLoops}
+                loadData={loadLoopsWrapper}
                 renderItem={renderItem}
                 allTags={allTags}
                 selectedTags={selectedTags}

@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common/Typography';
+import { Typography } from '../atoms/Typography';
 import { useTheme } from '../../contexts/ThemeContext';
 import FormErrorMessage from './FormErrorMessage';
 
@@ -74,7 +74,7 @@ export default function FormSwitch<T extends FieldValues>({
                                 false: theme.colors.surfaceVariant,
                                 true: theme.colors.primary,
                             }}
-                            thumbColor={value ? theme.colors.white : theme.colors.white}
+                            thumbColor={value ? theme.colors.primary : theme.colors.background}
                             ios_backgroundColor={theme.colors.surfaceVariant}
                         />
                     </View>
