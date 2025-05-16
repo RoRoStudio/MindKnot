@@ -26,7 +26,6 @@ import {
 } from '../../form';
 import { createAction, updateAction } from '../../../services/actionService';
 import { generateSimpleId } from '../../../utils/uuidUtil';
-import { useBottomSheet } from '../../../contexts/BottomSheetContext';
 import { Action, SubAction } from '../../../types/action';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -60,7 +59,6 @@ export default function ActionFormSheet({
     actionToEdit,
 }: ActionFormSheetProps) {
     const { theme } = useTheme();
-    const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isEditMode = !!actionToEdit;
 
@@ -183,20 +181,6 @@ export default function ActionFormSheet({
         );
     };
 
-    const handleCreateCategory = () => {
-        // We need to close the current sheet first to avoid UI issues
-        onClose();
-        // Then show the category form
-        setTimeout(() => {
-            showCategoryForm(undefined, () => {
-                // Re-open the action form after creating a category
-                setTimeout(() => {
-                    if (onSuccess) onSuccess();
-                }, 100);
-            });
-        }, 300);
-    };
-
     if (!visible) return null;
 
     return (
@@ -263,7 +247,6 @@ export default function ActionFormSheet({
                         name="categoryId"
                         control={control as unknown as Control<FieldValues>}
                         label="Category"
-                        onCreateCategory={handleCreateCategory}
                     />
                 </Form>
             </View>

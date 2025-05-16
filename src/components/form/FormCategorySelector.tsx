@@ -4,10 +4,10 @@ import {
     View,
     ScrollView,
     TouchableOpacity,
-    Text,
-    StyleSheet,
+    TextInput,
+    ActivityIndicator,
 } from 'react-native';
-import { Control, Controller, FieldValues, Path } from 'react-hook-form';
+import { Control, Controller, FieldValues, Path, useForm } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../common/Typography';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -15,6 +15,8 @@ import { Icon } from '../common/Icon';
 import FormErrorMessage from './FormErrorMessage';
 import { useCategories } from '../../hooks/useCategories';
 import { Category } from '../../types/category';
+import { ColorPicker } from '../common/ColorPicker';
+import { Button } from '../common/Button';
 
 
 interface FormCategorySelectorProps<T extends FieldValues> {
@@ -23,7 +25,6 @@ interface FormCategorySelectorProps<T extends FieldValues> {
     label?: string;
     helperText?: string;
     placeholder?: string;
-    onCreateCategory?: () => void;
 }
 
 export default function FormCategorySelector<T extends FieldValues>({
@@ -32,10 +33,20 @@ export default function FormCategorySelector<T extends FieldValues>({
     label = 'Category',
     helperText = 'Assign a category to organize your entries',
     placeholder = 'Select a category',
-    onCreateCategory,
 }: FormCategorySelectorProps<T>) {
-    const { categories, loadCategories } = useCategories();
+    const { categories, loadCategories, addCategory } = useCategories();
     const [loading, setLoading] = useState(false);
+    const [showCategoryForm, setShowCategoryForm] = useState(false);
+    const [creatingCategory, setCreatingCategory] = useState(false);
+    const [selectedColor, setSelectedColor] = useState('#4A90E2');
+
+    // Form for creating new category
+    const { control: categoryFormControl, handleSubmit, reset, formState: { errors: categoryErrors } } = useForm({
+        defaultValues: {
+            title: '',
+        },
+        mode: 'onChange'
+    });
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -51,7 +62,25 @@ export default function FormCategorySelector<T extends FieldValues>({
 
         fetchCategories();
     }, []);
+
     const { theme } = useTheme();
+
+    const handleCreateCategory = handleSubmit(async (data) => {
+        try {
+            setCreatingCategory(true);
+            await addCategory(data.title, selectedColor);
+            // Reset form and collapse it
+            reset({ title: '' });
+            setSelectedColor('#4A90E2');
+            setShowCategoryForm(false);
+            // Refresh categories
+            await loadCategories();
+        } catch (error) {
+            console.error('Error creating category:', error);
+        } finally {
+            setCreatingCategory(false);
+        }
+    });
 
     const styles = useStyles((theme) => ({
         container: {
@@ -107,6 +136,39 @@ export default function FormCategorySelector<T extends FieldValues>({
         },
         helperText: {
             marginTop: 4,
+            color: theme.colors.textSecondary,
+        },
+        categoryFormContainer: {
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: theme.shape.radius.m,
+            padding: theme.spacing.m,
+            marginTop: theme.spacing.s,
+            marginBottom: theme.spacing.m,
+        },
+        formRow: {
+            marginBottom: theme.spacing.s,
+        },
+        colorSection: {
+            marginTop: theme.spacing.m,
+            marginBottom: theme.spacing.m,
+        },
+        colorSectionLabel: {
+            marginBottom: theme.spacing.s,
+        },
+        input: {
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.shape.radius.s,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            paddingHorizontal: theme.spacing.m,
+            paddingVertical: theme.spacing.s,
+            fontSize: 16,
+            color: theme.colors.textPrimary,
+        },
+        buttonContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginTop: theme.spacing.m,
         },
     }));
 
@@ -184,19 +246,82 @@ export default function FormCategorySelector<T extends FieldValues>({
                             ))}
 
                             {/* Add category button */}
-                            {onCreateCategory && (
-                                <TouchableOpacity
-                                    style={styles.addCategoryButton}
-                                    onPress={onCreateCategory}
-                                >
-                                    <Icon name="plus" width={16} height={16} color={theme.colors.primary} />
-                                    <Typography style={styles.addCategoryLabel}>
-                                        Add New
-                                    </Typography>
-                                </TouchableOpacity>
-                            )}
+                            <TouchableOpacity
+                                style={styles.addCategoryButton}
+                                onPress={() => setShowCategoryForm(!showCategoryForm)}
+                            >
+                                <Icon
+                                    name={showCategoryForm ? "minus" : "plus"}
+                                    width={16}
+                                    height={16}
+                                    color={theme.colors.primary}
+                                />
+                                <Typography style={styles.addCategoryLabel}>
+                                    {showCategoryForm ? "Cancel" : "Add New"}
+                                </Typography>
+                            </TouchableOpacity>
                         </View>
                     </ScrollView>
+
+                    {/* Expandable category form */}
+                    {showCategoryForm && (
+                        <View style={styles.categoryFormContainer}>
+                            <Typography variant="h4">Create New Category</Typography>
+
+                            <View style={styles.formRow}>
+                                <Typography variant="body2" style={styles.colorSectionLabel}>
+                                    Category Name
+                                </Typography>
+                                <Controller
+                                    control={categoryFormControl}
+                                    name="title"
+                                    rules={{ required: 'Category name is required' }}
+                                    render={({ field: { onChange, value } }) => (
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="Enter category name"
+                                            value={value}
+                                            onChangeText={onChange}
+                                        />
+                                    )}
+                                />
+                                {categoryErrors.title && (
+                                    <FormErrorMessage
+                                        message={categoryErrors.title.message}
+                                        visible={!!categoryErrors.title}
+                                    />
+                                )}
+                            </View>
+
+                            <View style={styles.colorSection}>
+                                <Typography variant="body2" style={styles.colorSectionLabel}>
+                                    Category Color
+                                </Typography>
+                                <ColorPicker
+                                    selectedColor={selectedColor}
+                                    onSelectColor={setSelectedColor}
+                                />
+                            </View>
+
+                            <View style={styles.buttonContainer}>
+                                <Button
+                                    label="Cancel"
+                                    variant="secondary"
+                                    onPress={() => {
+                                        setShowCategoryForm(false);
+                                        reset({ title: '' });
+                                    }}
+                                />
+                                <Button
+                                    label={creatingCategory ? "Creating..." : "Create"}
+                                    variant="primary"
+                                    onPress={handleCreateCategory}
+                                    disabled={creatingCategory}
+                                    isLoading={creatingCategory}
+                                />
+                            </View>
+                        </View>
+                    )}
 
                     {loading && (
                         <Typography variant="caption" style={styles.loadingText}>
@@ -210,7 +335,6 @@ export default function FormCategorySelector<T extends FieldValues>({
                         <Typography
                             variant="caption"
                             style={styles.helperText}
-                            color="secondary"
                         >
                             {helperText}
                         </Typography>

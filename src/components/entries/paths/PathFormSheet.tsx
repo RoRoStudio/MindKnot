@@ -22,7 +22,6 @@ import {
 } from '../../form';
 import { usePaths } from '../../../hooks/usePaths';
 import { generateSimpleId } from '../../../utils/uuidUtil';
-import { useBottomSheet } from '../../../contexts/BottomSheetContext';
 import { Path, Milestone } from '../../../types/path';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -68,7 +67,6 @@ export default function PathFormSheet({
 }: PathFormSheetProps) {
     const { theme } = useTheme();
     const { addPath, updatePath } = usePaths();
-    const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isEditMode = !!pathToEdit?.id;
 
@@ -309,20 +307,6 @@ export default function PathFormSheet({
         );
     };
 
-    const handleCreateCategory = () => {
-        // We need to close the current sheet first to avoid UI issues
-        onClose();
-        // Then show the category form
-        setTimeout(() => {
-            showCategoryForm(undefined, () => {
-                // Re-open the path form after creating a category
-                setTimeout(() => {
-                    if (onSuccess) onSuccess();
-                }, 100);
-            });
-        }, 300);
-    };
-
     if (!visible) return null;
 
     return (
@@ -374,7 +358,6 @@ export default function PathFormSheet({
                         name="categoryId"
                         control={control as unknown as Control<FieldValues>}
                         label="Category (optional)"
-                        onCreateCategory={handleCreateCategory}
                     />
 
                     <FormTagInput

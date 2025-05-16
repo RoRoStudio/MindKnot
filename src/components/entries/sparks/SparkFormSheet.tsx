@@ -17,7 +17,6 @@ import {
     FormCategorySelector
 } from '../../form';
 import { createSpark, updateSpark } from '../../../services/sparkService';
-import { useBottomSheet } from '../../../contexts/BottomSheetContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -43,7 +42,6 @@ export default function SparkFormSheet({
     sparkToEdit
 }: SparkFormSheetProps) {
     const { theme } = useTheme();
-    const { showCategoryForm } = useBottomSheet();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isEditMode = !!sparkToEdit;
 
@@ -114,20 +112,6 @@ export default function SparkFormSheet({
         }
     };
 
-    const handleCreateCategory = () => {
-        // We need to close the current sheet first to avoid UI issues
-        onClose();
-        // Then show the category form
-        setTimeout(() => {
-            showCategoryForm(undefined, () => {
-                // Re-open the spark form after creating a category
-                setTimeout(() => {
-                    if (onSuccess) onSuccess();
-                }, 100);
-            });
-        }, 300);
-    };
-
     if (!visible) return null;
 
     return (
@@ -167,7 +151,6 @@ export default function SparkFormSheet({
                         name="categoryId"
                         control={control as unknown as Control<FieldValues>}
                         label="Category"
-                        onCreateCategory={handleCreateCategory}
                     />
 
                     <FormTagInput

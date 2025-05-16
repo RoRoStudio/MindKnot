@@ -9,6 +9,7 @@ import {
     Platform,
     TouchableWithoutFeedback,
     Keyboard,
+    Dimensions,
 } from 'react-native';
 import { Typography } from './Typography';
 import { Button } from './Button';
@@ -44,6 +45,8 @@ export const FormModal: React.FC<FormModalProps> = ({
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             justifyContent: 'center',
             alignItems: 'center',
+            width: '100%',
+            height: '100%',
         },
         modalContainer: {
             width: '90%',
@@ -55,6 +58,7 @@ export const FormModal: React.FC<FormModalProps> = ({
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.25,
             shadowRadius: 3.84,
+            position: 'relative',
         },
         modalHeader: {
             flexDirection: 'row',
@@ -83,6 +87,7 @@ export const FormModal: React.FC<FormModalProps> = ({
             flexDirection: 'row',
             justifyContent: 'flex-end',
             gap: theme.spacing.m,
+            width: '100%',
         }
     }));
 
@@ -96,6 +101,7 @@ export const FormModal: React.FC<FormModalProps> = ({
             visible={visible}
             animationType="fade"
             onRequestClose={onClose}
+            statusBarTranslucent={true}
         >
             <TouchableWithoutFeedback onPress={dismissKeyboard}>
                 <View style={styles.modalOverlay}>

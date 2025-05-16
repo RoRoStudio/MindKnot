@@ -5,14 +5,12 @@ import SparkFormSheet from '../components/entries/sparks/SparkFormSheet';
 import ActionFormSheet from '../components/entries/actions/ActionFormSheet';
 import LoopFormSheet from '../components/entries/loops/LoopFormSheet';
 import PathFormSheet from '../components/entries/paths/PathFormSheet';
-import CategoryFormModal from '../components/categories/CategoryFormModal';
 import { useNotes } from '../hooks/useNotes';
 import { useSparks } from '../hooks/useSparks';
 import { useActions } from '../hooks/useActions';
 import { usePaths } from '../hooks/usePaths';
 import { useLoops } from '../hooks/useLoops';
 import { useCategories } from '../hooks/useCategories';
-import { Category } from '../types/category';
 
 interface BottomSheetContextType {
     showNoteForm: (onSuccess?: () => void) => void;
@@ -20,7 +18,6 @@ interface BottomSheetContextType {
     showActionForm: (parentId?: string, parentType?: 'path' | 'milestone' | 'loop-item', onSuccess?: () => void) => void;
     showLoopForm: (onSuccess?: () => void) => void;
     showPathForm: (onSuccess?: () => void) => void;
-    showCategoryForm: (category?: Category, onSuccess?: () => void) => void;
     hideAllSheets: () => void;
 }
 
@@ -57,17 +54,13 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
     const [pathFormVisible, setPathFormVisible] = useState(false);
     const [pathOnSuccess, setPathOnSuccess] = useState<(() => void) | undefined>(undefined);
 
-    const [categoryFormVisible, setCategoryFormVisible] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState<Category | undefined>(undefined);
-    const [categoryOnSuccess, setCategoryOnSuccess] = useState<(() => void) | undefined>(undefined);
-
     // Get data loading functions from hooks
     const { loadNotes } = useNotes();
     const { loadSparks } = useSparks();
     const { loadActions } = useActions();
     const { loadPaths } = usePaths();
     const { loadLoops } = useLoops();
-    const { addCategory, editCategory, loadCategories } = useCategories();
+    const { loadCategories } = useCategories();
 
     // Enhanced success handlers with better logging
     const handleNoteSuccess = useCallback(() => {
@@ -135,29 +128,6 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
         });
     }, [loadPaths, pathOnSuccess]);
 
-    const handleCategorySuccess = useCallback(() => {
-        console.log('Category success callback triggered');
-        loadCategories().then(() => {
-            console.log('Categories reloaded successfully');
-            if (categoryOnSuccess) {
-                console.log('Calling additional onSuccess callback');
-                categoryOnSuccess();
-            }
-        }).catch(err => {
-            console.error('Error reloading categories:', err);
-        });
-    }, [loadCategories, categoryOnSuccess]);
-
-    const handleSaveCategory = useCallback(async (title: string, color: string) => {
-        if (selectedCategory) {
-            // Edit existing category
-            return await editCategory(selectedCategory.id, { title, color });
-        } else {
-            // Create new category
-            return await addCategory(title, color);
-        }
-    }, [selectedCategory, addCategory, editCategory]);
-
     // Functions to show/hide different form types
     const showNoteForm = (onSuccess?: () => void) => {
         setNoteOnSuccess(() => onSuccess);
@@ -190,19 +160,12 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
         setPathFormVisible(true);
     };
 
-    const showCategoryForm = (category?: Category, onSuccess?: () => void) => {
-        setSelectedCategory(category);
-        setCategoryOnSuccess(() => onSuccess);
-        setCategoryFormVisible(true);
-    };
-
     const hideAllSheets = () => {
         setNoteFormVisible(false);
         setSparkFormVisible(false);
         setActionFormVisible(false);
         setLoopFormVisible(false);
         setPathFormVisible(false);
-        setCategoryFormVisible(false);
     };
 
     return (
@@ -213,7 +176,6 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
                 showActionForm,
                 showLoopForm,
                 showPathForm,
-                showCategoryForm,
                 hideAllSheets,
             }}
         >
@@ -250,13 +212,6 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
                 visible={pathFormVisible}
                 onClose={() => setPathFormVisible(false)}
                 onSuccess={handlePathSuccess}
-            />
-
-            <CategoryFormModal
-                visible={categoryFormVisible}
-                onClose={() => setCategoryFormVisible(false)}
-                onSave={handleSaveCategory}
-                category={selectedCategory}
             />
         </BottomSheetContext.Provider>
     );
