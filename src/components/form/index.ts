@@ -13,6 +13,8 @@ import FormErrorMessage from './FormErrorMessage';
 import FormMoodSelector from './FormMoodSelector';
 import FormTagInput from './FormTagInput';
 import FormCategorySelector from './FormCategorySelector';
+import { FormModal } from './FormModal';
+import { FormSheet } from './FormSheet';
 
 export {
     Form,
@@ -29,4 +31,6 @@ export {
     FormMoodSelector,
     FormTagInput,
     FormCategorySelector,
+    FormModal,
+    FormSheet
 };

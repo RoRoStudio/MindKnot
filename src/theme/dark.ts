@@ -1,176 +1,331 @@
 // src/theme/dark.ts
+import { TextStyle } from 'react-native';
 import { ThemeType } from './themeTypes';
-import { baseColors, darkColors } from '../styles/colors';
-import { typography } from '../styles/typography';
-import { spacing } from '../styles/spacing';
+import tokens from './tokens';
 
 export const darkTheme: ThemeType = {
     name: 'dark',
     isDark: true,
     colors: {
-        // Primary colors - slightly brighter for dark mode
-        primary: '#547792',
-        primaryLight: '#94B4C1',
-        primaryDark: '#213448',
-        onPrimary: '#FFFFFF',
-
-        // Secondary colors - slightly darker for dark mode
-        secondary: '#C8CCA6',
-        secondaryLight: '#ECEFCA',
-        secondaryDark: '#A6A980',
-        onSecondary: '#213448',
-        secondaryContainer: '#3A3D2C',
-
-        // Tertiary colors
-        tertiary: '#E99470',
-        tertiaryLight: '#FFBB96',
-        tertiaryDark: '#C06B3E',
-        onTertiary: '#FFFFFF',
-
-        // Accent colors
-        accent: '#94B4C1',
-        accentLight: '#B5CEDA',
-        accentDark: '#6E8C99',
-        onAccent: '#FFFFFF',
+        // Brand color scales
+        brand: {
+            blue: tokens.color.brand.blue,
+            green: tokens.color.brand.green,
+            orange: tokens.color.brand.orange,
+            teal: tokens.color.brand.teal,
+        },
 
         // Neutral colors
-        background: '#121212',
-        surface: '#1E1E1E',
-        surfaceVariant: '#2C2C2C',
-        error: '#FF6B6B', // Lighter red for dark mode
-        warning: '#FFAB4C', // Lighter orange for dark mode
-        success: '#4ADE80', // Lighter green for dark mode
-        info: '#7DD3FC', // Lighter blue info color for dark mode
+        neutral: tokens.color.neutral,
+
+        // Primary colors (semantic mappings)
+        primary: tokens.color.brand.blue[400], // Brighter in dark mode
+        primaryLight: tokens.color.brand.teal[200],
+        primaryDark: tokens.color.brand.blue[500],
+        onPrimary: tokens.color.neutral.white,
+
+        // Secondary colors
+        secondary: tokens.color.brand.green[400], // Darker in dark mode
+        secondaryLight: tokens.color.brand.green[200],
+        secondaryDark: tokens.color.brand.green[500],
+        onSecondary: tokens.color.brand.blue[500],
+        secondaryContainer: '#3A3D2C', // Custom dark color for container
+
+        // Tertiary colors
+        tertiary: tokens.color.brand.orange[200], // Brighter in dark mode
+        tertiaryLight: '#FFBB96', // Custom brighter color
+        tertiaryDark: tokens.color.brand.orange[400],
+        onTertiary: tokens.color.neutral.white,
+
+        // Accent colors
+        accent: tokens.color.brand.teal[300],
+        accentLight: tokens.color.brand.teal[200],
+        accentDark: tokens.color.brand.teal[400],
+        onAccent: tokens.color.neutral.white,
+
+        // Background, surface, and content
+        background: tokens.color.neutral.gray[950],
+        surface: tokens.color.neutral.gray[900],
+        surfaceVariant: tokens.color.neutral.gray[800],
 
         // Text colors
-        textPrimary: '#FFFFFF',
-        textSecondary: '#B5CEDA', // Lighter version of accentLight
-        textDisabled: '#666666',
-        textLink: '#94B4C1', // Accent color
+        textPrimary: tokens.color.neutral.white,
+        textSecondary: tokens.color.brand.teal[200],
+        textDisabled: tokens.color.neutral.gray[600],
+        textLink: tokens.color.brand.teal[300],
 
         // Border and divider
-        border: '#333333',
-        divider: '#404040',
+        border: tokens.color.neutral.gray[700],
+        divider: tokens.color.neutral.gray[700],
+
+        // Feedback colors - brighter in dark mode
+        error: '#FF6B6B',
+        errorLight: 'rgba(255, 107, 107, 0.2)',
+        errorDark: '#FF3333',
+        warning: '#FFAB4C',
+        warningLight: 'rgba(255, 171, 76, 0.2)',
+        warningDark: '#FF9900',
+        success: '#4ADE80',
+        successLight: 'rgba(74, 222, 128, 0.2)',
+        successDark: '#22C55E',
+        info: '#7DD3FC',
+        infoLight: 'rgba(125, 211, 252, 0.2)',
+        infoDark: '#38BDF8',
 
         // Shadow color
-        shadow: '#000000',
+        shadow: tokens.color.neutral.black,
 
         // Utility colors
-        white: baseColors.white,
-        black: baseColors.black,
         transparent: 'transparent',
     },
 
     typography: {
-        fontFamily: {
-            regular: 'System',
-            medium: 'System',
-            bold: 'System',
+        fontFamily: tokens.typography.fontFamily,
+        fontSize: tokens.typography.fontSize,
+        fontWeight: tokens.typography.fontWeight,
+        lineHeight: tokens.typography.lineHeight,
+        letterSpacing: tokens.typography.letterSpacing,
+
+        // Preset text styles for dark mode
+        preset: {
+            heading1: {
+                fontFamily: tokens.typography.fontFamily.bold,
+                fontSize: tokens.typography.fontSize.xxxl,
+                fontWeight: tokens.typography.fontWeight.bold,
+                lineHeight: tokens.typography.fontSize.xxxl * 1.2,
+                letterSpacing: tokens.typography.letterSpacing.tight,
+                color: tokens.color.neutral.white,
+            } as TextStyle,
+            heading2: {
+                fontFamily: tokens.typography.fontFamily.bold,
+                fontSize: tokens.typography.fontSize.xxl,
+                fontWeight: tokens.typography.fontWeight.bold,
+                lineHeight: tokens.typography.fontSize.xxl * 1.2,
+                letterSpacing: tokens.typography.letterSpacing.tight,
+                color: tokens.color.neutral.white,
+            } as TextStyle,
+            heading3: {
+                fontFamily: tokens.typography.fontFamily.bold,
+                fontSize: tokens.typography.fontSize.xl,
+                fontWeight: tokens.typography.fontWeight.bold,
+                lineHeight: tokens.typography.fontSize.xl * 1.2,
+                letterSpacing: tokens.typography.letterSpacing.tight,
+                color: tokens.color.neutral.white,
+            } as TextStyle,
+            heading4: {
+                fontFamily: tokens.typography.fontFamily.medium,
+                fontSize: tokens.typography.fontSize.l,
+                fontWeight: tokens.typography.fontWeight.medium,
+                lineHeight: tokens.typography.fontSize.l * 1.3,
+                letterSpacing: tokens.typography.letterSpacing.normal,
+                color: tokens.color.neutral.white,
+            } as TextStyle,
+            heading5: {
+                fontFamily: tokens.typography.fontFamily.medium,
+                fontSize: tokens.typography.fontSize.m,
+                fontWeight: tokens.typography.fontWeight.medium,
+                lineHeight: tokens.typography.fontSize.m * 1.3,
+                letterSpacing: tokens.typography.letterSpacing.normal,
+                color: tokens.color.neutral.white,
+            } as TextStyle,
+            heading6: {
+                fontFamily: tokens.typography.fontFamily.medium,
+                fontSize: tokens.typography.fontSize.s,
+                fontWeight: tokens.typography.fontWeight.medium,
+                lineHeight: tokens.typography.fontSize.s * 1.3,
+                letterSpacing: tokens.typography.letterSpacing.normal,
+                color: tokens.color.neutral.white,
+            } as TextStyle,
+            subtitle1: {
+                fontFamily: tokens.typography.fontFamily.medium,
+                fontSize: tokens.typography.fontSize.m,
+                fontWeight: tokens.typography.fontWeight.medium,
+                lineHeight: tokens.typography.fontSize.m * 1.5,
+                letterSpacing: tokens.typography.letterSpacing.normal,
+                color: tokens.color.brand.teal[200],
+            } as TextStyle,
+            subtitle2: {
+                fontFamily: tokens.typography.fontFamily.medium,
+                fontSize: tokens.typography.fontSize.s,
+                fontWeight: tokens.typography.fontWeight.medium,
+                lineHeight: tokens.typography.fontSize.s * 1.5,
+                letterSpacing: tokens.typography.letterSpacing.normal,
+                color: tokens.color.brand.teal[200],
+            } as TextStyle,
+            body1: {
+                fontFamily: tokens.typography.fontFamily.regular,
+                fontSize: tokens.typography.fontSize.m,
+                fontWeight: tokens.typography.fontWeight.regular,
+                lineHeight: tokens.typography.fontSize.m * 1.5,
+                letterSpacing: tokens.typography.letterSpacing.normal,
+                color: tokens.color.neutral.gray[300],
+            } as TextStyle,
+            body2: {
+                fontFamily: tokens.typography.fontFamily.regular,
+                fontSize: tokens.typography.fontSize.s,
+                fontWeight: tokens.typography.fontWeight.regular,
+                lineHeight: tokens.typography.fontSize.s * 1.5,
+                letterSpacing: tokens.typography.letterSpacing.normal,
+                color: tokens.color.neutral.gray[300],
+            } as TextStyle,
+            caption: {
+                fontFamily: tokens.typography.fontFamily.regular,
+                fontSize: tokens.typography.fontSize.xs,
+                fontWeight: tokens.typography.fontWeight.regular,
+                lineHeight: tokens.typography.fontSize.xs * 1.5,
+                letterSpacing: tokens.typography.letterSpacing.normal,
+                color: tokens.color.neutral.gray[500],
+            } as TextStyle,
+            overline: {
+                fontFamily: tokens.typography.fontFamily.medium,
+                fontSize: tokens.typography.fontSize.xs,
+                fontWeight: tokens.typography.fontWeight.medium,
+                lineHeight: tokens.typography.fontSize.xs * 1.5,
+                letterSpacing: tokens.typography.letterSpacing.wide,
+                textTransform: 'uppercase',
+                color: tokens.color.neutral.gray[500],
+            } as TextStyle,
+            button: {
+                fontFamily: tokens.typography.fontFamily.medium,
+                fontSize: tokens.typography.fontSize.m,
+                fontWeight: tokens.typography.fontWeight.medium,
+                lineHeight: tokens.typography.fontSize.m * 1.5,
+                letterSpacing: tokens.typography.letterSpacing.normal,
+                textTransform: 'none',
+            } as TextStyle,
+            label: {
+                fontFamily: tokens.typography.fontFamily.medium,
+                fontSize: tokens.typography.fontSize.s,
+                fontWeight: tokens.typography.fontWeight.medium,
+                lineHeight: tokens.typography.fontSize.s * 1.5,
+                letterSpacing: tokens.typography.letterSpacing.normal,
+                color: tokens.color.neutral.gray[300],
+            } as TextStyle,
         },
-        fontSize: typography.fontSize,
-        fontWeight: {
-            regular: '400',
-            medium: '500',
-            bold: '700',
-        },
-        lineHeight: typography.lineHeight,
     },
 
     spacing: {
-        ...spacing,
-        xxl: 48, // Adding an xxl size that was missing
+        ...tokens.spacing,
     },
 
     shape: {
         radius: {
-            none: 0,
-            xs: 2,
-            s: 4,
-            m: 8,
-            l: 12,
-            xl: 20,
-            circle: 999,
+            ...tokens.radius,
         },
     },
 
     elevation: {
-        z1: {
-            shadowColor: '#000000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.25,
-            shadowRadius: 2,
-            elevation: 1,
-        },
-        z2: {
-            shadowColor: '#000000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 3,
-            elevation: 2,
-        },
-        z3: {
-            shadowColor: '#000000',
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.35,
-            shadowRadius: 5,
-            elevation: 6,
-        },
-        z4: {
-            shadowColor: '#000000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.45,
-            shadowRadius: 8,
-            elevation: 10,
-        },
+        ...tokens.shadow,
+    },
+
+    zIndex: {
+        ...tokens.zIndex,
+    },
+
+    animation: {
+        ...tokens.animation,
+    },
+
+    opacity: {
+        ...tokens.opacity,
     },
 
     components: {
         bottomNavBar: {
-            background: '#213448', // Dark primary
-            activeIcon: '#ECEFCA', // Light secondary 
-            inactiveIcon: 'rgba(236, 239, 202, 0.7)', // Semi-transparent
-            activeText: '#ECEFCA', // Light secondary
-            inactiveText: 'rgba(236, 239, 202, 0.7)', // Semi-transparent
-            fabBackground: '#94B4C1', // Accent color
-            fabIcon: '#213448', // Dark primary for contrast on the accent
-            menuItemBackground: '#547792', // Primary
-            menuItemIcon: '#FFFFFF',
+            background: tokens.color.brand.blue[500],
+            activeIcon: tokens.color.brand.green[200],
+            inactiveIcon: `rgba(236, 239, 202, 0.7)`,
+            activeText: tokens.color.brand.green[200],
+            inactiveText: `rgba(236, 239, 202, 0.7)`,
+            fabBackground: tokens.color.brand.teal[300],
+            fabIcon: tokens.color.brand.blue[500],
+            menuItemBackground: tokens.color.brand.blue[400],
+            menuItemIcon: tokens.color.neutral.white,
             elevation: 8,
         },
+
         card: {
-            background: '#1E1E1E',
-            border: '#333333',
-            titleColor: '#ECEFCA', // Light secondary
-            textColor: '#B5CEDA', // Light accent
-            radius: 10,
+            background: tokens.color.neutral.gray[900],
+            border: tokens.color.neutral.gray[700],
+            titleColor: tokens.color.brand.green[200],
+            textColor: tokens.color.brand.teal[200],
+            radius: tokens.radius.m,
+            padding: tokens.spacing.m,
+            elevation: tokens.shadow.s,
         },
+
         button: {
             primary: {
-                background: '#547792', // Primary (slightly brighter for dark mode)
-                text: '#FFFFFF',
+                background: tokens.color.brand.blue[400],
+                text: tokens.color.neutral.white,
                 border: 'transparent',
-                radius: 10,
+                radius: tokens.radius.m,
+                pressedBackground: tokens.color.brand.blue[300],
+                disabledBackground: tokens.color.neutral.gray[800],
+                disabledText: tokens.color.neutral.gray[600],
             },
             secondary: {
                 background: 'transparent',
-                text: '#94B4C1', // Accent
-                border: '#94B4C1', // Accent
-                radius: 10,
+                text: tokens.color.brand.teal[300],
+                border: tokens.color.brand.teal[300],
+                radius: tokens.radius.m,
+                pressedBackground: `rgba(148, 180, 193, 0.2)`,
+                disabledBackground: 'transparent',
+                disabledText: tokens.color.neutral.gray[700],
             },
             text: {
-                color: '#ECEFCA', // Light secondary
-                pressedColor: '#C8CCA6', // Secondary
+                color: tokens.color.brand.green[200],
+                pressedColor: tokens.color.brand.green[300],
+                disabledColor: tokens.color.neutral.gray[700],
             },
         },
+
         inputs: {
-            background: '#2C2C2C',
-            text: '#FFFFFF',
-            placeholder: '#666666',
-            border: '#333333',
-            focusBorder: '#94B4C1', // Accent
-            radius: 10,
+            background: tokens.color.neutral.gray[800],
+            text: tokens.color.neutral.white,
+            placeholder: tokens.color.neutral.gray[600],
+            border: tokens.color.neutral.gray[700],
+            focusBorder: tokens.color.brand.teal[300],
+            radius: tokens.radius.m,
             error: '#FF6B6B',
             success: '#4ADE80',
+            padding: tokens.spacing.m,
+            height: 56,
+        },
+
+        listItem: {
+            background: tokens.color.neutral.gray[900],
+            pressedBackground: tokens.color.neutral.gray[800],
+            titleColor: tokens.color.neutral.white,
+            subtitleColor: tokens.color.brand.teal[200],
+            border: tokens.color.neutral.gray[700],
+            height: 72,
+        },
+
+        modal: {
+            background: tokens.color.neutral.gray[900],
+            overlay: tokens.color.special.overlay,
+            shadow: tokens.shadow.l,
+            radius: tokens.radius.l,
+        },
+
+        status: {
+            info: {
+                background: 'rgba(125, 211, 252, 0.2)',
+                text: '#7DD3FC',
+            },
+            success: {
+                background: 'rgba(74, 222, 128, 0.2)',
+                text: '#4ADE80',
+            },
+            warning: {
+                background: 'rgba(255, 171, 76, 0.2)',
+                text: '#FFAB4C',
+            },
+            error: {
+                background: 'rgba(255, 107, 107, 0.2)',
+                text: '#FF6B6B',
+            },
         },
     },
 };

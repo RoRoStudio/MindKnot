@@ -3,11 +3,11 @@ import { BaseEntry } from './baseEntry';
 
 export interface Loop extends BaseEntry {
     type: 'loop';
-    description?: string;
+    description: string;
     frequency: string; // JSON stringified object, e.g. { type: 'daily' }
     startTimeByDay?: Record<string, string>; // e.g. { mon: '08:00', tue: '09:00' }
-    active?: boolean; // Whether the loop is currently active
-    startDate?: string; // When the loop starts
+    active: boolean;
+    startDate: string;
     endDate?: string; // When the loop ends (optional)
     items?: LoopItem[];
 }

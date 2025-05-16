@@ -6,6 +6,7 @@ export type RootStackParamList = {
     Path: { sagaId?: string };
     SagaDetail: { sagaId: string };
     ThemeInspector: undefined;
+    ComponentShowcase: undefined;
 
     // New unified screens with create/edit/view modes
     NoteScreen: {

@@ -3,21 +3,31 @@ import { StyleSheet } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeType } from '../theme/themeTypes';
 import { useMemo } from 'react';
+import styleConstants from '../theme/styleConstants';
+import { useThemedStyles } from './useThemedStyles';
 
 /**
+ * @deprecated Use useThemedStyles instead
+ * 
  * Custom hook to create styles that are theme-aware
+ * This hook is maintained for backward compatibility.
+ * New components should use useThemedStyles which provides access to style constants.
  * 
  * @param styleCreator A function that takes the theme and returns a style object
  * @returns The created styles
+ * 
+ * @example
+ * const styles = useStyles((theme) => ({
+ *   container: {
+ *     backgroundColor: theme.colors.background,
+ *     padding: theme.spacing.m,
+ *   },
+ * }));
  */
 export function useStyles<T extends StyleSheet.NamedStyles<T> | StyleSheet.NamedStyles<any>>(
     styleCreator: (theme: ThemeType) => T
 ): T {
-    const { theme } = useTheme();
-
-    // Create and memoize the styles based on the current theme
-    // We depend only on theme as the styleCreator function reference should be stable
-    return useMemo(() => {
-        return StyleSheet.create(styleCreator(theme));
-    }, [theme]);
+    return useThemedStyles((theme) => styleCreator(theme));
 }
+
+export default useStyles;

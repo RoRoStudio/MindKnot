@@ -289,12 +289,15 @@ export default function LoopScreen() {
         try {
             setIsSubmitting(true);
 
+            // Ensure startDate is always a string
+            const currentDate = new Date().toISOString();
+
             const loopData = {
                 title: data.title,
                 description: data.description,
                 frequency: data.frequency,
                 active: data.active,
-                startDate: data.startDate,
+                startDate: data.startDate || currentDate, // Use current date if startDate is not provided
                 endDate: data.endDate,
                 tags: data.tags,
                 categoryId: data.categoryId || undefined,

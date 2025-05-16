@@ -16,6 +16,9 @@ import Animated, {
     withDelay,
     Easing,
 } from 'react-native-reanimated';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types/navigation-types';
 import { useTheme } from '../contexts/ThemeContext';
 import { Typography } from '../components/common/Typography';
 import { Icon } from '../components/common/Icon';
@@ -48,6 +51,7 @@ export default function HomeScreen() {
     const { paths, loadPaths } = usePaths();
     const { loops, loadLoops } = useLoops();
     const { showNoteForm, showSparkForm, showActionForm, showPathForm } = useBottomSheet();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
     const headerOpacity = useSharedValue(0);
     const cardsOpacity = useSharedValue(0);
@@ -87,6 +91,28 @@ export default function HomeScreen() {
         return date.toLocaleDateString();
     };
 
+    const navigateToEntryScreen = (type: string, id: string) => {
+        switch (type) {
+            case 'note':
+                navigation.navigate('NoteScreen', { mode: 'view', id });
+                break;
+            case 'spark':
+                navigation.navigate('SparkScreen', { mode: 'view', id });
+                break;
+            case 'action':
+                navigation.navigate('ActionScreen', { mode: 'view', id });
+                break;
+            case 'path':
+                navigation.navigate('PathScreen', { mode: 'view', id });
+                break;
+            case 'loop':
+                navigation.navigate('LoopScreen', { mode: 'view', id });
+                break;
+            default:
+                console.warn(`Unknown entry type: ${type}`);
+        }
+    };
+
     const recentEntries = [
         ...notes.map(n => ({ id: n.id, type: 'note', title: n.title, date: formatRelativeDate(n.createdAt), ...iconMap.note })),
         ...sparks.map(s => ({ id: s.id, type: 'spark', title: s.title, date: formatRelativeDate(s.createdAt), ...iconMap.spark })),
@@ -102,6 +128,7 @@ export default function HomeScreen() {
         { id: '2', title: 'Add Spark', icon: 'lightbulb', color: '#FFB800', onPress: () => showSparkForm() },
         { id: '3', title: 'Create Action', icon: 'check', color: theme.colors.success, onPress: () => showActionForm() },
         { id: '4', title: 'Start Path', icon: 'compass', color: theme.colors.info, onPress: () => showPathForm() },
+        { id: '5', title: 'UI Showcase', icon: 'layout-grid', color: '#9C27B0', onPress: () => navigation.navigate('ComponentShowcase') },
     ];
 
 
@@ -148,6 +175,7 @@ export default function HomeScreen() {
                                 key={entry.id}
                                 style={styles.entryCard}
                                 activeOpacity={0.8}
+                                onPress={() => navigateToEntryScreen(entry.type, entry.id)}
                             >
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                     <Icon

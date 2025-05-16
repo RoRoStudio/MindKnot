@@ -11,14 +11,17 @@ export const createLoop = async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedA
     const now = new Date().toISOString();
 
     await executeSql(
-        `INSERT INTO loops (id, title, description, frequency, startTimeByDay, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO loops (id, title, description, frequency, startTimeByDay, active, startDate, endDate, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             id,
             loop.title,
             loop.description ?? null,
             loop.frequency,
             loop.startTimeByDay ? JSON.stringify(loop.startTimeByDay) : null,
+            loop.active ? 1 : 0,
+            loop.startDate,
+            loop.endDate || null,
             now,
             now
         ]
@@ -55,6 +58,9 @@ export const createLoop = async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedA
         description: loop.description,
         frequency: loop.frequency,
         startTimeByDay: loop.startTimeByDay,
+        active: loop.active,
+        startDate: loop.startDate,
+        endDate: loop.endDate,
         items: loop.items || [],
         tags: loop.tags || [],
         createdAt: now,
@@ -78,6 +84,8 @@ export const getAllLoops = async (): Promise<Loop[]> => {
                 type: 'loop',
                 tags: row.tags ? JSON.parse(row.tags) : [],
                 startTimeByDay: row.startTimeByDay ? JSON.parse(row.startTimeByDay) : undefined,
+                active: Boolean(row.active),
+                startDate: row.startDate || new Date().toISOString(), // Default to current date if not set
             })) as Loop[];
 
             if (DEBUG_LOG) console.log(`📣 Found ${loops.length} loops`);
@@ -124,6 +132,9 @@ export const updateLoop = async (
             description = ?, 
             frequency = ?,
             startTimeByDay = ?,
+            active = ?,
+            startDate = ?,
+            endDate = ?,
             tags = ?,
             updatedAt = ?
             WHERE id = ?`,
@@ -132,6 +143,9 @@ export const updateLoop = async (
                 loopData.description || null,
                 loopData.frequency,
                 loopData.startTimeByDay ? JSON.stringify(loopData.startTimeByDay) : null,
+                loopData.active ? 1 : 0,
+                loopData.startDate,
+                loopData.endDate || null,
                 loopData.tags ? JSON.stringify(loopData.tags) : null,
                 now,
                 loopId
@@ -227,6 +241,8 @@ export const getLoopById = async (id: string): Promise<Loop | null> => {
                 type: 'loop',
                 tags: row.tags ? JSON.parse(row.tags) : [],
                 startTimeByDay: row.startTimeByDay ? JSON.parse(row.startTimeByDay) : undefined,
+                active: Boolean(row.active),
+                startDate: row.startDate || new Date().toISOString(), // Default to current date if not set
                 items: [] // Will be populated below
             };
 

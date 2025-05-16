@@ -160,7 +160,13 @@ export default function NoteScreen() {
     }));
 
     // Set up form with default values
-    const { control, handleSubmit, reset, formState: { errors } } = useForm<NoteFormValues>({
+    const {
+        control,
+        handleSubmit,
+        reset,
+        getValues,
+        formState: { errors }
+    } = useForm<NoteFormValues>({
         defaultValues: {
             title: '',
             body: '',
@@ -337,8 +343,7 @@ export default function NoteScreen() {
 
     // Render read-only view
     const renderViewMode = () => {
-        const { getValues } = useForm();
-        const values = getValues ? getValues() : { title: '', body: '', tags: [], categoryId: null };
+        const values = getValues();
 
         return (
             <View style={styles.content}>

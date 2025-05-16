@@ -5,6 +5,8 @@ import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../common/Typography';
 import { Card } from '../common/Card';
 import { Icon, IconName } from '../common/Icon';
+import { CategoryPill } from '../common/CategoryPill';
+import { Tag } from '../common/Tag';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCategories } from '../../hooks/useCategories';
 import { Category } from '../../types/category';
@@ -288,23 +290,11 @@ export const EntryCard = memo(function EntryCard({
         if (!category) return null;
 
         return (
-            <View
-                style={[
-                    styles.categoryTag,
-                    {
-                        backgroundColor: `${category.color}20`,
-                        borderColor: category.color,
-                        borderWidth: 1,
-                    }
-                ]}
-            >
-                <View style={styles.categoryTextContainer}>
-                    <View style={[styles.categoryDot, { backgroundColor: category.color }]} />
-                    <Typography style={styles.tagText}>
-                        {category.title}
-                    </Typography>
-                </View>
-            </View>
+            <CategoryPill
+                title={category.title}
+                color={category.color}
+                size="small"
+            />
         );
     };
 
@@ -487,11 +477,11 @@ export const EntryCard = memo(function EntryCard({
                         {renderCategory()}
 
                         {tags && tags.length > 0 && tags.map((tag, index) => (
-                            <View key={index} style={styles.tag}>
-                                <Typography style={styles.tagText}>
-                                    {tag}
-                                </Typography>
-                            </View>
+                            <Tag
+                                key={index}
+                                label={tag}
+                                size="small"
+                            />
                         ))}
                     </View>
 

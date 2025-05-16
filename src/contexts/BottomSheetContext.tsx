@@ -1,15 +1,6 @@
 // src/contexts/BottomSheetContext.tsx
-import React, { createContext, useContext, ReactNode, useCallback } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNotes } from '../hooks/useNotes';
-import { useSparks } from '../hooks/useSparks';
-import { useActions } from '../hooks/useActions';
-import { usePaths } from '../hooks/usePaths';
-import { useLoops } from '../hooks/useLoops';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { RootStackParamList } from '../types/navigation-types';
-
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface BottomSheetContextType {
     showNoteForm: (onSuccess?: () => void) => void;
@@ -18,6 +9,9 @@ interface BottomSheetContextType {
     showLoopForm: (onSuccess?: () => void) => void;
     showPathForm: (onSuccess?: () => void) => void;
     hideAllSheets: () => void;
+    
+    // Add navigation callback handler
+    setNavigationCallback: (callback: (screen: keyof RootStackParamList, params: any) => void) => void;
 }
 
 const BottomSheetContext = createContext<BottomSheetContextType | undefined>(undefined);
@@ -35,48 +29,57 @@ interface BottomSheetProviderProps {
 }
 
 export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ children }) => {
-    const navigation = useNavigation<NavigationProp>();
+    // Instead of direct navigation, we'll use a callback that can be set by navigation-aware components
+    let navigateCallback: ((screen: keyof RootStackParamList, params: any) => void) | null = null;
+    
+    const setNavigationCallback = (callback: (screen: keyof RootStackParamList, params: any) => void) => {
+        navigateCallback = callback;
+    };
 
-    // Get data loading functions from hooks
-    const { loadNotes } = useNotes();
-    const { loadSparks } = useSparks();
-    const { loadActions } = useActions();
-    const { loadPaths } = usePaths();
-    const { loadLoops } = useLoops();
+    // Functions to handle navigation to different form screens
+    const showNoteForm = (onSuccess?: () => void) => {
+        if (navigateCallback) {
+            navigateCallback('NoteScreen', { mode: 'create' });
+        }
+    };
 
-    // Functions to navigate to different form screens
-    const showNoteForm = useCallback((onSuccess?: () => void) => {
-        navigation.navigate('NoteScreen', { mode: 'create' });
-    }, [navigation]);
+    const showSparkForm = (onSuccess?: () => void) => {
+        if (navigateCallback) {
+            navigateCallback('SparkScreen', { mode: 'create' });
+        }
+    };
 
-    const showSparkForm = useCallback((onSuccess?: () => void) => {
-        navigation.navigate('SparkScreen', { mode: 'create' });
-    }, [navigation]);
-
-    const showActionForm = useCallback(
-        (parentId?: string, parentType?: 'path' | 'milestone' | 'loop-item', onSuccess?: () => void) => {
-            navigation.navigate('ActionScreen', {
+    const showActionForm = (
+        parentId?: string, 
+        parentType?: 'path' | 'milestone' | 'loop-item', 
+        onSuccess?: () => void
+    ) => {
+        if (navigateCallback) {
+            navigateCallback('ActionScreen', {
                 mode: 'create',
                 parentId,
                 parentType
             });
-        },
-        [navigation]
-    );
+        }
+    };
 
-    const showLoopForm = useCallback((onSuccess?: () => void) => {
-        navigation.navigate('LoopScreen', { mode: 'create' });
-    }, [navigation]);
+    const showLoopForm = (onSuccess?: () => void) => {
+        if (navigateCallback) {
+            navigateCallback('LoopScreen', { mode: 'create' });
+        }
+    };
 
-    const showPathForm = useCallback((onSuccess?: () => void) => {
-        navigation.navigate('PathScreen', { mode: 'create' });
-    }, [navigation]);
+    const showPathForm = (onSuccess?: () => void) => {
+        if (navigateCallback) {
+            navigateCallback('PathScreen', { mode: 'create' });
+        }
+    };
 
     // This function doesn't do anything anymore, but we keep it for compatibility
-    const hideAllSheets = useCallback(() => {
+    const hideAllSheets = () => {
         // This function is kept for API compatibility
         // but doesn't need to do anything as we're using screens now
-    }, []);
+    };
 
     return (
         <BottomSheetContext.Provider
@@ -87,10 +90,10 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
                 showLoopForm,
                 showPathForm,
                 hideAllSheets,
+                setNavigationCallback,
             }}
         >
             {children}
-            {/* No bottom sheets are rendered here anymore */}
         </BottomSheetContext.Provider>
     );
 };

@@ -17,6 +17,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useStyles } from '../hooks/useStyles';
 import { Typography } from '../components/common/Typography';
 import { Icon } from '../components/common/Icon';
+import { DetailScreenHeader } from '../components/common/DetailScreenHeader';
 import { Form, FormInput, FormRichTextarea, FormTagInput, FormCategorySelector } from '../components/form';
 import { createAction, updateAction, getActionById } from '../services/actionService';
 import { RootStackParamList } from '../types/navigation-types';
@@ -290,6 +291,7 @@ export default function ActionScreen() {
                 description: data.description,
                 dueDate: data.dueDate,
                 done: data.completed,
+                completed: data.completed,
                 priority: data.priority,
                 tags: data.tags,
                 categoryId: data.categoryId || undefined,
@@ -337,21 +339,12 @@ export default function ActionScreen() {
         if (mode === 'view') title = "Action";
 
         return (
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Icon name="arrow-left" width={24} height={24} color={theme.colors.textPrimary} />
-                </TouchableOpacity>
-
-                <Typography variant="h6" style={styles.headerTitle}>
-                    {title}
-                </Typography>
-
-                {mode === 'view' && (
-                    <TouchableOpacity onPress={handleEditPress} style={styles.actionButton}>
-                        <Icon name="pencil" width={24} height={24} color={theme.colors.textPrimary} />
-                    </TouchableOpacity>
-                )}
-            </View>
+            <DetailScreenHeader
+                title={title}
+                iconName="square-check"
+                showEditButton={mode === 'view'}
+                onEditPress={handleEditPress}
+            />
         );
     };
 

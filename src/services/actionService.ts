@@ -9,15 +9,18 @@ export const createAction = async (action: Omit<Action, 'id' | 'type' | 'created
 
     await executeSql(
         `INSERT INTO actions (
-            id, title, tags, body, done, dueDate, subActions, parentId, parentType,
+            id, title, tags, body, description, done, completed, priority, dueDate, subActions, parentId, parentType,
             createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             id,
             action.title,
             action.tags ? JSON.stringify(action.tags) : null,
             action.body,
+            action.description,
             action.done ? 1 : 0,
+            action.completed ? 1 : 0,
+            action.priority,
             action.dueDate || null,
             action.subActions ? JSON.stringify(action.subActions) : null,
             action.parentId || null,
@@ -33,7 +36,10 @@ export const createAction = async (action: Omit<Action, 'id' | 'type' | 'created
         title: action.title,
         tags: action.tags || [],
         body: action.body,
-        done: action.done || false,
+        description: action.description,
+        done: action.done,
+        completed: action.completed,
+        priority: action.priority,
         dueDate: action.dueDate,
         subActions: action.subActions || [],
         parentId: action.parentId,
@@ -55,6 +61,9 @@ export const getAllActions = async (): Promise<Action[]> => {
             tags: row.tags ? JSON.parse(row.tags) : [],
             subActions: row.subActions ? JSON.parse(row.subActions) : [],
             done: Boolean(row.done),
+            completed: Boolean(row.completed),
+            priority: row.priority || 2, // Default priority if not set
+            description: row.description || '', // Default empty string if not set
             type: 'action'
         })) as Action[];
     }
@@ -75,6 +84,9 @@ export const getActionById = async (id: string): Promise<Action | null> => {
             tags: row.tags ? JSON.parse(row.tags) : [],
             subActions: row.subActions ? JSON.parse(row.subActions) : [],
             done: Boolean(row.done),
+            completed: Boolean(row.completed),
+            priority: row.priority || 2, // Default priority if not set
+            description: row.description || '', // Default empty string if not set
             type: 'action'
         } as Action;
     }
@@ -98,9 +110,12 @@ export const updateAction = async (id: string, updates: Partial<Omit<Action, 'id
         await executeSql(
             `UPDATE actions SET 
                 title = ?, 
-                body = ?, 
+                body = ?,
+                description = ?, 
                 tags = ?,
                 done = ?,
+                completed = ?,
+                priority = ?,
                 dueDate = ?,
                 subActions = ?,
                 parentId = ?,
@@ -110,8 +125,11 @@ export const updateAction = async (id: string, updates: Partial<Omit<Action, 'id
             [
                 updatedAction.title,
                 updatedAction.body,
+                updatedAction.description,
                 updatedAction.tags ? JSON.stringify(updatedAction.tags) : null,
                 updatedAction.done ? 1 : 0,
+                updatedAction.completed ? 1 : 0,
+                updatedAction.priority,
                 updatedAction.dueDate || null,
                 updatedAction.subActions ? JSON.stringify(updatedAction.subActions) : null,
                 updatedAction.parentId || null,

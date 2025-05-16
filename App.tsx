@@ -9,7 +9,6 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { initDatabase } from './src/database/database';
-import { BottomSheetProvider } from './src/contexts/BottomSheetContext';
 
 export default function App() {
     const [dbInitialized, setDbInitialized] = useState(false);
@@ -61,13 +60,11 @@ export default function App() {
         <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
                 <ThemeProvider>
-                    <BottomSheetProvider>
-                        <ActionSheetProvider>
-                            <NavigationContainer>
-                                <AppNavigator />
-                            </NavigationContainer>
-                        </ActionSheetProvider>
-                    </BottomSheetProvider>
+                    <ActionSheetProvider>
+                        <NavigationContainer>
+                            <AppNavigator />
+                        </NavigationContainer>
+                    </ActionSheetProvider>
                 </ThemeProvider>
             </SafeAreaProvider>
         </GestureHandlerRootView>
