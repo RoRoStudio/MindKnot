@@ -1,11 +1,17 @@
 // src/screens/vault/VaultNotesScreen.tsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BaseVaultScreen } from './BaseVaultScreen';
 import { useNotes } from '../../hooks/useNotes';
 import { NoteCard } from '../../components/entries';
 import { Note } from '../../types/note';
+import { RootStackParamList } from '../../types/navigation-types';
+
+type VaultNotesScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function VaultNotesScreen() {
+    const navigation = useNavigation<VaultNotesScreenNavigationProp>();
     const { notes, loadNotes } = useNotes();
 
     // Extract all unique tags from notes
@@ -14,6 +20,14 @@ export default function VaultNotesScreen() {
         notes.forEach(note => note.tags?.forEach(tag => tagSet.add(tag)));
         return Array.from(tagSet).sort();
     }, [notes]);
+
+    // Handle note press to navigate to detail screen
+    const handleNotePress = useCallback((note: Note) => {
+        navigation.navigate('NoteScreen', {
+            mode: 'view',
+            id: note.id
+        });
+    }, [navigation]);
 
     // Function to filter notes based on search term, tags, and category
     const filterNotes = (note: Note, searchTerm: string, selectedTags: string[], categoryId: string | null): boolean => {
@@ -53,11 +67,26 @@ export default function VaultNotesScreen() {
         }
     };
 
+    // Memoize the renderItem to avoid constant recreation
+    const renderItem = useMemo(() => {
+        return ({ item }: { item: Note }) => (
+            <NoteCard
+                note={item}
+                onPress={() => handleNotePress(item)}
+            />
+        );
+    }, [handleNotePress]);
+
+    // Memoize the loadData function to avoid recreation
+    const loadData = useCallback(async () => {
+        await loadNotes();
+    }, [loadNotes]);
+
     return (
         <BaseVaultScreen
             data={notes}
-            loadData={async () => { await loadNotes(); }}
-            renderItem={({ item }) => <NoteCard note={item} />}
+            loadData={loadData}
+            renderItem={renderItem}
             allTags={allTags}
             type="notes"
             emptyIcon="file-text"

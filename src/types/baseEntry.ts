@@ -6,4 +6,5 @@ export interface BaseEntry {
     categoryId?: string;
     createdAt: string;
     updatedAt: string;
+    isStarred?: boolean;
 }

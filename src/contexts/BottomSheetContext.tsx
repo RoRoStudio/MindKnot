@@ -1,16 +1,15 @@
 // src/contexts/BottomSheetContext.tsx
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import NoteFormSheet from '../components/entries/notes/NoteFormSheet';
-import SparkFormSheet from '../components/entries/sparks/SparkFormSheet';
-import ActionFormSheet from '../components/entries/actions/ActionFormSheet';
-import LoopFormSheet from '../components/entries/loops/LoopFormSheet';
-import PathFormSheet from '../components/entries/paths/PathFormSheet';
+import React, { createContext, useContext, ReactNode, useCallback } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNotes } from '../hooks/useNotes';
 import { useSparks } from '../hooks/useSparks';
 import { useActions } from '../hooks/useActions';
 import { usePaths } from '../hooks/usePaths';
 import { useLoops } from '../hooks/useLoops';
-import { useCategories } from '../hooks/useCategories';
+import { RootStackParamList } from '../types/navigation-types';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface BottomSheetContextType {
     showNoteForm: (onSuccess?: () => void) => void;
@@ -36,23 +35,7 @@ interface BottomSheetProviderProps {
 }
 
 export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ children }) => {
-    // Track visibility of each sheet type
-    const [noteFormVisible, setNoteFormVisible] = useState(false);
-    const [noteOnSuccess, setNoteOnSuccess] = useState<(() => void) | undefined>(undefined);
-
-    const [sparkFormVisible, setSparkFormVisible] = useState(false);
-    const [sparkOnSuccess, setSparkOnSuccess] = useState<(() => void) | undefined>(undefined);
-
-    const [actionFormVisible, setActionFormVisible] = useState(false);
-    const [actionParentId, setActionParentId] = useState<string | undefined>(undefined);
-    const [actionParentType, setActionParentType] = useState<'path' | 'milestone' | 'loop-item' | undefined>(undefined);
-    const [actionOnSuccess, setActionOnSuccess] = useState<(() => void) | undefined>(undefined);
-
-    const [loopFormVisible, setLoopFormVisible] = useState(false);
-    const [loopOnSuccess, setLoopOnSuccess] = useState<(() => void) | undefined>(undefined);
-
-    const [pathFormVisible, setPathFormVisible] = useState(false);
-    const [pathOnSuccess, setPathOnSuccess] = useState<(() => void) | undefined>(undefined);
+    const navigation = useNavigation<NavigationProp>();
 
     // Get data loading functions from hooks
     const { loadNotes } = useNotes();
@@ -60,113 +43,40 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
     const { loadActions } = useActions();
     const { loadPaths } = usePaths();
     const { loadLoops } = useLoops();
-    const { loadCategories } = useCategories();
 
-    // Enhanced success handlers with better logging
-    const handleNoteSuccess = useCallback(() => {
-        console.log('Note success callback triggered');
-        loadNotes().then(() => {
-            console.log('Notes reloaded successfully');
-            if (noteOnSuccess) {
-                console.log('Calling additional onSuccess callback');
-                noteOnSuccess();
-            }
-        }).catch(err => {
-            console.error('Error reloading notes:', err);
-        });
-    }, [loadNotes, noteOnSuccess]);
+    // Functions to navigate to different form screens
+    const showNoteForm = useCallback((onSuccess?: () => void) => {
+        navigation.navigate('NoteScreen', { mode: 'create' });
+    }, [navigation]);
 
-    const handleSparkSuccess = useCallback(() => {
-        console.log('Spark success callback triggered');
-        loadSparks().then(() => {
-            console.log('Sparks reloaded successfully');
-            if (sparkOnSuccess) {
-                console.log('Calling additional onSuccess callback');
-                sparkOnSuccess();
-            }
-        }).catch(err => {
-            console.error('Error reloading sparks:', err);
-        });
-    }, [loadSparks, sparkOnSuccess]);
+    const showSparkForm = useCallback((onSuccess?: () => void) => {
+        navigation.navigate('SparkScreen', { mode: 'create' });
+    }, [navigation]);
 
-    const handleActionSuccess = useCallback(() => {
-        console.log('Action success callback triggered');
-        loadActions().then(() => {
-            console.log('Actions reloaded successfully');
-            if (actionOnSuccess) {
-                console.log('Calling additional onSuccess callback');
-                actionOnSuccess();
-            }
-        }).catch(err => {
-            console.error('Error reloading actions:', err);
-        });
-    }, [loadActions, actionOnSuccess]);
+    const showActionForm = useCallback(
+        (parentId?: string, parentType?: 'path' | 'milestone' | 'loop-item', onSuccess?: () => void) => {
+            navigation.navigate('ActionScreen', {
+                mode: 'create',
+                parentId,
+                parentType
+            });
+        },
+        [navigation]
+    );
 
-    const handleLoopSuccess = useCallback(() => {
-        console.log('Loop success callback triggered');
-        loadLoops().then(() => {
-            console.log('Loops reloaded successfully');
-            if (loopOnSuccess) {
-                console.log('Calling additional onSuccess callback');
-                loopOnSuccess();
-            }
-        }).catch(err => {
-            console.error('Error reloading loops:', err);
-        });
-    }, [loadLoops, loopOnSuccess]);
+    const showLoopForm = useCallback((onSuccess?: () => void) => {
+        navigation.navigate('LoopScreen', { mode: 'create' });
+    }, [navigation]);
 
-    const handlePathSuccess = useCallback(() => {
-        console.log('Path success callback triggered');
-        loadPaths().then(() => {
-            console.log('Paths reloaded successfully');
-            if (pathOnSuccess) {
-                console.log('Calling additional onSuccess callback');
-                pathOnSuccess();
-            }
-        }).catch(err => {
-            console.error('Error reloading paths:', err);
-        });
-    }, [loadPaths, pathOnSuccess]);
+    const showPathForm = useCallback((onSuccess?: () => void) => {
+        navigation.navigate('PathScreen', { mode: 'create' });
+    }, [navigation]);
 
-    // Functions to show/hide different form types
-    const showNoteForm = (onSuccess?: () => void) => {
-        setNoteOnSuccess(() => onSuccess);
-        setNoteFormVisible(true);
-    };
-
-    const showSparkForm = (onSuccess?: () => void) => {
-        setSparkOnSuccess(() => onSuccess);
-        setSparkFormVisible(true);
-    };
-
-    const showActionForm = (
-        parentId?: string,
-        parentType?: 'path' | 'milestone' | 'loop-item',
-        onSuccess?: () => void
-    ) => {
-        setActionParentId(parentId);
-        setActionParentType(parentType);
-        setActionOnSuccess(() => onSuccess);
-        setActionFormVisible(true);
-    };
-
-    const showLoopForm = (onSuccess?: () => void) => {
-        setLoopOnSuccess(() => onSuccess);
-        setLoopFormVisible(true);
-    };
-
-    const showPathForm = (onSuccess?: () => void) => {
-        setPathOnSuccess(() => onSuccess);
-        setPathFormVisible(true);
-    };
-
-    const hideAllSheets = () => {
-        setNoteFormVisible(false);
-        setSparkFormVisible(false);
-        setActionFormVisible(false);
-        setLoopFormVisible(false);
-        setPathFormVisible(false);
-    };
+    // This function doesn't do anything anymore, but we keep it for compatibility
+    const hideAllSheets = useCallback(() => {
+        // This function is kept for API compatibility
+        // but doesn't need to do anything as we're using screens now
+    }, []);
 
     return (
         <BottomSheetContext.Provider
@@ -180,39 +90,7 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
             }}
         >
             {children}
-
-            {/* Render bottom sheets outside of the normal component hierarchy */}
-            <NoteFormSheet
-                visible={noteFormVisible}
-                onClose={() => setNoteFormVisible(false)}
-                onSuccess={handleNoteSuccess}
-            />
-
-            <SparkFormSheet
-                visible={sparkFormVisible}
-                onClose={() => setSparkFormVisible(false)}
-                onSuccess={handleSparkSuccess}
-            />
-
-            <ActionFormSheet
-                visible={actionFormVisible}
-                onClose={() => setActionFormVisible(false)}
-                parentId={actionParentId}
-                parentType={actionParentType}
-                onSuccess={handleActionSuccess}
-            />
-
-            <LoopFormSheet
-                visible={loopFormVisible}
-                onClose={() => setLoopFormVisible(false)}
-                onSuccess={handleLoopSuccess}
-            />
-
-            <PathFormSheet
-                visible={pathFormVisible}
-                onClose={() => setPathFormVisible(false)}
-                onSuccess={handlePathSuccess}
-            />
+            {/* No bottom sheets are rendered here anymore */}
         </BottomSheetContext.Provider>
     );
 };

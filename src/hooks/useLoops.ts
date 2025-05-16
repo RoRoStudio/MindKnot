@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Loop } from '../types/loop';
 import { createLoop, getAllLoops, updateLoop as updateLoopService } from '../services/loopService';
 import { useSagaStore } from '../state/sagaStore';
+import { executeSql } from '../database/database';
 
 export function useLoops() {
     const [loops, setLoops] = useState<Loop[]>([]);
@@ -166,6 +167,28 @@ export function useLoops() {
         }
     };
 
+    const deleteLoop = async (id: string): Promise<boolean> => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Delete the loop record
+            await executeSql('DELETE FROM loop_items WHERE loopId = ?', [id]);
+            await executeSql('DELETE FROM loops WHERE id = ?', [id]);
+
+            // Update state
+            setLoops(prev => prev.filter(loop => loop.id !== id));
+
+            return true;
+        } catch (err) {
+            console.error('Failed to delete loop:', err);
+            setError('Failed to delete loop');
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return {
         loops,
         loading,
@@ -173,6 +196,7 @@ export function useLoops() {
         loadLoops,
         addLoop,
         getTodayLoops,
-        updateLoop
+        updateLoop,
+        deleteLoop
     };
 }

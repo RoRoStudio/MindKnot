@@ -19,6 +19,13 @@ export const lightTheme: ThemeType = {
         secondaryLight: '#F5F7E2',
         secondaryDark: '#C8CCA6',
         onSecondary: '#213448',
+        secondaryContainer: '#F0F2D6',
+
+        // Tertiary colors
+        tertiary: '#C06B3E',
+        tertiaryLight: '#E99470',
+        tertiaryDark: '#984B24',
+        onTertiary: '#FFFFFF',
 
         // Accent colors
         accent: '#94B4C1',
@@ -44,6 +51,9 @@ export const lightTheme: ThemeType = {
         // Border and divider
         border: '#ECEFCA',
         divider: '#E9E9E9',
+
+        // Shadow color
+        shadow: 'rgba(0, 0, 0, 0.15)',
 
         // Utility colors
         white: baseColors.white,
@@ -87,30 +97,30 @@ export const lightTheme: ThemeType = {
         z1: {
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
+            shadowOpacity: 0.12,
             shadowRadius: 2,
             elevation: 1,
         },
         z2: {
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.15,
+            shadowOpacity: 0.18,
             shadowRadius: 3,
             elevation: 2,
         },
         z3: {
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            elevation: 4,
+            shadowOpacity: 0.22,
+            shadowRadius: 5,
+            elevation: 5,
         },
         z4: {
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.3,
-            shadowRadius: 6,
-            elevation: 8,
+            shadowRadius: 7,
+            elevation: 9,
         },
     },
 
@@ -132,20 +142,20 @@ export const lightTheme: ThemeType = {
             border: '#ECEFCA', // Updated to match secondary color
             titleColor: '#213448', // Updated to match primary
             textColor: '#547792', // Updated to match primaryLight
-            radius: 8,
+            radius: 10,
         },
         button: {
             primary: {
                 background: '#213448', // Updated to match primary
                 text: '#FFFFFF',
                 border: 'transparent',
-                radius: 8,
+                radius: 10,
             },
             secondary: {
                 background: 'transparent',
                 text: '#213448', // Updated to match primary
                 border: '#213448', // Updated to match primary
-                radius: 8,
+                radius: 10,
             },
             text: {
                 color: '#213448', // Updated to match primary
@@ -158,7 +168,7 @@ export const lightTheme: ThemeType = {
             placeholder: '#BDBDBD',
             border: '#ECEFCA', // Updated to match secondary
             focusBorder: '#213448', // Updated to match primary
-            radius: 8,
+            radius: 10,
             error: baseColors.urgentRed,
             success: '#27AE60',
         },

@@ -212,3 +212,40 @@ export const updateLoop = async (
         return false;
     }
 };
+
+export const getLoopById = async (id: string): Promise<Loop | null> => {
+    try {
+        const result = await executeSql(
+            'SELECT * FROM loops WHERE id = ?',
+            [id]
+        );
+
+        if (result && result.rows && result.rows._array && result.rows._array.length > 0) {
+            const row = result.rows._array[0];
+            const loop: Loop = {
+                ...row,
+                type: 'loop',
+                tags: row.tags ? JSON.parse(row.tags) : [],
+                startTimeByDay: row.startTimeByDay ? JSON.parse(row.startTimeByDay) : undefined,
+                items: [] // Will be populated below
+            };
+
+            // Fetch items for this loop
+            const itemsResult = await executeSql(
+                'SELECT * FROM loop_items WHERE loopId = ? ORDER BY createdAt ASC',
+                [id]
+            );
+
+            if (itemsResult && itemsResult.rows && itemsResult.rows._array) {
+                loop.items = itemsResult.rows._array as LoopItem[];
+            }
+
+            return loop;
+        }
+
+        return null;
+    } catch (error) {
+        console.error("Error fetching loop by ID:", error);
+        return null;
+    }
+};

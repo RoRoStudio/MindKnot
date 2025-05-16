@@ -50,6 +50,25 @@ import Undo from '../../assets/icons/lucide/undo.svg';
 import Redo from '../../assets/icons/lucide/redo.svg';
 import Type from '../../assets/icons/lucide/type.svg';
 
+// New icons for card actions
+import Star from '../../assets/icons/lucide/star.svg';
+import StarOff from '../../assets/icons/lucide/star-off.svg';
+import Copy from '../../assets/icons/lucide/copy.svg';
+import Archive from '../../assets/icons/lucide/archive.svg';
+import Square from '../../assets/icons/lucide/square.svg';
+import SlidersVertical from '../../assets/icons/lucide/sliders-vertical.svg';
+import Rows from '../../assets/icons/lucide/rows-2.svg';
+import LayoutGrid from '../../assets/icons/lucide/layout-grid.svg';
+import EllipsisVertical from '../../assets/icons/lucide/ellipsis-vertical.svg';
+
+// Additional icons needed for detail screens
+import Trash from '../../assets/icons/lucide/trash.svg';
+import Trash2 from '../../assets/icons/lucide/trash-2.svg';
+import Pencil from '../../assets/icons/lucide/pencil.svg';
+import Flag from '../../assets/icons/lucide/flag.svg';
+import CirclePlus from '../../assets/icons/lucide/circle-plus.svg';
+import Tag from '../../assets/icons/lucide/tag.svg';
+import Hash from '../../assets/icons/lucide/hash.svg';
 
 const iconMap = {
     plus: Plus,
@@ -97,15 +116,34 @@ const iconMap = {
     'square-check': SquareCheck,
     undo: Undo,
     redo: Redo,
+    // New card action icons
+    star: Star,
+    'star-off': StarOff,
+    copy: Copy,
+    archive: Archive,
+    square: Square,
+    'sliders-vertical': SlidersVertical,
+    'rows-2': Rows,
+    'layout-grid': LayoutGrid,
+    'ellipsis-vertical': EllipsisVertical,
+    // Additional icons needed for detail screens
+    trash: Trash,
+    'trash-2': Trash2,
+    'pencil': Pencil,
+    flag: Flag,
+    'circle-plus': CirclePlus,
+    tag: Tag,
+    hash: Hash
 };
 
 export type IconName = keyof typeof iconMap;
 
 type Props = SvgProps & {
     name: IconName;
+    size?: number; // Add size prop
 };
 
-export function Icon({ name, ...props }: Props) {
+export function Icon({ name, size, width, height, ...props }: Props) {
     const Component = iconMap[name];
 
     if (!Component) {
@@ -113,5 +151,8 @@ export function Icon({ name, ...props }: Props) {
         return <FileText {...props} />;
     }
 
-    return <Component {...props} />;
+    // If size is provided, use it for both width and height
+    const sizeProps = size ? { width: size, height: size } : {};
+
+    return <Component {...sizeProps} {...props} />;
 }

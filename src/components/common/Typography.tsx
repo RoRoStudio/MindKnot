@@ -3,11 +3,11 @@ import React from 'react';
 import { Text, TextProps, StyleSheet } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
 
-type TypographyVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'body1' | 'body2' | 'caption' | 'button' | 'overline';
+type TypographyVariant = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'subtitle1' | 'body1' | 'body2' | 'caption' | 'button' | 'overline';
 
 interface TypographyProps extends TextProps {
     variant?: TypographyVariant;
-    color?: 'primary' | 'secondary' | 'disabled' | 'error' | 'inherit';
+    color?: 'primary' | 'secondary' | 'disabled' | 'error' | 'inherit' | string;
     align?: 'left' | 'center' | 'right';
     bold?: boolean;
     italic?: boolean;
@@ -47,6 +47,21 @@ export const Typography: React.FC<TypographyProps> = ({
                 fontWeight: theme.typography.fontWeight.medium,
                 lineHeight: theme.typography.lineHeight.normal,
             },
+            h5: {
+                fontSize: theme.typography.fontSize.m * 1.1,
+                fontWeight: theme.typography.fontWeight.medium,
+                lineHeight: theme.typography.lineHeight.normal,
+            },
+            h6: {
+                fontSize: theme.typography.fontSize.s,
+                fontWeight: theme.typography.fontWeight.bold,
+                lineHeight: theme.typography.lineHeight.normal,
+            },
+            subtitle1: {
+                fontSize: theme.typography.fontSize.m,
+                fontWeight: theme.typography.fontWeight.medium,
+                lineHeight: theme.typography.lineHeight.normal,
+            },
             body1: {
                 fontSize: theme.typography.fontSize.m,
                 fontWeight: theme.typography.fontWeight.regular,
@@ -78,18 +93,25 @@ export const Typography: React.FC<TypographyProps> = ({
         };
 
         // Define color styles
-        const colorStyles = {
-            primary: { color: theme.colors.primary },
-            secondary: { color: theme.colors.secondary },
-            disabled: { color: theme.colors.textDisabled },
-            error: { color: theme.colors.error },
-            inherit: {}, // No specific color - will inherit from parent
-        };
+        let colorStyle = {};
+        if (typeof color === 'string' && ['primary', 'secondary', 'disabled', 'error', 'inherit'].includes(color)) {
+            const colorStyles = {
+                primary: { color: theme.colors.primary },
+                secondary: { color: theme.colors.secondary },
+                disabled: { color: theme.colors.textDisabled },
+                error: { color: theme.colors.error },
+                inherit: {}, // No specific color - will inherit from parent
+            };
+            colorStyle = colorStyles[color as 'primary' | 'secondary' | 'disabled' | 'error' | 'inherit'];
+        } else if (typeof color === 'string' && color !== 'inherit') {
+            // Direct color value
+            colorStyle = { color };
+        }
 
         return {
             text: {
                 ...variantStyles[variant],
-                ...colorStyles[color],
+                ...colorStyle,
                 textAlign: align,
                 ...(bold && { fontWeight: theme.typography.fontWeight.bold }),
                 ...(italic && { fontStyle: 'italic' as const }),

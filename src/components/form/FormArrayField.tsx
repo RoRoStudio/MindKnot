@@ -93,7 +93,16 @@ export default function FormArrayField<TFieldValues extends FieldValues = FieldV
                 ? { ...defaultValue, id: defaultValue.id || generateSimpleId() }
                 : { id: generateSimpleId() };
 
+        // Add the item to the array
         append(itemToAdd);
+
+        // Add a small delay to let the DOM update before trying to focus
+        setTimeout(() => {
+            // The focus error happens in React Native - we can't really focus
+            // on a newly created field element automatically. This is a browser
+            // functionality that doesn't translate well to React Native.
+            // We'll just let the item be added without focusing
+        }, 50);
     };
 
     const isMaxItems = maxItems ? fields.length >= maxItems : false;

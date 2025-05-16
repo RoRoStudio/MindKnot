@@ -7,9 +7,20 @@ import { useTheme } from '../../../contexts/ThemeContext';
 interface LoopCardProps {
     loop: Loop;
     onPress?: () => void;
+    onStar?: (id: string) => void;
+    onDuplicate?: (id: string) => void;
+    onArchive?: (id: string) => void;
+    onHide?: (id: string) => void;
 }
 
-export const LoopCard: React.FC<LoopCardProps> = ({ loop, onPress }) => {
+export const LoopCard: React.FC<LoopCardProps> = ({ 
+    loop, 
+    onPress,
+    onStar,
+    onDuplicate,
+    onArchive,
+    onHide 
+}) => {
     const { theme } = useTheme();
 
     // Parse the frequency for display
@@ -74,6 +85,23 @@ export const LoopCard: React.FC<LoopCardProps> = ({ loop, onPress }) => {
         ? `${loop.items.length} item${loop.items.length !== 1 ? 's' : ''} • ${frequencyText}`
         : frequencyText;
 
+    // Handle quick actions
+    const handleStar = () => {
+        if (onStar) onStar(loop.id);
+    };
+
+    const handleDuplicate = () => {
+        if (onDuplicate) onDuplicate(loop.id);
+    };
+
+    const handleArchive = () => {
+        if (onArchive) onArchive(loop.id);
+    };
+
+    const handleHide = () => {
+        if (onHide) onHide(loop.id);
+    };
+
     return (
         <EntryCard
             id={loop.id}
@@ -84,7 +112,13 @@ export const LoopCard: React.FC<LoopCardProps> = ({ loop, onPress }) => {
             iconColor={theme.colors.secondary}
             createdAt={loop.createdAt}
             tags={loop.tags}
+            categoryId={loop.categoryId}
             onPress={onPress}
+            isStarred={loop.isStarred}
+            onStar={handleStar}
+            onDuplicate={handleDuplicate}
+            onArchive={handleArchive}
+            onHide={handleHide}
         />
     );
 };

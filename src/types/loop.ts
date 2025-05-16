@@ -6,6 +6,9 @@ export interface Loop extends BaseEntry {
     description?: string;
     frequency: string; // JSON stringified object, e.g. { type: 'daily' }
     startTimeByDay?: Record<string, string>; // e.g. { mon: '08:00', tue: '09:00' }
+    active?: boolean; // Whether the loop is currently active
+    startDate?: string; // When the loop starts
+    endDate?: string; // When the loop ends (optional)
     items?: LoopItem[];
 }
 

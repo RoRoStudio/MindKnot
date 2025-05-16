@@ -14,6 +14,13 @@ export interface ColorPalette {
     secondaryLight: string;
     secondaryDark: string;
     onSecondary: string;
+    secondaryContainer: string;
+
+    // Tertiary colors
+    tertiary: string;
+    tertiaryLight: string;
+    tertiaryDark: string;
+    onTertiary: string;
 
     // Accent colors
     accent: string;
@@ -39,6 +46,9 @@ export interface ColorPalette {
     // Border and divider
     border: string;
     divider: string;
+
+    // Shadow color
+    shadow: string;
 
     // Utility colors
     white: string;

@@ -6,4 +6,28 @@ export type RootStackParamList = {
     Path: { sagaId?: string };
     SagaDetail: { sagaId: string };
     ThemeInspector: undefined;
+
+    // New unified screens with create/edit/view modes
+    NoteScreen: {
+        mode: 'create' | 'edit' | 'view',
+        id?: string
+    };
+    SparkScreen: {
+        mode: 'create' | 'edit' | 'view',
+        id?: string
+    };
+    ActionScreen: {
+        mode: 'create' | 'edit' | 'view',
+        id?: string,
+        parentId?: string,
+        parentType?: 'path' | 'milestone' | 'loop-item'
+    };
+    PathScreen: {
+        mode: 'create' | 'edit' | 'view',
+        id?: string
+    };
+    LoopScreen: {
+        mode: 'create' | 'edit' | 'view',
+        id?: string
+    };
 };

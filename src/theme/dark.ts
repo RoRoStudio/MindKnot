@@ -19,6 +19,13 @@ export const darkTheme: ThemeType = {
         secondaryLight: '#ECEFCA',
         secondaryDark: '#A6A980',
         onSecondary: '#213448',
+        secondaryContainer: '#3A3D2C',
+
+        // Tertiary colors
+        tertiary: '#E99470',
+        tertiaryLight: '#FFBB96',
+        tertiaryDark: '#C06B3E',
+        onTertiary: '#FFFFFF',
 
         // Accent colors
         accent: '#94B4C1',
@@ -44,6 +51,9 @@ export const darkTheme: ThemeType = {
         // Border and divider
         border: '#333333',
         divider: '#404040',
+
+        // Shadow color
+        shadow: '#000000',
 
         // Utility colors
         white: baseColors.white,
@@ -87,30 +97,30 @@ export const darkTheme: ThemeType = {
         z1: {
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.2,
+            shadowOpacity: 0.25,
             shadowRadius: 2,
             elevation: 1,
         },
         z2: {
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
+            shadowOpacity: 0.3,
             shadowRadius: 3,
             elevation: 2,
         },
         z3: {
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-            elevation: 4,
+            shadowOpacity: 0.35,
+            shadowRadius: 5,
+            elevation: 6,
         },
         z4: {
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.4,
-            shadowRadius: 6,
-            elevation: 8,
+            shadowOpacity: 0.45,
+            shadowRadius: 8,
+            elevation: 10,
         },
     },
 
@@ -132,20 +142,20 @@ export const darkTheme: ThemeType = {
             border: '#333333',
             titleColor: '#ECEFCA', // Light secondary
             textColor: '#B5CEDA', // Light accent
-            radius: 8,
+            radius: 10,
         },
         button: {
             primary: {
                 background: '#547792', // Primary (slightly brighter for dark mode)
                 text: '#FFFFFF',
                 border: 'transparent',
-                radius: 8,
+                radius: 10,
             },
             secondary: {
                 background: 'transparent',
                 text: '#94B4C1', // Accent
                 border: '#94B4C1', // Accent
-                radius: 8,
+                radius: 10,
             },
             text: {
                 color: '#ECEFCA', // Light secondary
@@ -158,7 +168,7 @@ export const darkTheme: ThemeType = {
             placeholder: '#666666',
             border: '#333333',
             focusBorder: '#94B4C1', // Accent
-            radius: 8,
+            radius: 10,
             error: '#FF6B6B',
             success: '#4ADE80',
         },

@@ -6,7 +6,16 @@ export interface Path extends BaseEntry {
     description?: string;
     startDate?: string;
     targetDate?: string;
+    target?: string; // The goal or target outcome
+    expectedDuration?: string; // Expected time to complete
     milestones?: Milestone[];
+    actions?: Array<{
+        id: string;
+        title: string;
+        description?: string;
+        done: boolean;
+        milestone?: string;
+    }>;
 }
 
 export interface Milestone {

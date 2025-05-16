@@ -1,11 +1,24 @@
 // src/screens/vault/BaseVaultScreen.tsx
-import React, { useCallback, useEffect, useState } from 'react';
-import { SafeAreaView, View, RefreshControl, FlatList, ListRenderItem } from 'react-native';
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
+import {
+    SafeAreaView,
+    View,
+    RefreshControl,
+    FlatList,
+    ListRenderItem,
+    Dimensions,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    StatusBar
+} from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
 import { useVaultFilters } from '../../contexts/VaultFiltersContext';
 import { VaultSearchHeader } from './VaultSearchHeader';
 import { VaultEmptyState } from './VaultEmptyState';
-import { IconName } from '../../components/common/Icon';
+import { Icon, IconName } from '../../components/common/Icon';
 import { useBottomSheet } from '../../contexts/BottomSheetContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -51,6 +64,13 @@ export function BaseVaultScreen<T>({
 
     const [refreshing, setRefreshing] = useState(false);
     const [filteredData, setFilteredData] = useState<T[]>([]);
+    const [isGridView, setIsGridView] = useState(type === 'sparks' || type === 'notes');
+    const windowWidth = Dimensions.get('window').width;
+    const windowHeight = Dimensions.get('window').height;
+    const listRef = useRef<FlatList>(null);
+
+    // Handle open action menus
+    const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
 
     const styles = useStyles((theme) => ({
         container: {
@@ -59,6 +79,55 @@ export function BaseVaultScreen<T>({
         },
         content: {
             flex: 1,
+        },
+        listContainer: {
+            flex: 1,
+        },
+        layoutToggle: {
+            position: 'absolute',
+            bottom: 16,
+            right: 16,
+            width: 50,
+            height: 50,
+            borderRadius: 25,
+            backgroundColor: theme.colors.primary,
+            justifyContent: 'center',
+            alignItems: 'center',
+            elevation: 6,
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            zIndex: 10,
+        },
+        gridContainer: {
+            padding: theme.spacing.s,
+            paddingBottom: 70, // Add extra padding at bottom to account for fab button
+        },
+        listContentContainer: {
+            padding: theme.spacing.m,
+            paddingBottom: 70, // Add extra padding at bottom to account for fab button
+            flexGrow: 1,
+        },
+        gridItem: {
+            width: (windowWidth - theme.spacing.s * 4) / 2,
+            margin: theme.spacing.xs,
+        },
+        overlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+            zIndex: 5,
+        },
+        spinner: {
+            position: 'absolute',
+            top: windowHeight / 2 - 25,
+            left: windowWidth / 2 - 25,
+            width: 50,
+            height: 50,
         },
     }));
 
@@ -72,6 +141,15 @@ export function BaseVaultScreen<T>({
 
         setFilteredData(filtered);
     }, [data, searchTerm, selectedTags, categoryId, sort, filterPredicate, sortItems]);
+
+    // Close action menu when tapping outside
+    const handleCloseActionMenu = useCallback(() => {
+        if (activeActionMenuId) {
+            setActiveActionMenuId(null);
+            return true; // Event was handled
+        }
+        return false; // Event wasn't handled
+    }, [activeActionMenuId]);
 
     // Pull-to-refresh handler
     const onRefresh = useCallback(async () => {
@@ -104,38 +182,145 @@ export function BaseVaultScreen<T>({
         }
     }, [type, showNoteForm, showSparkForm, showActionForm, showPathForm, showLoopForm]);
 
+    // Toggle between grid and list view
+    const toggleLayout = () => {
+        setIsGridView(!isGridView);
+    };
+
+    // Wrapper for the renderItem function to apply grid styling
+    const gridRenderItem = useMemo(() => {
+        return ({ item, index }: any) => {
+            return (
+                <View style={styles.gridItem}>
+                    {renderItem({
+                        item,
+                        index,
+                        // Pass additional props to handle action menu
+                        extraData: {
+                            setActiveActionMenuId,
+                            activeActionMenuId
+                        }
+                    } as any)}
+                </View>
+            );
+        };
+    }, [renderItem, activeActionMenuId, styles.gridItem]);
+
+    // Enhance the renderItem to pass action menu state
+    const enhancedRenderItem = useMemo(() => {
+        return (props: any) => {
+            return renderItem({
+                ...props,
+                // Pass additional props to handle action menu
+                extraData: {
+                    setActiveActionMenuId,
+                    activeActionMenuId
+                }
+            });
+        };
+    }, [renderItem, activeActionMenuId]);
+
     // Check if filters are applied
     const hasFiltersApplied = searchTerm !== '' || selectedTags.length > 0 || categoryId !== null;
 
-    return (
-        <View style={styles.container}>
-            <VaultSearchHeader allTags={allTags} />
+    // Only show layout toggle for notes and sparks
+    const showLayoutToggle = type === 'notes' || type === 'sparks';
 
-            <View style={styles.content}>
-                {filteredData.length === 0 ? (
-                    <VaultEmptyState
-                        type={type}
-                        onCreatePress={handleCreate}
-                        icon={emptyIcon}
-                        hasFiltersApplied={hasFiltersApplied}
-                    />
-                ) : (
-                    <FlatList
-                        data={filteredData}
-                        renderItem={renderItem}
-                        keyExtractor={keyExtractor}
-                        contentContainerStyle={{ padding: 16, flexGrow: 1 }}
-                        refreshControl={
-                            <RefreshControl
-                                refreshing={refreshing}
-                                onRefresh={onRefresh}
-                                colors={[theme.colors.primary]}
-                                tintColor={theme.colors.primary}
+    return (
+        <SafeAreaView style={styles.container}>
+            <TouchableWithoutFeedback onPress={handleCloseActionMenu}>
+                <View style={styles.container}>
+                    <VaultSearchHeader allTags={allTags} />
+
+                    <KeyboardAvoidingView
+                        behavior={Platform.OS === "ios" ? "padding" : undefined}
+                        style={styles.content}
+                        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+                    >
+                        {filteredData.length === 0 ? (
+                            <VaultEmptyState
+                                type={type}
+                                onCreatePress={handleCreate}
+                                icon={emptyIcon}
+                                hasFiltersApplied={hasFiltersApplied}
                             />
-                        }
-                    />
-                )}
-            </View>
-        </View>
+                        ) : (
+                            <View style={styles.content}>
+                                {isGridView ? (
+                                    <FlatList
+                                        ref={listRef}
+                                        key="grid"
+                                        data={filteredData}
+                                        renderItem={gridRenderItem}
+                                        keyExtractor={keyExtractor}
+                                        numColumns={2}
+                                        contentContainerStyle={styles.gridContainer}
+                                        refreshControl={
+                                            <RefreshControl
+                                                refreshing={refreshing}
+                                                onRefresh={onRefresh}
+                                                colors={[theme.colors.primary]}
+                                                tintColor={theme.colors.primary}
+                                            />
+                                        }
+                                        onScrollBeginDrag={Keyboard.dismiss}
+                                        removeClippedSubviews={true}
+                                        initialNumToRender={8}
+                                        maxToRenderPerBatch={10}
+                                        windowSize={10}
+                                    />
+                                ) : (
+                                    <FlatList
+                                        ref={listRef}
+                                        key="list"
+                                        data={filteredData}
+                                        renderItem={enhancedRenderItem}
+                                        keyExtractor={keyExtractor}
+                                        contentContainerStyle={styles.listContentContainer}
+                                        refreshControl={
+                                            <RefreshControl
+                                                refreshing={refreshing}
+                                                onRefresh={onRefresh}
+                                                colors={[theme.colors.primary]}
+                                                tintColor={theme.colors.primary}
+                                            />
+                                        }
+                                        onScrollBeginDrag={Keyboard.dismiss}
+                                        removeClippedSubviews={true}
+                                        initialNumToRender={8}
+                                        maxToRenderPerBatch={10}
+                                        windowSize={10}
+                                    />
+                                )}
+
+                                {showLayoutToggle && (
+                                    <TouchableOpacity
+                                        style={styles.layoutToggle}
+                                        onPress={toggleLayout}
+                                        activeOpacity={0.9}
+                                    >
+                                        <Icon
+                                            name={isGridView ? 'rows-2' : 'layout-grid'}
+                                            width={24}
+                                            height={24}
+                                            color={theme.colors.onPrimary}
+                                        />
+                                    </TouchableOpacity>
+                                )}
+
+                                {/* Semi-transparent overlay when action menu is open */}
+                                {activeActionMenuId && (
+                                    <TouchableOpacity
+                                        style={styles.overlay}
+                                        activeOpacity={1}
+                                        onPress={handleCloseActionMenu}
+                                    />
+                                )}
+                            </View>
+                        )}
+                    </KeyboardAvoidingView>
+                </View>
+            </TouchableWithoutFeedback>
+        </SafeAreaView>
     );
 }

@@ -1,7 +1,11 @@
 // src/components/common/Card.tsx
 import React from 'react';
-import { View, Text, StyleSheet, ViewProps, TouchableOpacity } from 'react-native';
+import { View, Text, ViewProps, TouchableOpacity } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
+
+// Pre-declare component types to prevent re-creation
+const TouchableView = TouchableOpacity;
+const StaticView = View;
 
 interface CardProps extends ViewProps {
     title?: string;
@@ -11,7 +15,8 @@ interface CardProps extends ViewProps {
     noPadding?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({
+// Using React.memo to prevent unnecessary re-renders
+export const Card = React.memo(function Card({
     title,
     onPress,
     children,
@@ -19,7 +24,7 @@ export const Card: React.FC<CardProps> = ({
     noPadding = false,
     style,
     ...props
-}) => {
+}: CardProps) {
     const styles = useStyles((theme) => ({
         container: {
             backgroundColor: theme.components.card.background,
@@ -40,17 +45,27 @@ export const Card: React.FC<CardProps> = ({
         },
     }));
 
-    const CardComponent = onPress ? TouchableOpacity : View;
+    if (onPress) {
+        return (
+            <TouchableOpacity
+                style={[styles.container, style]}
+                onPress={onPress}
+                activeOpacity={0.7}
+                {...props}
+            >
+                {title && <Text style={styles.title}>{title}</Text>}
+                {children}
+            </TouchableOpacity>
+        );
+    }
 
     return (
-        <CardComponent
+        <View
             style={[styles.container, style]}
-            onPress={onPress}
-            activeOpacity={onPress ? 0.7 : 1}
             {...props}
         >
             {title && <Text style={styles.title}>{title}</Text>}
             {children}
-        </CardComponent>
+        </View>
     );
-};
+});

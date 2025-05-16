@@ -342,3 +342,60 @@ export const updatePath = async (
         return false;
     }
 };
+
+export const getPathById = async (id: string): Promise<Path | null> => {
+    try {
+        const result = await executeSql(
+            'SELECT * FROM paths WHERE id = ?',
+            [id]
+        );
+
+        if (result && result.rows && result.rows._array && result.rows._array.length > 0) {
+            const row = result.rows._array[0];
+            const path: Path = {
+                ...row,
+                type: 'path',
+                tags: row.tags ? JSON.parse(row.tags) : [],
+                milestones: [] // Will be populated below
+            };
+
+            // Fetch milestones for this path
+            const milestonesResult = await executeSql(
+                'SELECT * FROM milestones WHERE pathId = ? ORDER BY createdAt ASC',
+                [id]
+            );
+
+            if (milestonesResult && milestonesResult.rows && milestonesResult.rows._array) {
+                path.milestones = milestonesResult.rows._array as Milestone[];
+
+                // For each milestone, fetch the linked actions
+                for (const milestone of path.milestones) {
+                    const actionsResult = await executeSql(
+                        `SELECT * FROM actions 
+                         WHERE parentId = ? AND parentType = ?
+                         ORDER BY createdAt ASC`,
+                        [milestone.id, 'milestone']
+                    );
+
+                    if (actionsResult && actionsResult.rows && actionsResult.rows._array) {
+                        milestone.actions = actionsResult.rows._array.map(action => ({
+                            id: action.id,
+                            name: action.title,
+                            description: action.body,
+                            done: Boolean(action.done)
+                        }));
+                    } else {
+                        milestone.actions = [];
+                    }
+                }
+            }
+
+            return path;
+        }
+
+        return null;
+    } catch (error) {
+        console.error("Error fetching path by ID:", error);
+        return null;
+    }
+};

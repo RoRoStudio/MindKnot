@@ -2,6 +2,7 @@
 import { StyleSheet } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeType } from '../theme/themeTypes';
+import { useMemo } from 'react';
 
 /**
  * Custom hook to create styles that are theme-aware
@@ -15,5 +16,8 @@ export function useStyles<T extends StyleSheet.NamedStyles<T> | StyleSheet.Named
     const { theme } = useTheme();
 
     // Create and memoize the styles based on the current theme
-    return StyleSheet.create(styleCreator(theme));
+    // We depend only on theme as the styleCreator function reference should be stable
+    return useMemo(() => {
+        return StyleSheet.create(styleCreator(theme));
+    }, [theme]);
 }

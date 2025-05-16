@@ -1,7 +1,7 @@
 // src/hooks/useSparks.ts
 import { useState, useEffect, useCallback } from 'react';
 import { Spark } from '../types/spark';
-import { createSpark, getAllSparks, updateSpark, deleteSpark, getUnlinkedSparks } from '../services/sparkService';
+import { createSpark, getAllSparks, updateSpark, deleteSpark } from '../services/sparkService';
 
 export function useSparks() {
     const [sparks, setSparks] = useState<Spark[]>([]);
@@ -93,23 +93,6 @@ export function useSparks() {
         }
     };
 
-    const loadUnlinkedSparks = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const unlinkedSparks = await getUnlinkedSparks();
-
-            // We can choose to set these to state or just return them
-            return unlinkedSparks;
-        } catch (err) {
-            console.error('Failed to load unlinked sparks:', err);
-            setError('Failed to load unlinked sparks');
-            return [];
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return {
         sparks,
         loading,
@@ -117,7 +100,6 @@ export function useSparks() {
         loadSparks,
         addSpark,
         editSpark,
-        removeSpark,
-        loadUnlinkedSparks
+        removeSpark
     };
 }

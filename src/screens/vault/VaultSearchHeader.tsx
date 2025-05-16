@@ -1,12 +1,17 @@
 // src/screens/vault/VaultSearchHeader.tsx - Optimized with performance improvements
-import React, { useCallback, memo } from 'react';
-import { View, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, memo, useState } from 'react';
+import { View, TextInput, ScrollView, TouchableOpacity, Animated, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../../components/common/Typography';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Icon } from '../../components/common/Icon';
 import { useVaultFilters } from '../../contexts/VaultFiltersContext';
 import { useCategories } from '../../hooks/useCategories';
+
+// Enable LayoutAnimation for Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface VaultSearchHeaderProps {
     allTags: string[];
@@ -31,134 +36,154 @@ export const VaultSearchHeader: React.FC<VaultSearchHeaderProps> = memo(({
 
     const { categories } = useCategories();
     const { theme } = useTheme();
+    const [filtersExpanded, setFiltersExpanded] = useState(false);
+
+    // Count active filters
+    const hasFilters = searchTerm || selectedTags.length > 0 || categoryId;
+    const filterCount = (searchTerm ? 1 : 0) + selectedTags.length + (categoryId ? 1 : 0);
 
     const styles = useStyles((theme) => ({
         container: {
-            padding: theme.spacing.m,
+            backgroundColor: theme.colors.background,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.divider,
+            zIndex: 10,
+        },
+        searchRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: theme.spacing.s,
+            paddingHorizontal: theme.spacing.m,
         },
         searchContainer: {
+            flex: 1,
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: theme.colors.surface,
             borderRadius: theme.shape.radius.m,
-            padding: theme.spacing.s,
-            marginBottom: theme.spacing.m,
+            paddingHorizontal: theme.spacing.s,
+            height: 40,
         },
         searchInput: {
             flex: 1,
             marginLeft: theme.spacing.s,
             color: theme.colors.textPrimary,
             fontSize: theme.typography.fontSize.m,
+            height: 40,
+            padding: 0,
         },
-        filterSection: {
-            marginBottom: theme.spacing.m,
-        },
-        filterHeader: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: theme.spacing.xs,
-        },
-        filterTitle: {
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        filterIcon: {
-            marginRight: theme.spacing.xs,
-        },
-        clearButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        clearButtonText: {
-            fontSize: theme.typography.fontSize.s,
-            color: theme.colors.primary,
-        },
-        tagsContainer: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            marginTop: theme.spacing.xs,
-        },
-        tagFilter: {
-            backgroundColor: theme.colors.surfaceVariant,
+        filtersButton: {
+            marginLeft: theme.spacing.s,
+            padding: theme.spacing.xs,
+            backgroundColor: filterCount > 0 ? theme.colors.primary : theme.colors.surface,
             borderRadius: theme.shape.radius.s,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
             paddingHorizontal: theme.spacing.s,
-            paddingVertical: 4,
-            marginRight: theme.spacing.xs,
+        },
+        filtersContainer: {
+            padding: theme.spacing.s,
+            paddingTop: 0,
+        },
+        chipScrollContainer: {
             marginBottom: theme.spacing.xs,
         },
-        tagFilterActive: {
-            backgroundColor: theme.colors.primary,
+        filterRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: theme.spacing.xs,
+            paddingHorizontal: theme.spacing.xs,
         },
-        tagText: {
+        divider: {
+            height: 1,
+            backgroundColor: theme.colors.divider,
+            marginVertical: theme.spacing.xs,
+        },
+        filterLabel: {
+            fontSize: theme.typography.fontSize.s,
+            color: theme.colors.textSecondary,
+        },
+        chip: {
+            paddingHorizontal: theme.spacing.s,
+            paddingVertical: 6,
+            borderRadius: theme.shape.radius.m,
+            marginRight: theme.spacing.xs,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: theme.colors.surface,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+        },
+        activeChip: {
+            borderColor: theme.colors.primary,
+            backgroundColor: `${theme.colors.primary}10`,
+        },
+        chipText: {
             fontSize: theme.typography.fontSize.xs,
             color: theme.colors.textSecondary,
         },
-        tagTextActive: {
-            color: theme.colors.white,
+        activeChipText: {
+            color: theme.colors.primary,
         },
-        sortContainer: {
+        sortRow: {
             flexDirection: 'row',
             justifyContent: 'space-between',
-            marginTop: theme.spacing.s,
-        },
-        sortOption: {
-            padding: theme.spacing.s,
-            borderRadius: theme.shape.radius.s,
-        },
-        sortOptionActive: {
-            backgroundColor: theme.colors.surfaceVariant,
-        },
-        categoriesContainer: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            marginTop: theme.spacing.xs,
-        },
-        categoryChip: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: theme.spacing.xs,
             paddingHorizontal: theme.spacing.s,
-            marginRight: theme.spacing.xs,
-            marginBottom: theme.spacing.xs,
+        },
+        sortButton: {
+            paddingHorizontal: theme.spacing.s,
+            paddingVertical: 6,
             borderRadius: theme.shape.radius.s,
-            borderWidth: 1,
+            backgroundColor: theme.colors.surface,
+            minWidth: 70,
+            alignItems: 'center',
         },
-        categoryChipSelected: {
-            borderWidth: 2,
+        activeSortButton: {
+            backgroundColor: theme.colors.primary,
         },
-        categoryChipLabel: {
-            marginLeft: theme.spacing.xs,
+        sortButtonText: {
             fontSize: theme.typography.fontSize.xs,
+            color: theme.colors.textSecondary,
+        },
+        activeSortButtonText: {
+            color: theme.colors.onPrimary,
         },
         colorIndicator: {
-            width: 10,
-            height: 10,
-            borderRadius: 5,
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+            marginRight: 4,
         },
         badge: {
-            position: 'absolute',
-            top: -5,
-            right: -5,
-            backgroundColor: theme.colors.primary,
+            backgroundColor: theme.colors.onPrimary,
             borderRadius: 10,
             width: 16,
             height: 16,
             alignItems: 'center',
             justifyContent: 'center',
+            marginLeft: 4,
         },
         badgeText: {
-            color: theme.colors.white,
+            color: theme.colors.primary,
             fontSize: 10,
+            fontWeight: 'bold',
+        },
+        clearButton: {
+            padding: theme.spacing.xs,
         },
     }));
 
-    // Check if any filters are applied
-    const hasFilters = searchTerm || selectedTags.length > 0 || categoryId;
-    const filterCount = (searchTerm ? 1 : 0) + selectedTags.length + (categoryId ? 1 : 0);
+    // Toggle filters expanded state
+    const toggleFilters = useCallback(() => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setFiltersExpanded(!filtersExpanded);
+    }, [filtersExpanded]);
 
     // Clear all filters
     const handleClearFilters = useCallback(() => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         clearFilters();
     }, [clearFilters]);
 
@@ -179,202 +204,221 @@ export const VaultSearchHeader: React.FC<VaultSearchHeaderProps> = memo(({
 
     return (
         <View style={styles.container}>
-            {/* Search bar */}
-            <View style={styles.searchContainer}>
-                <Icon name="search" width={20} height={20} color={styles.tagText.color} />
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search..."
-                    placeholderTextColor={styles.tagText.color}
-                    value={searchTerm}
-                    onChangeText={setSearchTerm}
-                    returnKeyType="search"
-                />
-                {searchTerm ? (
-                    <TouchableOpacity onPress={() => setSearchTerm('')}>
-                        <Icon name="x" width={18} height={18} color={styles.tagText.color} />
-                    </TouchableOpacity>
-                ) : null}
+            {/* Search bar and filter button row */}
+            <View style={styles.searchRow}>
+                <View style={styles.searchContainer}>
+                    <Icon name="search" width={16} height={16} color={theme.colors.textSecondary} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search..."
+                        placeholderTextColor={theme.colors.textSecondary}
+                        value={searchTerm}
+                        onChangeText={setSearchTerm}
+                        returnKeyType="search"
+                    />
+                    {searchTerm ? (
+                        <TouchableOpacity onPress={() => setSearchTerm('')}>
+                            <Icon name="x" width={16} height={16} color={theme.colors.textSecondary} />
+                        </TouchableOpacity>
+                    ) : null}
+                </View>
+
+                <TouchableOpacity style={styles.filtersButton} onPress={toggleFilters}>
+                    <Icon
+                        name="sliders-vertical"
+                        width={16}
+                        height={16}
+                        color={filterCount > 0 ? theme.colors.onPrimary : theme.colors.textSecondary}
+                    />
+                    {filterCount > 0 && (
+                        <View style={styles.badge}>
+                            <Typography style={styles.badgeText}>
+                                {filterCount}
+                            </Typography>
+                        </View>
+                    )}
+                </TouchableOpacity>
             </View>
 
-            {/* Filter header with count and clear button */}
-            {hasFilters && (
-                <View style={styles.filterHeader}>
-                    <View style={styles.filterTitle}>
-                        <Icon
-                            name="list"
-                            width={16}
-                            height={16}
-                            color={theme.colors.primary}
-                            style={styles.filterIcon}
-                        />
-                        <Typography variant="body2">
-                            Active Filters
-                        </Typography>
-                        {filterCount > 0 && (
-                            <View style={styles.badge}>
-                                <Typography style={styles.badgeText}>
-                                    {filterCount}
-                                </Typography>
+            {/* Expandable filters section */}
+            {filtersExpanded && (
+                <View style={styles.filtersContainer}>
+                    {/* Categories filter */}
+                    {showCategoriesFilter && categories.length > 0 && (
+                        <>
+                            <View style={styles.filterRow}>
+                                <Typography style={styles.filterLabel}>Categories</Typography>
+                                {categoryId && (
+                                    <TouchableOpacity
+                                        style={styles.clearButton}
+                                        onPress={() => setCategoryId(null)}
+                                    >
+                                        <Icon name="x" width={12} height={12} color={theme.colors.textSecondary} />
+                                    </TouchableOpacity>
+                                )}
                             </View>
-                        )}
-                    </View>
-                    <TouchableOpacity
-                        style={styles.clearButton}
-                        onPress={handleClearFilters}
-                    >
-                        <Typography style={styles.clearButtonText}>
-                            Clear All
-                        </Typography>
-                        <Icon
-                            name="x"
-                            width={14}
-                            height={14}
-                            color={theme.colors.primary}
-                            style={{ marginLeft: 4 }}
-                        />
-                    </TouchableOpacity>
-                </View>
-            )}
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                style={styles.chipScrollContainer}
+                            >
+                                {categories.map((category) => (
+                                    <TouchableOpacity
+                                        key={category.id}
+                                        style={[
+                                            styles.chip,
+                                            categoryId === category.id && styles.activeChip
+                                        ]}
+                                        onPress={() => handleCategoryToggle(category.id)}
+                                    >
+                                        <View
+                                            style={[
+                                                styles.colorIndicator,
+                                                { backgroundColor: category.color },
+                                            ]}
+                                        />
+                                        <Typography
+                                            style={[
+                                                styles.chipText,
+                                                categoryId === category.id && styles.activeChipText
+                                            ]}
+                                        >
+                                            {category.title}
+                                        </Typography>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </>
+                    )}
 
-            {/* Categories filter */}
-            {showCategoriesFilter && categories.length > 0 && (
-                <View style={styles.filterSection}>
-                    <Typography variant="body2" style={styles.filterTitle}>
-                        Categories
-                    </Typography>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.categoriesContainer}
-                    >
-                        {/* "All" option */}
+                    {/* Divider */}
+                    {showCategoriesFilter && categories.length > 0 && allTags.length > 0 && (
+                        <View style={styles.divider} />
+                    )}
+
+                    {/* Tags filter */}
+                    {allTags.length > 0 && (
+                        <>
+                            <View style={styles.filterRow}>
+                                <Typography style={styles.filterLabel}>Tags</Typography>
+                                {selectedTags.length > 0 && (
+                                    <TouchableOpacity
+                                        style={styles.clearButton}
+                                        onPress={() => {
+                                            selectedTags.forEach(tag => toggleTag(tag));
+                                        }}
+                                    >
+                                        <Icon name="x" width={12} height={12} color={theme.colors.textSecondary} />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                style={styles.chipScrollContainer}
+                            >
+                                {allTags.map((tag) => (
+                                    <TouchableOpacity
+                                        key={tag}
+                                        style={[
+                                            styles.chip,
+                                            selectedTags.includes(tag) && styles.activeChip
+                                        ]}
+                                        onPress={() => handleTagToggle(tag)}
+                                    >
+                                        <Typography
+                                            style={[
+                                                styles.chipText,
+                                                selectedTags.includes(tag) && styles.activeChipText
+                                            ]}
+                                        >
+                                            #{tag}
+                                        </Typography>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </>
+                    )}
+
+                    {/* Divider */}
+                    <View style={styles.divider} />
+
+                    {/* Sort options */}
+                    <View style={styles.filterRow}>
+                        <Typography style={styles.filterLabel}>Sort by</Typography>
+                    </View>
+                    <View style={styles.sortRow}>
                         <TouchableOpacity
-                            style={[
-                                styles.categoryChip,
-                                {
-                                    borderColor: categoryId === null ? theme.colors.primary : theme.colors.border,
-                                    backgroundColor: categoryId === null ? theme.colors.primaryLight : theme.colors.surface,
-                                },
-                            ]}
-                            onPress={() => handleCategoryToggle(null)}
+                            style={[styles.sortButton, sort === 'newest' && styles.activeSortButton]}
+                            onPress={() => handleSortChange('newest')}
                         >
-                            <Typography style={styles.categoryChipLabel}>
-                                All
+                            <Typography
+                                style={[
+                                    styles.sortButtonText,
+                                    sort === 'newest' && styles.activeSortButtonText
+                                ]}
+                            >
+                                Newest
                             </Typography>
                         </TouchableOpacity>
 
-                        {/* Category chips */}
-                        {categories.map((category) => (
-                            <TouchableOpacity
-                                key={category.id}
+                        <TouchableOpacity
+                            style={[styles.sortButton, sort === 'oldest' && styles.activeSortButton]}
+                            onPress={() => handleSortChange('oldest')}
+                        >
+                            <Typography
                                 style={[
-                                    styles.categoryChip,
-                                    {
-                                        borderColor: categoryId === category.id ? category.color : theme.colors.border,
-                                        backgroundColor: categoryId === category.id ? `${category.color}20` : theme.colors.surface,
-                                    },
+                                    styles.sortButtonText,
+                                    sort === 'oldest' && styles.activeSortButtonText
                                 ]}
-                                onPress={() => handleCategoryToggle(category.id)}
                             >
-                                <View
-                                    style={[
-                                        styles.colorIndicator,
-                                        { backgroundColor: category.color },
-                                    ]}
-                                />
-                                <Typography style={styles.categoryChipLabel}>
-                                    {category.title}
-                                </Typography>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
+                                Oldest
+                            </Typography>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.sortButton, sort === 'alphabetical' && styles.activeSortButton]}
+                            onPress={() => handleSortChange('alphabetical')}
+                        >
+                            <Typography
+                                style={[
+                                    styles.sortButtonText,
+                                    sort === 'alphabetical' && styles.activeSortButtonText
+                                ]}
+                            >
+                                A-Z
+                            </Typography>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Clear all filters button */}
+                    {filterCount > 0 && (
+                        <TouchableOpacity
+                            style={[
+                                styles.sortButton,
+                                {
+                                    marginTop: theme.spacing.s,
+                                    backgroundColor: theme.colors.surface,
+                                    alignSelf: 'center',
+                                    paddingHorizontal: theme.spacing.m,
+                                    borderWidth: 1,
+                                    borderColor: theme.colors.error
+                                }
+                            ]}
+                            onPress={handleClearFilters}
+                        >
+                            <Typography
+                                style={[
+                                    styles.sortButtonText,
+                                    { color: theme.colors.error }
+                                ]}
+                            >
+                                Clear All Filters
+                            </Typography>
+                        </TouchableOpacity>
+                    )}
                 </View>
             )}
-
-            {/* Tags filter */}
-            {allTags.length > 0 && (
-                <View style={styles.filterSection}>
-                    <Typography variant="body2" style={styles.filterTitle}>
-                        Tags
-                    </Typography>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.tagsContainer}
-                    >
-                        {allTags.map((tag) => (
-                            <TouchableOpacity
-                                key={tag}
-                                style={[
-                                    styles.tagFilter,
-                                    selectedTags.includes(tag) && styles.tagFilterActive
-                                ]}
-                                onPress={() => handleTagToggle(tag)}
-                            >
-                                <Typography
-                                    style={[
-                                        styles.tagText,
-                                        selectedTags.includes(tag) && styles.tagTextActive
-                                    ]}
-                                >
-                                    #{tag}
-                                </Typography>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                </View>
-            )}
-
-            {/* Sort options */}
-            <View style={styles.filterSection}>
-                <Typography variant="body2" style={styles.filterTitle}>
-                    Sort By
-                </Typography>
-                <View style={styles.sortContainer}>
-                    <TouchableOpacity
-                        style={[
-                            styles.sortOption,
-                            sort === 'newest' && styles.sortOptionActive
-                        ]}
-                        onPress={() => handleSortChange('newest')}
-                    >
-                        <Typography
-                            color={sort === 'newest' ? 'primary' : 'secondary'}
-                        >
-                            Newest
-                        </Typography>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[
-                            styles.sortOption,
-                            sort === 'oldest' && styles.sortOptionActive
-                        ]}
-                        onPress={() => handleSortChange('oldest')}
-                    >
-                        <Typography
-                            color={sort === 'oldest' ? 'primary' : 'secondary'}
-                        >
-                            Oldest
-                        </Typography>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[
-                            styles.sortOption,
-                            sort === 'alphabetical' && styles.sortOptionActive
-                        ]}
-                        onPress={() => handleSortChange('alphabetical')}
-                    >
-                        <Typography
-                            color={sort === 'alphabetical' ? 'primary' : 'secondary'}
-                        >
-                            A-Z
-                        </Typography>
-                    </TouchableOpacity>
-                </View>
-            </View>
         </View>
     );
 });

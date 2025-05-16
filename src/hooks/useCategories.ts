@@ -51,7 +51,7 @@ export function useCategories() {
         }
     };
 
-    const getCategory = async (id: string) => {
+    const getCategory = useCallback(async (id: string) => {
         if (!id) return null;
         try {
             return await getCategoryById(id);
@@ -59,7 +59,7 @@ export function useCategories() {
             console.error('Failed to get category:', err);
             return null;
         }
-    };
+    }, []);
 
     const editCategory = async (id: string, updates: Partial<Omit<Category, 'id' | 'createdAt' | 'updatedAt'>>) => {
         try {
