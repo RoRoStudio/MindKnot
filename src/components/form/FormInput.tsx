@@ -1,10 +1,11 @@
 // src/components/form/FormInput.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     View,
     TextInput,
     TextInputProps,
     TouchableOpacity,
+    TouchableWithoutFeedback,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
@@ -23,6 +24,12 @@ interface FormInputProps<T extends FieldValues> extends Omit<TextInputProps, 'on
     rightIcon?: React.ReactNode;
     errorIcon?: boolean;
     leadingText?: string;
+    /**
+     * Whether this input is used as a title field
+     * Title fields have no borders and the entire area is clickable
+     * @default false
+     */
+    isTitle?: boolean;
 }
 
 interface LabelProps {
@@ -43,14 +50,16 @@ export default function FormInput<T extends FieldValues>({
     errorIcon = true,
     leadingText,
     secureTextEntry,
+    isTitle = false,
     ...inputProps
 }: FormInputProps<T>) {
     const [isFocused, setIsFocused] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const inputRef = useRef<TextInput>(null);
 
     const styles = useStyles((theme) => ({
         container: {
-            marginBottom: theme.spacing.m,
+            marginBottom: isTitle ? theme.spacing.xs : theme.spacing.m,
         },
         label: {
             marginBottom: theme.spacing.xs,
@@ -59,16 +68,16 @@ export default function FormInput<T extends FieldValues>({
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: theme.components.inputs.background,
-            borderRadius: theme.components.inputs.radius,
-            borderWidth: 1,
+            borderRadius: isTitle ? 0 : theme.components.inputs.radius,
+            borderWidth: isTitle ? 0 : 1,
             borderColor: theme.components.inputs.border,
             overflow: 'hidden',
         },
         inputWrapperFocused: {
-            borderColor: theme.components.inputs.focusBorder,
+            borderColor: isTitle ? 'transparent' : theme.components.inputs.focusBorder,
         },
         inputWrapperError: {
-            borderColor: theme.colors.error,
+            borderColor: isTitle ? 'transparent' : theme.colors.error,
         },
         leftIconContainer: {
             paddingLeft: theme.spacing.m,
@@ -80,7 +89,8 @@ export default function FormInput<T extends FieldValues>({
             flex: 1,
             padding: theme.spacing.m,
             color: theme.components.inputs.text,
-            fontSize: theme.typography.fontSize.m,
+            fontSize: isTitle ? theme.typography.fontSize.xl : theme.typography.fontSize.m,
+            fontWeight: isTitle ? 'bold' : 'normal',
         },
         leadingText: {
             paddingLeft: theme.spacing.m,
@@ -96,6 +106,11 @@ export default function FormInput<T extends FieldValues>({
     }));
 
     const togglePasswordVisibility = () => setShowPassword(!showPassword);
+
+    const handleFocus = () => {
+        setIsFocused(true);
+        inputRef.current?.focus();
+    };
 
     const renderPasswordIcon = () => {
         if (!secureTextEntry) return null;
@@ -123,48 +138,52 @@ export default function FormInput<T extends FieldValues>({
             rules={rules}
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                 <View style={styles.container}>
-                    {label && (
+                    {label && !isTitle && (
                         <Typography variant="body1" style={styles.label}>
                             {label}
                         </Typography>
                     )}
 
-                    <View
-                        style={[
-                            styles.inputWrapper,
-                            isFocused && styles.inputWrapperFocused,
-                            error && styles.inputWrapperError,
-                        ]}
-                    >
-                        {leftIcon && <View style={styles.leftIconContainer}>{leftIcon}</View>}
-                        {leadingText && (
-                            <Typography style={styles.leadingText}>{leadingText}</Typography>
-                        )}
+                    <TouchableWithoutFeedback onPress={handleFocus}>
+                        <View
+                            style={[
+                                styles.inputWrapper,
+                                isFocused && styles.inputWrapperFocused,
+                                error && styles.inputWrapperError,
+                            ]}
+                        >
+                            {leftIcon && <View style={styles.leftIconContainer}>{leftIcon}</View>}
+                            {leadingText && (
+                                <Typography style={styles.leadingText}>{leadingText}</Typography>
+                            )}
 
-                        <TextInput
-                            style={styles.input}
-                            value={value}
-                            onChangeText={(text) => {
-                                if (maxLength && text.length > maxLength) {
-                                    return;
-                                }
-                                onChange(text);
-                            }}
-                            onBlur={() => {
-                                setIsFocused(false);
-                                onBlur();
-                            }}
-                            onFocus={() => setIsFocused(true)}
-                            maxLength={maxLength}
-                            secureTextEntry={secureTextEntry && !showPassword}
-                            {...inputProps}
-                        />
+                            <TextInput
+                                ref={inputRef}
+                                style={styles.input}
+                                value={value}
+                                onChangeText={(text) => {
+                                    if (maxLength && text.length > maxLength) {
+                                        return;
+                                    }
+                                    onChange(text);
+                                }}
+                                onBlur={() => {
+                                    setIsFocused(false);
+                                    onBlur();
+                                }}
+                                onFocus={() => setIsFocused(true)}
+                                maxLength={maxLength}
+                                secureTextEntry={secureTextEntry && !showPassword}
+                                placeholder={isTitle ? 'Untitled' : inputProps.placeholder}
+                                {...inputProps}
+                            />
 
-                        {renderPasswordIcon()}
-                        {rightIcon && !secureTextEntry && (
-                            <View style={styles.rightIconContainer}>{rightIcon}</View>
-                        )}
-                    </View>
+                            {renderPasswordIcon()}
+                            {rightIcon && !secureTextEntry && (
+                                <View style={styles.rightIconContainer}>{rightIcon}</View>
+                            )}
+                        </View>
+                    </TouchableWithoutFeedback>
 
                     {showCharCount && maxLength && (
                         <Typography
@@ -180,16 +199,20 @@ export default function FormInput<T extends FieldValues>({
                         </Typography>
                     )}
 
-                    <FormErrorMessage message={error?.message} visible={!!error} />
+                    {!isTitle && (
+                        <>
+                            <FormErrorMessage message={error?.message} visible={!!error} />
 
-                    {helperText && !error && (
-                        <Typography
-                            variant="caption"
-                            style={styles.helperText}
-                            color="secondary"
-                        >
-                            {helperText}
-                        </Typography>
+                            {helperText && !error && (
+                                <Typography
+                                    variant="caption"
+                                    style={styles.helperText}
+                                    color="secondary"
+                                >
+                                    {helperText}
+                                </Typography>
+                            )}
+                        </>
                     )}
                 </View>
             )}

@@ -317,14 +317,14 @@ export default function ComponentShowcaseScreen() {
                             ))}
                         </View>
                         <View style={styles.row}>
-                            <View style={styles.buttonContainer}>
+                            {/* <View style={styles.buttonContainer}>
                                 <Button
                                     label="With Icon"
                                     variant="primary"
                                     onPress={() => { }}
                                     leftIcon="plus"
                                 />
-                            </View>
+                            </View> */}
                             <View style={styles.buttonContainer}>
                                 <Button
                                     label="Disabled"

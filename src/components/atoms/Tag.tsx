@@ -104,23 +104,29 @@ export const Tag: React.FC<TagProps> = ({
 }) => {
     const styles = useThemedStyles((theme, constants) => ({
         tag: {
-            borderRadius: theme.shape.radius.m,
+            // Make tags pill-shaped with border radius at half height
+            borderRadius: 100, // Very high value ensures pill shape
             paddingHorizontal:
                 size === 'small' ? theme.spacing.s :
                     size === 'medium' ? theme.spacing.m :
                         theme.spacing.l,
             paddingVertical:
-                size === 'small' ? 2 :
-                    size === 'medium' ? 4 :
-                        6,
+                size === 'small' ? 4 :
+                    size === 'medium' ? 6 :
+                        8,
             backgroundColor: selected
-                ? `${theme.colors.primary}20` // 20% opacity
-                : theme.colors.surfaceVariant,
+                ? `${theme.colors.primary}15` // 15% opacity for selected background
+                : theme.colors.surface, // Use surface color for better contrast
             alignSelf: 'flex-start',
             flexDirection: 'row',
             alignItems: 'center',
             marginRight: theme.spacing.xs,
             marginBottom: theme.spacing.xs,
+            // Add border
+            borderWidth: 1,
+            borderColor: selected
+                ? theme.colors.primary
+                : theme.colors.border, // Use theme border color
         },
         text: {
             fontSize:
@@ -129,7 +135,7 @@ export const Tag: React.FC<TagProps> = ({
                         theme.typography.fontSize.m,
             color: selected
                 ? theme.colors.primary
-                : theme.colors.textSecondary,
+                : theme.colors.textPrimary, // Use primary text color for better readability
             fontWeight: selected ? '500' : '400',
         },
         removeIcon: {
@@ -175,7 +181,7 @@ export const Tag: React.FC<TagProps> = ({
                     <Icon
                         name="x"
                         size={size === 'small' ? 12 : size === 'medium' ? 14 : 16}
-                        color={selected ? styles.text.color : styles.text.color}
+                        color={selected ? theme.colors.primary : theme.colors.textSecondary}
                         style={styles.removeIcon}
                     />
                 </TouchableOpacity>

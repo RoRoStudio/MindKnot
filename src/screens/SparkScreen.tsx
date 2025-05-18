@@ -15,6 +15,7 @@ import { useForm, Control, FieldValues } from 'react-hook-form';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStyles } from '../hooks/useStyles';
 import { Typography, Icon } from '../components/common';
+import { EntryDetailHeader } from '../components/organisms';
 import { Form, FormInput, FormRichTextarea, FormTagInput, FormCategorySelector } from '../components/form';
 import { createSpark, updateSpark, getSparkById } from '../services/sparkService';
 import { RootStackParamList } from '../types/navigation-types';
@@ -253,26 +254,19 @@ export default function SparkScreen() {
 
     // Render header based on mode
     const renderHeader = () => {
-        let title = "Create Spark";
-        if (mode === 'edit') title = "Edit Spark";
-        if (mode === 'view') title = "Spark";
+        let title = "";
+        if (mode === 'create') title = "Create Spark";
+        else if (mode === 'edit') title = "Edit Spark";
+        else title = "Spark Details";
 
         return (
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Icon name="arrow-left" width={24} height={24} color={theme.colors.textPrimary} />
-                </TouchableOpacity>
-
-                <Typography variant="h6" style={styles.headerTitle}>
-                    {title}
-                </Typography>
-
-                {mode === 'view' && (
-                    <TouchableOpacity onPress={handleEditPress} style={styles.actionButton}>
-                        <Icon name="pencil" width={24} height={24} color={theme.colors.textPrimary} />
-                    </TouchableOpacity>
-                )}
-            </View>
+            <EntryDetailHeader
+                showEditButton={mode === 'view'}
+                onEditPress={handleEditPress}
+                onBackPress={() => navigation.goBack()}
+                isSaved={!!sparkId && mode === 'view'}
+                title={title}
+            />
         );
     };
 
@@ -286,6 +280,7 @@ export default function SparkScreen() {
                     label="Title"
                     placeholder="Enter a title..."
                     rules={{ required: 'Title is required' }}
+                    isTitle={true}
                 />
 
                 <FormRichTextarea
@@ -376,7 +371,10 @@ export default function SparkScreen() {
     if (isLoading) {
         return (
             <SafeAreaView style={styles.container}>
-                {renderHeader()}
+                <EntryDetailHeader
+                    onBackPress={() => navigation.goBack()}
+                    title="Loading..."
+                />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.colors.primary} />
                 </View>
@@ -387,20 +385,13 @@ export default function SparkScreen() {
     return (
         <SafeAreaView style={styles.container}>
             {renderHeader()}
-
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
                 <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                    {(mode === 'create' || mode === 'edit') ? (
-                        <View style={styles.content}>
-                            {renderForm()}
-                        </View>
-                    ) : (
-                        renderViewMode()
-                    )}
+                    {mode === 'view' ? renderViewMode() : renderForm()}
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>

@@ -15,7 +15,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useForm, Control, FieldValues } from 'react-hook-form';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStyles } from '../hooks/useStyles';
-import { Typography, Icon, DetailScreenHeader } from '../components/common';
+import { Typography, Icon } from '../components/common';
+import { EntryDetailHeader } from '../components/organisms';
 import { Form, FormInput, FormRichTextarea, FormTagInput, FormCategorySelector } from '../components/form';
 import { createAction, updateAction, getActionById } from '../services/actionService';
 import { RootStackParamList } from '../types/navigation-types';
@@ -332,16 +333,18 @@ export default function ActionScreen() {
 
     // Render header based on mode
     const renderHeader = () => {
-        let title = "Create Action";
-        if (mode === 'edit') title = "Edit Action";
-        if (mode === 'view') title = "Action";
+        let title = "";
+        if (mode === 'create') title = "Create Action";
+        else if (mode === 'edit') title = "Edit Action";
+        else title = "Action Details";
 
         return (
-            <DetailScreenHeader
-                title={title}
-                iconName="square-check"
+            <EntryDetailHeader
                 showEditButton={mode === 'view'}
                 onEditPress={handleEditPress}
+                onBackPress={() => navigation.goBack()}
+                isSaved={!!actionId && mode === 'view'}
+                title={title}
             />
         );
     };
@@ -387,6 +390,7 @@ export default function ActionScreen() {
                     label="Title"
                     placeholder="Enter a title..."
                     rules={{ required: 'Title is required' }}
+                    isTitle={true}
                 />
 
                 <FormRichTextarea
@@ -534,7 +538,10 @@ export default function ActionScreen() {
     if (isLoading) {
         return (
             <SafeAreaView style={styles.container}>
-                {renderHeader()}
+                <EntryDetailHeader
+                    onBackPress={() => navigation.goBack()}
+                    title="Loading..."
+                />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.colors.primary} />
                 </View>
@@ -545,20 +552,13 @@ export default function ActionScreen() {
     return (
         <SafeAreaView style={styles.container}>
             {renderHeader()}
-
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 88 : 0}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
                 <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                    {(mode === 'create' || mode === 'edit') ? (
-                        <View style={styles.content}>
-                            {renderForm()}
-                        </View>
-                    ) : (
-                        renderViewMode()
-                    )}
+                    {mode === 'view' ? renderViewMode() : renderForm()}
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>

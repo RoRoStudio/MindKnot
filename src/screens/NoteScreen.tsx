@@ -18,6 +18,7 @@ import { useStyles } from '../hooks/useStyles';
 import { Typography, Icon } from '../components/common';
 import { Tag } from '../components/atoms';
 import { Form, FormInput, FormRichTextarea, FormTagInput, FormCategorySelector } from '../components/form';
+import { EntryDetailHeader } from '../components/organisms';
 import { createNote, updateNote, getNoteById } from '../services/noteService';
 import { RootStackParamList } from '../types/navigation-types';
 import { useNotes } from '../hooks/useNotes';
@@ -59,27 +60,6 @@ export default function NoteScreen() {
         },
         content: {
             flex: 1,
-        },
-        header: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: theme.spacing.m,
-            paddingVertical: theme.spacing.m,
-        },
-        headerLeftSection: {
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        headerRightSection: {
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        backButton: {
-            padding: theme.spacing.xs,
-        },
-        actionButton: {
-            padding: theme.spacing.m,
         },
         lastEditedText: {
             textAlign: 'right',
@@ -335,11 +315,7 @@ export default function NoteScreen() {
     if (isLoading) {
         return (
             <SafeAreaView style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-                        <Icon name="arrow-left" width={24} height={24} color={theme.colors.textPrimary} />
-                    </TouchableOpacity>
-                </View>
+                <EntryDetailHeader onBackPress={handleBackPress} />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.colors.primary} />
                 </View>
@@ -349,36 +325,16 @@ export default function NoteScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <View style={styles.headerLeftSection}>
-                    <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-                        <Icon name="arrow-left" width={24} height={24} color={theme.colors.textPrimary} />
-                    </TouchableOpacity>
-                </View>
+            <EntryDetailHeader
+                isStarred={watchedValues.isStarred}
+                onStarPress={toggleStar}
+                onBackPress={handleBackPress}
+                onArchivePress={handleArchive}
+                onDuplicatePress={handleDuplicate}
+                onHidePress={handleHide}
+                isSaved={!!noteId}
+            />
 
-                <View style={styles.headerRightSection}>
-                    <TouchableOpacity onPress={toggleStar} style={styles.actionButton}>
-                        <Icon
-                            name={watchedValues.isStarred ? "star" : "star-off"}
-                            width={20}
-                            height={20}
-                            color={watchedValues.isStarred ? "#FFB800" : theme.colors.textPrimary}
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={handleArchive} style={styles.actionButton}>
-                        <Icon name="archive" width={20} height={20} color={theme.colors.textPrimary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={handleDuplicate} style={styles.actionButton}>
-                        <Icon name="copy" width={20} height={20} color={theme.colors.textPrimary} />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={handleHide} style={styles.actionButton}>
-                        <Icon name="eye-off" width={20} height={20} color={theme.colors.textPrimary} />
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-            {/* Last edited timestamp */}
             {lastEdited && (
                 <Typography variant="caption" style={styles.lastEditedText}>
                     Last edited {formatLastEdited()}
@@ -392,15 +348,14 @@ export default function NoteScreen() {
             >
                 <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                     <Form style={{ flex: 1 }}>
-                        {/* Title Input */}
                         <FormInput
                             name="title"
                             control={control as unknown as Control<FieldValues>}
                             placeholder="Untitled Note"
                             style={styles.titleInput}
+                            isTitle={true}
                         />
 
-                        {/* Tags and Categories */}
                         <View style={styles.metadataSection}>
                             <View style={styles.tagsContainer}>
                                 <FormTagInput
@@ -438,7 +393,6 @@ export default function NoteScreen() {
                             )}
                         </View>
 
-                        {/* Rich Text Editor */}
                         <View style={styles.editorContainer}>
                             <FormRichTextarea
                                 name="body"
