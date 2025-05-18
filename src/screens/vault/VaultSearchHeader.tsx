@@ -47,6 +47,12 @@ export const VaultSearchHeader: React.FC<VaultSearchHeaderProps> = memo(({
             borderBottomWidth: 1,
             borderBottomColor: theme.colors.divider,
             zIndex: 10,
+            // Add shadow for better visual separation
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 2,
         },
         searchRow: {
             flexDirection: 'row',
@@ -62,6 +68,9 @@ export const VaultSearchHeader: React.FC<VaultSearchHeaderProps> = memo(({
             borderRadius: theme.shape.radius.m,
             paddingHorizontal: theme.spacing.s,
             height: 40,
+            // Light border for better definition
+            borderWidth: 1,
+            borderColor: theme.colors.border,
         },
         searchInput: {
             flex: 1,
@@ -80,6 +89,10 @@ export const VaultSearchHeader: React.FC<VaultSearchHeaderProps> = memo(({
             alignItems: 'center',
             justifyContent: 'center',
             paddingHorizontal: theme.spacing.s,
+            // Add border to match search container
+            borderWidth: 1,
+            borderColor: filterCount > 0 ? theme.colors.primary : theme.colors.border,
+            height: 40,
         },
         filtersContainer: {
             padding: theme.spacing.s,
@@ -103,17 +116,21 @@ export const VaultSearchHeader: React.FC<VaultSearchHeaderProps> = memo(({
         filterLabel: {
             fontSize: theme.typography.fontSize.s,
             color: theme.colors.textSecondary,
+            fontWeight: '500',
         },
         chip: {
             paddingHorizontal: theme.spacing.s,
             paddingVertical: 6,
             borderRadius: theme.shape.radius.m,
             marginRight: theme.spacing.xs,
+            marginBottom: theme.spacing.xs, // Add bottom margin to prevent crowding
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: theme.colors.surface,
             borderWidth: 1,
             borderColor: theme.colors.border,
+            minWidth: 80, // Ensure minimum width for readability
+            justifyContent: 'center',
         },
         activeChip: {
             borderColor: theme.colors.primary,
@@ -125,6 +142,7 @@ export const VaultSearchHeader: React.FC<VaultSearchHeaderProps> = memo(({
         },
         activeChipText: {
             color: theme.colors.primary,
+            fontWeight: '500',
         },
         sortRow: {
             flexDirection: 'row',
@@ -138,9 +156,13 @@ export const VaultSearchHeader: React.FC<VaultSearchHeaderProps> = memo(({
             backgroundColor: theme.colors.surface,
             minWidth: 70,
             alignItems: 'center',
+            // Add border for better definition
+            borderWidth: 1,
+            borderColor: theme.colors.border,
         },
         activeSortButton: {
             backgroundColor: theme.colors.primary,
+            borderColor: theme.colors.primary,
         },
         sortButtonText: {
             fontSize: theme.typography.fontSize.xs,
@@ -148,6 +170,7 @@ export const VaultSearchHeader: React.FC<VaultSearchHeaderProps> = memo(({
         },
         activeSortButtonText: {
             color: theme.colors.onPrimary,
+            fontWeight: '500',
         },
         colorIndicator: {
             width: 8,

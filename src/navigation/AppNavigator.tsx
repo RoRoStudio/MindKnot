@@ -9,6 +9,7 @@ import { BottomSheetProvider, useBottomSheet } from '../contexts/BottomSheetCont
 import SagaDetailScreen from '../screens/SagaDetailScreen';
 import ThemeInspectorScreen from '../screens/ThemeInspectorScreen';
 import ComponentShowcaseScreen from '../screens/ComponentShowcaseScreen';
+import TestScreen from '../screens/TestScreen';
 
 // New unified entry screens
 import NoteScreen from '../screens/NoteScreen';
@@ -49,6 +50,7 @@ function MainNavigator() {
                 <Stack.Screen name="SagaDetail" component={SagaDetailScreen} />
                 <Stack.Screen name="ThemeInspector" component={ThemeInspectorScreen} />
                 <Stack.Screen name="ComponentShowcase" component={ComponentShowcaseScreen} />
+                <Stack.Screen name="TestScreen" component={TestScreen} />
 
                 {/* Entry screens with create/edit/view capabilities */}
                 <Stack.Screen name="NoteScreen" component={NoteScreen} />

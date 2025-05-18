@@ -69,14 +69,10 @@ export const EntryCard = memo(function EntryCard({
             marginBottom: theme.spacing.m,
             borderLeftWidth: 4,
             borderLeftColor: category ? category.color : (iconColor || theme.colors.primary),
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 2,
         },
         cardContent: {
             position: 'relative',
+            padding: theme.spacing.s,
         },
         header: {
             flexDirection: 'row',
@@ -384,6 +380,8 @@ export const EntryCard = memo(function EntryCard({
             <Card
                 style={styles.card}
                 onPress={handleCardPress}
+                elevated={true}
+                noPadding={true}
             >
                 <View style={styles.cardContent}>
                     <View style={styles.header}>

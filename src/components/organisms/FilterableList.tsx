@@ -5,6 +5,7 @@ import {
     RefreshControl,
     FlatList,
     ListRenderItem,
+    ListRenderItemInfo,
     Dimensions,
     TouchableOpacity,
     TouchableWithoutFeedback,
@@ -232,7 +233,7 @@ export function FilterableList<T>({
             borderRadius: 50,
             padding: theme.spacing.s,
             backgroundColor: theme.colors.primary,
-            shadowColor: '#000',
+            shadowColor: theme.colors.shadow,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
             shadowRadius: 4,
@@ -240,6 +241,7 @@ export function FilterableList<T>({
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: theme.spacing.m,
+            zIndex: 5, // Ensure it's above other elements
         },
         fabIcon: {
             marginRight: 8,
@@ -251,7 +253,7 @@ export function FilterableList<T>({
             borderRadius: 50,
             padding: theme.spacing.s,
             backgroundColor: theme.colors.surface,
-            shadowColor: '#000',
+            shadowColor: theme.colors.shadow,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
             shadowRadius: 4,
@@ -259,6 +261,7 @@ export function FilterableList<T>({
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: theme.spacing.m,
+            zIndex: 5, // Ensure it's above other elements
         },
         fabLabel: {
             color: theme.colors.onPrimary,
@@ -266,6 +269,12 @@ export function FilterableList<T>({
         },
         columnWrapperStyle: {
             justifyContent: 'space-between',
+            paddingHorizontal: theme.spacing.xs,
+        },
+        gridItem: {
+            flex: 1,
+            margin: theme.spacing.xs,
+            maxWidth: '48%', // Ensure two columns fit side by side
         },
         loadingContainer: {
             flex: 1,
@@ -384,9 +393,19 @@ export function FilterableList<T>({
                 numColumns: 2,
                 columnWrapperStyle: styles.columnWrapperStyle,
                 contentContainerStyle: styles.gridContainer,
+                renderItem: (info: ListRenderItemInfo<T>) => (
+                    <View style={styles.gridItem}>
+                        {renderItem(info)}
+                    </View>
+                ),
             };
         }
-        return {};
+        return {
+            contentContainerStyle: {
+                padding: theme.spacing.m,
+                paddingBottom: 80, // Add extra padding at bottom for fab button
+            },
+        };
     };
 
     return (

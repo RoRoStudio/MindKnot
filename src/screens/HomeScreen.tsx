@@ -127,6 +127,7 @@ export default function HomeScreen() {
         { id: '3', title: 'Create Action', icon: 'check', color: theme.colors.success, onPress: () => showActionForm() },
         { id: '4', title: 'Start Path', icon: 'compass', color: theme.colors.info, onPress: () => showPathForm() },
         { id: '5', title: 'UI Showcase', icon: 'layout-grid', color: '#9C27B0', onPress: () => navigation.navigate('ComponentShowcase') },
+        { id: '6', title: 'Path Timeline', icon: 'git-branch', color: '#4b6cb7', onPress: () => navigation.navigate('TestScreen') },
     ];
 
 

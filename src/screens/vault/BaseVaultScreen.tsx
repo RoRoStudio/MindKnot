@@ -82,6 +82,7 @@ export function BaseVaultScreen<T>({
         },
         listContainer: {
             flex: 1,
+            paddingTop: 4, // Add small padding at the top
         },
         layoutToggle: {
             position: 'absolute',
@@ -110,7 +111,7 @@ export function BaseVaultScreen<T>({
             flexGrow: 1,
         },
         gridItem: {
-            width: (windowWidth - theme.spacing.s * 4) / 2,
+            width: (windowWidth - theme.spacing.s * 6) / 2,
             margin: theme.spacing.xs,
         },
         overlay: {
@@ -245,7 +246,7 @@ export function BaseVaultScreen<T>({
                                 hasFiltersApplied={hasFiltersApplied}
                             />
                         ) : (
-                            <View style={styles.content}>
+                            <View style={styles.listContainer}>
                                 {isGridView ? (
                                     <FlatList
                                         ref={listRef}

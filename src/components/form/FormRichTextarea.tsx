@@ -10,6 +10,8 @@ import {
     Keyboard,
     Platform,
     Button,
+    ViewStyle,
+    TextStyle,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
@@ -44,6 +46,49 @@ interface FormRichTextareaProps<T extends FieldValues> {
     minHeight?: number;
     editorMode?: EditorMode;
     resizable?: boolean;
+    fullScreen?: boolean;
+}
+
+// Extend RichEditor props interface to include onInitialized
+interface ExtendedRichEditorProps {
+    onInitialized?: () => void;
+    ref?: any;
+    initialContentHTML?: string;
+    onChange?: (html: string) => void;
+    placeholder?: string;
+    pasteAsPlainText?: boolean;
+    useContainer?: boolean;
+    containerStyle?: any;
+    editorStyle?: any;
+    onFocus?: () => void;
+    onBlur?: () => void;
+    onPaste?: (data: any) => void;
+    style?: any;
+}
+
+// Define custom styles interface
+interface RichTextEditorStyles {
+    container: ViewStyle;
+    label: TextStyle;
+    formatToolbar: ViewStyle;
+    fullScreenToolbar: ViewStyle;
+    toolbarScroll: ViewStyle;
+    formatButton: ViewStyle;
+    formatButtonActive: ViewStyle;
+    activeFormatButton: ViewStyle;
+    editorContainer: ViewStyle;
+    editor: ViewStyle;
+    editorFullScreen: ViewStyle;
+    toggleContainer: ViewStyle;
+    toggleButton: ViewStyle;
+    toggleButtonText: TextStyle;
+    toggleText: TextStyle;
+    resizeHandle: ViewStyle;
+    resizeHandleLine: ViewStyle;
+    plainTextInput: TextStyle;
+    charCounter: TextStyle;
+    helperText: TextStyle;
+    errorContainer: ViewStyle;
 }
 
 export default function FormRichTextarea<T extends FieldValues>({
@@ -61,6 +106,7 @@ export default function FormRichTextarea<T extends FieldValues>({
     minHeight = 100,
     editorMode = 'full',
     resizable = true,
+    fullScreen = false,
 }: FormRichTextareaProps<T>) {
     // Dynamic defaults based on editor mode
     const defaultNumberOfLines = editorMode === 'light' ? 2 : 4;
@@ -101,50 +147,71 @@ export default function FormRichTextarea<T extends FieldValues>({
             setTimeout(() => {
                 if (useRichEditor) {
                     editorRef.current?.commandDOM(`
-                        // Completely reset and reinitialize the editor
+                        // Reset and initialize the editor for better handling
                         document.body.style.userSelect = 'text';
                         document.body.style.webkitUserSelect = 'text';
                         document.body.style.MozUserSelect = 'text';
                         document.body.contentEditable = 'true';
-                        document.documentElement.style.webkitTouchCallout = 'default';
-                        document.documentElement.style.webkitUserSelect = 'text';
                         
-                        // Force proper line handling
+                        // Fix for proper styling and spacing
                         const styleTag = document.createElement('style');
                         styleTag.innerHTML = \`
                             body {
-                                line-height: 1.5 !important;
-                                margin: 0 !important;
-                                padding: 0 !important;
+                                font-family: system-ui, -apple-system, sans-serif;
+                                font-size: 16px;
+                                line-height: 1.4;
+                                color: #333;
+                                padding: 10px;
+                                padding-top: 15px !important;
+                                margin: 0;
+                                min-height: 100%;
                             }
+                            
                             p {
-                                margin-top: 0 !important;
-                                margin-bottom: 0.8em !important;
-                                min-height: 1em !important;
+                                margin: 0 0 10px 0;
+                                padding: 0;
                             }
-                            div {
-                                margin-bottom: 0.8em !important;
-                                min-height: 1em !important;
-                            }
+                            
                             br {
-                                display: block !important;
-                                content: "" !important;
-                                margin-top: 0.8em !important;
-                                line-height: 1.5 !important;
+                                content: '';
+                                margin: 0;
+                                display: block;
+                                line-height: 1.4;
+                            }
+                            
+                            div, span {
+                                margin: 0;
+                                padding: 0;
+                            }
+                            
+                            /* Ensure no extra spacing with lists */
+                            ul, ol {
+                                margin-top: 0;
+                                margin-bottom: 10px;
+                                padding-left: 20px;
+                            }
+                            
+                            li {
+                                margin-bottom: 5px;
+                            }
+                            
+                            /* Fix heading margins */
+                            h1, h2, h3, h4, h5, h6 {
+                                margin-top: 20px;
+                                margin-bottom: 10px;
+                                line-height: 1.2;
                             }
                         \`;
                         document.head.appendChild(styleTag);
                         
-                        // Force keyboard behavior
+                        // Fix Enter key behavior for single line breaks
                         document.addEventListener('keydown', function(e) {
                             if (e.key === 'Enter' || e.keyCode === 13) {
-                                // Manually insert a paragraph break
-                                if (document.queryCommandSupported('insertParagraph')) {
-                                    document.execCommand('insertParagraph', false, null);
-                                } else {
-                                    document.execCommand('insertHTML', false, '<br><br>');
+                                // Only add a single new line
+                                if (!e.shiftKey) {
+                                    e.preventDefault();
+                                    document.execCommand('insertParagraph', false);
                                 }
-                                e.preventDefault();
                             }
                         });
                     `);
@@ -153,23 +220,52 @@ export default function FormRichTextarea<T extends FieldValues>({
         }
     }, [useRichEditor, editorRef.current]);
 
-    const styles = useStyles((theme) => ({
+    const styles = useStyles<RichTextEditorStyles>((theme) => ({
         container: {
-            marginBottom: theme.spacing.m,
+            marginBottom: fullScreen ? 0 : theme.spacing.m,
+            flex: fullScreen ? 1 : undefined,
         },
         label: {
             marginBottom: theme.spacing.xs,
         },
         formatToolbar: {
             flexDirection: 'row',
-            backgroundColor: theme.colors.surface,
-            borderTopLeftRadius: theme.components.inputs.radius,
-            borderTopRightRadius: theme.components.inputs.radius,
-            borderWidth: 1,
+            backgroundColor: fullScreen ? theme.colors.background : theme.colors.surface,
+            borderTopLeftRadius: fullScreen ? 0 : theme.components.inputs.radius,
+            borderTopRightRadius: fullScreen ? 0 : theme.components.inputs.radius,
+            borderWidth: fullScreen ? 0 : 1,
             borderBottomWidth: 0,
             borderColor: theme.components.inputs.border,
-            padding: theme.spacing.xs,
+            padding: fullScreen ? theme.spacing.xs : theme.spacing.xs,
             overflow: 'hidden',
+            marginBottom: 0,
+            // Add shadow for better visual separation in fullScreen mode
+            ...(fullScreen && {
+                shadowColor: theme.colors.shadow,
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 2,
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 1,
+            }),
+        },
+        fullScreenToolbar: {
+            // Styles for fullscreen toolbar
+            width: '100%',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 3,
+            elevation: 4,
         },
         toolbarScroll: {
             flexDirection: 'row',
@@ -185,111 +281,89 @@ export default function FormRichTextarea<T extends FieldValues>({
         formatButtonActive: {
             backgroundColor: theme.colors.primaryLight,
         },
+        activeFormatButton: {
+            backgroundColor: theme.colors.primaryLight,
+        },
         editorContainer: {
-            borderWidth: 1,
+            borderWidth: fullScreen ? 0 : 1,
+            borderTopWidth: fullScreen ? 0 : (isFocused ? 1 : 1),
             borderColor: theme.components.inputs.border,
-            borderRadius: theme.components.inputs.radius,
-            ...(isFocused && {
-                borderColor: theme.components.inputs.focusBorder,
-            }),
-            // For toolbar, only round the bottom if toolbar is visible
-            borderTopLeftRadius: useRichEditor ? 0 : theme.components.inputs.radius,
-            borderTopRightRadius: useRichEditor ? 0 : theme.components.inputs.radius,
-            borderBottomLeftRadius: resizable ? 0 : theme.components.inputs.radius,
-            borderBottomRightRadius: resizable ? 0 : theme.components.inputs.radius,
-            borderBottomWidth: resizable ? 0 : 1,
-            backgroundColor: theme.components.inputs.background,
+            borderRadius: fullScreen ? 0 : theme.components.inputs.radius,
+            borderTopLeftRadius: fullScreen ? 0 : (isFocused ? theme.components.inputs.radius : 0),
+            borderTopRightRadius: fullScreen ? 0 : (isFocused ? theme.components.inputs.radius : 0),
             overflow: 'hidden',
+            height: autoGrow ? 'auto' : actualNumberOfLines * 20,
+            minHeight: fullScreen ? actualMinHeight : actualMinHeight,
+            maxHeight: fullScreen ? undefined : actualMaxHeight,
+            ...(fullScreen && {
+                flex: 1,
+            }),
         },
-        editorError: {
-            borderColor: theme.colors.error,
+        editor: {
+            flex: 1,
+            height: '100%',
         },
-        richEditor: {
-            minHeight: actualMinHeight,
-            maxHeight: actualMaxHeight,
-        },
-        plainTextInput: {
-            padding: theme.spacing.m,
-            color: theme.components.inputs.text,
-            fontSize: theme.typography.fontSize.m,
-            textAlignVertical: 'top',
-            minHeight: actualMinHeight,
-            maxHeight: actualMaxHeight,
-        },
-        charCounter: {
-            alignSelf: 'flex-end',
-            marginTop: 4,
-        },
-        helperText: {
-            marginTop: 4,
+        editorFullScreen: {
+            borderWidth: 0,
+            borderRadius: 0,
+            overflow: 'visible',
         },
         toggleContainer: {
             flexDirection: 'row',
             justifyContent: 'flex-end',
-            alignItems: 'center',
             marginBottom: theme.spacing.xs,
         },
         toggleButton: {
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.s,
-            paddingHorizontal: theme.spacing.s,
-            paddingVertical: theme.spacing.xs,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
+        },
+        toggleButtonText: {
+            fontSize: theme.typography.fontSize.xs,
+            color: theme.colors.primary,
+            marginLeft: theme.spacing.xs,
         },
         toggleText: {
+            fontSize: theme.typography.fontSize.xs,
+            color: theme.colors.primary,
             marginLeft: theme.spacing.xs,
-            fontSize: theme.typography.fontSize.s,
         },
         resizeHandle: {
-            height: 24,
-            width: '100%',
+            height: 10,
+            backgroundColor: theme.colors.surfaceVariant,
             borderBottomLeftRadius: theme.components.inputs.radius,
             borderBottomRightRadius: theme.components.inputs.radius,
-            justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor: theme.colors.surface,
-            borderWidth: 1,
-            borderTopWidth: 0,
-            borderColor: isFocused
-                ? theme.components.inputs.focusBorder
-                : theme.components.inputs.border,
-            padding: 0,
-            margin: 0,
+            justifyContent: 'center',
         },
-        resizeBar: {
-            height: 4,
-            width: 40,
-            backgroundColor: isFocused
-                ? theme.components.inputs.focusBorder
-                : theme.colors.border,
-            borderRadius: 2,
-            marginTop: 2,
+        resizeHandleLine: {
+            width: 30,
+            height: 3,
+            backgroundColor: theme.colors.border,
+            borderRadius: 1.5,
         },
-        // More prominent active state
-        activeFormatIcon: {
-            color: theme.colors.primary,
+        plainTextInput: {
+            padding: theme.spacing.m,
+            flex: 1,
+            textAlignVertical: 'top',
+            fontSize: theme.typography.fontSize.m,
+            color: theme.components.inputs.text,
+            height: '100%',
         },
-        activeFormatButton: {
-            backgroundColor: theme.colors.primaryLight,
-            borderWidth: 1,
-            borderColor: theme.colors.primary,
+        charCounter: {
+            position: 'absolute',
+            bottom: 5,
+            right: 8,
+            backgroundColor: 'rgba(255, 255, 255, 0.7)',
+            paddingHorizontal: 5,
+            borderRadius: 10,
+            fontSize: 10,
         },
-        // Add a manual sync button
-        syncButton: {
-            alignSelf: 'flex-end',
-            marginTop: 5,
-            marginBottom: 5,
-            padding: 8,
-            backgroundColor: theme.colors.accent,
-            borderRadius: theme.shape.radius.s,
+        helperText: {
+            marginTop: 4,
         },
-        syncButtonText: {
-            color: theme.colors.textPrimary,
-            fontSize: 12,
-        }
+        errorContainer: {
+            marginTop: 4,
+        },
     }));
 
     // Map editor actions to icon names
@@ -363,7 +437,7 @@ export default function FormRichTextarea<T extends FieldValues>({
     // Create custom formatting toolbar with more explicit active states
     const renderFormatToolbar = () => {
         return (
-            <View style={styles.formatToolbar}>
+            <View style={[styles.formatToolbar, fullScreen && styles.fullScreenToolbar]}>
                 <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -399,7 +473,7 @@ export default function FormRichTextarea<T extends FieldValues>({
 
     // Render toggle button for optional rich editor
     const renderToggleButton = () => {
-        if (editorMode !== 'optional') return null;
+        if (editorMode !== 'optional' || fullScreen) return null;
 
         return (
             <View style={styles.toggleContainer}>
@@ -453,9 +527,6 @@ export default function FormRichTextarea<T extends FieldValues>({
                 }
             }
 
-            // Log content status
-            console.log(`Content status: ${isEmpty ? 'empty' : 'has content'}, Plain text length: ${extractedText.length}`);
-
             // Create a value that will work with form validation and database
             if (isEmpty) {
                 onChange(''); // Empty string for empty content
@@ -492,10 +563,8 @@ export default function FormRichTextarea<T extends FieldValues>({
                         setPlainText(text);
 
                         if (text) {
-                            console.log('Manual sync successful, content length:', text.length);
                             onChange(text);
                         } else {
-                            console.log('Manual sync found empty content');
                             onChange('');
                         }
                     }
@@ -510,13 +579,12 @@ export default function FormRichTextarea<T extends FieldValues>({
 
     // Initialize the editor with basic settings
     const handleEditorInitialized = () => {
-        console.log('Rich Editor initialized');
         if (editorRef.current) {
             // Basic setup with strong styling rules
             editorRef.current.commandDOM(`
                 document.body.style.fontFamily = 'System';
                 document.body.style.fontSize = '${theme.typography.fontSize.m}px';
-                document.body.style.padding = '${theme.spacing.m}px';
+                document.body.style.padding = '${fullScreen ? theme.spacing.s : theme.spacing.m}px';
                 document.body.style.lineHeight = '1.5';
                 document.body.style.color = '${theme.components.inputs.text}';
                 
@@ -534,13 +602,11 @@ export default function FormRichTextarea<T extends FieldValues>({
             name={name}
             rules={rules}
             render={({ field: { onChange, onBlur, value, ref }, fieldState: { error } }) => {
-                // Debug the current value when there's an error
-                if (error) {
-                    console.log(`Form error for ${name}:`, error.message);
-                    console.log(`Current value:`, value);
-                    console.log(`Current HTML:`, internalHtml);
-                    console.log(`Current plain text:`, plainText);
-                }
+                const handleEditorChange = (html: string) => {
+                    handleContentChange(html, onChange);
+                };
+
+                const initialHTML = ensureStringValue(value);
 
                 return (
                     <View style={styles.container}>
@@ -550,117 +616,99 @@ export default function FormRichTextarea<T extends FieldValues>({
                             </Typography>
                         )}
 
-                        {renderToggleButton()}
+                        {editorMode === 'optional' && renderToggleButton()}
 
-                        {useRichEditor && renderFormatToolbar()}
+                        {useRichEditor ? (
+                            <>
+                                {/* Format toolbar only for rich editor mode */}
+                                {renderFormatToolbar()}
 
-                        <View style={[
-                            styles.editorContainer,
-                            error && styles.editorError
-                        ]}>
-                            {useRichEditor ? (
-                                // Rich Text Editor
-                                <RichEditor
-                                    ref={(r) => {
-                                        // Store editor ref
-                                        editorRef.current = r;
-                                        // Pass to react-hook-form
-                                        if (typeof ref === 'function') ref(r);
-                                    }}
-                                    initialContentHTML={ensureStringValue(value)}
-                                    onChange={(content) => handleContentChange(content, onChange)}
-                                    onBlur={() => {
-                                        setIsFocused(false);
-                                        // Sync content on blur for safety
-                                        syncContent(onChange);
-                                        onBlur();
-                                    }}
-                                    onFocus={() => setIsFocused(true)}
-                                    placeholder={placeholder}
-                                    initialHeight={actualMinHeight}
-                                    initialFocus={false}
-                                    pasteAsPlainText={false}
-                                    useContainer={false}
-                                    editorInitializedCallback={handleEditorInitialized}
-                                    editorStyle={{
-                                        backgroundColor: theme.components.inputs.background,
-                                        color: theme.components.inputs.text,
-                                        placeholderColor: theme.components.inputs.placeholder,
-                                        contentCSSText: `
-                                            font-family: System; 
-                                            font-size: ${theme.typography.fontSize.m}px;
-                                            padding: ${theme.spacing.m}px;
-                                            line-height: 1.5;
-                                        `
-                                    }}
-                                    containerStyle={styles.richEditor}
-                                />
-                            ) : (
-                                // Plain Text Input
+                                <View style={[
+                                    styles.editorContainer,
+                                    fullScreen && styles.editorFullScreen
+                                ]}>
+                                    <RichEditor
+                                        ref={(r) => {
+                                            // Store editor ref
+                                            editorRef.current = r;
+                                            // Pass to react-hook-form
+                                            if (typeof ref === 'function') ref(r);
+                                        }}
+                                        initialContentHTML={initialHTML}
+                                        onChange={handleEditorChange}
+                                        placeholder={placeholder}
+                                        pasteAsPlainText={true}
+                                        useContainer={true}
+                                        containerStyle={{
+                                            minHeight: actualMinHeight,
+                                        }}
+                                        editorStyle={{
+                                            contentCSSText: `
+                                                font-family: system-ui, -apple-system, sans-serif;
+                                                font-size: 16px;
+                                                line-height: 1.4;
+                                                min-height: ${actualMinHeight}px;
+                                            `,
+                                        }}
+                                        onFocus={() => setIsFocused(true)}
+                                        onBlur={() => {
+                                            setIsFocused(false);
+                                            syncContent(onChange);
+                                        }}
+                                        // @ts-ignore - known prop in our version of the library
+                                        onInitialized={handleEditorInitialized}
+                                        onPaste={(data) => {
+                                            // Handle paste events here
+                                        }}
+                                        style={styles.editor}
+                                    />
+
+                                    {/* Character counter overlay if needed */}
+                                    {showCharCount && maxLength && (
+                                        <Text style={[
+                                            styles.charCounter,
+                                            charCount >= maxLength && { color: theme.colors.error }
+                                        ]}>
+                                            {charCount}/{maxLength}
+                                        </Text>
+                                    )}
+                                </View>
+
+                                {/* Resizable handle for non-fullscreen mode */}
+                                {resizable && !fullScreen && !autoGrow && (
+                                    <TouchableOpacity
+                                        style={styles.resizeHandle}
+                                        onPressIn={() => setIsResizing(true)}
+                                        onPressOut={() => setIsResizing(false)}
+                                    >
+                                        <View style={styles.resizeHandleLine} />
+                                    </TouchableOpacity>
+                                )}
+                            </>
+                        ) : (
+                            <View style={styles.editorContainer}>
                                 <TextInput
-                                    style={[
-                                        styles.plainTextInput,
-                                        { height: Math.max(actualMinHeight, height) }
-                                    ]}
-                                    value={ensureStringValue(value)}
+                                    value={plainText}
                                     onChangeText={(text) => {
-                                        if (maxLength && text.length > maxLength) {
-                                            return;
+                                        setPlainText(text);
+                                        onChange(text);
+                                        if (maxLength) {
+                                            setCharCount(text.length);
                                         }
-                                        // Plain text mode is simpler - just pass the text value
-                                        onChange(text.trim() === '' ? '' : text);
-                                        setCharCount(text.length);
                                     }}
-                                    onBlur={() => {
-                                        setIsFocused(false);
-                                        onBlur();
-                                    }}
-                                    onFocus={() => setIsFocused(true)}
-                                    maxLength={maxLength}
                                     placeholder={placeholder}
                                     multiline
                                     numberOfLines={actualNumberOfLines}
-                                    onContentSizeChange={(event) => {
-                                        if (autoGrow && !isResizing) {
-                                            const contentHeight = event.nativeEvent.contentSize.height;
-                                            setHeight(Math.min(Math.max(contentHeight, actualMinHeight), actualMaxHeight));
-                                        }
-                                    }}
+                                    style={styles.plainTextInput}
+                                    maxLength={maxLength}
                                 />
-                            )}
-                        </View>
-
-                        {/* Manual sync button for emergencies */}
-                        {useRichEditor && (
-                            <TouchableOpacity
-                                style={styles.syncButton}
-                                onPress={() => syncContent(onChange)}
-                            >
-                                <Text style={styles.syncButtonText}>Sync Content</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {/* Resize handle */}
-                        {resizable && (
-                            <View style={styles.resizeHandle}>
-                                <View style={styles.resizeBar} />
                             </View>
                         )}
 
-                        {/* Character counter */}
-                        {showCharCount && maxLength && (
-                            <Typography
-                                variant="caption"
-                                style={styles.charCounter}
-                                color={charCount === maxLength ? 'error' : 'secondary'}
-                            >
-                                {charCount}/{maxLength}
-                            </Typography>
-                        )}
-
+                        {/* Error message and helper text */}
                         <FormErrorMessage message={error?.message} visible={!!error} />
 
-                        {helperText && !error && (
+                        {!error && helperText && (
                             <Typography
                                 variant="caption"
                                 style={styles.helperText}

@@ -1,6 +1,6 @@
 // src/navigation/VaultTabNavigator.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import VaultNotesScreen from '../screens/vault/VaultNotesScreen';
@@ -18,13 +18,53 @@ const Tab = createMaterialTopTabNavigator();
 const CustomTabBar = ({ state, descriptors, navigation }: MaterialTopTabBarProps) => {
     const { theme } = useTheme();
 
+    // Create styles using the theme
+    const tabStyles = StyleSheet.create({
+        tabBarContainer: {
+            flexDirection: 'row',
+            paddingVertical: 10,
+            paddingHorizontal: 8,
+            backgroundColor: theme.colors.background,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.divider,
+            elevation: 2,
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+        },
+        scrollContainer: {
+            flexDirection: 'row',
+        },
+        tabButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 6,
+            paddingHorizontal: 12,
+            marginRight: 8,
+            borderRadius: 16,
+            borderWidth: 1,
+            // Use fixed width that's just enough for the content
+            minWidth: 0,
+            maxWidth: 'auto',
+        },
+        tabIcon: {
+            marginRight: 4,
+        },
+        tabLabel: {
+            fontSize: 13,
+            fontWeight: '500',
+        }
+    });
+
     return (
         <View>
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContainer}
-                style={styles.tabBarContainer}
+                contentContainerStyle={tabStyles.scrollContainer}
+                style={tabStyles.tabBarContainer}
             >
                 {state.routes.map((route, index) => {
                     const { options } = descriptors[route.key];
@@ -58,7 +98,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: MaterialTopTabBarProps
                             key={route.key}
                             onPress={onPress}
                             style={[
-                                styles.tabButton,
+                                tabStyles.tabButton,
                                 {
                                     backgroundColor: isFocused ? theme.colors.primary : 'transparent',
                                     borderColor: isFocused ? theme.colors.primary : theme.colors.textSecondary,
@@ -67,15 +107,17 @@ const CustomTabBar = ({ state, descriptors, navigation }: MaterialTopTabBarProps
                         >
                             <Icon
                                 name={iconName}
-                                size={18}
+                                size={16}
                                 color={isFocused ? theme.colors.background : theme.colors.textSecondary}
-                                style={styles.tabIcon}
+                                style={tabStyles.tabIcon}
                             />
                             <Text
                                 style={[
-                                    styles.tabLabel,
+                                    tabStyles.tabLabel,
                                     { color: isFocused ? theme.colors.background : theme.colors.textSecondary }
                                 ]}
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
                             >
                                 {label}
                             </Text>
@@ -116,6 +158,8 @@ export default function VaultTabNavigator() {
                 tabBarActiveTintColor: theme.colors.primary,
                 tabBarInactiveTintColor: theme.colors.textSecondary,
                 tabBarStyle: { display: 'none' }, // Hide default tab bar
+                lazy: true, // Only render screens when they are focused
+                swipeEnabled: true, // Enable swipe between tabs
             }}
         >
             {vaultEntryTypes.map(entryType => (
@@ -128,31 +172,3 @@ export default function VaultTabNavigator() {
         </Tab.Navigator>
     );
 }
-
-const styles = StyleSheet.create({
-    tabBarContainer: {
-        flexDirection: 'row',
-        paddingVertical: 12,
-        paddingHorizontal: 8,
-    },
-    scrollContainer: {
-        paddingHorizontal: 4,
-        paddingStart: 8,
-        paddingEnd: 8,
-    },
-    tabButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        marginHorizontal: 4,
-        borderRadius: 20,
-        borderWidth: 1,
-    },
-    tabIcon: {
-        marginRight: 6,
-    },
-    tabLabel: {
-        fontSize: 14,
-    }
-});

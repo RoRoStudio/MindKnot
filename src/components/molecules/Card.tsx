@@ -2,6 +2,7 @@ import React from 'react';
 import { View, ViewProps, TouchableOpacity } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
 import { Typography } from '../atoms/Typography';
+import { useTheme } from '../../contexts/ThemeContext';
 
 /**
  * Props for the Card component
@@ -48,17 +49,28 @@ export const Card = React.memo<CardProps>(function Card({
     style,
     ...props
 }) {
+    const { theme } = useTheme();
+
     const styles = useStyles((theme) => ({
         container: {
             backgroundColor: theme.components.card.background,
             borderRadius: theme.components.card.radius,
-            borderWidth: 1,
-            borderColor: theme.components.card.border,
             padding: noPadding ? 0 : theme.spacing.m,
-            ...(elevated && {
+            ...(elevated ? {
+                // Apply elevation styles
                 ...theme.elevation.s,
                 borderWidth: 0,
+            } : {
+                // Apply border styles
+                borderWidth: 1,
+                borderColor: theme.components.card.border,
             }),
+            // Ensure the card has a proper shadow
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: elevated ? 3 : 1,
         },
         title: {
             color: theme.components.card.titleColor,
