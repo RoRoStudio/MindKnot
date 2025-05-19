@@ -283,18 +283,16 @@ export default function SparkScreen() {
                     isTitle={true}
                 />
 
-                <FormRichTextarea
-                    name="body"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Spark"
-                    placeholder="Capture your insight..."
-                    rules={{ required: 'Spark content is required' }}
-                    numberOfLines={5}
-                    editorMode="light"
-                    resizable={true}
-                    minHeight={120}
-                    maxHeight={300}
-                />
+                <View style={{ flex: 1, paddingHorizontal: theme.spacing.m }}>
+                    <FormRichTextarea
+                        name="body"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Spark"
+                        placeholder="Capture your insight..."
+                        rules={{ required: 'Spark content is required' }}
+                        adaptiveHeight={false}
+                    />
+                </View>
 
                 <FormCategorySelector
                     name="categoryId"
@@ -390,9 +388,9 @@ export default function SparkScreen() {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
-                <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                <View style={{ flex: 1 }}>
                     {mode === 'view' ? renderViewMode() : renderForm()}
-                </ScrollView>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );

@@ -33,6 +33,8 @@ import CircleAlert from '../../assets/icons/lucide/circle-alert.svg';
 import X from '../../assets/icons/lucide/x.svg';
 import Calendar from '../../assets/icons/lucide/calendar.svg';
 import Clock from '../../assets/icons/lucide/clock.svg';
+import ChevronLeft from '../../assets/icons/lucide/chevron-left.svg';
+import ChevronRight from '../../assets/icons/lucide/chevron-right.svg';
 
 // Icons for updated navigation
 import Vault from '../../assets/icons/lucide/vault.svg';
@@ -104,6 +106,8 @@ const iconMap = {
     'eye-off': EyeOff,
     'chevron-down': ChevronDown,
     'chevron-up': ChevronUp,
+    'chevron-left': ChevronLeft,
+    'chevron-right': ChevronRight,
     'circle-alert': CircleAlert,
     x: X,
     calendar: Calendar,

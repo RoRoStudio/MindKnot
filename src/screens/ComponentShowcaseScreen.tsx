@@ -508,16 +508,18 @@ export default function ComponentShowcaseScreen() {
                     {/* Form Rich Text Editor */}
                     <ShowcaseSection title="Rich Text Editor">
                         <Form style={styles.formContainer}>
-                            <FormRichTextarea
-                                name="richTextarea"
-                                control={control}
-                                label="Rich Text Editor"
-                                placeholder="Enter formatted text here..."
-                                helperText="This editor supports rich text formatting with controls"
-                                minHeight={150}
-                                showCharCount
-                                maxLength={500}
-                            />
+                            <View style={{ flex: 1, minHeight: 200 }}>
+                                <FormRichTextarea
+                                    name="richTextarea"
+                                    control={control}
+                                    label="Rich Text Editor"
+                                    placeholder="Enter formatted text here..."
+                                    helperText="This editor supports rich text formatting with controls"
+                                    showCharCount
+                                    maxLength={500}
+                                    minimumHeight={150}
+                                />
+                            </View>
                         </Form>
                     </ShowcaseSection>
 

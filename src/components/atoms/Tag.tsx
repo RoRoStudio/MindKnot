@@ -5,6 +5,7 @@
 import React from 'react';
 import { View, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
 
@@ -102,6 +103,18 @@ export const Tag: React.FC<TagProps> = ({
     onRemove,
     style,
 }) => {
+    const { theme } = useTheme();
+
+    // Fixed heights for consistent appearance across the app
+    const getTagHeight = () => {
+        switch (size) {
+            case 'small': return 24;
+            case 'medium': return 28;
+            case 'large': return 32;
+            default: return 28;
+        }
+    };
+
     const styles = useThemedStyles((theme, constants) => ({
         tag: {
             // Make tags pill-shaped with border radius at half height
@@ -111,15 +124,17 @@ export const Tag: React.FC<TagProps> = ({
                     size === 'medium' ? theme.spacing.m :
                         theme.spacing.l,
             paddingVertical:
-                size === 'small' ? 4 :
-                    size === 'medium' ? 6 :
-                        8,
+                size === 'small' ? 2 :
+                    size === 'medium' ? 3 :
+                        4,
+            height: getTagHeight(),
             backgroundColor: selected
                 ? `${theme.colors.primary}15` // 15% opacity for selected background
                 : theme.colors.surface, // Use surface color for better contrast
             alignSelf: 'flex-start',
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'center',
             marginRight: theme.spacing.xs,
             marginBottom: theme.spacing.xs,
             // Add border
@@ -137,6 +152,12 @@ export const Tag: React.FC<TagProps> = ({
                 ? theme.colors.primary
                 : theme.colors.textPrimary, // Use primary text color for better readability
             fontWeight: selected ? '500' : '400',
+            marginTop: 0,
+            marginBottom: 0,
+            lineHeight:
+                size === 'small' ? 16 :
+                    size === 'medium' ? 18 :
+                        20,
         },
         removeIcon: {
             marginLeft: theme.spacing.xs,
@@ -167,7 +188,7 @@ export const Tag: React.FC<TagProps> = ({
             accessibilityRole={selectable ? "button" : undefined}
             accessibilityState={selectable ? { selected } : undefined}
         >
-            <Typography style={styles.text}>
+            <Typography style={styles.text} numberOfLines={1}>
                 {label}
             </Typography>
 
@@ -180,9 +201,10 @@ export const Tag: React.FC<TagProps> = ({
                 >
                     <Icon
                         name="x"
-                        size={size === 'small' ? 12 : size === 'medium' ? 14 : 16}
+                        size={size === 'small' ? 16 : size === 'medium' ? 18 : 20}
                         color={selected ? theme.colors.primary : theme.colors.textSecondary}
                         style={styles.removeIcon}
+                        strokeWidth={2.5}
                     />
                 </TouchableOpacity>
             )}

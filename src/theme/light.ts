@@ -56,7 +56,7 @@ export const lightTheme: ThemeType = {
         onAccent: tokens.color.neutral.white,
 
         // Background, surface, and content colors
-        background: tokens.color.neutral.gray[50],
+        background: tokens.color.neutral.white,
         surface: tokens.color.neutral.white,
         surfaceVariant: tokens.color.neutral.gray[100],
 

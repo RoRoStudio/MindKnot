@@ -374,17 +374,15 @@ export default function LoopScreen() {
                     isTitle={true}
                 />
 
-                <FormRichTextarea
-                    name="description"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Description"
-                    placeholder="Describe the loop..."
-                    numberOfLines={4}
-                    editorMode="light"
-                    resizable={true}
-                    minHeight={100}
-                    maxHeight={250}
-                />
+                <View style={{ flex: 1, paddingHorizontal: theme.spacing.m }}>
+                    <FormRichTextarea
+                        name="description"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Loop"
+                        placeholder="Describe the loop..."
+                        adaptiveHeight={false}
+                    />
+                </View>
 
                 <FormInput
                     name="frequency"
@@ -572,9 +570,9 @@ export default function LoopScreen() {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
-                <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                <View style={{ flex: 1 }}>
                     {mode === 'view' ? renderViewMode() : renderForm()}
-                </ScrollView>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );

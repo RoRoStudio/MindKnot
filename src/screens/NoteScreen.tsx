@@ -56,10 +56,11 @@ export default function NoteScreen() {
     const styles = useStyles((theme) => ({
         container: {
             flex: 1,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: theme.colors.background,
         },
         content: {
             flex: 1,
+            padding: theme.spacing.m,
         },
         lastEditedText: {
             textAlign: 'right',
@@ -341,13 +342,9 @@ export default function NoteScreen() {
                 </Typography>
             )}
 
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-            >
-                <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                    <Form style={{ flex: 1 }}>
+            <View style={{ flex: 1 }}>
+                <Form style={{ flex: 1 }}>
+                    <View collapsable={false} style={{ flex: 1 }}>
                         <FormInput
                             name="title"
                             control={control as unknown as Control<FieldValues>}
@@ -355,7 +352,6 @@ export default function NoteScreen() {
                             style={styles.titleInput}
                             isTitle={true}
                         />
-
                         <View style={styles.metadataSection}>
                             <View style={styles.tagsContainer}>
                                 <FormTagInput
@@ -364,7 +360,6 @@ export default function NoteScreen() {
                                     placeholder="Add tags..."
                                 />
                             </View>
-
                             {watchedValues.categoryId ? (
                                 <TouchableOpacity
                                     style={styles.categoryButton}
@@ -384,7 +379,6 @@ export default function NoteScreen() {
                                     </Typography>
                                 </TouchableOpacity>
                             )}
-
                             {showCategorySelector && (
                                 <FormCategorySelector
                                     name="categoryId"
@@ -392,20 +386,17 @@ export default function NoteScreen() {
                                 />
                             )}
                         </View>
-
-                        <View style={styles.editorContainer}>
+                        <View style={{ flex: 1, paddingHorizontal: theme.spacing.m }}>
                             <FormRichTextarea
                                 name="body"
                                 control={control as unknown as Control<FieldValues>}
                                 placeholder="Write your note..."
-                                editorMode="full"
-                                minHeight={400}
-                                fullScreen={true}
+                                label="Note"
                             />
                         </View>
-                    </Form>
-                </ScrollView>
-            </KeyboardAvoidingView>
+                    </View>
+                </Form>
+            </View>
         </SafeAreaView>
     );
 } 

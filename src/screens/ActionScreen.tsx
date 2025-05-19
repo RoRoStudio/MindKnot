@@ -393,17 +393,16 @@ export default function ActionScreen() {
                     isTitle={true}
                 />
 
-                <FormRichTextarea
-                    name="description"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Description"
-                    placeholder="Describe the action..."
-                    numberOfLines={4}
-                    editorMode="light"
-                    resizable={true}
-                    minHeight={100}
-                    maxHeight={250}
-                />
+                <View style={{ flex: 1, paddingHorizontal: theme.spacing.m }}>
+                    <FormRichTextarea
+                        name="description"
+                        control={control as unknown as Control<FieldValues>}
+                        label="Action"
+                        placeholder="Describe the action..."
+                        rules={{ required: 'Description is required' }}
+                        adaptiveHeight={false}
+                    />
+                </View>
 
                 <FormInput
                     name="dueDate"
@@ -557,9 +556,9 @@ export default function ActionScreen() {
                 style={{ flex: 1 }}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
-                <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                <View style={{ flex: 1 }}>
                     {mode === 'view' ? renderViewMode() : renderForm()}
-                </ScrollView>
+                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );

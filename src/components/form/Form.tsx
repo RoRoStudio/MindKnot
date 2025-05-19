@@ -22,6 +22,7 @@ export default function Form<TFieldValues extends FieldValues = FieldValues>({
     const styles = useStyles((theme) => ({
         container: {
             width: '100%',
+            flex: 1,
         },
     }));
 
@@ -32,7 +33,10 @@ export default function Form<TFieldValues extends FieldValues = FieldValues>({
 
     return (
         <FormProvider {...methods}>
-            <View style={[styles.container, style]}>
+            <View
+                style={[styles.container, style]}
+                collapsable={false} // Help with measuring issues
+            >
                 {typeof children === 'function'
                     ? children(methods)
                     : children}
