@@ -51,7 +51,7 @@ export interface CategoryPillProps {
  * CategoryPill component displays a category label with customizable appearance
  * It can be used as a static label or interactive selection element
  */
-export const CategoryPill = React.memo<CategoryPillProps>(({
+export const CategoryPill: React.FC<CategoryPillProps> = ({
     title,
     color,
     size = 'medium',
@@ -62,45 +62,92 @@ export const CategoryPill = React.memo<CategoryPillProps>(({
 }) => {
     const { theme } = useTheme();
 
+    // Fixed heights for consistent appearance across the app
+    const getPillHeight = () => {
+        switch (size) {
+            case 'small': return 24;
+            case 'medium': return 28;
+            case 'large': return 32;
+            default: return 28;
+        }
+    };
+
     const styles = useStyles((theme) => ({
         pill: {
-            borderRadius: theme.shape.radius.xl,
-            paddingHorizontal: size === 'small' ? theme.spacing.s : (size === 'medium' ? theme.spacing.m : theme.spacing.l),
-            paddingVertical: size === 'small' ? 2 : (size === 'medium' ? 4 : 6),
-            borderWidth: 1,
-            borderColor: color,
-            backgroundColor: selected ? `${color}30` : `${color}15`,
+            // Make pills pill-shaped with border radius at half height
+            borderRadius: 100, // Very high value ensures pill shape
+            paddingHorizontal:
+                size === 'small' ? theme.spacing.s :
+                    size === 'medium' ? theme.spacing.m :
+                        theme.spacing.l,
+            paddingVertical:
+                size === 'small' ? 2 :
+                    size === 'medium' ? 3 :
+                        4,
+            height: getPillHeight(),
+            backgroundColor: `${color}20`, // 20% opacity for background
             alignSelf: 'flex-start',
             flexDirection: 'row',
             alignItems: 'center',
-        },
-        dot: {
-            width: size === 'small' ? 6 : (size === 'medium' ? 8 : 10),
-            height: size === 'small' ? 6 : (size === 'medium' ? 8 : 10),
-            borderRadius: size === 'small' ? 3 : (size === 'medium' ? 4 : 5),
-            backgroundColor: color,
+            justifyContent: 'center',
             marginRight: theme.spacing.xs,
+            marginBottom: theme.spacing.xs,
+            // Add border
+            borderWidth: 1,
+            borderColor: color,
+            // Add shadow for more depth
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 1,
         },
         text: {
-            fontSize: size === 'small' ? theme.typography.fontSize.xs :
-                (size === 'medium' ? theme.typography.fontSize.s : theme.typography.fontSize.m),
-            color: selected ? color : theme.colors.textSecondary,
-            fontWeight: selected ? '600' : '400',
+            fontSize:
+                size === 'small' ? theme.typography.fontSize.xs :
+                    size === 'medium' ? theme.typography.fontSize.s :
+                        theme.typography.fontSize.m,
+            color: selected ? color : theme.colors.textPrimary,
+            fontWeight: selected ? '500' : '400',
+            marginTop: 0,
+            marginBottom: 0,
+            lineHeight:
+                size === 'small' ? 16 :
+                    size === 'medium' ? 18 :
+                        20,
         },
+        dot: {
+            width: size === 'small' ? 8 : size === 'medium' ? 10 : 12,
+            height: size === 'small' ? 8 : size === 'medium' ? 10 : 12,
+            borderRadius: 50,
+            backgroundColor: color,
+            marginRight: theme.spacing.xs,
+        }
     }));
 
+    // Use appropriate wrapper component based on interactivity
     const Wrapper = selectable ? TouchableOpacity : View;
+
+    const handlePress = () => {
+        if (selectable && onPress) {
+            onPress();
+        }
+    };
 
     return (
         <Wrapper
             style={[styles.pill, style]}
-            onPress={selectable ? onPress : undefined}
+            onPress={handlePress}
             disabled={!selectable}
+            accessibilityRole={selectable ? "button" : undefined}
+            accessibilityState={selectable ? { selected } : undefined}
         >
             <View style={styles.dot} />
-            <Typography style={styles.text}>
+            <Typography style={styles.text} numberOfLines={1}>
                 {title}
             </Typography>
         </Wrapper>
     );
-}); 
+};
+
+export default CategoryPill; 

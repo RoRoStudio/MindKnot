@@ -29,7 +29,7 @@ import FormSelect from '../components/form/FormSelect';
 import FormRadioGroup from '../components/form/FormRadioGroup';
 import FormDatePicker from '../components/form/FormDatePicker';
 import FormErrorMessage from '../components/form/FormErrorMessage';
-import FormTagInput from '../components/form/FormTagInput';
+import FormLabelInput from '../components/form/FormLabelInput';
 import FormMoodSelector from '../components/form/FormMoodSelector';
 import FormCategorySelector from '../components/form/FormCategorySelector';
 import FormArrayField from '../components/form/FormArrayField';
@@ -525,7 +525,7 @@ export default function ComponentShowcaseScreen() {
 
                     {/* Form Tag Input */}
                     <Form style={styles.formContainer}>
-                        <FormTagInput
+                        <FormLabelInput
                             name="tags"
                             control={control}
                             label="Tag Input"

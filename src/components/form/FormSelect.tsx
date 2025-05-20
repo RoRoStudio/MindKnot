@@ -2,22 +2,23 @@ import React, { useState, useRef } from 'react';
 import {
     View,
     TouchableOpacity,
-    TextInput,
-    ScrollView,
-    Animated,
-    Easing,
-    StyleSheet,
-    KeyboardAvoidingView,
-    TouchableWithoutFeedback,
-    Keyboard,
     Modal,
     FlatList,
-    SafeAreaView,
+    Dimensions,
+    Animated,
 } from 'react-native';
-import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
+import {
+    Control,
+    Controller,
+    FieldValues,
+    Path,
+    RegisterOptions,
+} from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography, Icon, IconName } from '../common';
+import { Typography } from '../atoms/Typography';
+import { Icon, IconName } from '../atoms/Icon';
 import FormErrorMessage from './FormErrorMessage';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface Option {
     label: string;
@@ -25,6 +26,9 @@ interface Option {
     icon?: IconName | string;
 }
 
+/**
+ * FormSelect component for selecting an option from a dropdown
+ */
 interface FormSelectProps<T extends FieldValues> {
     name: Path<T>;
     control: Control<T>;
@@ -48,75 +52,115 @@ export default function FormSelect<T extends FieldValues>({
     disabled = false,
     onChange: onExternalChange,
 }: FormSelectProps<T>) {
-    const [menuVisible, setMenuVisible] = useState(false);
-    const [search, setSearch] = useState('');
-    const animatedHeight = useRef(new Animated.Value(48)).current;
+    const [modalVisible, setModalVisible] = useState(false);
+    const { theme } = useTheme();
+    const animation = useRef(new Animated.Value(0)).current;
+    const windowHeight = Dimensions.get('window').height;
 
     const styles = useStyles((theme) => ({
         container: {
-            width: '100%',
             marginBottom: theme.spacing.m,
+            width: '100%',
         },
-        dropdownWrapper: {
-            borderWidth: 1,
-            borderColor: theme.components.inputs.border,
-            borderRadius: theme.components.inputs.radius,
-            overflow: 'hidden',
-            backgroundColor: theme.components.inputs.background,
+        label: {
+            marginBottom: theme.spacing.xs,
         },
-        header: {
-            height: 48,
+        selectContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 16,
+            paddingVertical: theme.spacing.s,
             paddingHorizontal: theme.spacing.m,
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            minHeight: 48,
+            // Add subtle shadow
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 1,
         },
-        inputText: {
-            fontSize: 16,
-        },
-        placeholderText: {
-            color: theme.components.inputs.placeholder,
+        selectText: {
             flex: 1,
+            fontSize: theme.typography.fontSize.m,
+            color: theme.colors.textPrimary,
         },
-        selectedText: {
-            color: theme.components.inputs.text,
+        placeholder: {
+            color: theme.colors.textSecondary,
+        },
+        modalContainer: {
             flex: 1,
+            justifyContent: 'flex-end',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
         },
-        searchInput: {
-            padding: theme.spacing.s,
-            fontSize: 16,
-            color: theme.components.inputs.text,
+        modalContent: {
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            backgroundColor: theme.colors.surface,
+            paddingBottom: 20,
+            maxHeight: windowHeight * 0.5,
+            // Add shadow to modal
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 5,
+            elevation: 5,
+        },
+        modalHeader: {
+            paddingVertical: theme.spacing.m,
+            paddingHorizontal: theme.spacing.l,
             borderBottomWidth: 1,
-            borderBottomColor: theme.components.inputs.border,
+            borderBottomColor: theme.colors.divider,
+            marginBottom: theme.spacing.s,
         },
-        list: {
-            maxHeight: 200,
+        modalTitle: {
+            fontSize: theme.typography.fontSize.l,
+            fontWeight: 'bold',
         },
-        option: {
-            padding: theme.spacing.m,
+        optionItem: {
             flexDirection: 'row',
             alignItems: 'center',
+            paddingVertical: theme.spacing.m,
+            paddingHorizontal: theme.spacing.l,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.divider,
         },
-        optionIcon: {
+        optionItemSelected: {
+            backgroundColor: `${theme.colors.primary}15`,
+        },
+        optionItemText: {
+            fontSize: theme.typography.fontSize.m,
+            color: theme.colors.textPrimary,
+        },
+        optionItemTextSelected: {
+            color: theme.colors.primary,
+            fontWeight: '500',
+        },
+        iconContainer: {
             marginRight: theme.spacing.s,
         },
-        selectedOption: {
-            backgroundColor: theme.colors.surfaceVariant,
+        icon: {
+            width: 20,
+            height: 20,
         },
         helperText: {
-            marginTop: 4,
+            marginTop: theme.spacing.xs,
+        },
+        disabled: {
+            opacity: 0.5,
         },
     }));
 
     const renderIcon = (iconName?: IconName | string, color?: string) => {
         if (!iconName) return null;
+
         return (
-            <View style={styles.optionIcon}>
+            <View style={styles.iconContainer}>
                 <Icon
                     name={iconName as IconName}
                     width={20}
                     height={20}
-                    color={color || '#000'}
+                    color={color || theme.colors.textPrimary}
                 />
             </View>
         );
@@ -124,92 +168,175 @@ export default function FormSelect<T extends FieldValues>({
 
     const toggleDropdown = () => {
         if (disabled) return;
-        const toValue = menuVisible ? 48 : 300;
-        setMenuVisible(!menuVisible);
-        Animated.timing(animatedHeight, {
-            toValue,
-            duration: 200,
-            easing: Easing.out(Easing.quad),
-            useNativeDriver: false,
-        }).start();
+
+        // Animate dropdown
+        if (modalVisible) {
+            // Close animation
+            Animated.timing(animation, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+            }).start();
+
+            setTimeout(() => setModalVisible(false), 200);
+        } else {
+            setModalVisible(true);
+
+            // Open animation
+            Animated.timing(animation, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
+        }
     };
 
     return (
         <Controller
-            control={control}
             name={name}
+            control={control}
             rules={rules}
             render={({ field: { onChange, value }, fieldState: { error } }) => {
-                const selected = options.find(o => o.value === value);
-                const filtered = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
+                const selectedOption = options.find(
+                    (option) => option.value === value
+                );
 
                 const handleSelect = (option: Option) => {
                     onChange(option.value);
-                    if (onExternalChange) onExternalChange(option.value);
-                    setMenuVisible(false);
-                    Animated.timing(animatedHeight, {
-                        toValue: 48,
-                        duration: 200,
-                        easing: Easing.out(Easing.quad),
-                        useNativeDriver: false,
-                    }).start();
+                    if (onExternalChange) {
+                        onExternalChange(option.value);
+                    }
+                    toggleDropdown();
                 };
 
                 return (
-                    <KeyboardAvoidingView behavior="padding">
-                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                            <View style={styles.container}>
-                                <Animated.View style={[styles.dropdownWrapper, { height: animatedHeight }]}>
-                                    <TouchableOpacity
-                                        style={styles.header}
-                                        onPress={toggleDropdown}
-                                        activeOpacity={0.8}
-                                    >
-                                        <Typography style={selected ? styles.selectedText : styles.placeholderText}>
-                                            {selected ? selected.label : 'Select an entry type'}
+                    <View style={styles.container}>
+                        {label && (
+                            <Typography variant="body1" style={styles.label}>
+                                {label}
+                            </Typography>
+                        )}
+
+                        <TouchableOpacity
+                            style={[
+                                styles.selectContainer,
+                                disabled && styles.disabled
+                            ]}
+                            onPress={toggleDropdown}
+                            activeOpacity={0.7}
+                            disabled={disabled}
+                        >
+                            {selectedOption?.icon && renderIcon(selectedOption.icon)}
+
+                            <Typography
+                                style={[
+                                    styles.selectText,
+                                    !selectedOption && styles.placeholder,
+                                ]}
+                            >
+                                {selectedOption ? selectedOption.label : placeholder}
+                            </Typography>
+
+                            <Icon
+                                name="chevron-down"
+                                width={20}
+                                height={20}
+                                color={theme.colors.textSecondary}
+                            />
+                        </TouchableOpacity>
+
+                        <Modal
+                            visible={modalVisible}
+                            transparent
+                            animationType="none"
+                            onRequestClose={toggleDropdown}
+                        >
+                            <Animated.View
+                                style={[
+                                    styles.modalContainer,
+                                    {
+                                        opacity: animation,
+                                    },
+                                ]}
+                            >
+                                <Animated.View
+                                    style={[
+                                        styles.modalContent,
+                                        {
+                                            transform: [
+                                                {
+                                                    translateY: animation.interpolate({
+                                                        inputRange: [0, 1],
+                                                        outputRange: [300, 0],
+                                                    }),
+                                                },
+                                            ],
+                                        },
+                                    ]}
+                                >
+                                    <View style={styles.modalHeader}>
+                                        <Typography style={styles.modalTitle}>
+                                            {label || "Select an option"}
                                         </Typography>
-                                        <Icon name={menuVisible ? 'chevron-up' : 'chevron-down'} width={20} height={20} color="#000" />
-                                    </TouchableOpacity>
+                                    </View>
 
-                                    {menuVisible && (
-                                        <>
-                                            <TextInput
-                                                placeholder="Search entries..."
-                                                value={search}
-                                                onChangeText={setSearch}
-                                                style={styles.searchInput}
-                                                placeholderTextColor={styles.placeholderText.color}
-                                            />
-                                            <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
-                                                {filtered.map((option) => (
-                                                    <TouchableOpacity
-                                                        key={option.value.toString()}
-                                                        style={[styles.option, option.value === value && styles.selectedOption]}
-                                                        onPress={() => handleSelect(option)}
+                                    <FlatList
+                                        data={options}
+                                        keyExtractor={(item) => item.value.toString()}
+                                        renderItem={({ item }) => {
+                                            const isSelected = value === item.value;
+
+                                            return (
+                                                <TouchableOpacity
+                                                    style={[
+                                                        styles.optionItem,
+                                                        isSelected && styles.optionItemSelected,
+                                                    ]}
+                                                    onPress={() => handleSelect(item)}
+                                                >
+                                                    {item.icon && renderIcon(
+                                                        item.icon,
+                                                        isSelected ? theme.colors.primary : undefined
+                                                    )}
+
+                                                    <Typography
+                                                        style={[
+                                                            styles.optionItemText,
+                                                            isSelected && styles.optionItemTextSelected,
+                                                        ]}
                                                     >
-                                                        {renderIcon(option.icon)}
-                                                        <Typography>{option.label}</Typography>
-                                                    </TouchableOpacity>
-                                                ))}
-                                            </ScrollView>
-                                        </>
-                                    )}
+                                                        {item.label}
+                                                    </Typography>
+
+                                                    {isSelected && (
+                                                        <Icon
+                                                            name="check"
+                                                            width={20}
+                                                            height={20}
+                                                            color={theme.colors.primary}
+                                                            style={{ marginLeft: 'auto' }}
+                                                        />
+                                                    )}
+                                                </TouchableOpacity>
+                                            );
+                                        }}
+                                    />
                                 </Animated.View>
+                            </Animated.View>
+                        </Modal>
 
-                                <FormErrorMessage message={error?.message} visible={!!error} />
+                        <FormErrorMessage message={error?.message} visible={!!error} />
 
-                                {helperText && !error && (
-                                    <Typography
-                                        variant="caption"
-                                        style={styles.helperText}
-                                        color="secondary"
-                                    >
-                                        {helperText}
-                                    </Typography>
-                                )}
-                            </View>
-                        </TouchableWithoutFeedback>
-                    </KeyboardAvoidingView>
+                        {helperText && !error && (
+                            <Typography
+                                variant="caption"
+                                style={styles.helperText}
+                                color="secondary"
+                            >
+                                {helperText}
+                            </Typography>
+                        )}
+                    </View>
                 );
             }}
         />

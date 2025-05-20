@@ -2,7 +2,7 @@ import React, { useCallback, memo, useState } from 'react';
 import { View, TextInput, ScrollView, TouchableOpacity, Animated, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Icon, IconName, Typography, Tag, CategoryPill } from '../common';
+import { Icon, IconName, Typography, Label, CategoryPill } from '../common';
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -264,7 +264,7 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
                 </View>
                 <View style={styles.tagsRow}>
                     {allTags.map(tag => (
-                        <Tag
+                        <Label
                             key={tag}
                             label={tag}
                             selected={selectedTags.includes(tag)}

@@ -11,7 +11,7 @@ import FormDatePicker from './FormDatePicker';
 import FormArrayField from './FormArrayField';
 import FormErrorMessage from './FormErrorMessage';
 import FormMoodSelector from './FormMoodSelector';
-import FormTagInput from './FormTagInput';
+import FormLabelInput from './FormLabelInput';
 import FormCategorySelector from './FormCategorySelector';
 import { FormModal } from './FormModal';
 import { FormSheet } from './FormSheet';
@@ -29,8 +29,11 @@ export {
     FormArrayField,
     FormErrorMessage,
     FormMoodSelector,
-    FormTagInput,
+    FormLabelInput,
     FormCategorySelector,
     FormModal,
     FormSheet
 };
+
+// Backward compatibility
+export { FormLabelInput as FormTagInput };

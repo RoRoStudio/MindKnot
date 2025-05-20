@@ -7,7 +7,7 @@
 export { Typography } from '../atoms/Typography';
 export { Icon, type IconName } from '../atoms/Icon';
 export { Button } from '../atoms/Button';
-export { Tag } from '../atoms/Tag';
+export { Label } from '../atoms/Label';
 
 // Molecules
 export { Card } from '../molecules/Card';

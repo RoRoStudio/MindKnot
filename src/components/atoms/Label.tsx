@@ -1,6 +1,6 @@
 /**
- * Tag component for displaying and interacting with tags
- * @module components/atoms/Tag
+ * Label component for displaying and interacting with labels
+ * @module components/atoms/Label
  */
 import React from 'react';
 import { View, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
@@ -10,41 +10,41 @@ import { Typography } from './Typography';
 import { Icon } from './Icon';
 
 /**
- * Size variants for the Tag component
+ * Size variants for the Label component
  */
-export type TagSize = 'small' | 'medium' | 'large';
+export type LabelSize = 'small' | 'medium' | 'large';
 
 /**
- * Props for the Tag component
+ * Props for the Label component
  * 
- * @interface TagProps
+ * @interface LabelProps
  */
-export interface TagProps {
+export interface LabelProps {
     /**
-     * Tag text to display
+     * Label text to display
      */
     label: string;
 
     /**
-     * Size variant of the tag
+     * Size variant of the label
      * @default 'medium'
      */
-    size?: TagSize;
+    size?: LabelSize;
 
     /**
-     * Whether the tag is selectable/toggleable
+     * Whether the label is selectable/toggleable
      * @default false
      */
     selectable?: boolean;
 
     /**
-     * Whether the tag is currently selected
+     * Whether the label is currently selected
      * @default false
      */
     selected?: boolean;
 
     /**
-     * Callback for when the tag is pressed (when selectable)
+     * Callback for when the label is pressed (when selectable)
      */
     onPress?: () => void;
 
@@ -66,34 +66,34 @@ export interface TagProps {
 }
 
 /**
- * Tag component used for displaying categories, filters or metadata
+ * Label component used for displaying categories, filters or metadata
  * 
  * @component
  * @example
  * ```jsx
  * // Basic usage
- * <Tag label="Technology" />
+ * <Label label="Technology" />
  * 
- * // Selectable tag
- * <Tag 
+ * // Selectable label
+ * <Label 
  *   label="Important" 
  *   selectable 
  *   selected={isSelected}
  *   onPress={() => setIsSelected(!isSelected)} 
  * />
  * 
- * // Removable tag
- * <Tag 
+ * // Removable label
+ * <Label 
  *   label="React Native" 
  *   removable 
- *   onRemove={() => removeTag('React Native')} 
+ *   onRemove={() => removeLabel('React Native')} 
  * />
  * 
  * // Custom size
- * <Tag label="Small Tag" size="small" />
+ * <Label label="Small Label" size="small" />
  * ```
  */
-export const Tag: React.FC<TagProps> = ({
+export const Label: React.FC<LabelProps> = ({
     label,
     size = 'medium',
     selectable = false,
@@ -106,7 +106,7 @@ export const Tag: React.FC<TagProps> = ({
     const { theme } = useTheme();
 
     // Fixed heights for consistent appearance across the app
-    const getTagHeight = () => {
+    const getLabelHeight = () => {
         switch (size) {
             case 'small': return 24;
             case 'medium': return 28;
@@ -116,8 +116,8 @@ export const Tag: React.FC<TagProps> = ({
     };
 
     const styles = useThemedStyles((theme, constants) => ({
-        tag: {
-            // Make tags pill-shaped with border radius at half height
+        label: {
+            // Make labels pill-shaped with border radius at half height
             borderRadius: 100, // Very high value ensures pill shape
             paddingHorizontal:
                 size === 'small' ? theme.spacing.s :
@@ -127,10 +127,8 @@ export const Tag: React.FC<TagProps> = ({
                 size === 'small' ? 2 :
                     size === 'medium' ? 3 :
                         4,
-            height: getTagHeight(),
-            backgroundColor: selected
-                ? `${theme.colors.primary}15` // 15% opacity for selected background
-                : theme.colors.surface, // Use surface color for better contrast
+            height: getLabelHeight(),
+            backgroundColor: theme.colors.surface,
             alignSelf: 'flex-start',
             flexDirection: 'row',
             alignItems: 'center',
@@ -139,19 +137,21 @@ export const Tag: React.FC<TagProps> = ({
             marginBottom: theme.spacing.xs,
             // Add border
             borderWidth: 1,
-            borderColor: selected
-                ? theme.colors.primary
-                : theme.colors.border, // Use theme border color
+            borderColor: theme.colors.border,
+            // Add shadow for more depth
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 1,
         },
         text: {
             fontSize:
                 size === 'small' ? theme.typography.fontSize.xs :
                     size === 'medium' ? theme.typography.fontSize.s :
                         theme.typography.fontSize.m,
-            color: selected
-                ? theme.colors.primary
-                : theme.colors.textPrimary, // Use primary text color for better readability
-            fontWeight: selected ? '500' : '400',
+            color: theme.colors.textPrimary,
+            fontWeight: '400',
             marginTop: 0,
             marginBottom: 0,
             lineHeight:
@@ -161,7 +161,23 @@ export const Tag: React.FC<TagProps> = ({
         },
         removeIcon: {
             marginLeft: theme.spacing.xs,
-        }
+        },
+        // No longer using these objects directly in style arrays, so just define what's needed
+        selectableLabel: {
+            backgroundColor: theme.colors.surfaceVariant,
+            borderStyle: 'solid',
+        },
+        selectedLabel: {
+            backgroundColor: `${theme.colors.primary}20`,
+            borderColor: theme.colors.primary,
+        },
+        selectableText: {
+            color: theme.colors.textSecondary,
+        },
+        selectedText: {
+            color: theme.colors.primary,
+            fontWeight: '500',
+        },
     }));
 
     // Use appropriate wrapper component based on interactivity
@@ -182,13 +198,31 @@ export const Tag: React.FC<TagProps> = ({
 
     return (
         <Wrapper
-            style={[styles.tag, style]}
+            style={[
+                styles.label,
+                selectable && { backgroundColor: theme.colors.surfaceVariant },
+                selected && {
+                    backgroundColor: `${theme.colors.primary}20`,
+                    borderColor: theme.colors.primary
+                },
+                style
+            ]}
             onPress={handlePress}
             disabled={!selectable && !removable}
             accessibilityRole={selectable ? "button" : undefined}
             accessibilityState={selectable ? { selected } : undefined}
         >
-            <Typography style={styles.text} numberOfLines={1}>
+            <Typography
+                style={[
+                    styles.text,
+                    selectable && { color: theme.colors.textSecondary },
+                    selected && {
+                        color: theme.colors.primary,
+                        fontWeight: '500' as const
+                    }
+                ]}
+                numberOfLines={1}
+            >
                 {label}
             </Typography>
 
@@ -197,7 +231,7 @@ export const Tag: React.FC<TagProps> = ({
                     onPress={handleRemovePress}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Remove ${label} tag`}
+                    accessibilityLabel={`Remove ${label} label`}
                 >
                     <Icon
                         name="x"
@@ -212,4 +246,4 @@ export const Tag: React.FC<TagProps> = ({
     );
 };
 
-export default Tag; 
+export default Label; 

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { View, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography, Card, Icon, IconName, CategoryPill, Tag } from '../common';
+import { Typography, Card, Icon, IconName, CategoryPill, Label } from '../common';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCategories } from '../../hooks/useCategories';
 import { Category } from '../../types/category';
@@ -471,7 +471,7 @@ export const EntryCard = memo(function EntryCard({
                         {renderCategory()}
 
                         {tags && tags.length > 0 && tags.map((tag, index) => (
-                            <Tag
+                            <Label
                                 key={index}
                                 label={tag}
                                 size="small"

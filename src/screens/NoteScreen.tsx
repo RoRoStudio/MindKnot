@@ -1,27 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
-    ScrollView,
     TouchableOpacity,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
     ActivityIndicator,
-    StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useForm, Control, FieldValues } from 'react-hook-form';
+import { Control, FieldValues, useForm } from 'react-hook-form';
+import { RootStackParamList } from '../types/navigation-types';
 import { useTheme } from '../contexts/ThemeContext';
 import { useStyles } from '../hooks/useStyles';
-import { Typography, Icon } from '../components/common';
-import { Tag } from '../components/atoms';
-import { Form, FormInput, FormRichTextarea, FormTagInput, FormCategorySelector } from '../components/form';
-import { EntryDetailHeader } from '../components/organisms';
-import { createNote, updateNote, getNoteById } from '../services/noteService';
-import { RootStackParamList } from '../types/navigation-types';
+import { Typography } from '../components/common';
+import {
+    Form,
+    FormInput,
+    FormRichTextarea,
+} from '../components/form';
+import {
+    EntryDetailHeader,
+    EntryMetadataBar
+} from '../components/organisms';
 import { useNotes } from '../hooks/useNotes';
+import { createNote, getNoteById, updateNote } from '../services/noteService';
 
 type NoteScreenRouteProp = RouteProp<
     {
@@ -51,7 +52,6 @@ export default function NoteScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [noteId, setNoteId] = useState<string | undefined>(undefined);
     const [lastEdited, setLastEdited] = useState<Date | null>(null);
-    const [showCategorySelector, setShowCategorySelector] = useState(false);
 
     const styles = useStyles((theme) => ({
         container: {
@@ -60,7 +60,6 @@ export default function NoteScreen() {
         },
         content: {
             flex: 1,
-            padding: theme.spacing.m,
         },
         lastEditedText: {
             textAlign: 'right',
@@ -77,60 +76,9 @@ export default function NoteScreen() {
             paddingBottom: theme.spacing.m,
             borderWidth: 0,
         },
-        metadataSection: {
-            paddingHorizontal: theme.spacing.m,
-            marginBottom: theme.spacing.m,
-        },
-        tagsContainer: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            marginBottom: theme.spacing.s,
-            alignItems: 'center',
-        },
-        tagItem: {
-            marginRight: theme.spacing.xs,
-            marginBottom: theme.spacing.xs,
-        },
-        addTagButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: 4,
-            paddingHorizontal: theme.spacing.s,
-            borderRadius: theme.shape.radius.m,
-            borderWidth: 1,
-            borderStyle: 'dashed',
-            borderColor: theme.colors.primary,
-        },
-        addTagText: {
-            color: theme.colors.primary,
-            marginLeft: 4,
-            fontSize: theme.typography.fontSize.s,
-        },
-        categoryButton: {
-            marginTop: theme.spacing.xs,
-            alignSelf: 'flex-start',
-            paddingVertical: 4,
-            paddingHorizontal: 8,
-            backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: 16,
-        },
-        actionButtonsRow: {
-            flexDirection: 'row',
-            marginBottom: theme.spacing.m,
-            paddingHorizontal: theme.spacing.m,
-        },
-        inlineActionButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginRight: theme.spacing.l,
-        },
-        inlineActionButtonText: {
-            color: theme.colors.textSecondary,
-            marginLeft: theme.spacing.xs,
-        },
         editorContainer: {
             flex: 1,
-            paddingHorizontal: 0,
+            paddingHorizontal: theme.spacing.m,
             marginTop: theme.spacing.s,
         },
         loadingContainer: {
@@ -309,8 +257,14 @@ export default function NoteScreen() {
         return lastEdited.toLocaleDateString();
     };
 
-    const toggleCategorySelector = () => {
-        setShowCategorySelector(!showCategorySelector);
+    // Handle label change
+    const handleLabelsChange = (newLabels: string[]) => {
+        setValue('tags', newLabels, { shouldDirty: true });
+    };
+
+    // Handle category change
+    const handleCategoryChange = (newCategoryId: string | null) => {
+        setValue('categoryId', newCategoryId, { shouldDirty: true });
     };
 
     if (isLoading) {
@@ -336,6 +290,14 @@ export default function NoteScreen() {
                 isSaved={!!noteId}
             />
 
+            <EntryMetadataBar
+                categoryId={watchedValues.categoryId}
+                onCategoryChange={handleCategoryChange}
+                labels={watchedValues.tags}
+                onLabelsChange={handleLabelsChange}
+                isEditing={true}
+            />
+
             {lastEdited && (
                 <Typography variant="caption" style={styles.lastEditedText}>
                     Last edited {formatLastEdited()}
@@ -352,46 +314,12 @@ export default function NoteScreen() {
                             style={styles.titleInput}
                             isTitle={true}
                         />
-                        <View style={styles.metadataSection}>
-                            <View style={styles.tagsContainer}>
-                                <FormTagInput
-                                    name="tags"
-                                    control={control as unknown as Control<FieldValues>}
-                                    placeholder="Add tags..."
-                                />
-                            </View>
-                            {watchedValues.categoryId ? (
-                                <TouchableOpacity
-                                    style={styles.categoryButton}
-                                    onPress={toggleCategorySelector}
-                                >
-                                    <Typography variant="caption" color="primary">
-                                        {watchedValues.categoryId ? "Change Category" : "Add Category"}
-                                    </Typography>
-                                </TouchableOpacity>
-                            ) : (
-                                <TouchableOpacity
-                                    style={styles.categoryButton}
-                                    onPress={toggleCategorySelector}
-                                >
-                                    <Typography variant="caption" color="primary">
-                                        Add Category
-                                    </Typography>
-                                </TouchableOpacity>
-                            )}
-                            {showCategorySelector && (
-                                <FormCategorySelector
-                                    name="categoryId"
-                                    control={control as unknown as Control<FieldValues>}
-                                />
-                            )}
-                        </View>
-                        <View style={{ flex: 1, paddingHorizontal: theme.spacing.m }}>
+
+                        <View style={styles.editorContainer}>
                             <FormRichTextarea
                                 name="body"
                                 control={control as unknown as Control<FieldValues>}
                                 placeholder="Write your note..."
-                                label="Note"
                             />
                         </View>
                     </View>

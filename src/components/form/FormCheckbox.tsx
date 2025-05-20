@@ -1,15 +1,16 @@
 // src/components/form/FormCheckbox.tsx
 import React from 'react';
-import {
-    View,
-    TouchableOpacity,
-    StyleSheet,
-} from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography, Icon } from '../common';
+import { Typography } from '../atoms/Typography';
+import { Icon } from '../atoms/Icon';
 import FormErrorMessage from './FormErrorMessage';
+import { useTheme } from '../../contexts/ThemeContext';
 
+/**
+ * FormCheckbox component for boolean input
+ */
 interface FormCheckboxProps<T extends FieldValues> {
     name: Path<T>;
     control: Control<T>;
@@ -27,6 +28,8 @@ export default function FormCheckbox<T extends FieldValues>({
     helperText,
     disabled = false,
 }: FormCheckboxProps<T>) {
+    const { theme } = useTheme();
+
     const styles = useStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
@@ -34,74 +37,76 @@ export default function FormCheckbox<T extends FieldValues>({
         checkboxContainer: {
             flexDirection: 'row',
             alignItems: 'center',
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 12,
+            paddingVertical: theme.spacing.s,
+            paddingHorizontal: theme.spacing.m,
+            // Add subtle shadow
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 1,
         },
         checkbox: {
-            width: 20,
-            height: 20,
-            borderWidth: 2,
-            borderColor: theme.colors.primary,
+            width: 22,
+            height: 22,
             borderRadius: 4,
+            borderWidth: 2,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface,
             justifyContent: 'center',
             alignItems: 'center',
             marginRight: theme.spacing.s,
         },
-        checkboxDisabled: {
-            borderColor: theme.colors.textDisabled,
-            opacity: 0.7,
-        },
         checkboxChecked: {
             backgroundColor: theme.colors.primary,
+            borderColor: theme.colors.primary,
         },
         label: {
             flex: 1,
+            fontSize: theme.typography.fontSize.m,
+            color: theme.colors.textPrimary,
         },
-        labelDisabled: {
-            color: theme.colors.textDisabled,
+        disabled: {
+            opacity: 0.5,
         },
         helperText: {
-            marginTop: 4,
-            marginLeft: 28, // Align with text
+            marginTop: theme.spacing.xs,
         },
     }));
 
     return (
         <Controller
-            control={control}
             name={name}
+            control={control}
             rules={rules}
             render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <View style={styles.container}>
                     <TouchableOpacity
-                        style={styles.checkboxContainer}
+                        style={[
+                            styles.checkboxContainer,
+                            disabled && styles.disabled
+                        ]}
                         onPress={() => {
                             if (!disabled) {
                                 onChange(!value);
                             }
                         }}
-                        activeOpacity={disabled ? 1 : 0.7}
+                        activeOpacity={0.7}
                         disabled={disabled}
                     >
-                        <View
-                            style={[
-                                styles.checkbox,
-                                value && styles.checkboxChecked,
-                                disabled && styles.checkboxDisabled,
-                            ]}
-                        >
+                        <View style={[styles.checkbox, value && styles.checkboxChecked]}>
                             {value && (
                                 <Icon
                                     name="check"
-                                    width={16}
-                                    height={16}
-                                    color="#FFFFFF"
+                                    width={14}
+                                    height={14}
+                                    color={theme.colors.surface}
                                 />
                             )}
                         </View>
-                        <Typography
-                            style={[styles.label, disabled && styles.labelDisabled]}
-                        >
-                            {label}
-                        </Typography>
+                        <Typography style={styles.label}>{label}</Typography>
                     </TouchableOpacity>
 
                     <FormErrorMessage message={error?.message} visible={!!error} />

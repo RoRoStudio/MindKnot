@@ -1,18 +1,19 @@
 // src/components/form/FormDatePicker.tsx
 import React, { useState } from 'react';
+import { View, TouchableOpacity, Platform } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import {
-    View,
-    TouchableOpacity,
-    Platform,
-    Modal,
-    SafeAreaView,
-    Text,
-} from 'react-native';
-import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
-import DateTimePicker from '@react-native-community/datetimepicker';
+    Control,
+    Controller,
+    FieldValues,
+    Path,
+    RegisterOptions,
+} from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography, Icon, Button } from '../common';
+import { Typography } from '../atoms/Typography';
+import { Icon } from '../atoms/Icon';
 import FormErrorMessage from './FormErrorMessage';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface FormDatePickerProps<T extends FieldValues> {
     name: Path<T>;
@@ -41,67 +42,59 @@ export default function FormDatePicker<T extends FieldValues>({
     maximumDate,
     formatDate,
 }: FormDatePickerProps<T>) {
+    const { theme } = useTheme();
     const [showPicker, setShowPicker] = useState(false);
+    const [isFocused, setIsFocused] = useState(false);
 
     const styles = useStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
+            width: '100%',
         },
         label: {
             marginBottom: theme.spacing.xs,
         },
-        pickerContainer: {
-            backgroundColor: theme.components.inputs.background,
-            borderWidth: 1,
-            borderColor: theme.components.inputs.border,
-            borderRadius: theme.components.inputs.radius,
-            padding: theme.spacing.m,
-        },
-        pickerContainerError: {
-            borderColor: theme.colors.error,
-        },
-        pickerContainerDisabled: {
-            opacity: 0.5,
-        },
-        pickerContent: {
+        inputContainer: {
             flexDirection: 'row',
-            justifyContent: 'space-between',
             alignItems: 'center',
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 16,
+            paddingVertical: theme.spacing.s,
+            paddingHorizontal: theme.spacing.m,
+            minHeight: 48,
+            // Add subtle shadow for depth
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 1,
+        },
+        inputContainerFocused: {
+            // Add more prominent shadow when focused
+            shadowColor: theme.colors.primary,
+            shadowOpacity: 0.2,
+            shadowRadius: 3,
+            elevation: 2,
+        },
+        inputContainerError: {
+            backgroundColor: `${theme.colors.error}10`,
+        },
+        inputText: {
+            flex: 1,
+            fontSize: theme.typography.fontSize.m,
+            color: theme.colors.textPrimary,
         },
         placeholder: {
-            color: theme.components.inputs.placeholder,
+            color: theme.colors.textSecondary,
         },
-        selectedValue: {
-            color: theme.components.inputs.text,
-        },
-        modalContainer: {
-            flex: 1,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            justifyContent: 'flex-end',
-        },
-        modalContent: {
-            backgroundColor: theme.colors.background,
-            borderTopLeftRadius: theme.shape.radius.l,
-            borderTopRightRadius: theme.shape.radius.l,
-        },
-        modalHeader: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: theme.spacing.m,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.colors.divider,
-        },
-        pickerWrapper: {
-            padding: theme.spacing.m,
-        },
-        buttonContainer: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            padding: theme.spacing.m,
+        iconContainer: {
+            marginLeft: theme.spacing.s,
         },
         helperText: {
-            marginTop: 4,
+            marginTop: theme.spacing.xs,
+        },
+        disabled: {
+            opacity: 0.5,
         },
     }));
 
@@ -125,17 +118,16 @@ export default function FormDatePicker<T extends FieldValues>({
                 return 'clock';
             case 'datetime':
                 return 'calendar';
+            case 'date':
             default:
                 return 'calendar';
         }
     };
 
-    // This is a simplified version that may need adjustment based on
-    // how the DateTimePicker is configured in your project
     const renderDatePicker = (value: Date | undefined, onChange: (date: Date) => void) => {
         if (!showPicker) return null;
 
-        const handleChange = (_: any, selectedDate?: Date) => {
+        const handleChange = (_: DateTimePickerEvent, selectedDate?: Date) => {
             setShowPicker(Platform.OS === 'ios');
             if (selectedDate) {
                 onChange(selectedDate);
@@ -145,7 +137,7 @@ export default function FormDatePicker<T extends FieldValues>({
         return (
             <DateTimePicker
                 value={value || new Date()}
-                mode={mode === 'datetime' ? 'date' : mode}
+                mode={mode}
                 is24Hour={true}
                 display="default"
                 onChange={handleChange}
@@ -157,17 +149,22 @@ export default function FormDatePicker<T extends FieldValues>({
 
     return (
         <Controller
-            control={control}
             name={name}
+            control={control}
             rules={rules}
             render={({ field: { onChange, value }, fieldState: { error } }) => {
+                // Convert string to Date if necessary
+                let dateValue: Date | undefined;
+                if (value) {
+                    dateValue = typeof value === 'object' && 'getTime' in value ? value : new Date(value);
+                }
+
                 const openPicker = () => {
                     if (!disabled) {
                         setShowPicker(true);
+                        setIsFocused(true);
                     }
                 };
-
-                const dateValue = value ? new Date(value) : undefined;
 
                 return (
                     <View style={styles.container}>
@@ -179,28 +176,35 @@ export default function FormDatePicker<T extends FieldValues>({
 
                         <TouchableOpacity
                             style={[
-                                styles.pickerContainer,
-                                error && styles.pickerContainerError,
-                                disabled && styles.pickerContainerDisabled,
+                                styles.inputContainer,
+                                isFocused && styles.inputContainerFocused,
+                                error && styles.inputContainerError,
+                                disabled && styles.disabled,
                             ]}
                             onPress={openPicker}
-                            activeOpacity={disabled ? 1 : 0.7}
+                            activeOpacity={0.7}
                             disabled={disabled}
                         >
-                            <View style={styles.pickerContent}>
-                                <Typography
-                                    style={dateValue ? styles.selectedValue : styles.placeholder}
-                                >
-                                    {dateValue ? formatValue(dateValue) : placeholder}
-                                </Typography>
+                            <Typography
+                                style={[
+                                    styles.inputText,
+                                    !dateValue && styles.placeholder,
+                                ]}
+                            >
+                                {dateValue ? formatValue(dateValue) : placeholder}
+                            </Typography>
+
+                            <View style={styles.iconContainer}>
                                 <Icon
                                     name={getIconForMode()}
                                     width={20}
                                     height={20}
-                                    color={styles.selectedValue.color}
+                                    color={theme.colors.textSecondary}
                                 />
                             </View>
                         </TouchableOpacity>
+
+                        {renderDatePicker(dateValue, onChange)}
 
                         <FormErrorMessage message={error?.message} visible={!!error} />
 
@@ -213,9 +217,6 @@ export default function FormDatePicker<T extends FieldValues>({
                                 {helperText}
                             </Typography>
                         )}
-
-                        {/* Render DatePicker based on platform */}
-                        {renderDatePicker(dateValue, onChange)}
                     </View>
                 );
             }}

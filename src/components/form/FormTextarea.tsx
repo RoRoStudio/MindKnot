@@ -1,10 +1,11 @@
 // src/components/form/FormTextarea.tsx
-import React, { useState } from 'react';
-import { View, TextInput, Platform } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, TextInput, TextInputProps } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../common';
+import { Typography } from '../atoms/Typography';
 import FormErrorMessage from './FormErrorMessage';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface FormTextareaProps<T extends FieldValues> {
     name: Path<T>;
@@ -33,34 +34,56 @@ export default function FormTextarea<T extends FieldValues>({
     autoGrow = true,
     maxHeight = 200,
 }: FormTextareaProps<T>) {
+    const { theme } = useTheme();
+    const [height, setHeight] = useState<number>(0);
     const [isFocused, setIsFocused] = useState(false);
-    const [height, setHeight] = useState<number | undefined>(undefined);
+
+    const inputRef = useRef<TextInput>(null);
 
     const styles = useStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
+            width: '100%',
         },
         label: {
             marginBottom: theme.spacing.xs,
         },
+        inputContainer: {
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 16,
+            paddingHorizontal: theme.spacing.s,
+            paddingVertical: theme.spacing.xs,
+            minHeight: numberOfLines * 24, // Approximate line height
+            // Add subtle shadow for depth
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 1,
+        },
+        inputContainerFocused: {
+            // Add more prominent shadow when focused
+            shadowColor: theme.colors.primary,
+            shadowOpacity: 0.2,
+            shadowRadius: 3,
+            elevation: 2,
+        },
+        inputContainerError: {
+            backgroundColor: `${theme.colors.error}10`,
+        },
         input: {
-            backgroundColor: theme.components.inputs.background,
-            borderWidth: 1,
-            borderColor: theme.components.inputs.border,
-            borderRadius: theme.components.inputs.radius,
             padding: theme.spacing.m,
-            color: theme.components.inputs.text,
-            fontSize: theme.typography.fontSize.m,
+            minHeight: numberOfLines * 20,
+            maxHeight: autoGrow ? maxHeight : undefined,
             textAlignVertical: 'top',
+            fontSize: theme.typography.fontSize.m,
+            color: theme.colors.textPrimary,
         },
-        inputFocused: {
-            borderColor: theme.components.inputs.focusBorder,
-        },
-        inputError: {
-            borderColor: theme.colors.error,
-        },
-        charCounter: {
+        charCount: {
             alignSelf: 'flex-end',
+            fontSize: 12,
+            color: theme.colors.textSecondary,
+            marginRight: theme.spacing.s,
             marginTop: 4,
         },
         helperText: {
@@ -70,8 +93,11 @@ export default function FormTextarea<T extends FieldValues>({
 
     const handleContentSizeChange = (event: any) => {
         if (autoGrow) {
-            const contentHeight = event.nativeEvent.contentSize.height;
-            setHeight(Math.min(contentHeight, maxHeight));
+            let newHeight = event.nativeEvent.contentSize.height;
+            if (maxHeight && newHeight > maxHeight) {
+                newHeight = maxHeight;
+            }
+            setHeight(newHeight);
         }
     };
 
@@ -88,43 +114,39 @@ export default function FormTextarea<T extends FieldValues>({
                         </Typography>
                     )}
 
-                    <TextInput
+                    <View
                         style={[
-                            styles.input,
-                            isFocused && styles.inputFocused,
-                            error && styles.inputError,
-                            height ? { height } : { minHeight: 20 * numberOfLines },
+                            styles.inputContainer,
+                            isFocused && styles.inputContainerFocused,
+                            error && styles.inputContainerError,
                         ]}
-                        value={value}
-                        onChangeText={(text) => {
-                            if (maxLength && text.length > maxLength) {
-                                return;
-                            }
-                            onChange(text);
-                        }}
-                        onBlur={() => {
-                            setIsFocused(false);
-                            onBlur();
-                        }}
-                        onFocus={() => setIsFocused(true)}
-                        maxLength={maxLength}
-                        placeholder={placeholder}
-                        multiline
-                        numberOfLines={numberOfLines}
-                        onContentSizeChange={handleContentSizeChange}
-                    />
+                    >
+                        <TextInput
+                            ref={inputRef}
+                            style={[
+                                styles.input,
+                                autoGrow && height ? { height } : {}
+                            ]}
+                            value={value || ''}
+                            onChangeText={onChange}
+                            onBlur={() => {
+                                setIsFocused(false);
+                                onBlur();
+                            }}
+                            onFocus={() => setIsFocused(true)}
+                            placeholder={placeholder}
+                            placeholderTextColor={theme.colors.textSecondary}
+                            multiline
+                            numberOfLines={numberOfLines}
+                            onContentSizeChange={handleContentSizeChange}
+                            textAlignVertical="top"
+                            selectionColor={theme.colors.primary}
+                        />
+                    </View>
 
                     {showCharCount && maxLength && (
-                        <Typography
-                            variant="caption"
-                            style={styles.charCounter}
-                            color={
-                                value && typeof value === 'string' && value.length === maxLength
-                                    ? 'error'
-                                    : 'secondary'
-                            }
-                        >
-                            {value && typeof value === 'string' ? value.length : 0}/{maxLength}
+                        <Typography style={styles.charCount}>
+                            {value ? value.length : 0}/{maxLength}
                         </Typography>
                     )}
 

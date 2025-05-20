@@ -21,14 +21,20 @@ interface FormCategorySelectorProps<T extends FieldValues> {
     label?: string;
     helperText?: string;
     placeholder?: string;
+    /**
+     * Optional direct handler for category selection
+     * Used when not relying solely on react-hook-form
+     */
+    onSelectCategory?: (categoryId: string | null) => void;
 }
 
 export default function FormCategorySelector<T extends FieldValues>({
     name,
     control,
     label = 'Category',
-    helperText = 'Assign a category to organize your entries',
+    helperText = '',
     placeholder = 'Select a category',
+    onSelectCategory,
 }: FormCategorySelectorProps<T>) {
     const { categories, loadCategories, addCategory } = useCategories();
     const [loading, setLoading] = useState(false);
@@ -81,14 +87,19 @@ export default function FormCategorySelector<T extends FieldValues>({
     const styles = useStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
+            width: '100%',
         },
         label: {
-            marginBottom: theme.spacing.xs,
+            marginBottom: theme.spacing.s,
+            fontSize: theme.typography.fontSize.m,
+            fontWeight: '500',
         },
         categoriesContainer: {
             flexDirection: 'row',
             flexWrap: 'wrap',
             marginTop: theme.spacing.s,
+            marginBottom: theme.spacing.s,
+            width: '100%',
         },
         categoryChip: {
             flexDirection: 'row',
@@ -97,11 +108,20 @@ export default function FormCategorySelector<T extends FieldValues>({
             paddingHorizontal: theme.spacing.s,
             marginRight: theme.spacing.s,
             marginBottom: theme.spacing.s,
-            borderRadius: theme.shape.radius.m,
+            borderRadius: theme.shape.radius.pill,
             borderWidth: 2,
+            // Add shadow for more depth
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 2,
         },
         categoryChipSelected: {
-            borderWidth: 2,
+            // Add more prominent shadow for selected state
+            shadowOpacity: 0.2,
+            shadowRadius: 3,
+            elevation: 3,
         },
         categoryChipLabel: {
             marginLeft: theme.spacing.xs,
@@ -110,6 +130,12 @@ export default function FormCategorySelector<T extends FieldValues>({
             width: 16,
             height: 16,
             borderRadius: 8,
+            // Add inner shadow effect
+            shadowColor: 'rgba(0,0,0,0.2)',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.2,
+            shadowRadius: 1,
+            elevation: 1,
         },
         addCategoryButton: {
             flexDirection: 'row',
@@ -117,54 +143,83 @@ export default function FormCategorySelector<T extends FieldValues>({
             paddingVertical: theme.spacing.xs,
             paddingHorizontal: theme.spacing.s,
             marginBottom: theme.spacing.s,
-            borderRadius: theme.shape.radius.m,
+            marginRight: theme.spacing.s,
+            borderRadius: theme.shape.radius.pill,
             borderWidth: 1,
             borderStyle: 'dashed',
-            borderColor: theme.colors.primary,
+            borderColor: theme.colors.border,
+            alignSelf: 'flex-start',
         },
         addCategoryLabel: {
             marginLeft: theme.spacing.xs,
-            color: theme.colors.primary,
+            color: theme.colors.textSecondary,
+            flexShrink: 1,
+            fontSize: theme.typography.fontSize.s,
         },
         loadingText: {
             marginTop: theme.spacing.xs,
             color: theme.colors.textSecondary,
         },
         helperText: {
-            marginTop: 4,
+            marginTop: theme.spacing.xs,
             color: theme.colors.textSecondary,
         },
         categoryFormContainer: {
             backgroundColor: theme.colors.surfaceVariant,
             borderRadius: theme.shape.radius.m,
             padding: theme.spacing.m,
-            marginTop: theme.spacing.s,
-            marginBottom: theme.spacing.m,
+            marginVertical: theme.spacing.m,
+            width: '100%',
         },
         formRow: {
             marginBottom: theme.spacing.s,
+            width: '100%',
+        },
+        formRowTitle: {
+            marginBottom: theme.spacing.xs,
+            fontSize: theme.typography.fontSize.s,
+            fontWeight: '500',
         },
         colorSection: {
             marginTop: theme.spacing.m,
             marginBottom: theme.spacing.m,
+            width: '100%',
         },
         colorSectionLabel: {
             marginBottom: theme.spacing.s,
+            fontSize: theme.typography.fontSize.s,
+            fontWeight: '500',
         },
         input: {
             backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.s,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            paddingHorizontal: theme.spacing.m,
-            paddingVertical: theme.spacing.s,
-            fontSize: 16,
+            borderRadius: 12,
+            padding: theme.spacing.s,
+            fontSize: 14,
             color: theme.colors.textPrimary,
+            // Add subtle shadow for depth without borders
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 1,
+            width: '100%',
         },
         buttonContainer: {
             flexDirection: 'row',
-            justifyContent: 'space-between',
+            justifyContent: 'flex-end',
             marginTop: theme.spacing.m,
+            columnGap: theme.spacing.s,
+            width: '100%',
+        },
+        headerRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: theme.spacing.m,
+            width: '100%',
+        },
+        closeButton: {
+            padding: theme.spacing.xs,
         },
     }));
 
@@ -183,35 +238,8 @@ export default function FormCategorySelector<T extends FieldValues>({
                     <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        style={{ marginBottom: 4 }}
                     >
                         <View style={styles.categoriesContainer}>
-                            {/* "None" option */}
-                            <TouchableOpacity
-                                style={[
-                                    styles.categoryChip,
-                                    {
-                                        borderColor: value === null || value === undefined
-                                            ? theme.colors.primary
-                                            : theme.colors.border,
-                                        backgroundColor: value === null || value === undefined
-                                            ? theme.colors.primaryLight
-                                            : theme.colors.surface,
-                                    },
-                                ]}
-                                onPress={() => onChange(null)}
-                            >
-                                <View
-                                    style={[
-                                        styles.colorIndicator,
-                                        { backgroundColor: theme.colors.surfaceVariant },
-                                    ]}
-                                />
-                                <Typography style={styles.categoryChipLabel}>
-                                    None
-                                </Typography>
-                            </TouchableOpacity>
-
                             {/* Category chips */}
                             {categories.map((category: Category) => (
                                 <TouchableOpacity
@@ -223,11 +251,19 @@ export default function FormCategorySelector<T extends FieldValues>({
                                                 ? category.color
                                                 : theme.colors.border,
                                             backgroundColor: value === category.id
-                                                ? `${category.color}20`  // 20% opacity
+                                                ? `${category.color}15`  // 15% opacity
                                                 : theme.colors.surface,
                                         },
+                                        value === category.id && styles.categoryChipSelected
                                     ]}
-                                    onPress={() => onChange(category.id)}
+                                    onPress={() => {
+                                        // Toggle category selection
+                                        const newValue = value === category.id ? null : category.id;
+                                        onChange(newValue);
+                                        if (onSelectCategory) {
+                                            onSelectCategory(newValue);
+                                        }
+                                    }}
                                 >
                                     <View
                                         style={[
@@ -235,7 +271,10 @@ export default function FormCategorySelector<T extends FieldValues>({
                                             { backgroundColor: category.color },
                                         ]}
                                     />
-                                    <Typography style={styles.categoryChipLabel}>
+                                    <Typography style={[
+                                        styles.categoryChipLabel,
+                                        { color: value === category.id ? theme.colors.primary : theme.colors.textPrimary }
+                                    ]}>
                                         {category.title}
                                     </Typography>
                                 </TouchableOpacity>
@@ -250,10 +289,10 @@ export default function FormCategorySelector<T extends FieldValues>({
                                     name={showCategoryForm ? "minus" : "plus"}
                                     width={16}
                                     height={16}
-                                    color={theme.colors.primary}
+                                    color={theme.colors.textSecondary}
                                 />
-                                <Typography style={styles.addCategoryLabel}>
-                                    {showCategoryForm ? "Cancel" : "Add New"}
+                                <Typography style={styles.addCategoryLabel} numberOfLines={1}>
+                                    {showCategoryForm ? "Cancel" : "New Category"}
                                 </Typography>
                             </TouchableOpacity>
                         </View>
@@ -262,10 +301,26 @@ export default function FormCategorySelector<T extends FieldValues>({
                     {/* Expandable category form */}
                     {showCategoryForm && (
                         <View style={styles.categoryFormContainer}>
-                            <Typography variant="h4">Create New Category</Typography>
+                            <View style={styles.headerRow}>
+                                <Typography variant="h4">Create New Category</Typography>
+                                <TouchableOpacity
+                                    style={styles.closeButton}
+                                    onPress={() => {
+                                        setShowCategoryForm(false);
+                                        reset({ title: '' });
+                                    }}
+                                >
+                                    <Icon
+                                        name="x"
+                                        width={20}
+                                        height={20}
+                                        color={theme.colors.textSecondary}
+                                    />
+                                </TouchableOpacity>
+                            </View>
 
                             <View style={styles.formRow}>
-                                <Typography variant="body2" style={styles.colorSectionLabel}>
+                                <Typography style={styles.formRowTitle}>
                                     Category Name
                                 </Typography>
                                 <Controller
@@ -290,7 +345,7 @@ export default function FormCategorySelector<T extends FieldValues>({
                             </View>
 
                             <View style={styles.colorSection}>
-                                <Typography variant="body2" style={styles.colorSectionLabel}>
+                                <Typography style={styles.colorSectionLabel}>
                                     Category Color
                                 </Typography>
                                 <ColorPicker

@@ -1,16 +1,24 @@
 // src/components/form/FormInput.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     TextInput,
+    StyleSheet,
     TextInputProps,
     TouchableOpacity,
-    TouchableWithoutFeedback,
 } from 'react-native';
-import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
-import { useStyles } from '../../hooks/useStyles';
-import { Typography, Icon } from '../common';
+import {
+    Control,
+    Controller,
+    FieldValues,
+    Path,
+    RegisterOptions,
+} from 'react-hook-form';
+import { Typography } from '../atoms/Typography';
+import { Icon } from '../atoms/Icon';
 import FormErrorMessage from './FormErrorMessage';
+import { useStyles } from '../../hooks/useStyles';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface FormInputProps<T extends FieldValues> extends Omit<TextInputProps, 'onChange' | 'onBlur' | 'value'> {
     name: Path<T>;
@@ -53,55 +61,74 @@ export default function FormInput<T extends FieldValues>({
     isTitle = false,
     ...inputProps
 }: FormInputProps<T>) {
+    const { theme } = useTheme();
     const [isFocused, setIsFocused] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const inputRef = useRef<TextInput>(null);
 
     const styles = useStyles((theme) => ({
         container: {
-            marginBottom: isTitle ? theme.spacing.xs : theme.spacing.m,
+            marginBottom: theme.spacing.m,
+            width: '100%',
         },
         label: {
             marginBottom: theme.spacing.xs,
         },
-        inputWrapper: {
+        inputContainer: {
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: theme.components.inputs.background,
-            borderRadius: isTitle ? 0 : theme.components.inputs.radius,
-            borderWidth: isTitle ? 0 : 1,
-            borderColor: theme.components.inputs.border,
-            overflow: 'hidden',
+            backgroundColor: isTitle ? 'transparent' : theme.colors.surfaceVariant,
+            borderRadius: 16,
+            paddingHorizontal: theme.spacing.m,
+            paddingVertical: theme.spacing.xs,
+            minHeight: 48,
+            // Add subtle shadow for depth
+            ...(isTitle ? {} : {
+                shadowColor: theme.colors.shadow,
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 1,
+            }),
         },
-        inputWrapperFocused: {
-            borderColor: isTitle ? 'transparent' : theme.components.inputs.focusBorder,
+        inputContainerFocused: {
+            backgroundColor: isTitle ? 'transparent' : theme.colors.surfaceVariant,
+            // Add more prominent shadow when focused
+            ...(isTitle ? {} : {
+                shadowColor: theme.colors.primary,
+                shadowOpacity: 0.2,
+                shadowRadius: 3,
+                elevation: 2,
+            }),
         },
-        inputWrapperError: {
-            borderColor: isTitle ? 'transparent' : theme.colors.error,
-        },
-        leftIconContainer: {
-            paddingLeft: theme.spacing.m,
-        },
-        rightIconContainer: {
-            paddingRight: theme.spacing.m,
+        inputContainerError: {
+            backgroundColor: isTitle ? 'transparent' : `${theme.colors.error}10`,
         },
         input: {
             flex: 1,
-            padding: theme.spacing.m,
-            color: theme.components.inputs.text,
+            padding: theme.spacing.s,
             fontSize: isTitle ? theme.typography.fontSize.xl : theme.typography.fontSize.m,
+            color: theme.colors.textPrimary,
             fontWeight: isTitle ? 'bold' : 'normal',
+            minHeight: isTitle ? 40 : 24, // Ensure minimum height
         },
         leadingText: {
-            paddingLeft: theme.spacing.m,
-            color: theme.components.inputs.text,
+            marginRight: theme.spacing.xs,
+            color: theme.colors.textSecondary,
         },
-        charCounter: {
-            alignSelf: 'flex-end',
-            marginTop: 4,
+        rightIconContainer: {
+            paddingLeft: theme.spacing.xs,
+        },
+        leftIconContainer: {
+            paddingRight: theme.spacing.xs,
+        },
+        charCount: {
+            fontSize: 12,
+            color: theme.colors.textSecondary,
+            marginLeft: theme.spacing.xs,
         },
         helperText: {
             marginTop: 4,
+            paddingHorizontal: theme.spacing.xs,
         },
     }));
 
@@ -109,23 +136,23 @@ export default function FormInput<T extends FieldValues>({
 
     const handleFocus = () => {
         setIsFocused(true);
-        inputRef.current?.focus();
+    };
+
+    const handleBlur = () => {
+        setIsFocused(false);
     };
 
     const renderPasswordIcon = () => {
-        if (!secureTextEntry) return null;
-
         return (
             <TouchableOpacity
-                style={styles.rightIconContainer}
                 onPress={togglePasswordVisibility}
-                activeOpacity={0.7}
+                style={styles.rightIconContainer}
             >
                 <Icon
                     name={showPassword ? 'eye-off' : 'eye'}
                     width={20}
                     height={20}
-                    color={styles.input.color}
+                    color={theme.colors.textSecondary}
                 />
             </TouchableOpacity>
         );
@@ -144,75 +171,72 @@ export default function FormInput<T extends FieldValues>({
                         </Typography>
                     )}
 
-                    <TouchableWithoutFeedback onPress={handleFocus}>
-                        <View
-                            style={[
-                                styles.inputWrapper,
-                                isFocused && styles.inputWrapperFocused,
-                                error && styles.inputWrapperError,
-                            ]}
-                        >
-                            {leftIcon && <View style={styles.leftIconContainer}>{leftIcon}</View>}
-                            {leadingText && (
-                                <Typography style={styles.leadingText}>{leadingText}</Typography>
-                            )}
+                    <View
+                        style={[
+                            styles.inputContainer,
+                            isFocused && styles.inputContainerFocused,
+                            error && styles.inputContainerError,
+                        ]}
+                    >
+                        {leftIcon && (
+                            <View style={styles.leftIconContainer}>{leftIcon}</View>
+                        )}
 
-                            <TextInput
-                                ref={inputRef}
-                                style={styles.input}
-                                value={value}
-                                onChangeText={(text) => {
-                                    if (maxLength && text.length > maxLength) {
-                                        return;
-                                    }
-                                    onChange(text);
-                                }}
-                                onBlur={() => {
-                                    setIsFocused(false);
-                                    onBlur();
-                                }}
-                                onFocus={() => setIsFocused(true)}
-                                maxLength={maxLength}
-                                secureTextEntry={secureTextEntry && !showPassword}
-                                placeholder={isTitle ? 'Untitled' : inputProps.placeholder}
-                                {...inputProps}
-                            />
+                        {leadingText && (
+                            <Typography style={styles.leadingText}>
+                                {leadingText}
+                            </Typography>
+                        )}
 
-                            {renderPasswordIcon()}
-                            {rightIcon && !secureTextEntry && (
-                                <View style={styles.rightIconContainer}>{rightIcon}</View>
-                            )}
-                        </View>
-                    </TouchableWithoutFeedback>
+                        <TextInput
+                            style={styles.input}
+                            onChangeText={onChange}
+                            onBlur={(e) => {
+                                handleBlur();
+                                onBlur();
+                            }}
+                            onFocus={handleFocus}
+                            value={value === null || value === undefined ? '' : String(value)}
+                            secureTextEntry={secureTextEntry && !showPassword}
+                            placeholderTextColor={theme.colors.textSecondary}
+                            selectionColor={theme.colors.primary}
+                            {...inputProps}
+                        />
 
-                    {showCharCount && maxLength && (
+                        {showCharCount && maxLength && (
+                            <Typography style={styles.charCount}>
+                                {value ? value.toString().length : 0}/{maxLength}
+                            </Typography>
+                        )}
+
+                        {secureTextEntry && renderPasswordIcon()}
+
+                        {rightIcon && !secureTextEntry && (
+                            <View style={styles.rightIconContainer}>{rightIcon}</View>
+                        )}
+
+                        {error && errorIcon && !secureTextEntry && !rightIcon && (
+                            <View style={styles.rightIconContainer}>
+                                <Icon
+                                    name="circle-alert"
+                                    width={18}
+                                    height={18}
+                                    color={theme.colors.error}
+                                />
+                            </View>
+                        )}
+                    </View>
+
+                    <FormErrorMessage message={error?.message} visible={!!error} />
+
+                    {!error && helperText && (
                         <Typography
                             variant="caption"
-                            style={styles.charCounter}
-                            color={
-                                value && typeof value === 'string' && value.length === maxLength
-                                    ? 'error'
-                                    : 'secondary'
-                            }
+                            color="secondary"
+                            style={styles.helperText}
                         >
-                            {value && typeof value === 'string' ? value.length : 0}/{maxLength}
+                            {helperText}
                         </Typography>
-                    )}
-
-                    {!isTitle && (
-                        <>
-                            <FormErrorMessage message={error?.message} visible={!!error} />
-
-                            {helperText && !error && (
-                                <Typography
-                                    variant="caption"
-                                    style={styles.helperText}
-                                    color="secondary"
-                                >
-                                    {helperText}
-                                </Typography>
-                            )}
-                        </>
                     )}
                 </View>
             )}
@@ -220,16 +244,17 @@ export default function FormInput<T extends FieldValues>({
     );
 }
 
-// Static Label component to allow FormInput.Label usage
 FormInput.Label = function Label({ label, style }: LabelProps) {
     const styles = useStyles((theme) => ({
         label: {
+            color: theme.colors.textPrimary,
+            fontSize: theme.typography.fontSize.m,
             marginBottom: theme.spacing.xs,
         }
     }));
 
     return (
-        <Typography variant="body1" style={[styles.label, style]}>
+        <Typography style={[styles.label, style]}>
             {label}
         </Typography>
     );
