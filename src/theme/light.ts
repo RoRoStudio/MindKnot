@@ -67,7 +67,7 @@ export const lightTheme: ThemeType = {
         textLink: tokens.color.brand.blue[500],
 
         // Border and divider
-        border: tokens.color.neutral.gray[200],
+        border: tokens.color.neutral.black,
         divider: tokens.color.neutral.gray[200],
 
         // Feedback colors

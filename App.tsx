@@ -6,9 +6,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import { View, Text, ActivityIndicator } from 'react-native';
+import { Provider } from 'react-redux';
+import { store } from './src/redux/store';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { initDatabase } from './src/database/database';
+import { useFonts, KantumruyPro_300Light, KantumruyPro_400Regular, KantumruyPro_500Medium, KantumruyPro_600SemiBold, KantumruyPro_700Bold } from '@expo-google-fonts/kantumruy-pro';
+import * as SplashScreen from 'expo-splash-screen';
 
 export default function App() {
     const [dbInitialized, setDbInitialized] = useState(false);
@@ -27,6 +31,22 @@ export default function App() {
 
         initializeDatabase();
     }, []);
+
+    // Load the fonts
+    const [fontsLoaded] = useFonts({
+        'KantumruyPro-Light': KantumruyPro_300Light,
+        'KantumruyPro-Regular': KantumruyPro_400Regular,
+        'KantumruyPro-Medium': KantumruyPro_500Medium,
+        'KantumruyPro-SemiBold': KantumruyPro_600SemiBold,
+        'KantumruyPro-Bold': KantumruyPro_700Bold,
+    });
+
+    // Hide splash screen once fonts are loaded
+    useEffect(() => {
+        if (fontsLoaded) {
+            SplashScreen.hideAsync();
+        }
+    }, [fontsLoaded]);
 
     if (dbError) {
         // Show a simple error screen if database initialization failed
@@ -56,7 +76,13 @@ export default function App() {
         );
     }
 
+    if (!fontsLoaded) {
+        // If fonts aren't loaded yet, return null or a loading indicator
+        return null;
+    }
+
     return (
+        <Provider store={store}>
         <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
                 <ThemeProvider>
@@ -68,5 +94,6 @@ export default function App() {
                 </ThemeProvider>
             </SafeAreaProvider>
         </GestureHandlerRootView>
+        </Provider>
     );
 }

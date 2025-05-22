@@ -3,21 +3,18 @@
  * @module components/atoms/Label
  */
 import React from 'react';
-import { View, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
-import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Typography } from './Typography';
 import { Icon } from './Icon';
 
 /**
- * Size variants for the Label component
+ * Different size variants for the Label component
  */
 export type LabelSize = 'small' | 'medium' | 'large';
 
 /**
- * Props for the Label component
- * 
- * @interface LabelProps
+ * Label component for displaying tags, categories, and other label-like elements
+ * with optional selectable and removable functionality.
  */
 export interface LabelProps {
     /**
@@ -66,32 +63,7 @@ export interface LabelProps {
 }
 
 /**
- * Label component used for displaying categories, filters or metadata
- * 
- * @component
- * @example
- * ```jsx
- * // Basic usage
- * <Label label="Technology" />
- * 
- * // Selectable label
- * <Label 
- *   label="Important" 
- *   selectable 
- *   selected={isSelected}
- *   onPress={() => setIsSelected(!isSelected)} 
- * />
- * 
- * // Removable label
- * <Label 
- *   label="React Native" 
- *   removable 
- *   onRemove={() => removeLabel('React Native')} 
- * />
- * 
- * // Custom size
- * <Label label="Small Label" size="small" />
- * ```
+ * Label component - displays a text label with configurable appearance and behavior
  */
 export const Label: React.FC<LabelProps> = ({
     label,
@@ -105,83 +77,55 @@ export const Label: React.FC<LabelProps> = ({
 }) => {
     const { theme } = useTheme();
 
-    // Fixed heights for consistent appearance across the app
-    const getLabelHeight = () => {
-        switch (size) {
-            case 'small': return 24;
-            case 'medium': return 28;
-            case 'large': return 32;
-            default: return 28;
-        }
-    };
+    // Decide whether to render as touchable based on interactivity props
+    const isInteractive = selectable || removable;
 
-    const styles = useThemedStyles((theme, constants) => ({
-        label: {
-            // Make labels pill-shaped with border radius at half height
-            borderRadius: 100, // Very high value ensures pill shape
-            paddingHorizontal:
-                size === 'small' ? theme.spacing.s :
-                    size === 'medium' ? theme.spacing.m :
-                        theme.spacing.l,
-            paddingVertical:
-                size === 'small' ? 2 :
-                    size === 'medium' ? 3 :
-                        4,
-            height: getLabelHeight(),
-            backgroundColor: theme.colors.surface,
-            alignSelf: 'flex-start',
+    const styles = StyleSheet.create({
+        container: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: theme.spacing.xs,
-            marginBottom: theme.spacing.xs,
-            // Add border
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            // Add shadow for more depth
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            elevation: 1,
+            backgroundColor: '#E5E7EB', // bg-gray-200
+            paddingHorizontal: 10, // px-2.5
+            paddingVertical: 4, // py-1
+            borderRadius: 9999, // rounded-full
         },
         text: {
-            fontSize:
-                size === 'small' ? theme.typography.fontSize.xs :
-                    size === 'medium' ? theme.typography.fontSize.s :
-                        theme.typography.fontSize.m,
-            color: theme.colors.textPrimary,
-            fontWeight: '400',
-            marginTop: 0,
-            marginBottom: 0,
-            lineHeight:
-                size === 'small' ? 16 :
-                    size === 'medium' ? 18 :
-                        20,
+            fontSize: 12, // text-xs
+            fontWeight: '500', // font-medium
+            color: '#4B5563', // text-gray-700
         },
         removeIcon: {
-            marginLeft: theme.spacing.xs,
+            marginLeft: 4,
         },
-        // No longer using these objects directly in style arrays, so just define what's needed
-        selectableLabel: {
-            backgroundColor: theme.colors.surfaceVariant,
-            borderStyle: 'solid',
-        },
-        selectedLabel: {
-            backgroundColor: `${theme.colors.primary}20`,
-            borderColor: theme.colors.primary,
-        },
-        selectableText: {
-            color: theme.colors.textSecondary,
+        selected: {
+            backgroundColor: theme.colors.primary,
         },
         selectedText: {
-            color: theme.colors.primary,
-            fontWeight: '500',
-        },
-    }));
+            color: theme.colors.onPrimary,
+        }
+    });
 
-    // Use appropriate wrapper component based on interactivity
-    const Wrapper = selectable || removable ? TouchableOpacity : View;
+    const renderLabel = () => (
+        <View style={[
+            styles.container,
+            selected && styles.selected,
+            style
+        ]}>
+            <Text style={[styles.text, selected && styles.selectedText]}>
+                {label}
+            </Text>
+            {removable && (
+                <TouchableOpacity
+                    style={styles.removeIcon}
+                    onPress={handleRemovePress}
+                    hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                >
+                    <Icon name="x" width={12} height={12} color={selected ? theme.colors.onPrimary : theme.colors.textSecondary} />
+                </TouchableOpacity>
+            )}
+        </View>
+    );
 
     const handlePress = () => {
         if (selectable && onPress) {
@@ -196,54 +140,16 @@ export const Label: React.FC<LabelProps> = ({
         }
     };
 
-    return (
-        <Wrapper
-            style={[
-                styles.label,
-                selectable && { backgroundColor: theme.colors.surfaceVariant },
-                selected && {
-                    backgroundColor: `${theme.colors.primary}20`,
-                    borderColor: theme.colors.primary
-                },
-                style
-            ]}
+    // Render as touchable if interactive, otherwise as a simple view
+    return isInteractive ? (
+        <TouchableOpacity
+            activeOpacity={0.7}
             onPress={handlePress}
-            disabled={!selectable && !removable}
-            accessibilityRole={selectable ? "button" : undefined}
-            accessibilityState={selectable ? { selected } : undefined}
+            disabled={!selectable}
         >
-            <Typography
-                style={[
-                    styles.text,
-                    selectable && { color: theme.colors.textSecondary },
-                    selected && {
-                        color: theme.colors.primary,
-                        fontWeight: '500' as const
-                    }
-                ]}
-                numberOfLines={1}
-            >
-                {label}
-            </Typography>
-
-            {removable && (
-                <TouchableOpacity
-                    onPress={handleRemovePress}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Remove ${label} label`}
-                >
-                    <Icon
-                        name="x"
-                        size={size === 'small' ? 16 : size === 'medium' ? 18 : 20}
-                        color={selected ? theme.colors.primary : theme.colors.textSecondary}
-                        style={styles.removeIcon}
-                        strokeWidth={2.5}
-                    />
-                </TouchableOpacity>
-            )}
-        </Wrapper>
-    );
+            {renderLabel()}
+        </TouchableOpacity>
+    ) : renderLabel();
 };
 
 export default Label; 

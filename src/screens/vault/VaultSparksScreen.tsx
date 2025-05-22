@@ -6,7 +6,7 @@ import { useSparks } from '../../hooks/useSparks';
 import { SparkCard } from '../../components/entries';
 import { Spark } from '../../types/spark';
 import { RootStackParamList } from '../../types/navigation-types';
-import { FilterableList, FilterableListHeader, Category } from '../../components/common';
+import { FilterableList, Category } from '../../components/common';
 import { useCategories } from '../../hooks/useCategories';
 import { useBottomSheet } from '../../contexts/BottomSheetContext';
 
@@ -32,7 +32,7 @@ export default function VaultSparksScreen() {
         return Array.from(tagSet).sort();
     }, [sparks]);
 
-    // Format categories for the FilterableListHeader
+    // Format categories for filter menu
     const formattedCategories = useMemo(() => {
         return categories.map(cat => ({
             id: cat.id,
@@ -71,7 +71,7 @@ export default function VaultSparksScreen() {
         setIsGridView(prev => !prev);
     }, []);
 
-    // Function to filter sparks based on search term, tags, and category
+    // Function to filter sparks
     const filterSparks = useCallback((spark: Spark, searchTerm: string, selectedTags: string[], categoryId: string | null): boolean => {
         // Filter by category
         if (categoryId && spark.categoryId !== categoryId) {
@@ -86,12 +86,12 @@ export default function VaultSparksScreen() {
         // Filter by search term
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
-            return (
-                (spark.title?.toLowerCase().includes(searchLower) ||
-                    spark.body?.toLowerCase().includes(searchLower)) ? true : false
-            );
+            const titleMatch = spark.title?.toLowerCase().includes(searchLower) || false;
+            const bodyMatch = spark.body?.toLowerCase().includes(searchLower) || false;
+            return titleMatch || bodyMatch;
         }
 
+        // If we got here, there's no search term or the search matches
         return true;
     }, []);
 
@@ -109,23 +109,19 @@ export default function VaultSparksScreen() {
         }
     }, []);
 
-    // Memoize the renderItem to avoid constant recreation
-    const renderItem = useMemo(() => {
-        return ({ item }: { item: Spark }) => (
-            <SparkCard
-                spark={item}
-                onPress={() => handleSparkPress(item)}
-            />
-        );
-    }, [handleSparkPress]);
+    // Render spark item
+    const renderItem = useCallback(({ item }: { item: Spark }) => (
+        <SparkCard
+            spark={item}
+            onPress={() => handleSparkPress(item)}
+        />
+    ), [handleSparkPress]);
 
     return (
         <>
             <FilterableList
                 data={sparks}
-                loadData={async () => {
-                    await loadSparks();
-                }}
+                loadData={async () => { await loadSparks(); }}
                 renderItem={renderItem}
                 allTags={allTags}
                 selectedTags={selectedTags}
@@ -136,7 +132,7 @@ export default function VaultSparksScreen() {
                 onCategoryChange={setCategoryId}
                 sortOrder={sortOrder}
                 onSortChange={setSortOrder}
-                emptyIcon="sparkles"
+                emptyIcon="lightbulb"
                 emptyText="No sparks found. Create your first spark!"
                 keyExtractor={(item) => item.id}
                 filterPredicate={filterSparks}
@@ -145,21 +141,7 @@ export default function VaultSparksScreen() {
                 onToggleView={handleToggleView}
                 onCreateItem={showSparkForm}
                 createButtonLabel="Create Spark"
-                ListHeaderComponent={
-                    <FilterableListHeader
-                        searchTerm={searchTerm}
-                        onSearchChange={setSearchTerm}
-                        allTags={allTags}
-                        selectedTags={selectedTags}
-                        onToggleTag={handleToggleTag}
-                        categories={formattedCategories}
-                        categoryId={categoryId}
-                        onCategoryChange={setCategoryId}
-                        sortOrder={sortOrder}
-                        onSortChange={setSortOrder}
-                        onClearFilters={handleClearFilters}
-                    />
-                }
+                categories={formattedCategories}
             />
         </>
     );

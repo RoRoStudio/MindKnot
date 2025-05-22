@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     Dimensions,
     View,
@@ -12,9 +12,9 @@ import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withTiming,
-    interpolate,
-    useAnimatedGestureHandler,
     runOnJS,
+    useAnimatedGestureHandler,
+    clamp
 } from 'react-native-reanimated';
 import {
     PanGestureHandler,
@@ -97,11 +97,10 @@ export interface BottomSheetProps {
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const DRAG_DISMISS_THRESHOLD = 100;
+const MAX_CONTENT_HEIGHT = SCREEN_HEIGHT * 0.9;
 
 /**
- * BottomSheet component provides a draggable sheet that slides up from the bottom of the screen
- * with configurable snap points, animations, and content areas
+ * BottomSheet component provides a modal sheet that slides up from the bottom of the screen
  */
 export const BottomSheet = React.memo<BottomSheetProps>(({
     visible,
@@ -122,50 +121,71 @@ export const BottomSheet = React.memo<BottomSheetProps>(({
 
     // Animation values
     const translateY = useSharedValue(SCREEN_HEIGHT);
+    const opacity = useSharedValue(0);
 
     const [shouldRender, setShouldRender] = useState(visible);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+    // Handle keyboard events
+    useEffect(() => {
+        const keyboardWillShowListener = Platform.OS === 'ios'
+            ? Keyboard.addListener('keyboardWillShow', (event) => setKeyboardHeight(event.endCoordinates.height))
+            : null;
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            (event) => {
+                setKeyboardHeight(event.endCoordinates.height);
+            }
+        );
+        const keyboardWillHideListener = Platform.OS === 'ios'
+            ? Keyboard.addListener('keyboardWillHide', () => setKeyboardHeight(0))
+            : null;
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setKeyboardHeight(0);
+            }
+        );
+
+        return () => {
+            keyboardDidShowListener.remove();
+            keyboardDidHideListener.remove();
+            keyboardWillShowListener?.remove();
+            keyboardWillHideListener?.remove();
+        };
+    }, []);
 
     // Update animation when visibility changes
     useEffect(() => {
         if (visible) {
             setShouldRender(true);
             translateY.value = withTiming(0, { duration: animationDuration });
+            opacity.value = withTiming(backdropOpacity, { duration: animationDuration });
         } else {
             translateY.value = withTiming(SCREEN_HEIGHT, { duration: animationDuration }, (isFinished) => {
                 if (isFinished) {
                     runOnJS(setShouldRender)(false);
                 }
             });
+            opacity.value = withTiming(0, { duration: animationDuration });
         }
-    }, [visible, animationDuration]);
+    }, [visible, animationDuration, backdropOpacity, translateY, opacity]);
 
     // Convert any percentage values to absolute pixels
     const actualMaxHeight = typeof maxHeight === 'number'
         ? (maxHeight <= 1 ? SCREEN_HEIGHT * maxHeight : maxHeight)
         : SCREEN_HEIGHT * 0.9;
 
-    // Calculate sheet heights
-    const calculateSnapPoint = useCallback((percentage: number) => {
-        const value = SCREEN_HEIGHT * percentage;
-        return Math.min(Math.max(value, minHeight), actualMaxHeight);
-    }, [minHeight, actualMaxHeight]);
+    // Get current snap point as pixels
+    const getSnapPoints = () => {
+        return snapPoints.map(point =>
+            typeof point === 'number' && point <= 1
+                ? SCREEN_HEIGHT * (1 - point) // Convert from percentage to actual position
+                : SCREEN_HEIGHT - point
+        );
+    };
 
-    // Main content animation
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: translateY.value }],
-    }));
-
-    // Backdrop animation
-    const backdropStyle = useAnimatedStyle(() => ({
-        opacity: interpolate(
-            translateY.value,
-            [0, SCREEN_HEIGHT],
-            [backdropOpacity, 0],
-            'clamp'
-        ),
-    }));
-
-    // Pan gesture handler
+    // Handle gestures for the drag handle
     const gestureHandler = useAnimatedGestureHandler<
         PanGestureHandlerGestureEvent,
         { startY: number }
@@ -174,40 +194,62 @@ export const BottomSheet = React.memo<BottomSheetProps>(({
             ctx.startY = translateY.value;
         },
         onActive: (event, ctx) => {
-            if (dismissible) {
-                translateY.value = Math.max(0, ctx.startY + event.translationY);
-            }
+            // Only allow dragging down or up to limits
+            translateY.value = clamp(
+                ctx.startY + event.translationY,
+                0,  // Don't allow dragging above origin
+                SCREEN_HEIGHT // Full height of screen
+            );
         },
-        onEnd: (event) => {
-            if (dismissible && event.translationY > DRAG_DISMISS_THRESHOLD) {
-                translateY.value = withTiming(SCREEN_HEIGHT, { duration: animationDuration }, (isFinished) => {
-                    if (isFinished) runOnJS(onClose)();
-                });
-            } else {
-                // Snap to nearest point
-                const snapPointValues = snapPoints.map(point => calculateSnapPoint(point));
-                const currentPosition = translateY.value;
-
-                // Find nearest snap point
-                let closestPoint = snapPointValues[0];
-                let minDistance = Math.abs(currentPosition - closestPoint);
-
-                for (const point of snapPointValues) {
-                    const distance = Math.abs(currentPosition - point);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestPoint = point;
+        onEnd: (event, _) => {
+            // If dragging down with significant velocity or distance, close the sheet
+            if ((event.velocityY > 500 || translateY.value > SCREEN_HEIGHT / 2) && dismissible) {
+                translateY.value = withTiming(SCREEN_HEIGHT, { duration: animationDuration }, (finished) => {
+                    if (finished) {
+                        runOnJS(onClose)();
                     }
-                }
-
-                translateY.value = withTiming(closestPoint, { duration: 200 });
+                });
+                return;
             }
+
+            // Otherwise snap to the closest snap point
+            const snapPointsInPx = getSnapPoints();
+            let closestPoint = 0; // Default to fully open
+            let minDistance = SCREEN_HEIGHT;
+
+            for (const point of snapPointsInPx) {
+                const distance = Math.abs(translateY.value - point);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestPoint = point;
+                }
+            }
+
+            translateY.value = withTiming(closestPoint, { duration: animationDuration });
         },
     });
 
+    // Main content animation
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateY: translateY.value }],
+    }));
+
+    // Backdrop animation
+    const backdropStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+    }));
+
     // Calculate the content area height
     const dragHandleHeight = 30; // Estimated height of drag handle area
-    const contentHeight = actualMaxHeight - (footerContent ? footerHeight : 0) - dragHandleHeight;
+    const adjustedFooterHeight = footerContent ? footerHeight : 0;
+    const calculatedMaxContentHeight = actualMaxHeight - adjustedFooterHeight - dragHandleHeight;
+
+    // Handle close
+    const handleClose = () => {
+        if (dismissible) {
+            onClose();
+        }
+    };
 
     // Base styles
     const styles = StyleSheet.create({
@@ -228,34 +270,34 @@ export const BottomSheet = React.memo<BottomSheetProps>(({
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: `rgba(0,0,0,${backdropOpacity})`,
+            backgroundColor: 'black',
         },
         sheetContainer: {
-            position: 'relative',
-            width: SCREEN_WIDTH,
-            maxHeight: actualMaxHeight,
-            minHeight: minHeight,
-        },
-        decorationLayer: {
             position: 'absolute',
-            top: -6,
-            left: -2,
-            right: -2,
-            bottom: 0,
-            backgroundColor: theme.colors.primary,
-            borderTopLeftRadius: 18,
-            borderTopRightRadius: 18,
-            zIndex: 0,
+            bottom: keyboardHeight,
+            left: 0,
+            right: 0,
+            width: SCREEN_WIDTH,
+            maxHeight: Math.min(actualMaxHeight, MAX_CONTENT_HEIGHT),
+            minHeight: minHeight,
         },
         contentWrapper: {
             backgroundColor: theme.colors.background,
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
-            zIndex: 1,
             overflow: 'hidden',
             width: '100%',
             minHeight: minHeight,
-            maxHeight: actualMaxHeight,
+            maxHeight: Math.min(actualMaxHeight, MAX_CONTENT_HEIGHT),
+            // Add shadow
+            shadowColor: theme.colors.shadow,
+            shadowOffset: {
+                width: 0,
+                height: -3,
+            },
+            shadowOpacity: 0.27,
+            shadowRadius: 4.65,
+            elevation: 6,
         },
         dragHandleContainer: {
             width: '100%',
@@ -263,6 +305,7 @@ export const BottomSheet = React.memo<BottomSheetProps>(({
             alignItems: 'center',
             justifyContent: 'center',
             paddingTop: 10,
+            zIndex: 10,
         },
         dragHandle: {
             width: 40,
@@ -270,17 +313,21 @@ export const BottomSheet = React.memo<BottomSheetProps>(({
             backgroundColor: theme.colors.textPrimary + '50',
             borderRadius: 10,
         },
+        scrollView: {
+            width: '100%',
+            maxHeight: calculatedMaxContentHeight,
+            flexGrow: 0,
+        },
         contentContainer: {
-            flexGrow: 1,
             padding: theme.spacing.m,
-            maxHeight: contentHeight,
+            paddingTop: 0,
         },
         footerContainer: {
             width: '100%',
             padding: theme.spacing.m,
             borderTopWidth: 1,
             borderTopColor: theme.colors.divider,
-            height: footerHeight,
+            height: adjustedFooterHeight,
             justifyContent: 'center',
             alignItems: 'center',
         },
@@ -292,36 +339,35 @@ export const BottomSheet = React.memo<BottomSheetProps>(({
 
     return (
         <View style={styles.container} pointerEvents={visible ? 'auto' : 'none'}>
-            <TouchableWithoutFeedback onPress={dismissible ? onClose : undefined}>
+            <TouchableWithoutFeedback onPress={handleClose}>
                 <Animated.View style={[styles.backdrop, backdropStyle]} />
             </TouchableWithoutFeedback>
 
-            <PanGestureHandler onGestureEvent={gestureHandler} enabled={dismissible}>
-                <Animated.View style={[styles.sheetContainer, animatedStyle]}>
-                    <View style={styles.decorationLayer} />
-                    <View style={styles.contentWrapper}>
-                        {showDragIndicator && (
-                            <View style={styles.dragHandleContainer}>
-                                <View style={styles.dragHandle} />
-                            </View>
-                        )}
+            <Animated.View style={[styles.sheetContainer, animatedStyle]}>
+                <View style={styles.contentWrapper}>
+                    <PanGestureHandler onGestureEvent={gestureHandler} enabled={dismissible}>
+                        <Animated.View style={styles.dragHandleContainer}>
+                            {showDragIndicator && <View style={styles.dragHandle} />}
+                        </Animated.View>
+                    </PanGestureHandler>
 
-                        <ScrollView
-                            contentContainerStyle={styles.contentContainer}
-                            keyboardShouldPersistTaps="handled"
-                            showsVerticalScrollIndicator={false}
-                        >
-                            {children}
-                        </ScrollView>
+                    <ScrollView
+                        style={styles.scrollView}
+                        contentContainerStyle={styles.contentContainer}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={true}
+                        nestedScrollEnabled={true}
+                    >
+                        {children}
+                    </ScrollView>
 
-                        {footerContent && (
-                            <View style={styles.footerContainer}>
-                                {footerContent}
-                            </View>
-                        )}
-                    </View>
-                </Animated.View>
-            </PanGestureHandler>
+                    {footerContent && (
+                        <View style={styles.footerContainer}>
+                            {footerContent}
+                        </View>
+                    )}
+                </View>
+            </Animated.View>
         </View>
     );
-}); 
+});

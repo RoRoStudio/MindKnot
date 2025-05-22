@@ -270,7 +270,10 @@ export default function NoteScreen() {
     if (isLoading) {
         return (
             <SafeAreaView style={styles.container}>
-                <EntryDetailHeader onBackPress={handleBackPress} />
+                <EntryDetailHeader
+                    onBackPress={handleBackPress}
+                    entryType="Note"
+                />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.colors.primary} />
                 </View>
@@ -288,6 +291,7 @@ export default function NoteScreen() {
                 onDuplicatePress={handleDuplicate}
                 onHidePress={handleHide}
                 isSaved={!!noteId}
+                entryType="Note"
             />
 
             <EntryMetadataBar

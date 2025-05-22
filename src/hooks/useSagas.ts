@@ -2,14 +2,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Saga } from '../types/saga';
 import { getAllSagas, createSaga } from '../services/sagaService';
-import { useSagaStore } from '../state/sagaStore';
+import { useSagaActions } from '../redux/hooks/stateHooks';
 import { IconName } from '../components/common';
 
 export function useSagas() {
     const [sagas, setSagas] = useState<Saga[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const { selectedSagaId, setSelectedSaga } = useSagaStore();
+    const { selectedSagaId, setSelectedSaga } = useSagaActions();
 
     const loadSagas = useCallback(async () => {
         try {

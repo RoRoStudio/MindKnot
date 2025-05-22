@@ -15,7 +15,7 @@ import { Typography, Icon, IconName } from '../components/common';
 import SagaCreationSheet from '../components/sagas/SagaCreationSheet';
 import AnimatedBookSaga from '../components/sagas/AnimatedBookSaga';
 import { getAllSagas, createSaga } from '../services/sagaService';
-import { useSagaStore } from '../state/sagaStore';
+import { useSagaActions } from '../redux/hooks/stateHooks';
 import { Saga } from '../types/saga';
 
 const { width } = Dimensions.get('window');
@@ -29,7 +29,7 @@ export default function SagaScreen() {
     const [sagas, setSagas] = useState<Saga[]>([]);
     const [isCreationSheetVisible, setCreationSheetVisible] = useState(false);
     const [overlay, setOverlay] = useState<React.ReactNode>(null);
-    const setSelectedSaga = useSagaStore(state => state.setSelectedSaga);
+    const { setSelectedSaga } = useSagaActions();
 
     const styles = useStyles((theme) => ({
         container: {

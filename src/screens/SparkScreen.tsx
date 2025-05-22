@@ -266,6 +266,7 @@ export default function SparkScreen() {
                 onBackPress={() => navigation.goBack()}
                 isSaved={!!sparkId && mode === 'view'}
                 title={title}
+                entryType="Spark"
             />
         );
     };
@@ -372,6 +373,7 @@ export default function SparkScreen() {
                 <EntryDetailHeader
                     onBackPress={() => navigation.goBack()}
                     title="Loading..."
+                    entryType="Spark"
                 />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.colors.primary} />

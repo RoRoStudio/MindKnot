@@ -6,7 +6,7 @@ import { RootStackParamList } from '../../types/navigation-types';
 import { useActions } from '../../hooks/useActions';
 import { ActionCard } from '../../components/entries';
 import { Action } from '../../types/action';
-import { FilterableList, FilterableListHeader } from '../../components/common';
+import { FilterableList, Category } from '../../components/common';
 import { useCategories } from '../../hooks/useCategories';
 import { useBottomSheet } from '../../contexts/BottomSheetContext';
 
@@ -30,7 +30,7 @@ export default function VaultActionsScreen() {
         return Array.from(tagSet).sort();
     }, [actions]);
 
-    // Format categories for the FilterableListHeader
+    // Format categories for filter menu
     const formattedCategories = useMemo(() => {
         return categories.map(cat => ({
             id: cat.id,
@@ -39,9 +39,12 @@ export default function VaultActionsScreen() {
         }));
     }, [categories]);
 
-    // Handle action press
-    const handleActionPress = useCallback((actionId: string) => {
-        navigation.navigate('ActionScreen', { mode: 'view', id: actionId });
+    // Handle action press to navigate to detail screen
+    const handleActionPress = useCallback((action: Action) => {
+        navigation.navigate('ActionScreen', {
+            mode: 'view',
+            id: action.id
+        });
     }, [navigation]);
 
     // Toggle tag selection
@@ -66,7 +69,7 @@ export default function VaultActionsScreen() {
         setIsGridView(prev => !prev);
     }, []);
 
-    // Function to filter actions based on search term, tags, and category
+    // Function to filter actions
     const filterActions = useCallback((action: Action, searchTerm: string, selectedTags: string[], categoryId: string | null): boolean => {
         // Filter by category
         if (categoryId && action.categoryId !== categoryId) {
@@ -81,17 +84,17 @@ export default function VaultActionsScreen() {
         // Filter by search term
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
-            return !!(
-                action.title?.toLowerCase().includes(searchLower) ||
-                action.body?.toLowerCase().includes(searchLower)
-            );
+            const titleMatch = action.title?.toLowerCase().includes(searchLower) || false;
+            const bodyMatch = action.body?.toLowerCase().includes(searchLower) || false;
+            return titleMatch || bodyMatch;
         }
 
+        // If we got here, there's no search term or the search matches
         return true;
     }, []);
 
     // Function to sort actions
-    const sortActions = useCallback((a: Action, b: Action, sortOrder: 'newest' | 'oldest' | 'alphabetical'): number => {
+    const sortActions = useCallback((a: Action, b: Action, sortOrder: 'newest' | 'oldest' | 'alphabetical') => {
         switch (sortOrder) {
             case 'newest':
                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -104,11 +107,11 @@ export default function VaultActionsScreen() {
         }
     }, []);
 
-    // Render item
+    // Render action item
     const renderItem = useCallback(({ item }: { item: Action }) => (
         <ActionCard
             action={item}
-            onPress={() => handleActionPress(item.id)}
+            onPress={() => handleActionPress(item)}
         />
     ), [handleActionPress]);
 
@@ -142,21 +145,7 @@ export default function VaultActionsScreen() {
                 onToggleView={handleToggleView}
                 onCreateItem={showActionForm}
                 createButtonLabel="Create Action"
-                ListHeaderComponent={
-                    <FilterableListHeader
-                        searchTerm={searchTerm}
-                        onSearchChange={setSearchTerm}
-                        allTags={allTags}
-                        selectedTags={selectedTags}
-                        onToggleTag={handleToggleTag}
-                        categories={formattedCategories}
-                        categoryId={categoryId}
-                        onCategoryChange={setCategoryId}
-                        sortOrder={sortOrder}
-                        onSortChange={setSortOrder}
-                        onClearFilters={handleClearFilters}
-                    />
-                }
+                categories={formattedCategories}
             />
         </>
     );

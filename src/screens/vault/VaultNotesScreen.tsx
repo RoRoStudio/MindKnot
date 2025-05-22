@@ -6,7 +6,7 @@ import { useNotes } from '../../hooks/useNotes';
 import { NoteCard } from '../../components/entries';
 import { Note } from '../../types/note';
 import { RootStackParamList } from '../../types/navigation-types';
-import { FilterableList, FilterableListHeader, Category } from '../../components/common';
+import { FilterableList, Category } from '../../components/common';
 import { useCategories } from '../../hooks/useCategories';
 import { useBottomSheet } from '../../contexts/BottomSheetContext';
 
@@ -149,21 +149,7 @@ export default function VaultNotesScreen() {
                 onToggleView={handleToggleView}
                 onCreateItem={showNoteForm}
                 createButtonLabel="Create Note"
-                ListHeaderComponent={
-                    <FilterableListHeader
-                        searchTerm={searchTerm}
-                        onSearchChange={setSearchTerm}
-                        allTags={allTags}
-                        selectedTags={selectedTags}
-                        onToggleTag={handleToggleTag}
-                        categories={formattedCategories}
-                        categoryId={categoryId}
-                        onCategoryChange={setCategoryId}
-                        sortOrder={sortOrder}
-                        onSortChange={setSortOrder}
-                        onClearFilters={handleClearFilters}
-                    />
-                }
+                categories={formattedCategories}
             />
         </>
     );

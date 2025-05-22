@@ -56,8 +56,11 @@ export const createSchemaSQL = `
     id TEXT PRIMARY KEY,
     title TEXT,
     body TEXT,
+    description TEXT DEFAULT '',
     tags TEXT,
     done INTEGER DEFAULT 0,
+    completed INTEGER DEFAULT 0,
+    priority INTEGER DEFAULT 0,
     dueDate TEXT,
     subActions TEXT,
     parentId TEXT,
@@ -119,4 +122,33 @@ export const createSchemaSQL = `
 
   -- Migration support: drop the old captures table if it exists
   DROP TABLE IF EXISTS captures;
+`;
+
+// Add migration functions to alter tables if they exist but are missing columns
+export const migrationSQL = `
+  -- Add missing columns to actions table if it exists
+  PRAGMA foreign_keys=off;
+  
+  BEGIN TRANSACTION;
+
+  -- Check if actions table exists but is missing columns
+  SELECT COUNT(*) AS count_column FROM pragma_table_info('actions') WHERE name='description';
+  
+  -- Migration for actions table
+  ALTER TABLE actions ADD COLUMN description TEXT DEFAULT '';
+  ALTER TABLE actions ADD COLUMN completed INTEGER DEFAULT 0;
+  ALTER TABLE actions ADD COLUMN priority INTEGER DEFAULT 0;
+  
+  COMMIT;
+  
+  PRAGMA foreign_keys=on;
+`;
+
+// Function to safely add a column to a table if it doesn't exist
+export const addColumnIfNotExists = `
+  SELECT CASE 
+      WHEN NOT EXISTS(SELECT 1 FROM pragma_table_info(?1) WHERE name=?2) 
+      THEN ('ALTER TABLE ' || ?1 || ' ADD COLUMN ' || ?2 || ' ' || ?3)
+      ELSE 'SELECT 1 WHERE 0'
+  END as sql_stmt;
 `;

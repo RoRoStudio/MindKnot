@@ -341,6 +341,7 @@ export default function PathScreen() {
                 onBackPress={() => navigation.goBack()}
                 isSaved={!!pathId && mode === 'view'}
                 title={title}
+                entryType="Path"
             />
         );
     };
@@ -504,6 +505,7 @@ export default function PathScreen() {
                 <EntryDetailHeader
                     onBackPress={() => navigation.goBack()}
                     title="Loading..."
+                    entryType="Path"
                 />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.colors.primary} />

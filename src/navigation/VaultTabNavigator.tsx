@@ -1,6 +1,6 @@
 // src/navigation/VaultTabNavigator.tsx
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, TouchableOpacity, StyleSheet, FlatList, Dimensions } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import VaultNotesScreen from '../screens/vault/VaultNotesScreen';
@@ -8,158 +8,122 @@ import VaultSparksScreen from '../screens/vault/VaultSparksScreen';
 import VaultActionsScreen from '../screens/vault/VaultActionsScreen';
 import VaultPathsScreen from '../screens/vault/VaultPathsScreen';
 import VaultLoopsScreen from '../screens/vault/VaultLoopsScreen';
-import { useTheme } from '../contexts/ThemeContext';
-import { Icon } from '../components/common';
+import { Icon, IconName } from '../components/common';
 import { getVaultEntryTypes, EntryType } from '../constants/entryTypes';
 
 const Tab = createMaterialTopTabNavigator();
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// Custom tab component for pill-shaped tabs with icons
-const CustomTabBar = ({ state, descriptors, navigation }: MaterialTopTabBarProps) => {
-    const { theme } = useTheme();
+// Define interface for tab item props
+interface TabItemProps {
+    label: string;
+    icon: IconName;
+    active: boolean;
+    onPress: () => void;
+}
 
-    // Create styles using the theme
-    const tabStyles = StyleSheet.create({
-        tabBarContainer: {
-            flexDirection: 'row',
-            paddingVertical: 10,
-            paddingHorizontal: 8,
-            backgroundColor: theme.colors.background,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.colors.divider,
-            elevation: 2,
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-        },
-        scrollContainer: {
-            flexDirection: 'row',
-        },
-        tabButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingVertical: 6,
-            paddingHorizontal: 12,
-            marginRight: 8,
-            borderRadius: 16,
-            borderWidth: 1,
-            // Use fixed width that's just enough for the content
-            minWidth: 0,
-            maxWidth: 'auto',
-        },
-        tabIcon: {
-            marginRight: 4,
-        },
-        tabLabel: {
-            fontSize: 13,
-            fontWeight: '500',
+// Define interface for tab data
+interface TabData {
+    id: string;
+    label: string;
+    icon: IconName;
+    active: boolean;
+    index: number;
+}
+
+// Pill-shaped tab item with icon in center
+const TabItem = React.memo<TabItemProps>(({ icon, active, onPress }) => {
+    return (
+        <TouchableOpacity
+            style={[
+                styles.tab,
+                active ? styles.activeTab : styles.inactiveTab,
+            ]}
+            onPress={onPress}
+            activeOpacity={0.8}
+        >
+            <Icon
+                name={icon}
+                size={18}
+                color={active ? '#FFFFFF' : '#333333'}
+            />
+        </TouchableOpacity>
+    );
+});
+
+// Tab bar that fits 5 tabs on screen with slight scrolling if needed
+function SimpleTabBar({ state, descriptors, navigation }: MaterialTopTabBarProps) {
+    const flatListRef = useRef<FlatList<TabData>>(null);
+    const tabWidth = Math.min(80, SCREEN_WIDTH / 5 - 16); // Calculate tab width to fit 5 tabs with some spacing
+
+    // Scroll to active tab when index changes
+    useEffect(() => {
+        if (flatListRef.current && state.index > 0) {
+            flatListRef.current.scrollToIndex({
+                index: state.index,
+                animated: true,
+                viewPosition: 0.5
+            });
         }
+    }, [state.index]);
+
+    const tabs: TabData[] = state.routes.map((route, index) => {
+        const entryType = getVaultEntryTypes().find(
+            type => type.pluralLabel === route.name
+        );
+
+        return {
+            id: route.key,
+            label: route.name,
+            icon: (entryType?.icon as IconName) || 'file-text',
+            active: state.index === index,
+            index: index,
+        };
     });
 
+    const handleTabPress = (index: number) => {
+        navigation.navigate(state.routes[index].name);
+    };
+
     return (
-        <View>
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={tabStyles.scrollContainer}
-                style={tabStyles.tabBarContainer}
-            >
-                {state.routes.map((route, index) => {
-                    const { options } = descriptors[route.key];
-                    const label =
-                        typeof options.tabBarLabel === 'string'
-                            ? options.tabBarLabel
-                            : options.title || route.name;
-                    const isFocused = state.index === index;
-
-                    // Find the entry type that matches this route
-                    const entryType = getVaultEntryTypes().find(
-                        type => type.pluralLabel === route.name
-                    );
-
-                    // Get the icon for this entry type
-                    const iconName = entryType?.icon || 'file-text';
-
-                    const onPress = () => {
-                        const event = navigation.emit({
-                            type: 'tabPress',
-                            target: route.key,
-                            canPreventDefault: true,
-                        });
-                        if (!isFocused && !event.defaultPrevented) {
-                            navigation.navigate(route.name);
-                        }
-                    };
-
-                    return (
-                        <TouchableOpacity
-                            key={route.key}
-                            onPress={onPress}
-                            style={[
-                                tabStyles.tabButton,
-                                {
-                                    backgroundColor: isFocused ? theme.colors.primary : 'transparent',
-                                    borderColor: isFocused ? theme.colors.primary : theme.colors.textSecondary,
-                                }
-                            ]}
-                        >
-                            <Icon
-                                name={iconName}
-                                size={16}
-                                color={isFocused ? theme.colors.background : theme.colors.textSecondary}
-                                style={tabStyles.tabIcon}
-                            />
-                            <Text
-                                style={[
-                                    tabStyles.tabLabel,
-                                    { color: isFocused ? theme.colors.background : theme.colors.textSecondary }
-                                ]}
-                                numberOfLines={1}
-                                ellipsizeMode="tail"
-                            >
-                                {label}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </ScrollView>
+        <View style={styles.container}>
+            <View style={styles.tabsRow}>
+                {tabs.map((item) => (
+                    <TabItem
+                        key={item.id}
+                        label={item.label}
+                        icon={item.icon}
+                        active={item.active}
+                        onPress={() => handleTabPress(item.index)}
+                    />
+                ))}
+            </View>
         </View>
     );
-};
+}
 
 export default function VaultTabNavigator() {
-    const { theme } = useTheme();
     const vaultEntryTypes = getVaultEntryTypes();
 
-    // Map entry types to their respective screen components
+    // Map entry types to screen components
     const getScreenComponent = (type: EntryType) => {
         switch (type) {
-            case EntryType.NOTE:
-                return VaultNotesScreen;
-            case EntryType.SPARK:
-                return VaultSparksScreen;
-            case EntryType.ACTION:
-                return VaultActionsScreen;
-            case EntryType.PATH:
-                return VaultPathsScreen;
-            case EntryType.LOOP:
-                return VaultLoopsScreen;
-            default:
-                return VaultNotesScreen;
+            case EntryType.NOTE: return VaultNotesScreen;
+            case EntryType.SPARK: return VaultSparksScreen;
+            case EntryType.ACTION: return VaultActionsScreen;
+            case EntryType.PATH: return VaultPathsScreen;
+            case EntryType.LOOP: return VaultLoopsScreen;
+            default: return VaultNotesScreen;
         }
     };
 
     return (
         <Tab.Navigator
-            tabBar={props => <CustomTabBar {...props} />}
+            tabBar={(props) => <SimpleTabBar {...props} />}
             screenOptions={{
-                tabBarActiveTintColor: theme.colors.primary,
-                tabBarInactiveTintColor: theme.colors.textSecondary,
-                tabBarStyle: { display: 'none' }, // Hide default tab bar
-                lazy: true, // Only render screens when they are focused
-                swipeEnabled: true, // Enable swipe between tabs
+                tabBarStyle: { display: 'none' },
+                lazy: true,
+                swipeEnabled: true,
             }}
         >
             {vaultEntryTypes.map(entryType => (
@@ -172,3 +136,35 @@ export default function VaultTabNavigator() {
         </Tab.Navigator>
     );
 }
+
+// Pill-shaped tab styling with proper spacing
+const styles = StyleSheet.create({
+    container: {
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+    },
+    tabsContainer: {
+        paddingHorizontal: 12, // use padding on both sides
+        justifyContent: 'space-between', // evenly distribute
+    },
+    tab: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 50,
+        marginRight: 8,
+        width: 50,
+        height: 30,
+    },
+    activeTab: {
+        backgroundColor: '#202030',
+    },
+    inactiveTab: {
+        backgroundColor: '#F5F5F5',
+    },
+    tabsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+    },
+});

@@ -211,7 +211,7 @@ export const Icon: React.FC<IconProps> = ({
     // If size is provided, use it for both width and height
     const sizeProps = size ? { width: size, height: size } : {};
 
-    return <Component {...sizeProps} width={width} height={height} {...props} />;
+    return <Component width={width ?? size} height={height ?? size} {...props} />;
 };
 
 export default Icon; 

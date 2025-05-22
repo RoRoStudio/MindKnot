@@ -17,6 +17,7 @@ import {
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 import { Icon, IconName } from '../common';
 import { StyleProps, DisableableProps, LoadingProps, SizeVariant } from '../shared-props';
+import { useTheme } from '../../contexts/ThemeContext';
 
 /**
  * Button style variants
@@ -98,20 +99,142 @@ export interface ButtonProps extends TouchableOpacityProps, StyleProps, Disablea
  * <Button label="Login" fullWidth onPress={handleLogin} />
  * ```
  */
-export const Button = React.memo<ButtonProps>(({
+const Button: React.FC<ButtonProps> = ({
     variant = 'primary',
     label,
-    isLoading = false,
     leftIcon,
     rightIcon,
-    disabled = false,
     fullWidth = false,
     size = 'medium',
+    onPress,
+    disabled = false,
+    isLoading = false,
     style,
     labelStyle,
     iconStyle,
     ...props
 }) => {
+    const { theme } = useTheme();
+
+    // Get base styles for the button based on variant and size
+    const getButtonStyles = (): StyleProp<ViewStyle> => {
+        const baseStyle: ViewStyle = {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 8,
+            alignSelf: fullWidth ? 'stretch' : 'flex-start',
+        };
+
+        // Size-based padding
+        const sizePadding = {
+            xs: { paddingVertical: 8, paddingHorizontal: 12 },
+            small: { paddingVertical: 10, paddingHorizontal: 16 },
+            medium: { paddingVertical: 16, paddingHorizontal: 20 },
+            large: { paddingVertical: 18, paddingHorizontal: 24 },
+            xl: { paddingVertical: 20, paddingHorizontal: 32 },
+        };
+
+        // Variant-specific styling
+        let variantStyle: ViewStyle = {};
+        switch (variant) {
+            case 'primary':
+                variantStyle = {
+                    backgroundColor: '#1B1B1B',
+                    borderWidth: 0,
+                };
+                break;
+            case 'secondary':
+                variantStyle = {
+                    backgroundColor: theme.colors.surfaceVariant,
+                    borderWidth: 0,
+                };
+                break;
+            case 'outline':
+                variantStyle = {
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: theme.colors.border,
+                };
+                break;
+            case 'text':
+                variantStyle = {
+                    backgroundColor: 'transparent',
+                    borderWidth: 0,
+                    paddingVertical: 0,
+                    paddingHorizontal: 0,
+                };
+                break;
+            case 'danger':
+                variantStyle = {
+                    backgroundColor: theme.colors.error,
+                    borderWidth: 0,
+                };
+                break;
+            default:
+                break;
+        }
+
+        // Disabled styling
+        const disabledStyle: ViewStyle = disabled ? {
+            opacity: 0.5,
+        } : {};
+
+        return [baseStyle, sizePadding[size], variantStyle, disabledStyle];
+    };
+
+    // Get text styles for the label based on variant
+    const getTextStyles = (): StyleProp<TextStyle> => {
+        const baseStyle: TextStyle = {
+            textAlign: 'center',
+            fontSize: 16,
+            fontWeight: '600',
+        };
+
+        // Size-based fonts
+        const sizeStyle = {
+            xs: { fontSize: 12 },
+            small: { fontSize: 14 },
+            medium: { fontSize: 16 },
+            large: { fontSize: 18 },
+            xl: { fontSize: 20 },
+        };
+
+        // Variant-specific text styling
+        let variantStyle: TextStyle = {};
+        switch (variant) {
+            case 'primary':
+                variantStyle = {
+                    color: '#FFFFFF',
+                };
+                break;
+            case 'secondary':
+                variantStyle = {
+                    color: theme.colors.primary,
+                };
+                break;
+            case 'outline':
+                variantStyle = {
+                    color: theme.colors.primary,
+                };
+                break;
+            case 'text':
+                variantStyle = {
+                    color: theme.colors.primary,
+                };
+                break;
+            case 'danger':
+                variantStyle = {
+                    color: theme.colors.error,
+                };
+                break;
+            default:
+                break;
+        }
+
+        return [baseStyle, sizeStyle[size], variantStyle];
+    };
+
     const styles = useThemedStyles((theme, constants) => ({
         button: {
             flexDirection: 'row',
@@ -234,6 +357,7 @@ export const Button = React.memo<ButtonProps>(({
             )}
         </TouchableOpacity>
     );
-});
+};
 
+export { Button };
 export default Button; 

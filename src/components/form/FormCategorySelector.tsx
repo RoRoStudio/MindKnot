@@ -14,6 +14,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import FormErrorMessage from './FormErrorMessage';
 import { useCategories } from '../../hooks/useCategories';
 import { Category } from '../../types/category';
+import CategoryPill from '../molecules/CategoryPill';
 
 interface FormCategorySelectorProps<T extends FieldValues> {
     name: Path<T>;
@@ -100,49 +101,18 @@ export default function FormCategorySelector<T extends FieldValues>({
             marginTop: theme.spacing.s,
             marginBottom: theme.spacing.s,
             width: '100%',
+            paddingBottom: theme.spacing.m,
         },
-        categoryChip: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: theme.spacing.xs,
-            paddingHorizontal: theme.spacing.s,
-            marginRight: theme.spacing.s,
+        categoriesScrollView: {
             marginBottom: theme.spacing.s,
-            borderRadius: theme.shape.radius.pill,
-            borderWidth: 2,
-            // Add shadow for more depth
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            elevation: 2,
-        },
-        categoryChipSelected: {
-            // Add more prominent shadow for selected state
-            shadowOpacity: 0.2,
-            shadowRadius: 3,
-            elevation: 3,
-        },
-        categoryChipLabel: {
-            marginLeft: theme.spacing.xs,
-        },
-        colorIndicator: {
-            width: 16,
-            height: 16,
-            borderRadius: 8,
-            // Add inner shadow effect
-            shadowColor: 'rgba(0,0,0,0.2)',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.2,
-            shadowRadius: 1,
-            elevation: 1,
+            maxHeight: 200, // Limit the height to ensure form is visible
         },
         addCategoryButton: {
             flexDirection: 'row',
             alignItems: 'center',
             paddingVertical: theme.spacing.xs,
             paddingHorizontal: theme.spacing.s,
-            marginBottom: theme.spacing.s,
+            marginBottom: theme.spacing.m,
             marginRight: theme.spacing.s,
             borderRadius: theme.shape.radius.pill,
             borderWidth: 1,
@@ -221,6 +191,20 @@ export default function FormCategorySelector<T extends FieldValues>({
         closeButton: {
             padding: theme.spacing.xs,
         },
+        categoryListContainer: {
+            marginTop: theme.spacing.m,
+            marginBottom: theme.spacing.l,
+            width: '100%',
+        },
+        categoryListTitle: {
+            fontSize: theme.typography.fontSize.m,
+            fontWeight: '500',
+            marginBottom: theme.spacing.s,
+        },
+        // Space to ensure enough room for scrolling
+        spacer: {
+            height: 100,
+        }
     }));
 
     return (
@@ -235,68 +219,21 @@ export default function FormCategorySelector<T extends FieldValues>({
                         </Typography>
                     )}
 
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
+                    {/* Add category button */}
+                    <TouchableOpacity
+                        style={styles.addCategoryButton}
+                        onPress={() => setShowCategoryForm(!showCategoryForm)}
                     >
-                        <View style={styles.categoriesContainer}>
-                            {/* Category chips */}
-                            {categories.map((category: Category) => (
-                                <TouchableOpacity
-                                    key={category.id}
-                                    style={[
-                                        styles.categoryChip,
-                                        {
-                                            borderColor: value === category.id
-                                                ? category.color
-                                                : theme.colors.border,
-                                            backgroundColor: value === category.id
-                                                ? `${category.color}15`  // 15% opacity
-                                                : theme.colors.surface,
-                                        },
-                                        value === category.id && styles.categoryChipSelected
-                                    ]}
-                                    onPress={() => {
-                                        // Toggle category selection
-                                        const newValue = value === category.id ? null : category.id;
-                                        onChange(newValue);
-                                        if (onSelectCategory) {
-                                            onSelectCategory(newValue);
-                                        }
-                                    }}
-                                >
-                                    <View
-                                        style={[
-                                            styles.colorIndicator,
-                                            { backgroundColor: category.color },
-                                        ]}
-                                    />
-                                    <Typography style={[
-                                        styles.categoryChipLabel,
-                                        { color: value === category.id ? theme.colors.primary : theme.colors.textPrimary }
-                                    ]}>
-                                        {category.title}
-                                    </Typography>
-                                </TouchableOpacity>
-                            ))}
-
-                            {/* Add category button */}
-                            <TouchableOpacity
-                                style={styles.addCategoryButton}
-                                onPress={() => setShowCategoryForm(!showCategoryForm)}
-                            >
-                                <Icon
-                                    name={showCategoryForm ? "minus" : "plus"}
-                                    width={16}
-                                    height={16}
-                                    color={theme.colors.textSecondary}
-                                />
-                                <Typography style={styles.addCategoryLabel} numberOfLines={1}>
-                                    {showCategoryForm ? "Cancel" : "New Category"}
-                                </Typography>
-                            </TouchableOpacity>
-                        </View>
-                    </ScrollView>
+                        <Icon
+                            name={showCategoryForm ? "minus" : "plus"}
+                            width={16}
+                            height={16}
+                            color={theme.colors.textSecondary}
+                        />
+                        <Typography style={styles.addCategoryLabel} numberOfLines={1}>
+                            {showCategoryForm ? "Cancel" : "New Category"}
+                        </Typography>
+                    </TouchableOpacity>
 
                     {/* Expandable category form */}
                     {showCategoryForm && (
@@ -374,6 +311,39 @@ export default function FormCategorySelector<T extends FieldValues>({
                         </View>
                     )}
 
+                    {/* Existing Categories Section */}
+                    <View style={styles.categoryListContainer}>
+                        <Typography variant="body1" style={styles.categoryListTitle}>
+                            Select a Category
+                        </Typography>
+
+                        <ScrollView
+                            horizontal={false}
+                            style={styles.categoriesScrollView}
+                            showsVerticalScrollIndicator={true}
+                        >
+                            <View style={styles.categoriesContainer}>
+                                {categories.map((category: Category) => (
+                                    <CategoryPill
+                                        key={category.id}
+                                        title={category.title}
+                                        color={category.color}
+                                        selected={value === category.id}
+                                        selectable={true}
+                                        onPress={() => {
+                                            // Toggle category selection
+                                            const newValue = value === category.id ? null : category.id;
+                                            onChange(newValue);
+                                            if (onSelectCategory) {
+                                                onSelectCategory(newValue);
+                                            }
+                                        }}
+                                    />
+                                ))}
+                            </View>
+                        </ScrollView>
+                    </View>
+
                     {loading && (
                         <Typography variant="caption" style={styles.loadingText}>
                             Loading categories...
@@ -390,6 +360,9 @@ export default function FormCategorySelector<T extends FieldValues>({
                             {helperText}
                         </Typography>
                     )}
+
+                    {/* Add spacer at the bottom to ensure scrollability */}
+                    <View style={styles.spacer} />
                 </View>
             )}
         />

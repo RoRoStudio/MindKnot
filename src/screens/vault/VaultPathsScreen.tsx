@@ -6,7 +6,7 @@ import { RootStackParamList } from '../../types/navigation-types';
 import { usePaths } from '../../hooks/usePaths';
 import { PathCard } from '../../components/entries';
 import { Path } from '../../types/path';
-import { FilterableList, FilterableListHeader } from '../../components/common';
+import { FilterableList, Category } from '../../components/common';
 import { useCategories } from '../../hooks/useCategories';
 import { useBottomSheet } from '../../contexts/BottomSheetContext';
 
@@ -30,7 +30,7 @@ export default function VaultPathsScreen() {
         return Array.from(tagSet).sort();
     }, [paths]);
 
-    // Format categories for the FilterableListHeader
+    // Format categories for filter menu
     const formattedCategories = useMemo(() => {
         return categories.map(cat => ({
             id: cat.id,
@@ -39,9 +39,12 @@ export default function VaultPathsScreen() {
         }));
     }, [categories]);
 
-    // Handle path press
-    const handlePathPress = useCallback((pathId: string) => {
-        navigation.navigate('PathScreen', { mode: 'view', id: pathId });
+    // Handle path press to navigate to detail screen
+    const handlePathPress = useCallback((path: Path) => {
+        navigation.navigate('PathScreen', {
+            mode: 'view',
+            id: path.id
+        });
     }, [navigation]);
 
     // Toggle tag selection
@@ -66,7 +69,7 @@ export default function VaultPathsScreen() {
         setIsGridView(prev => !prev);
     }, []);
 
-    // Function to filter paths based on search term, tags, and category
+    // Function to filter paths
     const filterPaths = useCallback((path: Path, searchTerm: string, selectedTags: string[], categoryId: string | null): boolean => {
         // Filter by category
         if (categoryId && path.categoryId !== categoryId) {
@@ -81,17 +84,17 @@ export default function VaultPathsScreen() {
         // Filter by search term
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
-            return !!(
-                path.title?.toLowerCase().includes(searchLower) ||
-                path.description?.toLowerCase().includes(searchLower)
-            );
+            const titleMatch = path.title?.toLowerCase().includes(searchLower) || false;
+            const descMatch = path.description?.toLowerCase().includes(searchLower) || false;
+            return titleMatch || descMatch;
         }
 
+        // If we got here, there's no search term or the search matches
         return true;
     }, []);
 
     // Function to sort paths
-    const sortPaths = useCallback((a: Path, b: Path, sortOrder: 'newest' | 'oldest' | 'alphabetical'): number => {
+    const sortPaths = useCallback((a: Path, b: Path, sortOrder: 'newest' | 'oldest' | 'alphabetical') => {
         switch (sortOrder) {
             case 'newest':
                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -104,11 +107,11 @@ export default function VaultPathsScreen() {
         }
     }, []);
 
-    // Render item
+    // Render path item
     const renderItem = useCallback(({ item }: { item: Path }) => (
         <PathCard
             path={item}
-            onPress={() => handlePathPress(item.id)}
+            onPress={() => handlePathPress(item)}
         />
     ), [handlePathPress]);
 
@@ -142,21 +145,7 @@ export default function VaultPathsScreen() {
                 onToggleView={handleToggleView}
                 onCreateItem={showPathForm}
                 createButtonLabel="Create Path"
-                ListHeaderComponent={
-                    <FilterableListHeader
-                        searchTerm={searchTerm}
-                        onSearchChange={setSearchTerm}
-                        allTags={allTags}
-                        selectedTags={selectedTags}
-                        onToggleTag={handleToggleTag}
-                        categories={formattedCategories}
-                        categoryId={categoryId}
-                        onCategoryChange={setCategoryId}
-                        sortOrder={sortOrder}
-                        onSortChange={setSortOrder}
-                        onClearFilters={handleClearFilters}
-                    />
-                }
+                categories={formattedCategories}
             />
         </>
     );

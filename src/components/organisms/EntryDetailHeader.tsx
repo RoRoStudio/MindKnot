@@ -65,8 +65,14 @@ export interface EntryDetailHeaderProps {
 
     /**
      * Title to optionally display in the center of the header
+     * @deprecated Use entryType instead
      */
     title?: string;
+
+    /**
+     * The type of entry (Note, Path, Spark, etc.)
+     */
+    entryType?: string;
 }
 
 /**
@@ -84,7 +90,7 @@ export const EntryDetailHeader = React.memo<EntryDetailHeaderProps>(({
     onHidePress,
     style,
     isSaved = false,
-    title,
+    entryType,
 }) => {
     const navigation = useNavigation();
     const { theme } = useTheme();
@@ -104,17 +110,17 @@ export const EntryDetailHeader = React.memo<EntryDetailHeaderProps>(({
         headerLeftSection: {
             flexDirection: 'row',
             alignItems: 'center',
-        },
-        headerMiddleSection: {
-            flex: 1,
-            alignItems: 'center',
+            flex: 2, // Give it plenty of room for the title
         },
         headerRightSection: {
             flexDirection: 'row',
             alignItems: 'center',
+            flex: 1, // Less space needed for action buttons
+            justifyContent: 'flex-end', // Align buttons to the right
         },
         backButton: {
             padding: theme.spacing.xs,
+            marginRight: theme.spacing.s,
         },
         actionButton: {
             padding: theme.spacing.s,
@@ -145,8 +151,10 @@ export const EntryDetailHeader = React.memo<EntryDetailHeaderProps>(({
             marginLeft: theme.spacing.s,
             color: theme.colors.textPrimary,
         },
-        title: {
-            fontWeight: '500',
+        entryType: {
+            fontWeight: 'bold',
+            color: theme.colors.textPrimary,
+            fontSize: theme.typography.fontSize.xl,
         },
     }));
 
@@ -172,21 +180,21 @@ export const EntryDetailHeader = React.memo<EntryDetailHeaderProps>(({
                 <View style={styles.headerLeftSection}>
                     <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
                         <Icon
-                            name="arrow-left"
+                            name="chevron-left"
                             width={24}
                             height={24}
                             color={theme.colors.textPrimary}
                         />
                     </TouchableOpacity>
-                </View>
-
-                {title && (
-                    <View style={styles.headerMiddleSection}>
-                        <Typography variant="h6" style={styles.title}>
-                            {title}
+                    {entryType && (
+                        <Typography
+                            variant="h4"
+                            style={styles.entryType}
+                        >
+                            {entryType}
                         </Typography>
-                    </View>
-                )}
+                    )}
+                </View>
 
                 <View style={styles.headerRightSection}>
                     {isSaved && (

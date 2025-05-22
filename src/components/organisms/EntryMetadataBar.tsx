@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
 import { Typography, Label, Icon } from '../common';
 import { useCategories } from '../../hooks/useCategories';
@@ -10,6 +10,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import Form from '../form/Form';
 import { useForm } from 'react-hook-form';
 import { BottomSheet } from '../molecules/BottomSheet';
+import DottedPillButton from '../atoms/DottedPillButton';
 
 // For form state
 type FormValues = {
@@ -54,7 +55,7 @@ export const EntryMetadataBar: React.FC<EntryMetadataBarProps> = ({
 }) => {
     const { theme } = useTheme();
     const [category, setCategory] = useState<Category | null>(null);
-    const { getCategory, categories } = useCategories();
+    const { getCategory } = useCategories();
     const [showCategorySheet, setShowCategorySheet] = useState(false);
     const [showLabelsSheet, setShowLabelsSheet] = useState(false);
 
@@ -94,45 +95,28 @@ export const EntryMetadataBar: React.FC<EntryMetadataBarProps> = ({
         section: {
             marginBottom: theme.spacing.m,
         },
-        sectionTitle: {
-            fontSize: theme.typography.fontSize.xs,
-            color: theme.colors.textSecondary,
-            marginBottom: theme.spacing.s,
-        },
         labelsContainer: {
             flexDirection: 'row',
             flexWrap: 'wrap',
             alignItems: 'center',
         },
-        addButton: {
+        addButtonContainer: {
+            display: 'flex',
             flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: theme.spacing.xs,
-            paddingHorizontal: theme.spacing.s,
-            borderRadius: theme.shape.radius.pill,
-            borderWidth: 1,
-            borderStyle: 'dashed',
-            borderColor: theme.colors.border,
-            marginRight: theme.spacing.xs,
-            marginBottom: theme.spacing.xs,
-            alignSelf: 'flex-start',
-        },
-        addButtonText: {
-            marginLeft: theme.spacing.xs,
-            color: theme.colors.textSecondary,
-            fontSize: theme.typography.fontSize.s,
+            flexWrap: 'wrap',
         },
         categoryPill: {
             flexDirection: 'row',
             alignItems: 'center',
-            paddingVertical: theme.spacing.xs,
-            paddingHorizontal: theme.spacing.s,
-            borderRadius: theme.shape.radius.pill,
+            paddingVertical: 4,
+            paddingHorizontal: 10,
+            borderRadius: 100,
             backgroundColor: category ? `${category.color}20` : 'transparent',
             borderWidth: 1,
             borderColor: category ? category.color : theme.colors.border,
-            marginBottom: theme.spacing.s,
+            marginBottom: theme.spacing.xs,
             alignSelf: 'flex-start',
+            height: 24, // Consistent height matching Label "small" component
         },
         categoryDot: {
             width: 8,
@@ -143,25 +127,39 @@ export const EntryMetadataBar: React.FC<EntryMetadataBarProps> = ({
         },
         categoryText: {
             color: category ? category.color : theme.colors.textSecondary,
-            fontSize: theme.typography.fontSize.s,
+            fontSize: theme.typography.fontSize.xs,
+            textAlignVertical: 'center',
+            includeFontPadding: false,
+            lineHeight: 16,
         },
         bottomSheetContent: {
             padding: theme.spacing.m,
+            paddingBottom: theme.spacing.xl * 2,
         },
         labelChip: {
             marginRight: theme.spacing.xs,
             marginBottom: theme.spacing.xs,
         },
+        keyboardAvoidingView: {
+            flex: 1,
+            width: '100%',
+            minHeight: 400,
+        },
+        bottomSpacer: {
+            height: 100,
+        }
     }));
 
     const handleCategoryPress = () => {
         if (isEditing) {
+            Keyboard.dismiss();
             setShowCategorySheet(true);
         }
     };
 
     const handleAddLabelPress = () => {
         if (isEditing) {
+            Keyboard.dismiss();
             setShowLabelsSheet(true);
         }
     };
@@ -196,26 +194,19 @@ export const EntryMetadataBar: React.FC<EntryMetadataBarProps> = ({
                             </Typography>
                         </TouchableOpacity>
                     ) : (
-                        <TouchableOpacity
-                            style={styles.addButton}
+                        <DottedPillButton
+                            iconName="plus"
+                            label="Add Category"
                             onPress={handleCategoryPress}
                             disabled={!isEditing}
-                        >
-                            <Icon
-                                name="plus"
-                                size={14}
-                                color={theme.colors.textSecondary}
-                            />
-                            <Typography style={styles.addButtonText}>
-                                Add Category
-                            </Typography>
-                        </TouchableOpacity>
+                        />
                     )}
                 </View>
 
                 {/* Labels Section */}
                 <View style={styles.section}>
-                    <View style={styles.labelsContainer}>
+                    <View style={styles.addButtonContainer}>
+                        {/* Display existing labels */}
                         {labels && labels.map((label, index) => (
                             <Label
                                 key={index}
@@ -233,20 +224,14 @@ export const EntryMetadataBar: React.FC<EntryMetadataBarProps> = ({
                             />
                         ))}
 
+                        {/* Add Label button - use iconOnly when labels exist */}
                         {isEditing && (
-                            <TouchableOpacity
-                                style={styles.addButton}
+                            <DottedPillButton
+                                iconName="plus"
+                                label={labels && labels.length > 0 ? undefined : "Add Label"}
+                                iconOnly={labels && labels.length > 0}
                                 onPress={handleAddLabelPress}
-                            >
-                                <Icon
-                                    name="plus"
-                                    size={14}
-                                    color={theme.colors.textSecondary}
-                                />
-                                <Typography style={styles.addButtonText}>
-                                    Add Label
-                                </Typography>
-                            </TouchableOpacity>
+                            />
                         )}
                     </View>
                 </View>
@@ -256,38 +241,56 @@ export const EntryMetadataBar: React.FC<EntryMetadataBarProps> = ({
             <BottomSheet
                 visible={showCategorySheet}
                 onClose={() => setShowCategorySheet(false)}
-                snapPoints={[0.6]}
+                snapPoints={[0.9]}
+                dismissible={true}
+                maxHeight={0.9}
             >
-                <View style={styles.bottomSheetContent}>
-                    <FormCategorySelector
-                        name="categoryId"
-                        control={control}
-                        label="Select Category"
-                        onSelectCategory={handleCategoryChange}
-                        helperText=""
-                    />
-                </View>
+                <KeyboardAvoidingView
+                    behavior={Platform.select({ ios: 'padding', android: undefined })}
+                    style={styles.keyboardAvoidingView}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+                >
+                    <View style={styles.bottomSheetContent}>
+                        <FormCategorySelector
+                            name="categoryId"
+                            control={control}
+                            label="Select Category"
+                            onSelectCategory={handleCategoryChange}
+                            helperText=""
+                        />
+                        <View style={styles.bottomSpacer} />
+                    </View>
+                </KeyboardAvoidingView>
             </BottomSheet>
 
             {/* Labels Selection Bottom Sheet */}
             <BottomSheet
                 visible={showLabelsSheet}
                 onClose={handleLabelsSheetClose}
-                snapPoints={[0.7]}
+                snapPoints={[0.9]}
+                dismissible={true}
+                maxHeight={0.9}
             >
-                <View style={styles.bottomSheetContent}>
-                    <Form>
-                        <FormLabelInput
-                            name="labels"
-                            control={control}
-                            label="Add Labels"
-                            currentLabels={labels}
-                            onLabelsChange={handleLabelsChange}
-                            onDone={handleLabelsSheetClose}
-                        />
-                    </Form>
-                </View>
+                <KeyboardAvoidingView
+                    behavior={Platform.select({ ios: 'padding', android: undefined })}
+                    style={styles.keyboardAvoidingView}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+                >
+                    <View style={styles.bottomSheetContent}>
+                        <Form>
+                            <FormLabelInput
+                                name="labels"
+                                control={control}
+                                label="Add Labels"
+                                currentLabels={labels}
+                                onLabelsChange={handleLabelsChange}
+                                onDone={handleLabelsSheetClose}
+                            />
+                        </Form>
+                        <View style={styles.bottomSpacer} />
+                    </View>
+                </KeyboardAvoidingView>
             </BottomSheet>
         </>
     );
-}; 
+};

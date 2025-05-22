@@ -16,7 +16,6 @@ import {
 } from 'react-native';
 import { useStyles } from '../../hooks/useStyles';
 import { useVaultFilters } from '../../contexts/VaultFiltersContext';
-import { VaultSearchHeader } from './VaultSearchHeader';
 import { VaultEmptyState } from './VaultEmptyState';
 import { Icon, IconName } from '../../components/common';
 import { useBottomSheet } from '../../contexts/BottomSheetContext';
@@ -231,8 +230,6 @@ export function BaseVaultScreen<T>({
         <SafeAreaView style={styles.container}>
             <TouchableWithoutFeedback onPress={handleCloseActionMenu}>
                 <View style={styles.container}>
-                    <VaultSearchHeader allTags={allTags} />
-
                     <KeyboardAvoidingView
                         behavior={Platform.OS === "ios" ? "padding" : undefined}
                         style={styles.content}

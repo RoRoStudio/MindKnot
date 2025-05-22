@@ -2,13 +2,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Path } from '../types/path';
 import { createPath, getAllPaths, updatePath as updatePathService } from '../services/pathService';
-import { useSagaStore } from '../state/sagaStore';
+import { useSagaActions } from '../redux/hooks/stateHooks';
 
 export function usePaths() {
     const [paths, setPaths] = useState<Path[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const selectedSagaId = useSagaStore(state => state.selectedSagaId);
+    const { selectedSagaId } = useSagaActions();
 
     const loadPaths = useCallback(async () => {
         try {

@@ -6,7 +6,7 @@ import { RootStackParamList } from '../../types/navigation-types';
 import { useLoops } from '../../hooks/useLoops';
 import { LoopCard } from '../../components/entries';
 import { Loop } from '../../types/loop';
-import { FilterableList, FilterableListHeader } from '../../components/common';
+import { FilterableList, Category } from '../../components/common';
 import { useCategories } from '../../hooks/useCategories';
 import { useBottomSheet } from '../../contexts/BottomSheetContext';
 
@@ -30,7 +30,7 @@ export default function VaultLoopsScreen() {
         return Array.from(tagSet).sort();
     }, [loops]);
 
-    // Format categories for the FilterableListHeader
+    // Format categories for filter menu
     const formattedCategories = useMemo(() => {
         return categories.map(cat => ({
             id: cat.id,
@@ -39,9 +39,12 @@ export default function VaultLoopsScreen() {
         }));
     }, [categories]);
 
-    // Handle loop press
-    const handleLoopPress = useCallback((loopId: string) => {
-        navigation.navigate('LoopScreen', { mode: 'view', id: loopId });
+    // Handle loop press to navigate to detail screen
+    const handleLoopPress = useCallback((loop: Loop) => {
+        navigation.navigate('LoopScreen', {
+            mode: 'view',
+            id: loop.id
+        });
     }, [navigation]);
 
     // Toggle tag selection
@@ -66,7 +69,7 @@ export default function VaultLoopsScreen() {
         setIsGridView(prev => !prev);
     }, []);
 
-    // Function to filter loops based on search term, tags, and category
+    // Function to filter loops
     const filterLoops = useCallback((loop: Loop, searchTerm: string, selectedTags: string[], categoryId: string | null): boolean => {
         // Filter by category
         if (categoryId && loop.categoryId !== categoryId) {
@@ -81,9 +84,9 @@ export default function VaultLoopsScreen() {
         // Filter by search term
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
-            return !!(
-                loop.title?.toLowerCase().includes(searchLower) ||
-                loop.description?.toLowerCase().includes(searchLower)
+            return (
+                (loop.title?.toLowerCase().includes(searchLower) ||
+                    loop.description?.toLowerCase().includes(searchLower))
             );
         }
 
@@ -91,7 +94,7 @@ export default function VaultLoopsScreen() {
     }, []);
 
     // Function to sort loops
-    const sortLoops = useCallback((a: Loop, b: Loop, sortOrder: 'newest' | 'oldest' | 'alphabetical'): number => {
+    const sortLoops = useCallback((a: Loop, b: Loop, sortOrder: 'newest' | 'oldest' | 'alphabetical') => {
         switch (sortOrder) {
             case 'newest':
                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -104,11 +107,11 @@ export default function VaultLoopsScreen() {
         }
     }, []);
 
-    // Render item
+    // Render loop item
     const renderItem = useCallback(({ item }: { item: Loop }) => (
         <LoopCard
             loop={item}
-            onPress={() => handleLoopPress(item.id)}
+            onPress={() => handleLoopPress(item)}
         />
     ), [handleLoopPress]);
 
@@ -142,21 +145,7 @@ export default function VaultLoopsScreen() {
                 onToggleView={handleToggleView}
                 onCreateItem={showLoopForm}
                 createButtonLabel="Create Loop"
-                ListHeaderComponent={
-                    <FilterableListHeader
-                        searchTerm={searchTerm}
-                        onSearchChange={setSearchTerm}
-                        allTags={allTags}
-                        selectedTags={selectedTags}
-                        onToggleTag={handleToggleTag}
-                        categories={formattedCategories}
-                        categoryId={categoryId}
-                        onCategoryChange={setCategoryId}
-                        sortOrder={sortOrder}
-                        onSortChange={setSortOrder}
-                        onClearFilters={handleClearFilters}
-                    />
-                }
+                categories={formattedCategories}
             />
         </>
     );

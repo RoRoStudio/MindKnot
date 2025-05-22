@@ -208,7 +208,7 @@ export function FilterableList<T>({
             flex: 1,
         },
         gridContainer: {
-            padding: theme.spacing.s,
+            padding: 12,
             paddingBottom: 80, // Add extra padding at bottom for fab button
         },
         emptyContainer: {
@@ -230,9 +230,10 @@ export function FilterableList<T>({
             position: 'absolute',
             bottom: theme.spacing.m,
             right: theme.spacing.m,
-            borderRadius: 50,
-            padding: theme.spacing.s,
-            backgroundColor: theme.colors.primary,
+            borderRadius: 28,
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+            backgroundColor: '#202030', // Dark blue/black from screenshot
             shadowColor: theme.colors.shadow,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
@@ -240,7 +241,6 @@ export function FilterableList<T>({
             elevation: 5,
             flexDirection: 'row',
             alignItems: 'center',
-            paddingHorizontal: theme.spacing.m,
             zIndex: 5, // Ensure it's above other elements
         },
         fabIcon: {
@@ -250,30 +250,28 @@ export function FilterableList<T>({
             position: 'absolute',
             bottom: theme.spacing.m,
             left: theme.spacing.m,
-            borderRadius: 50,
-            padding: theme.spacing.s,
-            backgroundColor: theme.colors.surface,
+            borderRadius: 24,
+            padding: 12,
+            backgroundColor: '#F5F5F7', // Light gray from screenshot
             shadowColor: theme.colors.shadow,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
             shadowRadius: 4,
             elevation: 5,
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: theme.spacing.m,
             zIndex: 5, // Ensure it's above other elements
         },
         fabLabel: {
             color: theme.colors.onPrimary,
             fontWeight: 'bold',
+            fontFamily: 'KantumruyPro-SemiBold',
         },
         columnWrapperStyle: {
             justifyContent: 'space-between',
-            paddingHorizontal: theme.spacing.xs,
+            paddingHorizontal: 4,
         },
         gridItem: {
             flex: 1,
-            margin: theme.spacing.xs,
+            margin: 4,
             maxWidth: '48%', // Ensure two columns fit side by side
         },
         loadingContainer: {
@@ -402,7 +400,7 @@ export function FilterableList<T>({
         }
         return {
             contentContainerStyle: {
-                padding: theme.spacing.m,
+                padding: 16,
                 paddingBottom: 80, // Add extra padding at bottom for fab button
             },
         };

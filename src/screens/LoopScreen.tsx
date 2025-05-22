@@ -357,6 +357,7 @@ export default function LoopScreen() {
                 onBackPress={() => navigation.goBack()}
                 isSaved={!!loopId && mode === 'view'}
                 title={title}
+                entryType="Loop"
             />
         );
     };
@@ -554,6 +555,7 @@ export default function LoopScreen() {
                 <EntryDetailHeader
                     onBackPress={() => navigation.goBack()}
                     title="Loading..."
+                    entryType="Loop"
                 />
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={theme.colors.primary} />

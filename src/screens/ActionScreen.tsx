@@ -1,26 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
-    ScrollView,
+    TextInput,
     TouchableOpacity,
-    Alert,
     KeyboardAvoidingView,
     Platform,
-    ActivityIndicator,
-    Switch,
+    ScrollView,
+    StyleSheet,
+    Text,
+    StatusBar,
+    Alert
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useForm, Control, FieldValues } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useTheme } from '../contexts/ThemeContext';
-import { useStyles } from '../hooks/useStyles';
-import { Typography, Icon } from '../components/common';
-import { EntryDetailHeader } from '../components/organisms';
-import { Form, FormInput, FormRichTextarea, FormTagInput, FormCategorySelector } from '../components/form';
+import { Icon, ConfirmationModal } from '../components/common';
 import { createAction, updateAction, getActionById } from '../services/actionService';
 import { RootStackParamList } from '../types/navigation-types';
 import { useActions } from '../hooks/useActions';
+import { EntryDetailHeader } from '../components/organisms';
+import { EntryMetadataBar } from '../components/organisms';
+import FormDatePicker, { FormDatePickerRef } from '../components/form/FormDatePicker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type ActionScreenMode = 'create' | 'edit' | 'view';
 
@@ -40,12 +42,13 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface ActionFormValues {
     title: string;
-    description: string;
-    dueDate?: string;
-    completed: boolean;
-    priority: number;
+    targetDate?: string;
+    priority: 'low' | 'medium' | 'high' | null;
+    subTasks: { id: string; text: string; completed: boolean }[];
     tags: string[];
     categoryId: string | null;
+    done?: boolean;
+    completed?: boolean;
 }
 
 export default function ActionScreen() {
@@ -54,196 +57,54 @@ export default function ActionScreen() {
     const { theme } = useTheme();
     const { loadActions } = useActions();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [mode, setMode] = useState<ActionScreenMode>('create');
     const [actionId, setActionId] = useState<string | undefined>(undefined);
     const [parentId, setParentId] = useState<string | undefined>(undefined);
     const [parentType, setParentType] = useState<'path' | 'milestone' | 'loop-item' | undefined>(undefined);
-
-    const styles = useStyles((theme) => ({
-        container: {
-            flex: 1,
-            backgroundColor: theme.colors.background,
-        },
-        content: {
-            flex: 1,
-            padding: theme.spacing.m,
-        },
-        header: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: theme.spacing.m,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.colors.divider,
-        },
-        backButton: {
-            padding: theme.spacing.s,
-        },
-        headerTitle: {
-            flex: 1,
-            marginLeft: theme.spacing.s,
-        },
-        actionButton: {
-            marginHorizontal: theme.spacing.s,
-        },
-        buttonContainer: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: theme.spacing.l,
-            paddingHorizontal: theme.spacing.m,
-            paddingBottom: theme.spacing.m,
-        },
-        submitButton: {
-            backgroundColor: theme.colors.primary,
-            paddingVertical: theme.spacing.m,
-            paddingHorizontal: theme.spacing.l,
-            borderRadius: theme.shape.radius.m,
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 120,
-        },
-        submitButtonText: {
-            color: theme.colors.onPrimary,
-            fontWeight: 'bold',
-        },
-        cancelButton: {
-            paddingVertical: theme.spacing.m,
-            paddingHorizontal: theme.spacing.l,
-            borderRadius: theme.shape.radius.m,
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        cancelButtonText: {
-            color: theme.colors.textSecondary,
-        },
-        loadingContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        metadataSection: {
-            marginTop: theme.spacing.m,
-        },
-        metadataTitle: {
-            marginBottom: theme.spacing.s,
-        },
-        tagsContainer: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            marginBottom: theme.spacing.m,
-        },
-        tag: {
-            backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: theme.shape.radius.m,
-            paddingHorizontal: theme.spacing.s,
-            paddingVertical: theme.spacing.xs,
-            marginRight: theme.spacing.xs,
-            marginBottom: theme.spacing.xs,
-        },
-        dateText: {
-            marginTop: theme.spacing.s,
-            color: theme.colors.textSecondary,
-        },
-        editButton: {
-            position: 'absolute',
-            right: theme.spacing.l,
-            bottom: theme.spacing.l,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            backgroundColor: theme.colors.primary,
-            justifyContent: 'center',
-            alignItems: 'center',
-            elevation: 4,
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 3,
-        },
-        switchContainer: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.m,
-            padding: theme.spacing.m,
-            marginBottom: theme.spacing.m,
-        },
-        switchLabel: {
-            flex: 1,
-        },
-        priorityContainer: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: theme.spacing.m,
-        },
-        priorityButton: {
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: theme.spacing.s,
-        },
-        priorityActive: {
-            backgroundColor: theme.colors.primary,
-        },
-        priorityInactive: {
-            backgroundColor: theme.colors.surfaceVariant,
-        },
-        priorityText: {
-            color: theme.colors.onPrimary,
-            fontWeight: 'bold',
-        },
-        priorityInactiveText: {
-            color: theme.colors.textSecondary,
-        },
-        detailsRow: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginVertical: theme.spacing.xs,
-        },
-        detailsLabel: {
-            width: 100,
-            marginRight: theme.spacing.m,
-        },
-        detailsValue: {
-            flex: 1,
-        },
-        completedText: {
-            textDecorationLine: 'line-through',
-            color: theme.colors.textSecondary,
-        },
-    }));
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [actionData, setActionData] = useState<ActionFormValues | null>(null);
+    const [editingSubTaskIndex, setEditingSubTaskIndex] = useState<number | null>(null);
+    const [editingSubTaskText, setEditingSubTaskText] = useState('');
 
     // Set up form with default values
-    const { control, handleSubmit, reset, setValue, watch, getValues, formState: { errors } } = useForm<ActionFormValues>({
+    const { control, handleSubmit, setValue, watch, reset, getValues } = useForm<ActionFormValues>({
         defaultValues: {
             title: '',
-            description: '',
-            dueDate: undefined,
-            completed: false,
-            priority: 2,
+            targetDate: undefined,
+            priority: null,
+            subTasks: [],
             tags: [],
             categoryId: null,
+            done: false,
+            completed: false,
         },
         mode: 'onChange'
     });
 
-    const completed = watch('completed');
     const priority = watch('priority');
+    const targetDate = watch('targetDate');
+    const subTasks = watch('subTasks');
+    const tags = watch('tags');
+    const categoryId = watch('categoryId');
+    const isDone = watch('done');
+    const isCompleted = watch('completed');
+
+    // Reference for FormDatePicker
+    const datePickerRef = useRef<FormDatePickerRef>(null);
 
     // Initialize from route params
     useEffect(() => {
         if (route.params) {
             const { mode: routeMode, id, parentId: routeParentId, parentType: routeParentType } = route.params;
-            setMode(routeMode);
+            console.log(`ActionScreen: Route params loaded - mode: ${routeMode}, id: ${id}`);
+
+            setMode(routeMode || 'create');
             setActionId(id);
             setParentId(routeParentId);
             setParentType(routeParentType);
 
             if ((routeMode === 'edit' || routeMode === 'view') && id) {
+                console.log(`ActionScreen: Loading existing action with id: ${id}`);
                 loadActionData(id);
             }
         }
@@ -252,29 +113,28 @@ export default function ActionScreen() {
     // Load action data for edit or view mode
     const loadActionData = async (id: string) => {
         try {
-            setIsLoading(true);
+            console.log(`ActionScreen: Fetching action data for id: ${id}`);
             const action = await getActionById(id);
 
             if (action) {
+                console.log(`ActionScreen: Action loaded - done status: ${action.done}, title: ${action.title}`);
                 reset({
                     title: action.title,
-                    description: action.description || action.body || '',
-                    dueDate: action.dueDate,
-                    completed: action.completed !== undefined ? action.completed : action.done,
-                    priority: action.priority !== undefined ? action.priority : 2,
+                    targetDate: action.dueDate,
+                    priority: action.priority === 1 ? 'low' : action.priority === 3 ? 'high' : action.priority === 2 ? 'medium' : null,
+                    subTasks: action.subTasks ? action.subTasks : [],
                     tags: action.tags || [],
                     categoryId: action.categoryId || null,
+                    done: action.done || false,
+                    completed: action.completed || false,
                 });
             } else {
-                Alert.alert('Error', 'Action not found');
+                console.error(`ActionScreen: Action with id ${id} not found`);
                 navigation.goBack();
             }
         } catch (error) {
             console.error('Error loading action:', error);
-            Alert.alert('Error', 'Failed to load action');
             navigation.goBack();
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -284,282 +144,1000 @@ export default function ActionScreen() {
 
         try {
             setIsSubmitting(true);
+            console.log(`ActionScreen: onSubmit called, mode=${mode}, actionId=${actionId}`);
+            console.log(`ActionScreen: Current done status before update: ${data.done}`);
+
+            // Convert priority to number or undefined if not set
+            let priorityValue = 0; // Default to 0 for no priority
+            if (data.priority === 'low') priorityValue = 1;
+            else if (data.priority === 'medium') priorityValue = 2;
+            else if (data.priority === 'high') priorityValue = 3;
+
+            // For existing actions in edit or view mode, toggle done status
+            let isDone = data.done || false;
+            let isCompleted = data.completed || false;
+
+            // Check if we have an actionId, regardless of mode
+            if (actionId) {
+                // Toggle completion status for existing actions
+                isDone = !isDone;
+                console.log(`ActionScreen: Toggling done status to: ${isDone}`);
+
+                // If marking as complete and there are incomplete sub-tasks, show confirmation modal
+                const hasSubTasks = data.subTasks && data.subTasks.length > 0;
+                const completedSubTasks = data.subTasks.filter(task => task.completed).length;
+                const hasIncompleteSubTasks = hasSubTasks && completedSubTasks < data.subTasks.length;
+
+                if (isDone && hasIncompleteSubTasks) {
+                    // Store current form data for later use when modal is confirmed
+                    setActionData(data);
+                    setShowConfirmModal(true);
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
 
             const actionData = {
                 title: data.title,
-                description: data.description,
-                dueDate: data.dueDate,
-                done: data.completed,
-                completed: data.completed,
-                priority: data.priority,
+                description: '',
+                dueDate: data.targetDate,
+                done: isDone,
+                completed: isCompleted,
+                priority: priorityValue,
                 tags: data.tags,
                 categoryId: data.categoryId || undefined,
                 parentId: parentId,
                 parentType: parentType,
+                subTasks: data.subTasks,
                 type: 'action' as const,
             };
 
-            let success;
-            if (mode === 'edit' && actionId) {
+            let success = false;
+            // If we have an actionId, update the existing action regardless of mode
+            if (actionId) {
+                // We're updating an existing action
+                console.log(`ActionScreen: Updating action ${actionId} with done=${isDone}`);
                 success = await updateAction(actionId, actionData);
+                console.log(`ActionScreen: Update result: ${success ? 'success' : 'failed'}`);
             } else {
-                await createAction(actionData);
-                success = true;
+                // We're creating a new action
+                console.log(`ActionScreen: Creating new action with done=${isDone}`);
+                const newActionId = await createAction(actionData);
+                success = !!newActionId;
             }
 
             if (success) {
+                // Make sure we reload the actions list to reflect changes
                 await loadActions();
+                console.log('ActionScreen: Actions reloaded, navigating back');
                 navigation.goBack();
             } else {
-                Alert.alert('Error', 'Failed to save the action. Please try again.');
+                Alert.alert('Error', 'Failed to update the action. Please try again.');
             }
         } catch (error) {
             console.error('Error handling action:', error);
-            Alert.alert('Error', 'An unexpected error occurred.');
+            Alert.alert('Error', 'An error occurred while saving the action');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    // Switch to edit mode from view mode
-    const handleEditPress = () => {
-        setMode('edit');
+    const handleBackPress = () => {
+        navigation.goBack();
     };
 
-    // Handle priority selection
-    const handlePrioritySelect = (value: number) => {
-        setValue('priority', value);
+    const handleToggleSubTaskCompletion = async (index: number) => {
+        try {
+            const updatedSubTasks = [...subTasks];
+            const isBeingMarkedIncomplete = updatedSubTasks[index].completed;
+
+            // Toggle the completion status
+            updatedSubTasks[index] = {
+                ...updatedSubTasks[index],
+                completed: !updatedSubTasks[index].completed
+            };
+
+            // Update the form state
+            setValue('subTasks', updatedSubTasks);
+
+            // If we have an actionId and a subtask is being marked incomplete,
+            // also mark the main action as incomplete if it was complete
+            if (actionId && isBeingMarkedIncomplete && isDone) {
+                setValue('done', false);
+
+                // Update in database immediately
+                const currentData = getValues();
+                const priorityValue = currentData.priority === 'low' ? 1 :
+                    currentData.priority === 'medium' ? 2 :
+                        currentData.priority === 'high' ? 3 : 0;
+
+                const actionData = {
+                    title: currentData.title,
+                    description: '',
+                    dueDate: currentData.targetDate,
+                    done: false, // Mark as not done
+                    completed: currentData.completed,
+                    priority: priorityValue,
+                    tags: currentData.tags,
+                    categoryId: currentData.categoryId || undefined,
+                    parentId: parentId,
+                    parentType: parentType,
+                    subTasks: updatedSubTasks,
+                    type: 'action' as const,
+                };
+
+                await updateAction(actionId, actionData);
+            }
+
+            // If we're in view/edit mode with an existing action, save changes immediately
+            if (actionId && (mode === 'view' || mode === 'edit')) {
+                const currentData = getValues();
+                const priorityValue = currentData.priority === 'low' ? 1 :
+                    currentData.priority === 'medium' ? 2 :
+                        currentData.priority === 'high' ? 3 : 0;
+
+                const actionData = {
+                    title: currentData.title,
+                    description: '',
+                    dueDate: currentData.targetDate,
+                    done: currentData.done,
+                    completed: currentData.completed,
+                    priority: priorityValue,
+                    tags: currentData.tags,
+                    categoryId: currentData.categoryId || undefined,
+                    parentId: parentId,
+                    parentType: parentType,
+                    subTasks: updatedSubTasks,
+                    type: 'action' as const,
+                };
+
+                await updateAction(actionId, actionData);
+            }
+        } catch (error) {
+            console.error('Error toggling subtask completion:', error);
+            Alert.alert('Error', 'Failed to update sub-task status');
+        }
     };
 
-    // Render header based on mode
-    const renderHeader = () => {
-        let title = "";
-        if (mode === 'create') title = "Create Action";
-        else if (mode === 'edit') title = "Edit Action";
-        else title = "Action Details";
+    const handleAddSubTask = () => {
+        const newSubTask = {
+            id: Date.now().toString(),
+            text: '',
+            completed: false
+        };
+        const updatedSubTasks = [...subTasks, newSubTask];
+        setValue('subTasks', updatedSubTasks);
 
-        return (
-            <EntryDetailHeader
-                showEditButton={mode === 'view'}
-                onEditPress={handleEditPress}
-                onBackPress={() => navigation.goBack()}
-                isSaved={!!actionId && mode === 'view'}
-                title={title}
-            />
-        );
+        // If we're in view/edit mode with an existing action, save changes immediately
+        if (actionId && (mode === 'view' || mode === 'edit')) {
+            saveSubTasksToDatabase(updatedSubTasks);
+        }
+
+        // Set the new task to be in editing mode
+        setTimeout(() => {
+            setEditingSubTaskIndex(updatedSubTasks.length - 1);
+            setEditingSubTaskText('');
+        }, 100);
     };
 
-    // Render priority selection
-    const renderPrioritySelector = () => {
-        return (
-            <View>
-                <Typography variant="body1" style={{ marginBottom: theme.spacing.s }}>Priority</Typography>
-                <View style={styles.priorityContainer}>
-                    {[1, 2, 3].map((value) => (
-                        <TouchableOpacity
-                            key={value}
-                            style={[
-                                styles.priorityButton,
-                                priority === value ? styles.priorityActive : styles.priorityInactive
-                            ]}
-                            onPress={() => handlePrioritySelect(value)}
-                            disabled={mode === 'view'}
-                        >
-                            <Typography
-                                style={priority === value ? styles.priorityText : styles.priorityInactiveText}
-                            >
-                                {value}
-                            </Typography>
-                        </TouchableOpacity>
-                    ))}
-                    <Typography variant="caption" style={{ marginLeft: theme.spacing.s }}>
-                        {priority === 1 ? 'Low' : priority === 2 ? 'Medium' : 'High'}
-                    </Typography>
-                </View>
-            </View>
-        );
+    const saveSubTasksToDatabase = async (updatedSubTasks: any[]) => {
+        try {
+            if (!actionId) return;
+
+            const currentData = getValues();
+            const priorityValue = currentData.priority === 'low' ? 1 :
+                currentData.priority === 'medium' ? 2 :
+                    currentData.priority === 'high' ? 3 : 0;
+
+            const actionData = {
+                title: currentData.title,
+                description: '',
+                dueDate: currentData.targetDate,
+                done: currentData.done,
+                completed: currentData.completed,
+                priority: priorityValue,
+                tags: currentData.tags,
+                categoryId: currentData.categoryId || undefined,
+                parentId: parentId,
+                parentType: parentType,
+                subTasks: updatedSubTasks,
+                type: 'action' as const,
+            };
+
+            await updateAction(actionId, actionData);
+        } catch (error) {
+            console.error('Error saving subtasks to database:', error);
+            Alert.alert('Error', 'Failed to save sub-task changes');
+        }
     };
 
-    // Render form for create and edit modes
-    const renderForm = () => {
-        return (
-            <Form>
-                <FormInput
-                    name="title"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Title"
-                    placeholder="Enter a title..."
-                    rules={{ required: 'Title is required' }}
-                    isTitle={true}
-                />
-
-                <View style={{ flex: 1, paddingHorizontal: theme.spacing.m }}>
-                    <FormRichTextarea
-                        name="description"
-                        control={control as unknown as Control<FieldValues>}
-                        label="Action"
-                        placeholder="Describe the action..."
-                        rules={{ required: 'Description is required' }}
-                        adaptiveHeight={false}
-                    />
-                </View>
-
-                <FormInput
-                    name="dueDate"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Due Date"
-                    placeholder="YYYY-MM-DD"
-                />
-
-                {renderPrioritySelector()}
-
-                <View style={styles.switchContainer}>
-                    <Typography variant="body1" style={styles.switchLabel}>
-                        Completed
-                    </Typography>
-                    <Switch
-                        value={completed}
-                        onValueChange={(value) => setValue('completed', value)}
-                        trackColor={{ false: theme.colors.surfaceVariant, true: theme.colors.primary }}
-                        thumbColor={theme.colors.surface}
-                    />
-                </View>
-
-                <FormCategorySelector
-                    name="categoryId"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Category"
-                />
-
-                <FormTagInput
-                    name="tags"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Tags"
-                />
-
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity
-                        style={styles.cancelButton}
-                        onPress={() => navigation.goBack()}
-                        disabled={isSubmitting}
-                    >
-                        <Typography style={styles.cancelButtonText}>Cancel</Typography>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.submitButton}
-                        onPress={handleSubmit(onSubmit)}
-                        disabled={isSubmitting}
-                    >
-                        <Typography style={styles.submitButtonText}>
-                            {isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update' : 'Create'}
-                        </Typography>
-                    </TouchableOpacity>
-                </View>
-            </Form>
-        );
+    const startEditingSubTask = (index: number) => {
+        setEditingSubTaskIndex(index);
+        setEditingSubTaskText(subTasks[index].text);
     };
 
-    // Render read-only view
-    const renderViewMode = () => {
-        const values = getValues();
+    const saveSubTaskEdit = async (index: number) => {
+        if (editingSubTaskIndex === null) return;
 
-        return (
-            <View style={styles.content}>
-                <Typography
-                    variant="h4"
-                    style={values.completed ? styles.completedText : undefined}
-                >
-                    {values.title}
-                </Typography>
+        try {
+            const updatedSubTasks = [...subTasks];
+            const trimmedText = editingSubTaskText.trim();
 
-                {values.description ? (
-                    <Typography
-                        variant="body1"
-                        style={[{ marginTop: theme.spacing.m }, values.completed ? styles.completedText : undefined]}
-                    >
-                        {values.description}
-                    </Typography>
-                ) : null}
+            // If empty, keep original text
+            if (trimmedText) {
+                updatedSubTasks[index] = {
+                    ...updatedSubTasks[index],
+                    text: trimmedText
+                };
+                setValue('subTasks', updatedSubTasks);
+            }
 
-                <View style={styles.metadataSection}>
-                    <Typography variant="subtitle1">Details</Typography>
-
-                    <View style={styles.detailsRow}>
-                        <Typography variant="body2" style={styles.detailsLabel}>Status:</Typography>
-                        <Typography variant="body2" style={styles.detailsValue}>
-                            {values.completed ? 'Completed' : 'Pending'}
-                        </Typography>
-                    </View>
-
-                    {values.dueDate ? (
-                        <View style={styles.detailsRow}>
-                            <Typography variant="body2" style={styles.detailsLabel}>Due Date:</Typography>
-                            <Typography variant="body2" style={styles.detailsValue}>
-                                {values.dueDate}
-                            </Typography>
-                        </View>
-                    ) : null}
-
-                    <View style={styles.detailsRow}>
-                        <Typography variant="body2" style={styles.detailsLabel}>Priority:</Typography>
-                        <Typography variant="body2" style={styles.detailsValue}>
-                            {values.priority === 1 ? 'Low' : values.priority === 2 ? 'Medium' : 'High'}
-                        </Typography>
-                    </View>
-
-                    {values.tags && values.tags.length > 0 && (
-                        <>
-                            <Typography variant="subtitle1" style={[styles.metadataTitle, { marginTop: theme.spacing.m }]}>
-                                Tags:
-                            </Typography>
-                            <View style={styles.tagsContainer}>
-                                {values.tags.map((tag, index) => (
-                                    <View key={index} style={styles.tag}>
-                                        <Typography variant="caption">{tag}</Typography>
-                                    </View>
-                                ))}
-                            </View>
-                        </>
-                    )}
-                </View>
-
-                <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={handleEditPress}
-                >
-                    <Icon name="pencil" width={24} height={24} color={theme.colors.onPrimary} />
-                </TouchableOpacity>
-            </View>
-        );
+            // If we're in view/edit mode with an existing action, save changes immediately
+            if (actionId && (mode === 'view' || mode === 'edit')) {
+                await saveSubTasksToDatabase(updatedSubTasks);
+            }
+        } catch (error) {
+            console.error('Error updating subtask text:', error);
+            Alert.alert('Error', 'Failed to update sub-task text');
+        } finally {
+            setEditingSubTaskIndex(null);
+            setEditingSubTaskText('');
+        }
     };
 
-    if (isLoading) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <EntryDetailHeader
-                    onBackPress={() => navigation.goBack()}
-                    title="Loading..."
-                />
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
-                </View>
-            </SafeAreaView>
-        );
-    }
+    const handleCategoryChange = async (newCategoryId: string | null) => {
+        setValue('categoryId', newCategoryId);
+
+        // If we're in view/edit mode with an existing action, save changes immediately
+        if (actionId && (mode === 'view' || mode === 'edit')) {
+            try {
+                const currentData = getValues();
+                const priorityValue = currentData.priority === 'low' ? 1 :
+                    currentData.priority === 'medium' ? 2 :
+                        currentData.priority === 'high' ? 3 : 0;
+
+                const actionData = {
+                    title: currentData.title,
+                    description: '',
+                    dueDate: currentData.targetDate,
+                    done: currentData.done,
+                    completed: currentData.completed,
+                    priority: priorityValue,
+                    tags: currentData.tags,
+                    categoryId: newCategoryId || undefined, // Convert null to undefined
+                    parentId: parentId,
+                    parentType: parentType,
+                    subTasks: currentData.subTasks,
+                    type: 'action' as const,
+                };
+
+                await updateAction(actionId, actionData);
+            } catch (error) {
+                console.error('Error saving category change:', error);
+                Alert.alert('Error', 'Failed to save category change');
+            }
+        }
+    };
+
+    const handleLabelsChange = async (newLabels: string[]) => {
+        setValue('tags', newLabels);
+
+        // If we're in view/edit mode with an existing action, save changes immediately
+        if (actionId && (mode === 'view' || mode === 'edit')) {
+            try {
+                const currentData = getValues();
+                const priorityValue = currentData.priority === 'low' ? 1 :
+                    currentData.priority === 'medium' ? 2 :
+                        currentData.priority === 'high' ? 3 : 0;
+
+                const actionData = {
+                    title: currentData.title,
+                    description: '',
+                    dueDate: currentData.targetDate,
+                    done: currentData.done,
+                    completed: currentData.completed,
+                    priority: priorityValue,
+                    tags: newLabels,
+                    categoryId: currentData.categoryId || undefined, // Convert null to undefined
+                    parentId: parentId,
+                    parentType: parentType,
+                    subTasks: currentData.subTasks,
+                    type: 'action' as const,
+                };
+
+                await updateAction(actionId, actionData);
+            } catch (error) {
+                console.error('Error saving label changes:', error);
+                Alert.alert('Error', 'Failed to save label changes');
+            }
+        }
+    };
+
+    // Toggle priority selection (select or deselect)
+    const handlePriorityToggle = async (selectedPriority: 'low' | 'medium' | 'high') => {
+        const newPriority = priority === selectedPriority ? null : selectedPriority;
+        setValue('priority', newPriority);
+
+        // If we're in view/edit mode with an existing action, save changes immediately
+        if (actionId && (mode === 'view' || mode === 'edit')) {
+            try {
+                const currentData = getValues();
+                const priorityValue = newPriority === 'low' ? 1 :
+                    newPriority === 'medium' ? 2 :
+                        newPriority === 'high' ? 3 : 0;
+
+                const actionData = {
+                    title: currentData.title,
+                    description: '',
+                    dueDate: currentData.targetDate,
+                    done: currentData.done,
+                    completed: currentData.completed,
+                    priority: priorityValue,
+                    tags: currentData.tags,
+                    categoryId: currentData.categoryId || undefined, // Convert null to undefined
+                    parentId: parentId,
+                    parentType: parentType,
+                    subTasks: currentData.subTasks,
+                    type: 'action' as const,
+                };
+
+                await updateAction(actionId, actionData);
+            } catch (error) {
+                console.error('Error saving priority change:', error);
+                Alert.alert('Error', 'Failed to save priority change');
+            }
+        }
+    };
+
+    // Clear target date function
+    const handleClearTargetDate = async () => {
+        setValue('targetDate', undefined);
+
+        // If we're in view/edit mode with an existing action, save changes immediately
+        if (actionId && (mode === 'view' || mode === 'edit')) {
+            try {
+                const currentData = getValues();
+                const priorityValue = currentData.priority === 'low' ? 1 :
+                    currentData.priority === 'medium' ? 2 :
+                        currentData.priority === 'high' ? 3 : 0;
+
+                const actionData = {
+                    title: currentData.title,
+                    description: '',
+                    dueDate: undefined,
+                    done: currentData.done,
+                    completed: currentData.completed,
+                    priority: priorityValue,
+                    tags: currentData.tags,
+                    categoryId: currentData.categoryId || undefined, // Convert null to undefined
+                    parentId: parentId,
+                    parentType: parentType,
+                    subTasks: currentData.subTasks,
+                    type: 'action' as const,
+                };
+
+                await updateAction(actionId, actionData);
+            } catch (error) {
+                console.error('Error clearing target date:', error);
+                Alert.alert('Error', 'Failed to clear target date');
+            }
+        }
+    };
+
+    // Also, update the title onChange to save immediately
+    const handleTitleChange = async (value: string) => {
+        setValue('title', value);
+
+        // If we're in view/edit mode with an existing action, save title changes after a short delay
+        if (actionId && (mode === 'view' || mode === 'edit')) {
+            try {
+                const currentData = getValues();
+                const priorityValue = currentData.priority === 'low' ? 1 :
+                    currentData.priority === 'medium' ? 2 :
+                        currentData.priority === 'high' ? 3 : 0;
+
+                const actionData = {
+                    title: value,
+                    description: '',
+                    dueDate: currentData.targetDate,
+                    done: currentData.done,
+                    completed: currentData.completed,
+                    priority: priorityValue,
+                    tags: currentData.tags,
+                    categoryId: currentData.categoryId || undefined, // Convert null to undefined
+                    parentId: parentId,
+                    parentType: parentType,
+                    subTasks: currentData.subTasks,
+                    type: 'action' as const,
+                };
+
+                await updateAction(actionId, actionData);
+            } catch (error) {
+                console.error('Error saving title change:', error);
+                // Don't show alert for title changes as it could be disruptive during typing
+            }
+        }
+    };
+
+    // Function to handle opening the date picker
+    const handleOpenDatePicker = () => {
+        if (datePickerRef.current) {
+            datePickerRef.current.openPicker();
+        }
+    };
+
+    // Add function to handle modal confirmation
+    const handleCompleteAllConfirm = async () => {
+        if (!actionData || !actionId) {
+            setShowConfirmModal(false);
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            console.log(`ActionScreen: Confirming completion of all sub-tasks`);
+
+            // Convert priority to number or undefined if not set
+            let priorityValue = 0; // Default to 0 for no priority
+            if (actionData.priority === 'low') priorityValue = 1;
+            else if (actionData.priority === 'medium') priorityValue = 2;
+            else if (actionData.priority === 'high') priorityValue = 3;
+
+            // Mark all sub-tasks as complete
+            const updatedSubTasks = actionData.subTasks.map(task => ({
+                ...task,
+                completed: true
+            }));
+
+            // Update form state
+            setValue('subTasks', updatedSubTasks);
+            setValue('done', true);
+
+            const updatedActionData = {
+                title: actionData.title,
+                description: '',
+                dueDate: actionData.targetDate,
+                done: true, // Mark as done
+                completed: actionData.completed,
+                priority: priorityValue,
+                tags: actionData.tags,
+                categoryId: actionData.categoryId || undefined,
+                parentId: parentId,
+                parentType: parentType,
+                subTasks: updatedSubTasks, // Updated sub-tasks
+                type: 'action' as const,
+            };
+
+            console.log('ActionScreen: Updating action with all sub-tasks complete:', updatedActionData);
+            const success = await updateAction(actionId, updatedActionData);
+
+            if (success) {
+                // Make sure we reload the actions list to reflect changes
+                await loadActions();
+                console.log('ActionScreen: Actions reloaded after marking all complete');
+                navigation.goBack();
+            } else {
+                Alert.alert('Error', 'Failed to update the action. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error handling action:', error);
+            Alert.alert('Error', 'An error occurred while updating the action');
+        } finally {
+            setIsSubmitting(false);
+            setShowConfirmModal(false);
+        }
+    };
+
+    // Add a handleDateChange function to save date changes immediately
+    const handleDateChange = async (date: string | undefined) => {
+        setValue('targetDate', date);
+
+        // If we're in view/edit mode with an existing action, save changes immediately
+        if (actionId && (mode === 'view' || mode === 'edit')) {
+            try {
+                const currentData = getValues();
+                const priorityValue = currentData.priority === 'low' ? 1 :
+                    currentData.priority === 'medium' ? 2 :
+                        currentData.priority === 'high' ? 3 : 0;
+
+                const actionData = {
+                    title: currentData.title,
+                    description: '',
+                    dueDate: date,
+                    done: currentData.done,
+                    completed: currentData.completed,
+                    priority: priorityValue,
+                    tags: currentData.tags,
+                    categoryId: currentData.categoryId || undefined,
+                    parentId: parentId,
+                    parentType: parentType,
+                    subTasks: currentData.subTasks,
+                    type: 'action' as const,
+                };
+
+                await updateAction(actionId, actionData);
+            } catch (error) {
+                console.error('Error saving date change:', error);
+                // Don't show alert as it could be disruptive
+            }
+        }
+    };
+
+    // Add a useEffect to watch for changes to the targetDate field
+    useEffect(() => {
+        // Only run when we have an actionId and we're in view/edit mode
+        if (actionId && (mode === 'view' || mode === 'edit') && targetDate !== undefined) {
+            const saveDateChange = async () => {
+                try {
+                    const currentData = getValues();
+                    const priorityValue = currentData.priority === 'low' ? 1 :
+                        currentData.priority === 'medium' ? 2 :
+                            currentData.priority === 'high' ? 3 : 0;
+
+                    const actionData = {
+                        title: currentData.title,
+                        description: '',
+                        dueDate: targetDate,
+                        done: currentData.done,
+                        completed: currentData.completed,
+                        priority: priorityValue,
+                        tags: currentData.tags,
+                        categoryId: currentData.categoryId || undefined,
+                        parentId: parentId,
+                        parentType: parentType,
+                        subTasks: currentData.subTasks,
+                        type: 'action' as const,
+                    };
+
+                    await updateAction(actionId, actionData);
+                } catch (error) {
+                    console.error('Error saving date change:', error);
+                    // Don't show alert as it could be disruptive
+                }
+            };
+
+            saveDateChange();
+        }
+    }, [targetDate, actionId, mode]);
+
+    const styles = StyleSheet.create({
+        safeArea: {
+            flex: 1,
+            backgroundColor: '#FFFFFF',
+        },
+        container: {
+            flex: 1,
+            backgroundColor: '#FFFFFF',
+        },
+        content: {
+            flex: 1,
+        },
+        titleInput: {
+            fontSize: 32,
+            fontWeight: '300',
+            color: theme.colors.black,
+            padding: 16,
+            paddingTop: 16,
+            paddingBottom: 16,
+            fontFamily: 'KantumruyPro-Bold',
+        },
+        divider: {
+            height: 1,
+            backgroundColor: '#EEEEEE',
+            marginHorizontal: 16,
+        },
+        sectionContainer: {
+            paddingVertical: 16,
+            paddingHorizontal: 16,
+        },
+        sectionRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        },
+        sectionLabel: {
+            fontSize: 16,
+            fontWeight: '500',
+            color: '#000000',
+            fontFamily: 'KantumruyPro-Medium',
+        },
+        targetDateContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            height: 50,
+        },
+        targetDateValueContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        targetDateValue: {
+            fontSize: 16,
+            color: '#757575',
+            fontFamily: 'KantumruyPro-Regular',
+            marginRight: 8,
+        },
+        targetDatePlaceholder: {
+            fontSize: 16,
+            color: '#757575',
+            fontFamily: 'KantumruyPro-Regular',
+        },
+        clearButton: {
+            padding: 4,
+        },
+        chevronRight: {
+            marginLeft: 4,
+        },
+        prioritySection: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        },
+        priorityLabelContainer: {
+            flex: 1,
+        },
+        priorityButtonsContainer: {
+            flexDirection: 'row',
+            flex: 2,
+        },
+        priorityButton: {
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginHorizontal: 4,
+            borderRadius: 50,
+            borderWidth: 1,
+        },
+        priorityButtonFirst: {
+            marginLeft: 0,
+        },
+        priorityButtonLast: {
+            marginRight: 0,
+        },
+        lowButton: {
+            backgroundColor: priority === 'low' ? '#EEEEEE' : '#FFFFFF',
+            borderColor: priority === 'low' ? '#EEEEEE' : '#E0E0E0',
+        },
+        mediumButton: {
+            backgroundColor: priority === 'medium' ? '#FFD54F' : '#FFFFFF',
+            borderColor: priority === 'medium' ? '#FFD54F' : '#E0E0E0',
+        },
+        highButton: {
+            backgroundColor: priority === 'high' ? '#EF5350' : '#FFFFFF',
+            borderColor: priority === 'high' ? '#EF5350' : '#E0E0E0',
+        },
+        lowButtonText: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: '#000000',
+            fontFamily: 'KantumruyPro-Medium',
+        },
+        mediumButtonText: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: '#000000',
+            fontFamily: 'KantumruyPro-Medium',
+        },
+        highButtonText: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: priority === 'high' ? '#FFFFFF' : '#000000',
+            fontFamily: 'KantumruyPro-Medium',
+        },
+        subTasksHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 16,
+        },
+        subTasksContainer: {
+            marginTop: 8,
+        },
+        subTaskRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+        checkBox: {
+            width: 24,
+            height: 24,
+            borderRadius: 4,
+            borderWidth: 1,
+            borderColor: '#BDBDBD',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: 12,
+        },
+        checkBoxChecked: {
+            backgroundColor: '#1B1B1B',
+            borderColor: '#1B1B1B',
+        },
+        subTaskInput: {
+            flex: 1,
+            fontSize: 16,
+            color: '#212121',
+            padding: 0,
+        },
+        subTaskInputCompleted: {
+            textDecorationLine: 'line-through',
+            color: '#9E9E9E',
+        },
+        subTaskTextContainer: {
+            flex: 1,
+            paddingVertical: 8,
+        },
+        subTaskText: {
+            fontSize: 16,
+            color: '#212121',
+        },
+        newSubTaskRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: 8,
+        },
+        newSubTaskIcon: {
+            marginRight: 12,
+        },
+        newSubTaskText: {
+            fontSize: 16,
+            color: '#9E9E9E',
+            fontFamily: 'KantumruyPro-Regular',
+        },
+        bottomContainer: {
+            padding: 16,
+            paddingBottom: 32,
+            borderTopWidth: 1,
+            borderTopColor: '#F5F5F5',
+        },
+        createButton: {
+            backgroundColor: '#1B1B1B',
+            borderRadius: 32,
+            paddingVertical: 16,
+            alignItems: 'center',
+        },
+        createButtonText: {
+            color: '#FFFFFF',
+            fontSize: 16,
+            fontWeight: '600',
+            fontFamily: 'KantumruyPro-SemiBold',
+        },
+        hiddenDatePicker: {
+            height: 0,
+            width: 0,
+            opacity: 0,
+            position: 'absolute',
+        },
+    });
 
     return (
-        <SafeAreaView style={styles.container}>
-            {renderHeader()}
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-            >
-                <View style={{ flex: 1 }}>
-                    {mode === 'view' ? renderViewMode() : renderForm()}
-                </View>
-            </KeyboardAvoidingView>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <View style={styles.container}>
+                <EntryDetailHeader
+                    onBackPress={handleBackPress}
+                    entryType="New Action"
+                />
+
+                <EntryMetadataBar
+                    categoryId={categoryId}
+                    onCategoryChange={handleCategoryChange}
+                    labels={tags}
+                    onLabelsChange={handleLabelsChange}
+                    isEditing={true}
+                />
+
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={{ flex: 1 }}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+                >
+                    <ScrollView style={styles.content}>
+                        <Controller
+                            control={control}
+                            name="title"
+                            rules={{ required: true }}
+                            render={({ field: { value } }) => (
+                                <TextInput
+                                    style={styles.titleInput}
+                                    placeholder="Action title"
+                                    placeholderTextColor="#9E9E9E"
+                                    value={value}
+                                    onChangeText={handleTitleChange}
+                                />
+                            )}
+                        />
+
+                        <View style={styles.divider} />
+
+                        <View style={styles.sectionContainer}>
+                            <TouchableOpacity
+                                style={styles.targetDateContainer}
+                                onPress={handleOpenDatePicker}
+                            >
+                                <Text style={styles.sectionLabel}>Target date</Text>
+                                <View style={styles.targetDateValueContainer}>
+                                    {targetDate ? (
+                                        <>
+                                            <Text style={styles.targetDateValue}>
+                                                {new Date(targetDate).toLocaleDateString()}
+                                            </Text>
+                                            <TouchableOpacity
+                                                style={styles.clearButton}
+                                                onPress={handleClearTargetDate}
+                                            >
+                                                <Icon name="x" width={16} height={16} color="#9E9E9E" />
+                                            </TouchableOpacity>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Text style={styles.targetDatePlaceholder}>Set target date</Text>
+                                            <Icon
+                                                name="chevron-right"
+                                                width={16}
+                                                height={16}
+                                                color="#9E9E9E"
+                                                style={styles.chevronRight}
+                                            />
+                                        </>
+                                    )}
+                                </View>
+                            </TouchableOpacity>
+
+                            <View style={styles.hiddenDatePicker}>
+                                <FormDatePicker
+                                    name="targetDate"
+                                    control={control}
+                                    ref={datePickerRef}
+                                    placeholder=""
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.divider} />
+
+                        <View style={styles.sectionContainer}>
+                            <View style={styles.prioritySection}>
+                                <View style={styles.priorityLabelContainer}>
+                                    <Text style={styles.sectionLabel}>Priority</Text>
+                                </View>
+                                <View style={styles.priorityButtonsContainer}>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.priorityButton,
+                                            styles.priorityButtonFirst,
+                                            styles.lowButton
+                                        ]}
+                                        onPress={() => handlePriorityToggle('low')}
+                                    >
+                                        <Text style={styles.lowButtonText}>Low</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.priorityButton,
+                                            styles.mediumButton
+                                        ]}
+                                        onPress={() => handlePriorityToggle('medium')}
+                                    >
+                                        <Text style={styles.mediumButtonText}>Medium</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.priorityButton,
+                                            styles.priorityButtonLast,
+                                            styles.highButton
+                                        ]}
+                                        onPress={() => handlePriorityToggle('high')}
+                                    >
+                                        <Text style={styles.highButtonText}>High</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+
+                        <View style={styles.divider} />
+
+                        <View style={styles.sectionContainer}>
+                            <View style={styles.subTasksHeader}>
+                                <Text style={styles.sectionLabel}>Sub-actions</Text>
+                            </View>
+                            <View style={styles.subTasksContainer}>
+                                {subTasks.map((subTask, index) => (
+                                    <View key={subTask.id} style={styles.subTaskRow}>
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.checkBox,
+                                                subTask.completed && styles.checkBoxChecked
+                                            ]}
+                                            onPress={() => handleToggleSubTaskCompletion(index)}
+                                        >
+                                            {subTask.completed && (
+                                                <Icon name="check" width={16} height={16} color="#FFFFFF" />
+                                            )}
+                                        </TouchableOpacity>
+
+                                        {editingSubTaskIndex === index ? (
+                                            <TextInput
+                                                style={[
+                                                    styles.subTaskInput,
+                                                    subTask.completed && styles.subTaskInputCompleted
+                                                ]}
+                                                value={editingSubTaskText}
+                                                onChangeText={setEditingSubTaskText}
+                                                onBlur={() => saveSubTaskEdit(index)}
+                                                onSubmitEditing={() => saveSubTaskEdit(index)}
+                                                autoFocus
+                                                returnKeyType="done"
+                                            />
+                                        ) : (
+                                            <TouchableOpacity
+                                                style={styles.subTaskTextContainer}
+                                                onPress={() => startEditingSubTask(index)}
+                                                activeOpacity={0.7}
+                                            >
+                                                <Text style={[
+                                                    styles.subTaskText,
+                                                    subTask.completed && styles.subTaskInputCompleted
+                                                ]}>
+                                                    {subTask.text}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                ))}
+                                <TouchableOpacity
+                                    style={styles.newSubTaskRow}
+                                    onPress={handleAddSubTask}
+                                >
+                                    <Icon
+                                        name="plus"
+                                        width={20}
+                                        height={20}
+                                        color="#9E9E9E"
+                                        style={styles.newSubTaskIcon}
+                                    />
+                                    <Text style={styles.newSubTaskText}>Add sub-actions</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {/* Extra space at the bottom */}
+                        <View style={{ height: 100 }} />
+                    </ScrollView>
+
+                    <View style={styles.bottomContainer}>
+                        <TouchableOpacity
+                            style={[
+                                styles.createButton,
+                                isDone && mode === 'edit' ? { backgroundColor: '#4CAF50' } : {}  // Green bg for completed actions
+                            ]}
+                            onPress={handleSubmit(onSubmit)}
+                            disabled={isSubmitting}
+                        >
+                            <Text style={styles.createButtonText}>
+                                {isSubmitting ? 'Saving...' :
+                                    mode === 'create' ? 'Create Action' :
+                                        isDone ? 'Mark as Incomplete' : 'Mark as Complete'}
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </KeyboardAvoidingView>
+            </View>
+
+            {/* Confirmation Modal for completing sub-tasks */}
+            <ConfirmationModal
+                visible={showConfirmModal}
+                title="Complete All Sub-actions?"
+                message={actionData && actionData.subTasks
+                    ? `Marking this action as complete will also mark all ${actionData.subTasks.filter(t => !t.completed).length} incomplete sub-actions as complete. Would you like to proceed?`
+                    : "Would you like to mark all sub-actions as complete?"}
+                icon="check"
+                confirmText="Complete All"
+                cancelText="Cancel"
+                onConfirm={handleCompleteAllConfirm}
+                onCancel={() => setShowConfirmModal(false)}
+                accentColor={theme.colors.success}
+            />
         </SafeAreaView>
     );
 } 

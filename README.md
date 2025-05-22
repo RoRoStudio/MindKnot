@@ -1,10 +1,7 @@
 
 ```
 MindKnot
-├─ .pnp.cjs
-├─ .pnp.loader.mjs
-├─ App.tsx
-├─ README.md
+
 ├─ app.json
 ├─ assets
 │  ├─ adaptive-icon.png
@@ -26,16 +23,16 @@ MindKnot
 │  │        ├─ a-arrow-up.svg
 │  │        ├─ (and a lot more)
 │  ├─ components
-│  │  ├─ common
-│  │  │  ├─ BottomSheet.tsx
+│  │  ├─ atoms
 │  │  │  ├─ Button.tsx
-│  │  │  ├─ Card.tsx
-│  │  │  ├─ ColorPicker.tsx
-│  │  │  ├─ FormModal.tsx
-│  │  │  ├─ FormSheet.tsx
+│  │  │  ├─ DottedPillButton.tsx
 │  │  │  ├─ Icon.tsx
-│  │  │  ├─ IconPicker.tsx
-│  │  │  └─ Typography.tsx
+│  │  │  ├─ Label.tsx
+│  │  │  ├─ Typography.tsx
+│  │  │  └─ index.ts
+│  │  ├─ common
+│  │  │  ├─ ConfirmationModal.tsx
+│  │  │  └─ index.ts
 │  │  ├─ entries
 │  │  │  ├─ EntryCard.tsx
 │  │  │  ├─ actions
@@ -57,20 +54,41 @@ MindKnot
 │  │  │  ├─ FormDatePicker.tsx
 │  │  │  ├─ FormErrorMessage.tsx
 │  │  │  ├─ FormInput.tsx
+│  │  │  ├─ FormLabelInput.tsx
+│  │  │  ├─ FormModal.tsx
 │  │  │  ├─ FormMoodSelector.tsx
 │  │  │  ├─ FormRadioGroup.tsx
 │  │  │  ├─ FormRichTextarea.tsx
 │  │  │  ├─ FormSelect.tsx
+│  │  │  ├─ FormSheet.tsx
 │  │  │  ├─ FormSwitch.tsx
-│  │  │  ├─ FormTagInput.tsx
 │  │  │  ├─ FormTextarea.tsx
+│  │  │  └─ index.ts
+│  │  ├─ molecules
+│  │  │  ├─ BottomSheet.tsx
+│  │  │  ├─ Card.tsx
+│  │  │  ├─ CategoryPill.tsx
+│  │  │  ├─ ColorPicker.tsx
+│  │  │  ├─ IconPicker.tsx
 │  │  │  └─ index.ts
 │  │  ├─ navigation
 │  │  │  ├─ CustomBottomNavBar.tsx
 │  │  │  └─ DiamondFab.tsx
-│  │  └─ sagas
-│  │     ├─ AnimatedBookSaga.tsx
-│  │     └─ SagaCreationSheet.tsx
+│  │  ├─ organisms
+│  │  │  ├─ EntryDetailHeader.tsx
+│  │  │  ├─ EntryMetadataBar.tsx
+│  │  │  ├─ FilterableList.tsx
+│  │  │  ├─ FilterableListHeader.tsx
+│  │  │  └─ index.ts
+│  │  ├─ sagas
+│  │  │  ├─ AnimatedBookSaga.tsx
+│  │  │  └─ SagaCreationSheet.tsx
+│  │  ├─ shared-props.ts
+│  │  └─ templates
+│  │     ├─ BaseEntityScreen.tsx
+│  │     └─ index.ts
+│  ├─ constants
+│  │  └─ entryTypes.ts
 │  ├─ contexts
 │  │  ├─ BottomSheetConfig.tsx
 │  │  ├─ BottomSheetContext.tsx
@@ -87,11 +105,37 @@ MindKnot
 │  │  ├─ usePaths.ts
 │  │  ├─ useSagas.ts
 │  │  ├─ useSparks.ts
-│  │  └─ useStyles.ts
+│  │  ├─ useStyles.ts
+│  │  └─ useThemedStyles.ts
 │  ├─ navigation
 │  │  ├─ AppNavigator.tsx
 │  │  ├─ TabNavigator.tsx
 │  │  └─ VaultTabNavigator.tsx
+│  ├─ redux
+│  │  ├─ hooks
+│  │  │  ├─ index.ts
+│  │  │  ├─ stateHooks.ts
+│  │  │  ├─ useActionActions.ts
+│  │  │  ├─ useLoopActions.ts
+│  │  │  ├─ useNoteActions.ts
+│  │  │  ├─ usePathActions.ts
+│  │  │  ├─ useSagaActions.ts
+│  │  │  └─ useSparkActions.ts
+│  │  ├─ selectors
+│  │  │  ├─ actionSelectors.ts
+│  │  │  ├─ loopSelectors.ts
+│  │  │  ├─ noteSelectors.ts
+│  │  │  ├─ pathSelectors.ts
+│  │  │  ├─ sagaSelectors.ts
+│  │  │  └─ sparkSelectors.ts
+│  │  ├─ slices
+│  │  │  ├─ actionSlice.ts
+│  │  │  ├─ loopSlice.ts
+│  │  │  ├─ noteSlice.ts
+│  │  │  ├─ pathSlice.ts
+│  │  │  ├─ sagaSlice.ts
+│  │  │  └─ sparkSlice.ts
+│  │  └─ store.ts
 │  ├─ screens
 │  │  ├─ ActionScreen.tsx
 │  │  ├─ ComponentShowcaseScreen.tsx
@@ -103,6 +147,7 @@ MindKnot
 │  │  ├─ SagaDetailScreen.tsx
 │  │  ├─ SagaScreen.tsx
 │  │  ├─ SparkScreen.tsx
+│  │  ├─ TestScreen.tsx
 │  │  ├─ ThemeInspectorScreen.tsx
 │  │  ├─ VaultScreen.tsx
 │  │  ├─ detail
@@ -113,7 +158,6 @@ MindKnot
 │  │     ├─ VaultLoopsScreen.tsx
 │  │     ├─ VaultNotesScreen.tsx
 │  │     ├─ VaultPathsScreen.tsx
-│  │     ├─ VaultSearchHeader.tsx
 │  │     └─ VaultSparksScreen.tsx
 │  ├─ services
 │  │  ├─ actionService.ts
@@ -123,10 +167,6 @@ MindKnot
 │  │  ├─ pathService.ts
 │  │  ├─ sagaService.ts
 │  │  └─ sparkService.ts
-│  ├─ state
-│  │  ├─ loopStore.ts
-│  │  ├─ pathStore.ts
-│  │  └─ sagaStore.ts
 │  ├─ styles
 │  │  ├─ colors.ts
 │  │  ├─ index.ts
@@ -135,7 +175,10 @@ MindKnot
 │  ├─ theme
 │  │  ├─ dark.ts
 │  │  ├─ light.ts
-│  │  └─ themeTypes.ts
+│  │  ├─ styleConstants.ts
+│  │  ├─ themeTypes.ts
+│  │  ├─ themeUtils.ts
+│  │  └─ tokens.ts
 │  ├─ types
 │  │  ├─ action.ts
 │  │  ├─ baseEntry.ts

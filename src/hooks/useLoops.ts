@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Loop } from '../types/loop';
 import { createLoop, getAllLoops, updateLoop as updateLoopService } from '../services/loopService';
-import { useSagaStore } from '../state/sagaStore';
+import { useSagaActions } from '../redux/hooks/stateHooks';
 import { executeSql } from '../database/database';
 
 export function useLoops() {
     const [loops, setLoops] = useState<Loop[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const selectedSagaId = useSagaStore(state => state.selectedSagaId);
+    const { selectedSagaId } = useSagaActions();
 
     const loadLoops = useCallback(async (sagaId?: string) => {
         try {

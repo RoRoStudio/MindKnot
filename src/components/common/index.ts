@@ -19,10 +19,11 @@ export { IconPicker } from '../molecules/IconPicker';
 // Organisms
 export { FilterableList } from '../organisms/FilterableList';
 export { FilterableListHeader, type Category } from '../organisms/FilterableListHeader';
-export { DetailScreenHeader } from '../organisms/DetailScreenHeader';
+export { EntryDetailHeader } from '../organisms/EntryDetailHeader';
 
 // Form components
 export { FormModal } from '../form/FormModal';
 export { FormSheet } from '../form/FormSheet';
 
 // Export other components as needed 
+export * from './ConfirmationModal'; 

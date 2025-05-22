@@ -17,6 +17,7 @@ export interface Action extends BaseEntry {
     completed: boolean;
     priority: number;
     subActions?: SubAction[];
+    subTasks?: { id: string; text: string; completed: boolean }[];
     parentId?: string; // For hierarchical actions or when part of Path/Loop
     parentType?: 'path' | 'milestone' | 'loop-item'; // Indicates what contains this action
 }

@@ -21,3 +21,14 @@ npx expo start -c
 
 # find critical errors:
 npx tsc --noEmit
+
+# fix frozen emulator
+#!/bin/bash
+/mnt/c/Users/rober/AppData/Local/Android/Sdk/emulator/emulator.exe -avd Pixel_8_API_35 -no-snapshot-load -no-snapshot-save -wipe-data -gpu swiftshader_indirect
+
+# not frozen
+/mnt/c/Users/rober/AppData/Local/Android/Sdk/emulator/emulator.exe -avd Pixel_8_API_35 
+
+then use this to make it executable:
+chmod +x ~/emulator.sh
+

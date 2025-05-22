@@ -3,9 +3,8 @@ import {
     View,
     TextInput,
     TouchableOpacity,
-    FlatList,
     Keyboard,
-    ScrollView,
+    Platform,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
@@ -13,7 +12,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 import { Label } from '../atoms/Label';
-import Button from '../atoms/Button';
 import FormErrorMessage from './FormErrorMessage';
 
 // Maximum label length for mobile UI
@@ -40,7 +38,10 @@ interface FormLabelInputProps<T extends FieldValues> {
 const USED_LABELS_STORAGE_KEY = 'mindknot_used_labels';
 
 // Keep a local copy of used labels for the current session
-let cachedUsedLabels: string[] = [];
+let cachedUsedLabels: string[] = [
+    "personal", "work", "important", "ideas", "todo",
+    "health", "fitness", "travel", "family", "shopping"
+];
 
 export default function FormLabelInput<T extends FieldValues>({
     name,
@@ -54,27 +55,10 @@ export default function FormLabelInput<T extends FieldValues>({
 }: FormLabelInputProps<T>) {
     const { theme } = useTheme();
     const [labelInput, setLabelInput] = useState('');
-    const [usedLabels, setUsedLabels] = useState<string[]>([]);
+    const [usedLabels, setUsedLabels] = useState<string[]>(cachedUsedLabels);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [isFocused, setIsFocused] = useState(false);
     const inputRef = useRef<TextInput>(null);
-
-    // Load previously used labels from storage
-    useEffect(() => {
-        const loadUsedLabels = async () => {
-            try {
-                // In a real implementation, this would use AsyncStorage
-                // Since we don't have it imported, we'll use the cached labels
-                if (cachedUsedLabels.length > 0) {
-                    setUsedLabels(cachedUsedLabels);
-                }
-            } catch (error) {
-                console.error('Error loading used labels:', error);
-            }
-        };
-
-        loadUsedLabels();
-    }, []);
 
     // Update suggestions when labelInput changes
     useEffect(() => {
@@ -94,7 +78,6 @@ export default function FormLabelInput<T extends FieldValues>({
 
     const styles = useStyles((theme) => ({
         container: {
-            flex: 1,
             width: '100%',
             display: 'flex',
             flexDirection: 'column',
@@ -117,9 +100,9 @@ export default function FormLabelInput<T extends FieldValues>({
             backgroundColor: theme.colors.surfaceVariant,
             borderRadius: theme.shape.radius.m,
             paddingHorizontal: theme.spacing.m,
-            paddingVertical: theme.spacing.s,
+            paddingVertical: 0,
             marginRight: theme.spacing.s,
-            minHeight: 48,
+            minHeight: 40,
         },
         input: {
             flex: 1,
@@ -127,32 +110,31 @@ export default function FormLabelInput<T extends FieldValues>({
             backgroundColor: 'transparent',
             fontSize: theme.typography.fontSize.m,
             padding: theme.spacing.s,
+            height: 40,
         },
         labelsContainer: {
             flexDirection: 'row',
             flexWrap: 'wrap',
             width: '100%',
-            marginBottom: theme.spacing.l,
+            marginBottom: theme.spacing.m,
         },
-        actionButton: {
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: 48,
-            height: 48,
+        addButton: {
+            width: 40,
+            height: 40,
             borderRadius: theme.shape.radius.m,
             backgroundColor: theme.colors.surfaceVariant,
+            justifyContent: 'center',
+            alignItems: 'center',
         },
         helperText: {
-            marginTop: theme.spacing.s,
+            marginTop: theme.spacing.xs,
             marginBottom: theme.spacing.m,
         },
         suggestionsContainer: {
-            marginVertical: theme.spacing.s,
+            marginBottom: theme.spacing.m,
             borderRadius: theme.shape.radius.m,
-            maxHeight: 200,
             backgroundColor: theme.colors.surfaceVariant,
             width: '100%',
-            marginBottom: theme.spacing.m,
         },
         suggestionItem: {
             padding: theme.spacing.m,
@@ -167,6 +149,7 @@ export default function FormLabelInput<T extends FieldValues>({
             color: theme.colors.textSecondary,
             fontSize: 12,
             marginLeft: theme.spacing.xs,
+            alignSelf: 'center',
         },
         sectionTitle: {
             fontSize: theme.typography.fontSize.m,
@@ -184,16 +167,16 @@ export default function FormLabelInput<T extends FieldValues>({
             marginRight: theme.spacing.xs,
             marginBottom: theme.spacing.xs,
         },
-        footer: {
-            width: '100%',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: 'auto',
-            paddingVertical: theme.spacing.m,
-        },
         contentContainer: {
-            flex: 1,
             width: '100%',
+        },
+        suggestionsWrap: {
+            width: '100%',
+        },
+        selectedLabelsTitle: {
+            fontSize: theme.typography.fontSize.m,
+            color: theme.colors.textSecondary,
+            marginBottom: theme.spacing.s,
         }
     }));
 
@@ -204,9 +187,6 @@ export default function FormLabelInput<T extends FieldValues>({
             const newUsedLabels = [label, ...usedLabels.slice(0, 49)]; // Keep max 50 labels
             setUsedLabels(newUsedLabels);
             cachedUsedLabels = newUsedLabels;
-
-            // In a real implementation, this would save to AsyncStorage
-            // AsyncStorage.setItem(USED_LABELS_STORAGE_KEY, JSON.stringify(newUsedLabels));
         }
     };
 
@@ -231,6 +211,11 @@ export default function FormLabelInput<T extends FieldValues>({
 
         setLabelInput('');
         setSuggestions([]);
+
+        // Submit automatically when adding a label if on mobile
+        if (Platform.OS !== 'web' && onDone && !currentLabels.includes(label)) {
+            Keyboard.dismiss();
+        }
     };
 
     const handleRemoveLabel = (label: string, onChange: (value: string[]) => void, currentLabels: string[]) => {
@@ -255,11 +240,10 @@ export default function FormLabelInput<T extends FieldValues>({
         }
         setLabelInput('');
         setSuggestions([]);
-    };
 
-    const handleDone = () => {
-        if (onDone) {
-            onDone();
+        // Dismiss keyboard after selecting a suggestion on mobile
+        if (Platform.OS !== 'web' && onDone && !currentLabels.includes(label)) {
+            Keyboard.dismiss();
         }
     };
 
@@ -278,6 +262,25 @@ export default function FormLabelInput<T extends FieldValues>({
                 onLabelsChange(newLabels);
             }
         }
+    };
+
+    // Render suggestions without using nested ScrollViews (avoids VirtualizedList warnings)
+    const renderSuggestions = (onChange: (value: string[]) => void, labels: string[]) => {
+        if (!isFocused || suggestions.length === 0) return null;
+
+        return (
+            <View style={styles.suggestionsContainer}>
+                {suggestions.map((item, index) => (
+                    <TouchableOpacity
+                        key={`suggestion-${index}`}
+                        style={styles.suggestionItem}
+                        onPress={() => handleSelectSuggestion(item, onChange, labels)}
+                    >
+                        <Typography style={styles.suggestionText}>{item}</Typography>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        );
     };
 
     return (
@@ -324,61 +327,54 @@ export default function FormLabelInput<T extends FieldValues>({
                                 </View>
 
                                 <TouchableOpacity
-                                    style={styles.actionButton}
+                                    style={styles.addButton}
                                     onPress={() => handleAddLabel(onChange, labels)}
                                     disabled={!labelInput.trim()}
                                 >
                                     <Icon
                                         name="plus"
-                                        size={24}
+                                        size={16} // Smaller icon
                                         color={labelInput.trim() ? theme.colors.primary : theme.colors.textSecondary}
                                     />
                                 </TouchableOpacity>
                             </View>
 
-                            {/* Suggestions */}
-                            {isFocused && suggestions.length > 0 && (
-                                <View style={styles.suggestionsContainer}>
-                                    <FlatList
-                                        data={suggestions}
-                                        keyExtractor={(item) => item}
-                                        renderItem={({ item }) => (
-                                            <TouchableOpacity
-                                                style={styles.suggestionItem}
-                                                onPress={() => handleSelectSuggestion(item, onChange, labels)}
-                                            >
-                                                <Typography style={styles.suggestionText}>{item}</Typography>
-                                            </TouchableOpacity>
-                                        )}
-                                    />
-                                </View>
-                            )}
+                            {/* Suggestions - render directly without FlatList */}
+                            <View style={styles.suggestionsWrap}>
+                                {renderSuggestions(onChange, labels)}
+                            </View>
 
-                            {/* Display added labels */}
+                            {/* Display added labels with header */}
                             {labels && labels.length > 0 && (
-                                <View style={styles.labelsContainer}>
-                                    {labels.map((label: string, index: number) => (
-                                        <Label
-                                            key={index}
-                                            label={label}
-                                            size="medium"
-                                            removable
-                                            onRemove={() => handleRemoveLabel(label, onChange, labels)}
-                                        />
-                                    ))}
-                                </View>
+                                <>
+                                    <Typography style={styles.selectedLabelsTitle}>
+                                        Selected Labels
+                                    </Typography>
+                                    <View style={styles.labelsContainer}>
+                                        {labels.map((label: string, index: number) => (
+                                            <Label
+                                                key={`current-${index}`}
+                                                label={label}
+                                                size="medium"
+                                                removable
+                                                onRemove={() => handleRemoveLabel(label, onChange, labels)}
+                                                style={styles.existingLabelChip}
+                                            />
+                                        ))}
+                                    </View>
+                                </>
                             )}
 
                             {/* Display existing labels for selection */}
                             {availableLabels.length > 0 && (
                                 <>
                                     <Typography style={styles.sectionTitle}>
-                                        Recently Used Labels
+                                        Recent Labels
                                     </Typography>
                                     <View style={styles.existingLabelsContainer}>
                                         {availableLabels.map((label, index) => (
                                             <Label
-                                                key={index}
+                                                key={`available-${index}`}
                                                 label={label}
                                                 size="medium"
                                                 selectable
@@ -402,21 +398,9 @@ export default function FormLabelInput<T extends FieldValues>({
                                 </Typography>
                             )}
                         </View>
-
-                        {onDone && (
-                            <View style={styles.footer}>
-                                <Button
-                                    label="Done"
-                                    variant="primary"
-                                    onPress={handleDone}
-                                    size="medium"
-                                    fullWidth={false}
-                                />
-                            </View>
-                        )}
                     </View>
                 );
             }}
         />
     );
-} 
+}

@@ -1,5 +1,5 @@
 // src/components/form/FormDatePicker.tsx
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { View, TouchableOpacity, Platform } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import {
@@ -15,6 +15,11 @@ import { Icon } from '../atoms/Icon';
 import FormErrorMessage from './FormErrorMessage';
 import { useTheme } from '../../contexts/ThemeContext';
 
+// Export interface for ref
+export interface FormDatePickerRef {
+    openPicker: () => void;
+}
+
 interface FormDatePickerProps<T extends FieldValues> {
     name: Path<T>;
     control: Control<T>;
@@ -29,22 +34,34 @@ interface FormDatePickerProps<T extends FieldValues> {
     formatDate?: (date: Date) => string;
 }
 
-export default function FormDatePicker<T extends FieldValues>({
-    name,
-    control,
-    label,
-    rules,
-    placeholder = 'Select a date',
-    helperText,
-    disabled = false,
-    mode = 'date',
-    minimumDate,
-    maximumDate,
-    formatDate,
-}: FormDatePickerProps<T>) {
+const FormDatePicker = forwardRef<FormDatePickerRef, FormDatePickerProps<any>>((props, ref) => {
+    const {
+        name,
+        control,
+        label,
+        rules,
+        placeholder = 'Select a date',
+        helperText,
+        disabled = false,
+        mode = 'date',
+        minimumDate,
+        maximumDate,
+        formatDate,
+    } = props;
+
     const { theme } = useTheme();
     const [showPicker, setShowPicker] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
+
+    // Expose the openPicker method to parent components
+    useImperativeHandle(ref, () => ({
+        openPicker: () => {
+            if (!disabled) {
+                setShowPicker(true);
+                setIsFocused(true);
+            }
+        }
+    }));
 
     const styles = useStyles((theme) => ({
         container: {
@@ -222,4 +239,6 @@ export default function FormDatePicker<T extends FieldValues>({
             }}
         />
     );
-}
+});
+
+export default FormDatePicker;

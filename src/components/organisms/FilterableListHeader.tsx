@@ -128,37 +128,53 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
             zIndex: 10,
         },
         searchRow: {
+            padding: 10,
+            paddingHorizontal: 16,
+        },
+        searchAndFilterContainer: {
             flexDirection: 'row',
-            alignItems: 'center',
-            padding: theme.spacing.s,
-            paddingHorizontal: theme.spacing.m,
+            backgroundColor: '#F5F5F7',
+            borderRadius: 8,
+            height: 40,
+            overflow: 'hidden',
         },
         searchContainer: {
             flex: 1,
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.m,
-            paddingHorizontal: theme.spacing.s,
-            height: 40,
+            paddingHorizontal: 12,
         },
         searchInput: {
             flex: 1,
-            marginLeft: theme.spacing.s,
+            marginLeft: 8,
             color: theme.colors.textPrimary,
             fontSize: theme.typography.fontSize.m,
             height: 40,
             padding: 0,
         },
         filtersButton: {
-            marginLeft: theme.spacing.s,
-            padding: theme.spacing.xs,
-            backgroundColor: filterCount > 0 ? theme.colors.primary : theme.colors.surface,
-            borderRadius: theme.shape.radius.s,
-            flexDirection: 'row',
+            width: 40,
+            height: 40,
             alignItems: 'center',
             justifyContent: 'center',
-            paddingHorizontal: theme.spacing.s,
+            position: 'relative',
+        },
+        filtersBadge: {
+            position: 'absolute',
+            top: 5,
+            right: 5,
+            backgroundColor: theme.colors.primary,
+            width: 16,
+            height: 16,
+            borderRadius: 8,
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1,
+        },
+        filtersBadgeText: {
+            color: 'white',
+            fontSize: 10,
+            fontWeight: 'bold',
         },
         filtersContainer: {
             padding: theme.spacing.s,
@@ -209,20 +225,6 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
         },
         activeSortButtonText: {
             color: theme.colors.onPrimary,
-        },
-        badge: {
-            backgroundColor: theme.colors.onPrimary,
-            borderRadius: 10,
-            width: 16,
-            height: 16,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginLeft: 4,
-        },
-        badgeText: {
-            color: theme.colors.primary,
-            fontSize: 10,
-            fontWeight: 'bold',
         },
         clearFiltersRow: {
             flexDirection: 'row',
@@ -417,45 +419,47 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
     return (
         <View style={styles.container}>
             <View style={styles.searchRow}>
-                <View style={styles.searchContainer}>
-                    <Icon
-                        name="search"
-                        width={18}
-                        height={18}
-                        color={theme.colors.textSecondary}
-                    />
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Search..."
-                        placeholderTextColor={theme.colors.textSecondary}
-                        value={searchTerm}
-                        onChangeText={onSearchChange}
-                    />
-                    {searchTerm ? (
-                        <TouchableOpacity onPress={() => onSearchChange('')}>
-                            <Icon
-                                name="x"
-                                width={16}
-                                height={16}
-                                color={theme.colors.textSecondary}
-                            />
-                        </TouchableOpacity>
-                    ) : null}
-                </View>
+                <View style={styles.searchAndFilterContainer}>
+                    <View style={styles.searchContainer}>
+                        <Icon
+                            name="search"
+                            width={18}
+                            height={18}
+                            color="#757575"
+                        />
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="Search..."
+                            placeholderTextColor="#757575"
+                            value={searchTerm}
+                            onChangeText={onSearchChange}
+                        />
+                        {searchTerm ? (
+                            <TouchableOpacity onPress={() => onSearchChange('')}>
+                                <Icon
+                                    name="x"
+                                    width={16}
+                                    height={16}
+                                    color="#757575"
+                                />
+                            </TouchableOpacity>
+                        ) : null}
+                    </View>
 
-                <TouchableOpacity style={styles.filtersButton} onPress={toggleFilters}>
-                    <Icon
-                        name="sliders-vertical"
-                        width={18}
-                        height={18}
-                        color={theme.colors.textPrimary}
-                    />
-                    {filterCount > 0 && (
-                        <View style={styles.badge}>
-                            <Typography style={styles.badgeText}>{filterCount}</Typography>
-                        </View>
-                    )}
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.filtersButton} onPress={toggleFilters}>
+                        <Icon
+                            name="sliders-vertical"
+                            width={20}
+                            height={20}
+                            color="#333333"
+                        />
+                        {filterCount > 0 && (
+                            <View style={styles.filtersBadge}>
+                                <Typography style={styles.filtersBadgeText}>{filterCount}</Typography>
+                            </View>
+                        )}
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {renderFilterOptions()}
