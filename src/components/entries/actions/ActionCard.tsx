@@ -1,17 +1,12 @@
 // src/components/entries/actions/ActionCard.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Action } from '../../../types/action';
 import { Category } from '../../../types/category';
 import { ENTRY_TYPES, EntryType } from '../../../constants/entryTypes';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { Icon } from '../../common';
-import { Typography } from '../../common';
-import { LabelRow } from '../../shared/LabelRow';
-import { CategoryPill } from '../../shared/CategoryPill';
-import { RootStackParamList } from '../../../types/navigation-types';
+import { EntryCard } from '../EntryCard';
 import { updateAction, getActionById } from '../../../api/actionService';
 import { getCategoryById } from '../../../api/categoryService';
 import { ConfirmationModal } from '../../shared/ConfirmationModal';
@@ -36,9 +31,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     onHide
 }) => {
     const { theme } = useTheme();
-    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [expanded, setExpanded] = useState(false);
-    const [showActions, setShowActions] = useState(false);
     const [newSubAction, setNewSubAction] = useState('');
     const [subTasks, setSubTasks] = useState(action.subTasks || []);
     const [isDone, setIsDone] = useState(action.done || false);
@@ -209,20 +202,8 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         }
     };
 
-    const handlePress = () => {
-        // Navigate to ActionScreen
-        navigation.navigate('ActionScreen', {
-            mode: 'view',
-            id: action.id
-        });
-    };
-
     const handleToggleExpand = () => {
         setExpanded(!expanded);
-    };
-
-    const toggleMenu = () => {
-        setShowActions(!showActions);
     };
 
     const formatDate = (dateString?: string) => {
@@ -329,23 +310,6 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     // Fix the plus-circle icon
     const plusCircleIcon = <Icon name="circle-plus" width={20} height={20} color="#6B7280" />;
 
-    // Handle quick actions
-    const handleStar = () => {
-        if (onStar) onStar(action.id);
-    };
-
-    const handleDuplicate = () => {
-        if (onDuplicate) onDuplicate(action.id);
-    };
-
-    const handleArchive = () => {
-        if (onArchive) onArchive(action.id);
-    };
-
-    const handleHide = () => {
-        if (onHide) onHide(action.id);
-    };
-
     // Render the expanded content with sub-actions
     const renderExpandedContent = () => (
         <View style={styles.subActionsContainer}>
@@ -428,162 +392,37 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     );
 
     return (
-        <TouchableOpacity
-            style={styles.container}
-            onPress={handlePress}
-            activeOpacity={0.9}
-        >
-            <View style={[
-                styles.card,
-                {
-                    borderTopColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
-                    borderLeftColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
-                    borderRightColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
-                    borderBottomColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
-                }
-            ]}>
-                <View style={styles.header}>
-                    <View style={styles.headerLeft}>
-                        <TouchableOpacity
-                            onPress={handleToggleDone}
-                            style={styles.checkboxContainer}
-                        >
-                            <View style={[
-                                styles.checkbox,
-                                isDone && {
-                                    backgroundColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
-                                    borderColor: ENTRY_TYPES[EntryType.ACTION].borderColor
-                                }
-                            ]}>
-                                {isDone && (
-                                    <Icon name="check" width={14} height={14} color="#FFFFFF" />
-                                )}
-                            </View>
-                        </TouchableOpacity>
-
-                        <View style={styles.contentContainer}>
-                            <Text style={[
-                                styles.title,
-                                isDone && styles.titleCompleted
-                            ]}>
-                                {action.title}
-                            </Text>
-
-                            {categoryInfo && (
-                                <CategoryPill
-                                    title={categoryInfo.title}
-                                    color={categoryInfo.color}
-                                    size="small"
-                                    style={styles.categoryPill}
-                                />
-                            )}
-
-                            {action.dueDate && (
-                                <View style={styles.dueDateContainer}>
-                                    <Icon name="calendar" width={16} height={16} color="#6B7280" />
-                                    <Text style={styles.dueDateText}>
-                                        Target: {formatDate(action.dueDate)}
-                                    </Text>
-                                </View>
-                            )}
-
-                            {action.tags && action.tags.length > 0 && (
-                                <View style={styles.tagsContainer}>
-                                    <LabelRow
-                                        labels={action.tags}
-                                        size="small"
-                                        maxLabelsToShow={3}
-                                        gap={6}
-                                    />
-                                </View>
-                            )}
-                        </View>
-                    </View>
-
-                    <View style={styles.headerRight}>
-                        <TouchableOpacity
-                            onPress={handleToggleExpand}
-                            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-                            style={styles.expandButton}
-                        >
-                            {hasSubActions && !expanded && (
-                                <View style={styles.subTaskCounter}>
-                                    <Text style={styles.subTaskCounterText}>{completedSubTasks}/{totalSubTasks}</Text>
-                                </View>
-                            )}
-                            <Icon
-                                name={expanded ? "chevron-up" : "chevron-down"}
-                                width={24}
-                                height={24}
-                                color="#9CA3AF"
-                            />
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            onPress={toggleMenu}
-                            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-                            style={styles.moreButton}
-                        >
-                            <Icon name="ellipsis-vertical" width={24} height={24} color="#9CA3AF" />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {expanded && (
-                    <View style={styles.expandedContainer}>
-                        {renderExpandedContent()}
-                    </View>
-                )}
-            </View>
-
-            {/* Actions Menu (Dropdown) - Will be shown when showActions is true */}
-            {showActions && (
-                <View style={styles.actionsMenu}>
-                    <TouchableOpacity
-                        style={styles.actionMenuItem}
-                        onPress={() => {
-                            handleStar();
-                            setShowActions(false);
-                        }}
-                    >
-                        <Icon name="star" width={16} height={16} color="#6B7280" />
-                        <Text style={styles.actionMenuItemText}>Star</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.actionMenuItem}
-                        onPress={() => {
-                            handleDuplicate();
-                            setShowActions(false);
-                        }}
-                    >
-                        <Icon name="copy" width={16} height={16} color="#6B7280" />
-                        <Text style={styles.actionMenuItemText}>Duplicate</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.actionMenuItem}
-                        onPress={() => {
-                            handleArchive();
-                            setShowActions(false);
-                        }}
-                    >
-                        <Icon name="archive" width={16} height={16} color="#6B7280" />
-                        <Text style={styles.actionMenuItemText}>Archive</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.actionMenuItem}
-                        onPress={() => {
-                            handleHide();
-                            setShowActions(false);
-                        }}
-                    >
-                        <Icon name="eye-off" width={16} height={16} color="#6B7280" />
-                        <Text style={styles.actionMenuItemText}>Hide</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
+        <>
+            <EntryCard
+                id={action.id}
+                title={action.title}
+                description={action.description}
+                iconName={ENTRY_TYPES[EntryType.ACTION].icon}
+                borderColor={ENTRY_TYPES[EntryType.ACTION].borderColor}
+                createdAt={action.createdAt}
+                tags={action.tags}
+                categoryId={action.categoryId}
+                onPress={onPress}
+                isStarred={action.isStarred}
+                onStar={onStar}
+                onDuplicate={onDuplicate}
+                onArchive={onArchive}
+                onHide={onHide}
+                done={isDone}
+                dueDate={action.dueDate}
+                // Checkbox functionality
+                showCheckbox={true}
+                checkboxChecked={isDone}
+                onCheckboxPress={handleToggleDone}
+                // Expandable functionality
+                expandable={true}
+                expanded={expanded}
+                onToggleExpand={handleToggleExpand}
+                expandedContent={renderExpandedContent()}
+                // Sub-task counter
+                subTaskCounter={hasSubActions ? `${completedSubTasks}/${totalSubTasks}` : undefined}
+                navigationScreen="ActionScreen"
+            />
 
             {/* Confirmation Modal for completing sub-tasks */}
             <ConfirmationModal
@@ -597,114 +436,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                 onCancel={handleModalCancel}
                 accentColor={ENTRY_TYPES[EntryType.ACTION].borderColor}
             />
-        </TouchableOpacity>
+        </>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        marginBottom: 16,
-        position: 'relative',
-    },
-    card: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        borderWidth: 1,
-        borderTopWidth: 1,
-        borderLeftWidth: 1,
-        borderRightWidth: 1,
-        borderBottomWidth: 4,
-        padding: 16,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-    },
-    headerLeft: {
-        flexDirection: 'row',
-        flex: 1,
-        alignItems: 'flex-start',
-    },
-    headerRight: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 8,
-        flexShrink: 0,
-    },
-    checkboxContainer: {
-        marginTop: 4,
-        marginRight: 12,
-        flexShrink: 0,
-    },
-    checkbox: {
-        width: 20,
-        height: 20,
-        borderWidth: 1,
-        borderColor: '#D1D5DB',
-        borderRadius: 4,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    contentContainer: {
-        flex: 1,
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#111827',
-        marginBottom: 4,
-    },
-    titleCompleted: {
-        textDecorationLine: 'line-through',
-        color: '#9CA3AF',
-    },
-    categoryPill: {
-        marginTop: 4,
-    },
-    dueDateContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: 8,
-    },
-    dueDateText: {
-        fontSize: 14,
-        color: '#6B7280',
-        marginLeft: 4,
-    },
-    tagsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginTop: 12,
-    },
-    expandButton: {
-        marginRight: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    subTaskCounter: {
-        backgroundColor: '#E5E7EB',
-        borderRadius: 999,
-        paddingHorizontal: 6,
-        height: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 4,
-    },
-    subTaskCounterText: {
-        fontSize: 12,
-        fontWeight: '500',
-        color: '#6B7280',
-    },
-    moreButton: {
-        // No specific styling needed
-    },
-    expandedContainer: {
-        marginTop: 16,
-        paddingTop: 16,
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-    },
     subActionsContainer: {
         gap: 12,
     },
@@ -769,32 +505,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
         color: '#6B7280',
-        marginLeft: 8,
-    },
-    actionsMenu: {
-        position: 'absolute',
-        top: 40,
-        right: 16,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 3,
-        padding: 8,
-        zIndex: 10,
-        minWidth: 140,
-    },
-    actionMenuItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 8,
-        borderRadius: 4,
-    },
-    actionMenuItemText: {
-        fontSize: 14,
-        color: '#4B5563',
         marginLeft: 8,
     },
 });

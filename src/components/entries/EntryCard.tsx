@@ -39,6 +39,12 @@ interface EntryCardProps {
     // Navigation
     navigationScreen?: keyof RootStackParamList;
     navigationParams?: any;
+    // Checkbox functionality for ActionCard
+    showCheckbox?: boolean;
+    checkboxChecked?: boolean;
+    onCheckboxPress?: () => void;
+    // Sub-task counter for ActionCard
+    subTaskCounter?: string;
 }
 
 export const EntryCard: React.FC<EntryCardProps> = ({
@@ -65,6 +71,10 @@ export const EntryCard: React.FC<EntryCardProps> = ({
     done = false,
     navigationScreen,
     navigationParams,
+    showCheckbox = false,
+    checkboxChecked = false,
+    onCheckboxPress,
+    subTaskCounter,
 }) => {
     const { theme } = useTheme();
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -148,6 +158,25 @@ export const EntryCard: React.FC<EntryCardProps> = ({
             ]}>
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
+                        {showCheckbox && (
+                            <TouchableOpacity
+                                onPress={onCheckboxPress}
+                                style={styles.checkboxContainer}
+                            >
+                                <View style={[
+                                    styles.checkbox,
+                                    checkboxChecked && {
+                                        backgroundColor: borderColor,
+                                        borderColor: borderColor
+                                    }
+                                ]}>
+                                    {checkboxChecked && (
+                                        <Icon name="check" width={14} height={14} color="#FFFFFF" />
+                                    )}
+                                </View>
+                            </TouchableOpacity>
+                        )}
+
                         <View style={styles.contentContainer}>
                             <Text style={[
                                 styles.title,
@@ -219,6 +248,11 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                                 hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
                                 style={styles.expandButton}
                             >
+                                {subTaskCounter && !expanded && (
+                                    <View style={styles.subTaskCounter}>
+                                        <Text style={styles.subTaskCounterText}>{subTaskCounter}</Text>
+                                    </View>
+                                )}
                                 <Icon
                                     name={expanded ? "chevron-up" : "chevron-down"}
                                     width={24}
@@ -397,7 +431,8 @@ const styles = StyleSheet.create({
     },
     expandButton: {
         marginRight: 8,
-        padding: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     moreButton: {
         padding: 4,
@@ -433,5 +468,33 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#4B5563',
         marginLeft: 8,
+    },
+    checkboxContainer: {
+        marginTop: 4,
+        marginRight: 12,
+        flexShrink: 0,
+    },
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        borderRadius: 4,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    subTaskCounter: {
+        backgroundColor: '#E5E7EB',
+        borderRadius: 999,
+        paddingHorizontal: 6,
+        height: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 4,
+    },
+    subTaskCounterText: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: '#6B7280',
     },
 });
