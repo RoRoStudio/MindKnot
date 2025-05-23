@@ -2,7 +2,7 @@
 import React, { useCallback, memo } from 'react';
 import { Note } from '../../../types/note';
 import { EntryCard } from '../EntryCard';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { ENTRY_TYPES, EntryType } from '../../../constants/entryTypes';
 
 interface NoteCardProps {
     note: Note;
@@ -21,8 +21,6 @@ export const NoteCard: React.FC<NoteCardProps> = memo(({
     onArchive,
     onHide
 }) => {
-    const { theme } = useTheme();
-
     // Handle quick actions with useCallback to prevent unnecessary re-renders
     const handleStar = useCallback(() => {
         if (onStar) onStar(note.id);
@@ -45,8 +43,8 @@ export const NoteCard: React.FC<NoteCardProps> = memo(({
             id={note.id}
             title={note.title}
             description={note.body}
-            iconName="file-text"
-            iconColor={theme.colors.primary}
+            iconName={ENTRY_TYPES[EntryType.NOTE].icon}
+            borderColor={ENTRY_TYPES[EntryType.NOTE].borderColor}
             createdAt={note.createdAt}
             tags={note.tags}
             categoryId={note.categoryId}
@@ -56,6 +54,9 @@ export const NoteCard: React.FC<NoteCardProps> = memo(({
             onDuplicate={handleDuplicate}
             onArchive={handleArchive}
             onHide={handleHide}
+            // Notes don't need to be expandable
+            expandable={false}
+            navigationScreen="NoteScreen"
         />
     );
 });

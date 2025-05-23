@@ -16,6 +16,7 @@ export type EntryTypeConfig = {
     pluralLabel: string;
     showInVault: boolean;
     showInMomentum: boolean;
+    borderColor: string;
 };
 
 export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
@@ -25,7 +26,8 @@ export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
         pluralLabel: 'Notes',
         icon: 'scroll-text',
         showInVault: true,
-        showInMomentum: false
+        showInMomentum: false,
+        borderColor: '#3B82F6'
     },
     [EntryType.SPARK]: {
         type: EntryType.SPARK,
@@ -33,7 +35,8 @@ export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
         pluralLabel: 'Sparks',
         icon: 'zap',
         showInVault: true,
-        showInMomentum: true
+        showInMomentum: true,
+        borderColor: '#F59E0B'
     },
     [EntryType.ACTION]: {
         type: EntryType.ACTION,
@@ -41,7 +44,8 @@ export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
         pluralLabel: 'Actions',
         icon: 'square-check',
         showInVault: true,
-        showInMomentum: true
+        showInMomentum: true,
+        borderColor: '#4ADE80'
     },
     [EntryType.PATH]: {
         type: EntryType.PATH,
@@ -49,7 +53,8 @@ export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
         pluralLabel: 'Paths',
         icon: 'compass',
         showInVault: true,
-        showInMomentum: true
+        showInMomentum: true,
+        borderColor: '#8B5CF6'
     },
     [EntryType.LOOP]: {
         type: EntryType.LOOP,
@@ -57,7 +62,8 @@ export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
         pluralLabel: 'Loops',
         icon: 'infinity',
         showInVault: true,
-        showInMomentum: true
+        showInMomentum: true,
+        borderColor: '#06B6D4'
     }
 };
 

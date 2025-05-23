@@ -7,11 +7,11 @@ import {
     ViewStyle,
     Dimensions
 } from 'react-native';
-import { BottomSheet } from '../molecules/BottomSheet';
-import { Typography } from '../atoms/Typography';
+import { BottomSheet } from '../shared/BottomSheet';
+import { Typography } from '../shared/Typography';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useBottomSheetConfig } from '../../contexts/BottomSheetConfig';
-import { Button } from '../atoms/Button';
+import { Button } from '../shared/Button';
 
 /**
  * Props for the FormSheet component

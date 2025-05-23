@@ -28,7 +28,8 @@ export default function VaultSparksScreen() {
     // Extract all unique tags from sparks
     const allTags = useMemo(() => {
         const tagSet = new Set<string>();
-        sparks.forEach(spark => spark.tags?.forEach(tag => tagSet.add(tag)));
+        const sparksArray = Array.isArray(sparks) ? sparks : [];
+        sparksArray.forEach((spark: Spark) => spark.tags?.forEach(tag => tagSet.add(tag)));
         return Array.from(tagSet).sort();
     }, [sparks]);
 
@@ -120,7 +121,7 @@ export default function VaultSparksScreen() {
     return (
         <>
             <FilterableList
-                data={sparks}
+                data={Array.isArray(sparks) ? sparks : []}
                 loadData={async () => { await loadSparks(); }}
                 renderItem={renderItem}
                 allTags={allTags}

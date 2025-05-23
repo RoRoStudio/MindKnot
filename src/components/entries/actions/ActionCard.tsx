@@ -4,14 +4,17 @@ import { View, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-nativ
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Action } from '../../../types/action';
+import { Category } from '../../../types/category';
+import { ENTRY_TYPES, EntryType } from '../../../constants/entryTypes';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { Icon } from '../../common';
 import { Typography } from '../../common';
-import { Label } from '../../atoms/Label';
-import { CategoryPill } from '../../molecules/CategoryPill';
+import { LabelRow } from '../../shared/LabelRow';
+import { CategoryPill } from '../../shared/CategoryPill';
 import { RootStackParamList } from '../../../types/navigation-types';
-import { updateAction, getActionById } from '../../../services/actionService';
-import { ConfirmationModal } from '../../common/ConfirmationModal';
+import { updateAction, getActionById } from '../../../api/actionService';
+import { getCategoryById } from '../../../api/categoryService';
+import { ConfirmationModal } from '../../shared/ConfirmationModal';
 
 interface ActionCardProps {
     action: Action;
@@ -42,9 +45,29 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [editingSubTaskId, setEditingSubTaskId] = useState<string | null>(null);
     const [editingSubTaskText, setEditingSubTaskText] = useState('');
+    const [categoryInfo, setCategoryInfo] = useState<Category | null>(null);
 
     const hasSubActions = subTasks && subTasks.length > 0;
     const inputRef = useRef<TextInput>(null);
+
+    // Fetch category info when action.categoryId changes
+    useEffect(() => {
+        const fetchCategoryInfo = async () => {
+            if (action.categoryId) {
+                try {
+                    const category = await getCategoryById(action.categoryId);
+                    setCategoryInfo(category);
+                } catch (error) {
+                    console.error('Error fetching category:', error);
+                    setCategoryInfo(null);
+                }
+            } else {
+                setCategoryInfo(null);
+            }
+        };
+
+        fetchCategoryInfo();
+    }, [action.categoryId]);
 
     // Refresh data from database when action ID changes
     useEffect(() => {
@@ -303,30 +326,106 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         setIsDone(isDone);
     };
 
-    // Get category info based on categoryId
-    const getCategoryInfo = () => {
-        // In a real app, you would fetch the category info from your store/service
-        if (!action.categoryId) return null;
-
-        // Mock category data - in real app would come from a category service
-        const categories = {
-            'home': { title: 'Home', color: '#4ADE80' },
-            'project-x': { title: 'Project X', color: '#3B82F6' },
-            'work': { title: 'Work', color: '#F97316' },
-            'personal': { title: 'Personal', color: '#8B5CF6' },
-        };
-
-        // Default to Project X if category not found
-        return categories[action.categoryId as keyof typeof categories] || categories['project-x'];
-    };
-
-    const categoryInfo = getCategoryInfo();
-
-    // Fix the more-vertical icon
-    const moreVertIcon = <Icon name="ellipsis-vertical" width={24} height={24} color="#9CA3AF" />;
-
     // Fix the plus-circle icon
     const plusCircleIcon = <Icon name="circle-plus" width={20} height={20} color="#6B7280" />;
+
+    // Handle quick actions
+    const handleStar = () => {
+        if (onStar) onStar(action.id);
+    };
+
+    const handleDuplicate = () => {
+        if (onDuplicate) onDuplicate(action.id);
+    };
+
+    const handleArchive = () => {
+        if (onArchive) onArchive(action.id);
+    };
+
+    const handleHide = () => {
+        if (onHide) onHide(action.id);
+    };
+
+    // Render the expanded content with sub-actions
+    const renderExpandedContent = () => (
+        <View style={styles.subActionsContainer}>
+            {hasSubActions && (
+                <Text style={styles.subActionsHeading}>Sub-actions</Text>
+            )}
+
+            {subTasks.map((subTask) => (
+                <View key={subTask.id} style={styles.subActionRow}>
+                    <TouchableOpacity
+                        onPress={() => handleToggleSubTaskDone(subTask.id)}
+                        style={styles.subActionCheckboxContainer}
+                    >
+                        <View style={[
+                            styles.subActionCheckbox,
+                            subTask.completed && {
+                                backgroundColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
+                                borderColor: ENTRY_TYPES[EntryType.ACTION].borderColor
+                            }
+                        ]}>
+                            {subTask.completed && (
+                                <Icon name="check" width={14} height={14} color="#FFFFFF" />
+                            )}
+                        </View>
+                    </TouchableOpacity>
+
+                    {editingSubTaskId === subTask.id ? (
+                        <TextInput
+                            ref={inputRef}
+                            style={[
+                                styles.subActionInput,
+                                subTask.completed && styles.subActionTextCompleted
+                            ]}
+                            value={editingSubTaskText}
+                            onChangeText={setEditingSubTaskText}
+                            onBlur={saveSubTaskEdit}
+                            onSubmitEditing={saveSubTaskEdit}
+                            autoFocus
+                            returnKeyType="done"
+                        />
+                    ) : (
+                        <TouchableOpacity
+                            style={styles.subActionTextContainer}
+                            onPress={() => startEditingSubTask(subTask.id, subTask.text)}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={[
+                                styles.subActionText,
+                                subTask.completed && styles.subActionTextCompleted
+                            ]}>
+                                {subTask.text}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            ))}
+
+            <View style={styles.addSubActionContainer}>
+                <View style={styles.addSubActionInputContainer}>
+                    <TextInput
+                        style={styles.addSubActionInput}
+                        placeholder="Add a sub-action..."
+                        placeholderTextColor="#9CA3AF"
+                        value={newSubAction}
+                        onChangeText={setNewSubAction}
+                        onSubmitEditing={addNewSubAction}
+                        returnKeyType="done"
+                    />
+                </View>
+
+                <TouchableOpacity
+                    style={styles.addSubActionButton}
+                    onPress={addNewSubAction}
+                >
+                    {plusCircleIcon}
+                    <Text style={styles.addSubActionText}>Add sub-action</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
 
     return (
         <TouchableOpacity
@@ -336,7 +435,12 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         >
             <View style={[
                 styles.card,
-                { borderColor: theme.colors.success }
+                {
+                    borderTopColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
+                    borderLeftColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
+                    borderRightColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
+                    borderBottomColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
+                }
             ]}>
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
@@ -347,8 +451,8 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                             <View style={[
                                 styles.checkbox,
                                 isDone && {
-                                    backgroundColor: theme.colors.success,
-                                    borderColor: theme.colors.success
+                                    backgroundColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
+                                    borderColor: ENTRY_TYPES[EntryType.ACTION].borderColor
                                 }
                             ]}>
                                 {isDone && (
@@ -385,14 +489,12 @@ export const ActionCard: React.FC<ActionCardProps> = ({
 
                             {action.tags && action.tags.length > 0 && (
                                 <View style={styles.tagsContainer}>
-                                    {action.tags.map((tag, index) => (
-                                        <Label
-                                            key={index}
-                                            label={tag}
-                                            size="small"
-                                            style={styles.label}
-                                        />
-                                    ))}
+                                    <LabelRow
+                                        labels={action.tags}
+                                        size="small"
+                                        maxLabelsToShow={3}
+                                        gap={6}
+                                    />
                                 </View>
                             )}
                         </View>
@@ -422,88 +524,14 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                             hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
                             style={styles.moreButton}
                         >
-                            {moreVertIcon}
+                            <Icon name="ellipsis-vertical" width={24} height={24} color="#9CA3AF" />
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 {expanded && (
-                    <View style={styles.subActionsContainer}>
-                        {hasSubActions && (
-                            <Text style={styles.subActionsHeading}>Sub-actions</Text>
-                        )}
-
-                        {subTasks.map((subTask) => (
-                            <View key={subTask.id} style={styles.subActionRow}>
-                                <TouchableOpacity
-                                    onPress={() => handleToggleSubTaskDone(subTask.id)}
-                                    style={styles.subActionCheckboxContainer}
-                                >
-                                    <View style={[
-                                        styles.subActionCheckbox,
-                                        subTask.completed && {
-                                            backgroundColor: theme.colors.success,
-                                            borderColor: theme.colors.success
-                                        }
-                                    ]}>
-                                        {subTask.completed && (
-                                            <Icon name="check" width={14} height={14} color="#FFFFFF" />
-                                        )}
-                                    </View>
-                                </TouchableOpacity>
-
-                                {editingSubTaskId === subTask.id ? (
-                                    <TextInput
-                                        ref={inputRef}
-                                        style={[
-                                            styles.subActionInput,
-                                            subTask.completed && styles.subActionTextCompleted
-                                        ]}
-                                        value={editingSubTaskText}
-                                        onChangeText={setEditingSubTaskText}
-                                        onBlur={saveSubTaskEdit}
-                                        onSubmitEditing={saveSubTaskEdit}
-                                        autoFocus
-                                        returnKeyType="done"
-                                    />
-                                ) : (
-                                    <TouchableOpacity
-                                        style={styles.subActionTextContainer}
-                                        onPress={() => startEditingSubTask(subTask.id, subTask.text)}
-                                        activeOpacity={0.7}
-                                    >
-                                        <Text style={[
-                                            styles.subActionText,
-                                            subTask.completed && styles.subActionTextCompleted
-                                        ]}>
-                                            {subTask.text}
-                                        </Text>
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-                        ))}
-
-                        <View style={styles.addSubActionContainer}>
-                            <View style={styles.addSubActionInputContainer}>
-                                <TextInput
-                                    style={styles.addSubActionInput}
-                                    placeholder="Add a sub-action..."
-                                    placeholderTextColor="#9CA3AF"
-                                    value={newSubAction}
-                                    onChangeText={setNewSubAction}
-                                    onSubmitEditing={addNewSubAction}
-                                    returnKeyType="done"
-                                />
-                            </View>
-
-                            <TouchableOpacity
-                                style={styles.addSubActionButton}
-                                onPress={addNewSubAction}
-                            >
-                                {plusCircleIcon}
-                                <Text style={styles.addSubActionText}>Add sub-action</Text>
-                            </TouchableOpacity>
-                        </View>
+                    <View style={styles.expandedContainer}>
+                        {renderExpandedContent()}
                     </View>
                 )}
             </View>
@@ -514,7 +542,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                     <TouchableOpacity
                         style={styles.actionMenuItem}
                         onPress={() => {
-                            if (onStar) onStar(action.id);
+                            handleStar();
                             setShowActions(false);
                         }}
                     >
@@ -525,7 +553,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                     <TouchableOpacity
                         style={styles.actionMenuItem}
                         onPress={() => {
-                            if (onDuplicate) onDuplicate(action.id);
+                            handleDuplicate();
                             setShowActions(false);
                         }}
                     >
@@ -536,7 +564,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                     <TouchableOpacity
                         style={styles.actionMenuItem}
                         onPress={() => {
-                            if (onArchive) onArchive(action.id);
+                            handleArchive();
                             setShowActions(false);
                         }}
                     >
@@ -547,7 +575,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                     <TouchableOpacity
                         style={styles.actionMenuItem}
                         onPress={() => {
-                            if (onHide) onHide(action.id);
+                            handleHide();
                             setShowActions(false);
                         }}
                     >
@@ -567,7 +595,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                 cancelText="Cancel"
                 onConfirm={handleModalConfirm}
                 onCancel={handleModalCancel}
-                accentColor={theme.colors.success}
+                accentColor={ENTRY_TYPES[EntryType.ACTION].borderColor}
             />
         </TouchableOpacity>
     );
@@ -582,13 +610,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#4ADE80', // Default green color, will be overridden
+        borderTopWidth: 1,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderBottomWidth: 4,
         padding: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 1,
     },
     header: {
         flexDirection: 'row',
@@ -604,10 +630,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         marginLeft: 8,
+        flexShrink: 0,
     },
     checkboxContainer: {
         marginTop: 4,
         marginRight: 12,
+        flexShrink: 0,
     },
     checkbox: {
         width: 20,
@@ -648,11 +676,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         marginTop: 12,
-        gap: 8,
-    },
-    label: {
-        marginRight: 4,
-        marginBottom: 4,
     },
     expandButton: {
         marginRight: 8,
@@ -676,9 +699,13 @@ const styles = StyleSheet.create({
     moreButton: {
         // No specific styling needed
     },
-    subActionsContainer: {
+    expandedContainer: {
         marginTop: 16,
-        paddingLeft: 32,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
+    },
+    subActionsContainer: {
         gap: 12,
     },
     subActionsHeading: {

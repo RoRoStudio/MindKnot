@@ -6,17 +6,17 @@ import TabNavigator from './TabNavigator';
 import { BottomSheetProvider, useBottomSheet } from '../contexts/BottomSheetContext';
 
 // Saga and theme screens
-import SagaDetailScreen from '../screens/SagaDetailScreen';
-import ThemeInspectorScreen from '../screens/ThemeInspectorScreen';
-import ComponentShowcaseScreen from '../screens/ComponentShowcaseScreen';
-import TestScreen from '../screens/TestScreen';
+import SagaDetailScreen from '../screens/sagas/SagaDetailScreen';
+import ThemeInspectorScreen from '../screens/dev/ThemeInspectorScreen';
+import ComponentShowcaseScreen from '../screens/dev/ComponentShowcaseScreen';
+import TestScreen from '../screens/dev/TestScreen';
 
 // New unified entry screens
-import NoteScreen from '../screens/NoteScreen';
-import SparkScreen from '../screens/SparkScreen';
-import ActionScreen from '../screens/ActionScreen';
-import PathScreen from '../screens/PathScreen';
-import LoopScreen from '../screens/LoopScreen';
+import NoteScreen from '../screens/notes/NoteScreen';
+import SparkScreen from '../screens/sparks/SparkScreen';
+import ActionScreen from '../screens/actions/ActionScreen';
+import PathScreen from '../screens/paths/PathScreen';
+import LoopScreen from '../screens/loops/LoopScreen';
 import { RootStackParamList } from '../types/navigation-types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 

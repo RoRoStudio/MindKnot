@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Animated, Easing } from 'react-native';
 import { Spark } from '../../../types/spark';
 import { EntryCard } from '../EntryCard';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { ENTRY_TYPES, EntryType } from '../../../constants/entryTypes';
 
 interface SparkCardProps {
     spark: Spark;
@@ -24,11 +24,7 @@ export const SparkCard: React.FC<SparkCardProps> = ({
     onHide,
     isNew = false
 }) => {
-    const { theme } = useTheme();
     const [animValue] = useState(new Animated.Value(isNew ? 0 : 1));
-
-    // For Sparks, we have a different color
-    const sparkColor = '#FFB800'; // Golden color
 
     useEffect(() => {
         if (isNew) {
@@ -76,8 +72,8 @@ export const SparkCard: React.FC<SparkCardProps> = ({
                 id={spark.id}
                 title={spark.title}
                 description={spark.body}
-                iconName="lightbulb"
-                iconColor={sparkColor}
+                iconName={ENTRY_TYPES[EntryType.SPARK].icon}
+                borderColor={ENTRY_TYPES[EntryType.SPARK].borderColor}
                 createdAt={spark.createdAt}
                 tags={spark.tags}
                 categoryId={spark.categoryId}
@@ -87,6 +83,9 @@ export const SparkCard: React.FC<SparkCardProps> = ({
                 onDuplicate={handleDuplicate}
                 onArchive={handleArchive}
                 onHide={handleHide}
+                // Sparks don't need to be expandable
+                expandable={false}
+                navigationScreen="SparkScreen"
             />
         </Animated.View>
     );

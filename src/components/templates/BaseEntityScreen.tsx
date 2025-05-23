@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, SafeAreaView } from 'react-native';
-import { Icon, IconName } from '../atoms/Icon';
+import { Icon, IconName } from '../shared/Icon';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStyles } from '../../hooks/useStyles';
 import { FilterableList } from '../common';
-import type { FilterableListProps } from '../organisms/FilterableList';
+import type { FilterableListProps } from '../shared/FilterableList';
 
 /**
  * Base props for entity data

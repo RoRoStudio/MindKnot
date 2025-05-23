@@ -1,6 +1,6 @@
 // src/hooks/useSparks.ts
 import { useEffect } from 'react';
-import { useSparkActions } from '../redux/hooks/stateHooks';
+import { useSparkActions } from '../store/sparks/useSparkActions';
 
 export function useSparks() {
     const {
@@ -9,8 +9,8 @@ export function useSparks() {
         error,
         loadSparks,
         addSpark,
-        updateSpark: editSpark,
-        deleteSpark: removeSpark,
+        editSpark: updateSpark,
+        removeSpark: deleteSpark,
         getSparkById
     } = useSparkActions();
 
@@ -24,7 +24,8 @@ export function useSparks() {
         error,
         loadSparks,
         addSpark,
-        editSpark,
-        removeSpark
+        updateSpark,
+        deleteSpark,
+        getSparkById
     };
 }

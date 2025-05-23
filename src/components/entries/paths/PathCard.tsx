@@ -1,11 +1,11 @@
-// src/components/entries/PathCard.tsx
+// src/components/entries/paths/PathCard.tsx
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Path } from '../../../types/path';
 import { EntryCard } from '../EntryCard';
+import { ENTRY_TYPES, EntryType } from '../../../constants/entryTypes';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { Typography, Icon } from '../../common';
-import { TouchableOpacity } from 'react-native';
 
 interface PathCardProps {
     path: Path;
@@ -202,8 +202,8 @@ export const PathCard: React.FC<PathCardProps> = ({
             title={path.title}
             subtitle={subtitle}
             description={path.description}
-            iconName="compass"
-            iconColor={theme.colors.info}
+            iconName={ENTRY_TYPES[EntryType.PATH].icon}
+            borderColor={ENTRY_TYPES[EntryType.PATH].borderColor}
             createdAt={path.createdAt}
             tags={path.tags}
             categoryId={path.categoryId}
@@ -213,9 +213,12 @@ export const PathCard: React.FC<PathCardProps> = ({
             onDuplicate={handleDuplicate}
             onArchive={handleArchive}
             onHide={handleHide}
+            // Paths can be expandable if they have milestones or actions
+            expandable={hasMilestonesOrActions}
             expanded={expanded}
-            onExpand={hasMilestonesOrActions ? handleToggleExpand : undefined}
-            children={renderPathContent()}
+            onToggleExpand={handleToggleExpand}
+            expandedContent={renderPathContent()}
+            navigationScreen="PathScreen"
         />
     );
 };

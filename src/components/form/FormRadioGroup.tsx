@@ -3,7 +3,7 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../atoms/Typography';
+import { Typography } from '../shared/Typography';
 import FormErrorMessage from './FormErrorMessage';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -125,7 +125,7 @@ export default function FormRadioGroup<T extends FieldValues>({
                     <View style={styles.optionsContainer}>
                         {options.map((option) => {
                             const isSelected = value === option.value;
-                            
+
                             return (
                                 <TouchableOpacity
                                     key={option.value.toString()}

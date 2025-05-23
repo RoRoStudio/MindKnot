@@ -3,8 +3,8 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../atoms/Typography';
-import { Icon } from '../atoms/Icon';
+import { Typography } from '../shared/Typography';
+import { Icon } from '../shared/Icon';
 import FormErrorMessage from './FormErrorMessage';
 import { useTheme } from '../../contexts/ThemeContext';
 

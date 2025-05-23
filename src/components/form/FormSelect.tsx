@@ -15,8 +15,8 @@ import {
     RegisterOptions,
 } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../atoms/Typography';
-import { Icon, IconName } from '../atoms/Icon';
+import { Typography } from '../shared/Typography';
+import { Icon, IconName } from '../shared/Icon';
 import FormErrorMessage from './FormErrorMessage';
 import { useTheme } from '../../contexts/ThemeContext';
 

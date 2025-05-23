@@ -7,10 +7,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { Provider } from 'react-redux';
-import { store } from './src/redux/store';
+import { store } from './src/store';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
-import { initDatabase } from './src/database/database';
+import { initDatabase } from './src/api/database';
 import { useFonts, KantumruyPro_300Light, KantumruyPro_400Regular, KantumruyPro_500Medium, KantumruyPro_600SemiBold, KantumruyPro_700Bold } from '@expo-google-fonts/kantumruy-pro';
 import * as SplashScreen from 'expo-splash-screen';
 
@@ -21,11 +21,19 @@ export default function App() {
     useEffect(() => {
         const initializeDatabase = async () => {
             try {
+                console.log('Starting database initialization...');
                 await initDatabase();
+                console.log('Database initialization completed successfully');
                 setDbInitialized(true);
             } catch (error) {
-                console.error('Failed to initialize database:', error);
-                setDbError(error instanceof Error ? error.message : 'Unknown database error');
+                const errorMessage = error instanceof Error ? error.message : 'Unknown database error';
+                console.error('Database initialization failed:', error);
+                console.error('Error details:', {
+                    name: error instanceof Error ? error.name : 'Unknown',
+                    message: errorMessage,
+                    stack: error instanceof Error ? error.stack : 'No stack trace'
+                });
+                setDbError(errorMessage);
             }
         };
 
@@ -83,17 +91,17 @@ export default function App() {
 
     return (
         <Provider store={store}>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-            <SafeAreaProvider>
-                <ThemeProvider>
-                    <ActionSheetProvider>
-                        <NavigationContainer>
-                            <AppNavigator />
-                        </NavigationContainer>
-                    </ActionSheetProvider>
-                </ThemeProvider>
-            </SafeAreaProvider>
-        </GestureHandlerRootView>
+            <GestureHandlerRootView style={{ flex: 1 }}>
+                <SafeAreaProvider>
+                    <ThemeProvider>
+                        <ActionSheetProvider>
+                            <NavigationContainer>
+                                <AppNavigator />
+                            </NavigationContainer>
+                        </ActionSheetProvider>
+                    </ThemeProvider>
+                </SafeAreaProvider>
+            </GestureHandlerRootView>
         </Provider>
     );
 }

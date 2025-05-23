@@ -9,9 +9,9 @@ import {
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Typography } from '../atoms/Typography';
-import { Icon } from '../atoms/Icon';
-import { Label } from '../atoms/Label';
+import { Typography } from '../shared/Typography';
+import { Icon } from '../shared/Icon';
+import { Label } from '../shared/Label';
 import FormErrorMessage from './FormErrorMessage';
 
 // Maximum label length for mobile UI
@@ -32,6 +32,8 @@ interface FormLabelInputProps<T extends FieldValues> {
     currentLabels?: string[];
     // Callback when done adding
     onDone?: () => void;
+    // Value support for non-form use cases
+    value?: string[];
 }
 
 // Local storage key for saving used labels
@@ -51,7 +53,8 @@ export default function FormLabelInput<T extends FieldValues>({
     placeholder = 'Add a label...',
     onLabelsChange,
     currentLabels,
-    onDone
+    onDone,
+    value
 }: FormLabelInputProps<T>) {
     const { theme } = useTheme();
     const [labelInput, setLabelInput] = useState('');

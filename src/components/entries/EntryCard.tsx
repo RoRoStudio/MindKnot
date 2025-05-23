@@ -1,492 +1,437 @@
 // src/components/entries/EntryCard.tsx
-import React, { useState, useEffect, useCallback, memo } from 'react';
-import { View, TouchableOpacity, Animated, StyleSheet } from 'react-native';
-import { useStyles } from '../../hooks/useStyles';
-import { Typography, Card, Icon, IconName, CategoryPill, Label } from '../common';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useCategories } from '../../hooks/useCategories';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Category } from '../../types/category';
+import { useTheme } from '../../contexts/ThemeContext';
+import { Icon, IconName } from '../common';
+import { Typography } from '../common';
+import { LabelRow } from '../shared/LabelRow';
+import { CategoryPill } from '../shared/CategoryPill';
+import { RootStackParamList } from '../../types/navigation-types';
+import { getCategoryById } from '../../api/categoryService';
 
 interface EntryCardProps {
     id: string;
     title: string;
-    subtitle?: string;
     description?: string;
     iconName: IconName;
-    iconColor?: string;
+    borderColor: string;
     createdAt: string;
     tags?: string[];
     categoryId?: string;
     onPress?: () => void;
-    done?: boolean;
-    dueDate?: string;
-    expanded?: boolean;
-    onExpand?: () => void;
-    onStar?: () => void;
-    onDuplicate?: () => void;
-    onArchive?: () => void;
-    onHide?: () => void;
     isStarred?: boolean;
-    children?: React.ReactNode;
-    extraData?: {
-        setActiveActionMenuId: (id: string | null) => void;
-        activeActionMenuId: string | null;
-    };
+    onStar?: (id: string) => void;
+    onDuplicate?: (id: string) => void;
+    onArchive?: (id: string) => void;
+    onHide?: (id: string) => void;
+    // Expandable section props
+    expandable?: boolean;
+    expanded?: boolean;
+    onToggleExpand?: () => void;
+    expandedContent?: React.ReactNode;
+    // Entry type specific props
+    subtitle?: string;
+    dueDate?: string;
+    done?: boolean;
+    // Navigation
+    navigationScreen?: keyof RootStackParamList;
+    navigationParams?: any;
 }
 
-export const EntryCard = memo(function EntryCard({
+export const EntryCard: React.FC<EntryCardProps> = ({
     id,
     title,
-    subtitle,
     description,
     iconName,
-    iconColor,
+    borderColor,
     createdAt,
     tags,
     categoryId,
     onPress,
-    done,
-    dueDate,
-    expanded = false,
-    onExpand,
+    isStarred = false,
     onStar,
     onDuplicate,
     onArchive,
     onHide,
-    isStarred = false,
-    children,
-    extraData,
-}: EntryCardProps) {
+    expandable = false,
+    expanded = false,
+    onToggleExpand,
+    expandedContent,
+    subtitle,
+    dueDate,
+    done = false,
+    navigationScreen,
+    navigationParams,
+}) => {
     const { theme } = useTheme();
-    const { getCategory } = useCategories();
-    const [category, setCategory] = useState<Category | null>(null);
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [showActions, setShowActions] = useState(false);
-    const [expandAnim] = useState(new Animated.Value(expanded ? 1 : 0));
-    const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+    const [categoryInfo, setCategoryInfo] = useState<Category | null>(null);
 
-    const styles = useStyles((theme) => ({
-        card: {
-            marginBottom: theme.spacing.m,
-            borderLeftWidth: 4,
-            borderLeftColor: category ? category.color : (iconColor || theme.colors.primary),
-        },
-        cardContent: {
-            position: 'relative',
-            padding: theme.spacing.s,
-        },
-        header: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: theme.spacing.xs,
-        },
-        iconContainer: {
-            marginRight: theme.spacing.s,
-        },
-        titleContainer: {
-            flex: 1,
-        },
-        title: {
-            flex: 1,
-        },
-        subtitle: {
-            marginTop: 2,
-            color: theme.colors.textSecondary,
-        },
-        description: {
-            marginVertical: theme.spacing.xs,
-            color: theme.colors.textPrimary,
-        },
-        metaContainer: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: theme.spacing.s,
-        },
-        dateText: {
-            color: theme.colors.textSecondary,
-        },
-        tagsContainer: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            marginTop: theme.spacing.xs,
-        },
-        tag: {
-            backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: theme.shape.radius.s,
-            paddingHorizontal: theme.spacing.s,
-            paddingVertical: 2,
-            marginRight: theme.spacing.xs,
-            marginBottom: theme.spacing.xs,
-        },
-        tagText: {
-            fontSize: theme.typography.fontSize.xs,
-            color: theme.colors.textSecondary,
-        },
-        categoryTag: {
-            paddingHorizontal: theme.spacing.s,
-            paddingVertical: 2,
-            marginRight: theme.spacing.xs,
-            marginBottom: theme.spacing.xs,
-            borderRadius: theme.shape.radius.s,
-        },
-        categoryDot: {
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            marginRight: 4,
-        },
-        categoryTextContainer: {
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        dueDate: {
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        dueDateText: {
-            fontSize: theme.typography.fontSize.xs,
-            color: theme.colors.textSecondary,
-            marginLeft: theme.spacing.xs,
-        },
-        doneIndicator: {
-            backgroundColor: theme.colors.success,
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            marginRight: theme.spacing.xs,
-        },
-        actionsButton: {
-            padding: theme.spacing.xs,
-            zIndex: 1,
-        },
-        actionsMenu: {
-            position: 'absolute',
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.m,
-            padding: theme.spacing.xs,
-            zIndex: 99999,
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            elevation: 4,
-            width: 150,
-            top: menuPosition.top,
-            right: 10,
-        },
-        actionItem: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: theme.spacing.s,
-            borderRadius: theme.shape.radius.s,
-        },
-        actionItemText: {
-            marginLeft: theme.spacing.s,
-            color: theme.colors.textPrimary,
-        },
-        childrenContainer: {
-            marginTop: theme.spacing.m,
-            overflow: 'hidden',
-        },
-        expandIcon: {
-            marginLeft: theme.spacing.xs,
-            transform: [{ rotate: expanded ? '180deg' : '0deg' }],
-        },
-        starredIcon: {
-            marginRight: theme.spacing.s,
-        },
-    }));
-
-    // Fetch category
+    // Fetch category info when categoryId changes
     useEffect(() => {
-        const fetchCategory = async () => {
-            if (!categoryId) {
-                setCategory(null);
-                return;
-            }
-
-            try {
-                const cat = await getCategory(categoryId);
-                setCategory(cat);
-            } catch (err) {
-                console.error('Error fetching category:', err);
-                setCategory(null);
+        const fetchCategoryInfo = async () => {
+            if (categoryId) {
+                try {
+                    const category = await getCategoryById(categoryId);
+                    setCategoryInfo(category);
+                } catch (error) {
+                    console.error('Error fetching category:', error);
+                    setCategoryInfo(null);
+                }
+            } else {
+                setCategoryInfo(null);
             }
         };
 
-        fetchCategory();
-    }, [categoryId, getCategory]);
+        fetchCategoryInfo();
+    }, [categoryId]);
 
-    // Handle animation
-    useEffect(() => {
-        Animated.timing(expandAnim, {
-            toValue: expanded ? 1 : 0,
-            duration: 200,
-            useNativeDriver: false,
-        }).start();
-    }, [expanded, expandAnim]);
-
-    // Handle menu visibility
-    useEffect(() => {
-        if (extraData && extraData.activeActionMenuId !== id && showActions) {
-            setShowActions(false);
-        }
-    }, [extraData, id, showActions]);
-
-    // Format a date for display
-    const formatDate = useCallback((dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString();
-    }, []);
-
-    // Menu toggle
-    const handleToggleMenu = useCallback(() => {
-        const newShowActions = !showActions;
-        if (extraData) {
-            extraData.setActiveActionMenuId(newShowActions ? id : null);
-        }
-        setShowActions(newShowActions);
-    }, [showActions, extraData, id]);
-
-    // Handle card press
-    const handleCardPress = useCallback(() => {
-        if (onPress) onPress();
-    }, [onPress]);
-
-    // Handle ellipsis press
-    const handleEllipsisPress = useCallback((e: any) => {
-        e.stopPropagation();
-        handleToggleMenu();
-    }, [handleToggleMenu]);
-
-    // Measure action button
-    const measureActionButton = useCallback((ref: View) => {
-        if (!ref) return;
-
-        ref.measure((x, y, width, height, pageX, pageY) => {
-            setMenuPosition({
-                top: pageY + height + 2,
-                right: 0
+    const handlePress = () => {
+        if (onPress) {
+            onPress();
+        } else if (navigationScreen) {
+            navigation.navigate(navigationScreen, {
+                mode: 'view',
+                id: id,
+                ...navigationParams
             });
-        });
-    }, []);
-
-    // Derived values
-    const childrenMaxHeight = expandAnim.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0, 500]
-    });
-
-    // Render category element
-    const renderCategory = () => {
-        if (!category) return null;
-
-        return (
-            <CategoryPill
-                title={category.title}
-                color={category.color}
-                size="small"
-            />
-        );
+        }
     };
 
-    // Render due date
-    const renderDueDate = () => {
-        if (!dueDate) return null;
-
-        const date = new Date(dueDate);
-        const now = new Date();
-        const isOverdue = date < now && !done;
-
-        return (
-            <View style={styles.dueDate}>
-                <Icon
-                    name="calendar"
-                    width={12}
-                    height={12}
-                    color={isOverdue ? theme.colors.error : theme.colors.textSecondary}
-                />
-                <Typography
-                    style={[
-                        styles.dueDateText,
-                        isOverdue && { color: theme.colors.error },
-                    ]}
-                >
-                    {formatDate(dueDate)}
-                </Typography>
-            </View>
-        );
+    const handleToggleExpand = () => {
+        if (expandable && onToggleExpand) {
+            onToggleExpand();
+        }
     };
 
-    // Render actions menu
-    const renderActionsMenu = () => {
-        if (!showActions) return null;
+    const toggleMenu = () => {
+        setShowActions(!showActions);
+    };
 
-        return (
-            <View style={styles.actionsMenu}>
-                <TouchableOpacity
-                    style={styles.actionItem}
-                    onPress={() => {
-                        setShowActions(false);
-                        if (extraData) extraData.setActiveActionMenuId(null);
-                        if (onStar) onStar();
-                    }}
-                >
-                    <Icon name={isStarred ? "star-off" : "star"} width={16} height={16} color={theme.colors.primary} />
-                    <Typography style={styles.actionItemText}>{isStarred ? "Unstar" : "Star"}</Typography>
-                </TouchableOpacity>
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).replace(/\//g, '/');
+    };
 
-                <TouchableOpacity
-                    style={styles.actionItem}
-                    onPress={() => {
-                        setShowActions(false);
-                        if (extraData) extraData.setActiveActionMenuId(null);
-                        if (onDuplicate) onDuplicate();
-                    }}
-                >
-                    <Icon name="copy" width={16} height={16} color={theme.colors.primary} />
-                    <Typography style={styles.actionItemText}>Duplicate</Typography>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.actionItem}
-                    onPress={() => {
-                        setShowActions(false);
-                        if (extraData) extraData.setActiveActionMenuId(null);
-                        if (onArchive) onArchive();
-                    }}
-                >
-                    <Icon name="archive" width={16} height={16} color={theme.colors.primary} />
-                    <Typography style={styles.actionItemText}>Archive</Typography>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={styles.actionItem}
-                    onPress={() => {
-                        setShowActions(false);
-                        if (extraData) extraData.setActiveActionMenuId(null);
-                        if (onHide) onHide();
-                    }}
-                >
-                    <Icon name="eye-off" width={16} height={16} color={theme.colors.primary} />
-                    <Typography style={styles.actionItemText}>Hide</Typography>
-                </TouchableOpacity>
-            </View>
-        );
+    const formatDueDate = (dateString?: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).replace(/\//g, '/');
     };
 
     return (
-        <View>
-            <Card
-                style={styles.card}
-                onPress={handleCardPress}
-                elevated={true}
-                noPadding={true}
-            >
-                <View style={styles.cardContent}>
-                    <View style={styles.header}>
-                        <View style={styles.iconContainer}>
-                            <Icon
-                                name={iconName}
-                                width={18}
-                                height={18}
-                                color={category ? category.color : (iconColor || theme.colors.primary)}
-                            />
-                            {done !== undefined && done && (
-                                <View style={styles.doneIndicator} />
-                            )}
-                        </View>
+        <TouchableOpacity
+            style={styles.container}
+            onPress={handlePress}
+            activeOpacity={0.9}
+        >
+            <View style={[
+                styles.card,
+                {
+                    borderTopColor: borderColor,
+                    borderLeftColor: borderColor,
+                    borderRightColor: borderColor,
+                    borderBottomColor: borderColor,
+                }
+            ]}>
+                <View style={styles.header}>
+                    <View style={styles.headerLeft}>
+                        <View style={styles.contentContainer}>
+                            <Text style={[
+                                styles.title,
+                                done && styles.titleCompleted
+                            ]}>
+                                {title}
+                            </Text>
 
-                        <View style={styles.titleContainer}>
-                            <Typography variant="h4" style={styles.title}>
-                                {title || 'Untitled'}
-                            </Typography>
+                            {done && (
+                                <View style={[styles.doneIndicator, { backgroundColor: borderColor }]} />
+                            )}
 
                             {subtitle && (
-                                <Typography variant="caption" style={styles.subtitle}>
+                                <Text style={styles.subtitle}>
                                     {subtitle}
-                                </Typography>
+                                </Text>
+                            )}
+
+                            {description && (
+                                <Text style={styles.description} numberOfLines={2}>
+                                    {description}
+                                </Text>
+                            )}
+
+                            {categoryInfo && (
+                                <CategoryPill
+                                    title={categoryInfo.title}
+                                    color={categoryInfo.color}
+                                    size="small"
+                                    style={styles.categoryPill}
+                                />
+                            )}
+
+                            {dueDate && (
+                                <View style={styles.dueDateContainer}>
+                                    <Icon name="calendar" width={16} height={16} color="#6B7280" />
+                                    <Text style={styles.dueDateText}>
+                                        Target: {formatDueDate(dueDate)}
+                                    </Text>
+                                </View>
+                            )}
+
+                            <View style={styles.metaContainer}>
+                                <Text style={styles.dateText}>
+                                    {formatDate(createdAt)}
+                                </Text>
+                                {isStarred && (
+                                    <Icon name="star" width={16} height={16} color="#FFB800" style={styles.starIcon} />
+                                )}
+                            </View>
+
+                            {tags && tags.length > 0 && (
+                                <View style={styles.tagsContainer}>
+                                    <LabelRow
+                                        labels={tags}
+                                        size="small"
+                                        maxLabelsToShow={3}
+                                        gap={6}
+                                    />
+                                </View>
                             )}
                         </View>
+                    </View>
 
-                        {isStarred && (
-                            <Icon
-                                name="star"
-                                width={16}
-                                height={16}
-                                color="#FFB800"
-                                style={styles.starredIcon}
-                            />
-                        )}
-
-                        {children && onExpand && (
+                    <View style={styles.headerRight}>
+                        {expandable && (
                             <TouchableOpacity
-                                onPress={(e) => {
-                                    e.stopPropagation();
-                                    if (onExpand) onExpand();
-                                }}
-                                style={styles.expandIcon}
+                                onPress={handleToggleExpand}
+                                hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                                style={styles.expandButton}
                             >
                                 <Icon
-                                    name="chevron-down"
-                                    width={20}
-                                    height={20}
-                                    color={theme.colors.textSecondary}
+                                    name={expanded ? "chevron-up" : "chevron-down"}
+                                    width={24}
+                                    height={24}
+                                    color="#9CA3AF"
                                 />
                             </TouchableOpacity>
                         )}
 
-                        <View
-                            ref={measureActionButton}
-                            style={{ position: 'relative' }}
+                        <TouchableOpacity
+                            onPress={toggleMenu}
+                            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                            style={styles.moreButton}
                         >
-                            <TouchableOpacity
-                                style={styles.actionsButton}
-                                onPress={handleEllipsisPress}
-                            >
-                                <Icon
-                                    name="ellipsis-vertical"
-                                    width={18}
-                                    height={18}
-                                    color={theme.colors.textSecondary}
-                                />
-                            </TouchableOpacity>
-                        </View>
+                            <Icon name="ellipsis-vertical" width={24} height={24} color="#9CA3AF" />
+                        </TouchableOpacity>
                     </View>
-
-                    {description && (
-                        <Typography variant="body2" style={styles.description} numberOfLines={2}>
-                            {description}
-                        </Typography>
-                    )}
-
-                    <View style={styles.metaContainer}>
-                        <Typography variant="caption" style={styles.dateText}>
-                            {formatDate(createdAt)}
-                        </Typography>
-                        {renderDueDate()}
-                    </View>
-
-                    <View style={styles.tagsContainer}>
-                        {renderCategory()}
-
-                        {tags && tags.length > 0 && tags.map((tag, index) => (
-                            <Label
-                                key={index}
-                                label={tag}
-                                size="small"
-                            />
-                        ))}
-                    </View>
-
-                    {children && (
-                        <Animated.View style={[styles.childrenContainer, { maxHeight: childrenMaxHeight }]}>
-                            {expanded && children}
-                        </Animated.View>
-                    )}
                 </View>
-            </Card>
-            {showActions && renderActionsMenu()}
-        </View>
+
+                {expanded && expandedContent && (
+                    <View style={styles.expandedContainer}>
+                        {expandedContent}
+                    </View>
+                )}
+            </View>
+
+            {/* Actions Menu (Dropdown) */}
+            {showActions && (
+                <View style={styles.actionsMenu}>
+                    <TouchableOpacity
+                        style={styles.actionMenuItem}
+                        onPress={() => {
+                            if (onStar) onStar(id);
+                            setShowActions(false);
+                        }}
+                    >
+                        <Icon name={isStarred ? "star" : "star-off"} width={16} height={16} color="#6B7280" />
+                        <Text style={styles.actionMenuItemText}>{isStarred ? "Unstar" : "Star"}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.actionMenuItem}
+                        onPress={() => {
+                            if (onDuplicate) onDuplicate(id);
+                            setShowActions(false);
+                        }}
+                    >
+                        <Icon name="copy" width={16} height={16} color="#6B7280" />
+                        <Text style={styles.actionMenuItemText}>Duplicate</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.actionMenuItem}
+                        onPress={() => {
+                            if (onArchive) onArchive(id);
+                            setShowActions(false);
+                        }}
+                    >
+                        <Icon name="archive" width={16} height={16} color="#6B7280" />
+                        <Text style={styles.actionMenuItemText}>Archive</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.actionMenuItem}
+                        onPress={() => {
+                            if (onHide) onHide(id);
+                            setShowActions(false);
+                        }}
+                    >
+                        <Icon name="eye-off" width={16} height={16} color="#6B7280" />
+                        <Text style={styles.actionMenuItemText}>Hide</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+        </TouchableOpacity>
     );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        marginBottom: 16,
+        position: 'relative',
+    },
+    card: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderTopWidth: 1,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderBottomWidth: 4,
+        padding: 16,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    headerLeft: {
+        flexDirection: 'row',
+        flex: 1,
+        alignItems: 'flex-start',
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginLeft: 8,
+        flexShrink: 0,
+    },
+    contentContainer: {
+        flex: 1,
+        position: 'relative',
+    },
+    title: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#111827',
+        marginBottom: 4,
+        lineHeight: 24,
+    },
+    titleCompleted: {
+        textDecorationLine: 'line-through',
+        color: '#9CA3AF',
+    },
+    doneIndicator: {
+        position: 'absolute',
+        top: 2,
+        right: 0,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+    },
+    subtitle: {
+        fontSize: 14,
+        color: '#6B7280',
+        marginBottom: 4,
+        lineHeight: 18,
+    },
+    description: {
+        fontSize: 14,
+        color: '#374151',
+        marginBottom: 8,
+        lineHeight: 20,
+    },
+    categoryPill: {
+        marginTop: 4,
+        marginBottom: 8,
+        alignSelf: 'flex-start',
+    },
+    dueDateContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
+    dueDateText: {
+        fontSize: 14,
+        color: '#6B7280',
+        marginLeft: 4,
+    },
+    metaContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+    },
+    dateText: {
+        fontSize: 12,
+        color: '#9CA3AF',
+    },
+    starIcon: {
+        marginLeft: 8,
+    },
+    tagsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+    },
+    expandButton: {
+        marginRight: 8,
+        padding: 4,
+    },
+    moreButton: {
+        padding: 4,
+    },
+    expandedContainer: {
+        marginTop: 16,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
+    },
+    actionsMenu: {
+        position: 'absolute',
+        top: 40,
+        right: 16,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+        padding: 8,
+        zIndex: 10,
+        minWidth: 140,
+    },
+    actionMenuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 8,
+        borderRadius: 4,
+    },
+    actionMenuItemText: {
+        fontSize: 14,
+        color: '#4B5563',
+        marginLeft: 8,
+    },
 });

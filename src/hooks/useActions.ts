@@ -1,6 +1,7 @@
 // src/hooks/useActions.ts
 import { useCallback, useEffect } from 'react';
-import { useActionActions } from '../redux/hooks/stateHooks';
+import { useActionActions } from '../store/actions/useActionActions';
+import { Action } from '../types/action';
 
 export function useActions() {
     const {
@@ -23,7 +24,7 @@ export function useActions() {
     const loadUpcomingActions = useCallback(async () => {
         try {
             // Filter actions to get only those with due dates
-            return actions.filter(action => action.dueDate);
+            return actions.filter((action: Action) => action.dueDate);
         } catch (err) {
             console.error('Failed to load upcoming actions:', err);
             return [];
@@ -33,7 +34,7 @@ export function useActions() {
     const loadActionsByParent = useCallback(async (parentId: string, parentType: string) => {
         try {
             // Filter actions to get only those with matching parent
-            return actions.filter(action =>
+            return actions.filter((action: Action) =>
                 action.parentId === parentId && action.parentType === parentType
             );
         } catch (err) {

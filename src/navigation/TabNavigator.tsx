@@ -1,11 +1,11 @@
 // src/navigation/TabNavigator.tsx
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from '../screens/HomeScreen';
-import SagaScreen from '../screens/SagaScreen';
-import VaultScreen from '../screens/VaultScreen';
-import MomentumScreen from '../screens/MomentumScreen';
-import { CustomBottomNavBar } from '../components/navigation/CustomBottomNavBar';
+import HomeScreen from '../screens/home/HomeScreen';
+import SagaScreen from '../screens/sagas/SagaScreen';
+import VaultScreen from '../screens/vault/VaultScreen';
+import MomentumScreen from '../screens/momentum/MomentumScreen';
+import { CustomBottomNavBar } from '../components/navigation';
 
 const Tab = createBottomTabNavigator();
 

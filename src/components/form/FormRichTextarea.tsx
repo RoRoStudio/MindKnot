@@ -13,7 +13,7 @@ import {
     Path,
     RegisterOptions,
 } from 'react-hook-form';
-import { Typography } from '../atoms/Typography';
+import { Typography } from '../shared/Typography';
 import FormErrorMessage from './FormErrorMessage';
 import { useTheme } from '../../contexts/ThemeContext';
 import {

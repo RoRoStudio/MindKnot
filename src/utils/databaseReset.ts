@@ -1,6 +1,6 @@
 // src/utils/databaseReset.ts
 import * as SQLite from 'expo-sqlite';
-import { createSchemaSQL } from '../database/schema';
+import { createSchemaSQL } from '../api/schema';
 import { Alert } from 'react-native';
 
 interface TableRow {
@@ -9,7 +9,7 @@ interface TableRow {
 
 export const resetDatabase = async (): Promise<boolean> => {
     try {
-        // Method 1: Drop all tables and recreate them
+        // Open the database
         const db = await SQLite.openDatabaseAsync('mindknot.db');
 
         // Get all table names
@@ -28,6 +28,9 @@ export const resetDatabase = async (): Promise<boolean> => {
         // Recreate schema
         await db.execAsync(createSchemaSQL);
         console.log('Database schema recreated');
+
+        // Close the database connection
+        await db.closeAsync();
 
         Alert.alert(
             "Database Reset",

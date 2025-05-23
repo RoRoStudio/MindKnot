@@ -1,6 +1,6 @@
 // src/hooks/useNotes.ts
 import { useEffect } from 'react';
-import { useNoteActions } from '../redux/hooks/stateHooks';
+import { useNoteActions } from '../store/notes/useNoteActions';
 
 export function useNotes() {
     const {
@@ -9,8 +9,8 @@ export function useNotes() {
         error,
         loadNotes,
         addNote,
-        updateNote: editNote,
-        deleteNote: removeNote,
+        editNote: updateNote,
+        removeNote: deleteNote,
         getNoteById
     } = useNoteActions();
 
@@ -24,7 +24,8 @@ export function useNotes() {
         error,
         loadNotes,
         addNote,
-        editNote,
-        removeNote
+        updateNote,
+        deleteNote,
+        getNoteById
     };
 }

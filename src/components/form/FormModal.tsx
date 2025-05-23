@@ -9,8 +9,8 @@ import {
     TouchableWithoutFeedback,
     Keyboard,
 } from 'react-native';
-import { Typography } from '../atoms/Typography';
-import { Button } from '../atoms/Button';
+import { Typography } from '../shared/Typography';
+import { Button } from '../shared/Button';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useStyles } from '../../hooks/useStyles';
 

@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { View, TextInput, TextInputProps } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useStyles } from '../../hooks/useStyles';
-import { Typography } from '../atoms/Typography';
+import { Typography } from '../shared/Typography';
 import FormErrorMessage from './FormErrorMessage';
 import { useTheme } from '../../contexts/ThemeContext';
 

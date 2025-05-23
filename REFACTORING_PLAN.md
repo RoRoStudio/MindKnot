@@ -1,56 +1,100 @@
-MindKnot Refactoring Plan
+# MindKnot Codebase Refactoring Plan
 
-1. Component Architecture Standardization
-1.1 Create Atomic Design Structure
-Reorganize src/components/common into atomic design principles:
-atoms/: Basic building blocks (Button, Icon, Typography, Tag)
-molecules/: Combinations of atoms (CategoryPill, Card)
-organisms/: Complex UI sections (FilterableList, DetailScreenHeader)
-templates/: Page layouts with content placeholders
-1.2 Component API Consistency
-Implement consistent props interfaces across similar components
-Add TypeScript prop interfaces with full JSDoc documentation
-Create shared prop types for commonly used patterns
+This document outlines the step-by-step plan for refactoring the MindKnot codebase from the current atomic design structure to a feature-based organization.
 
-2. State Management Refinement
-2.1 Develop Unified Store Pattern
-Create consistent Zustand store implementation for all entity types
-Implement shared store creator functions with common CRUD operations
-Extract filter/sort/view state into reusable store
-2.2 Custom Hook Library
-Create reusable hooks package for common UI patterns:
-useFilterableList: Extract filter logic from screens
-useEntityCRUD: Standard CRUD operations for entities
-useSortableData: Sorting logic abstraction
+## Progress Tracking
 
-3. Common UI Patterns
-3.1 Extract Shared Patterns
-Create BaseEntityScreen template for all entity screens
-Implement EntityForm factory to standardize form creation
-Develop reusable search/filter components
-3.2 Navigation Patterns
-Standardize navigation structure with consistent route definitions
-Create route factories for common navigation patterns
-4. Theme System Improvements
+- [x] Create new directory structure
+- [x] Copy files to new locations
+- [x] Create index files for main directories
+- [x] Update imports in example files
+- [ ] Update all remaining imports
+- [ ] Run TypeScript to verify correctness
+- [ ] Remove old files once everything is working
 
-4.1 Tokens and Variables
-Create comprehensive theme token system
-Implement design system variables
-Ensure consistent spacing and layout patterns
-4.2 Theme Utils
-Create theme utilities for common patterns (e.g., elevation, color manipulation)
-Implement accessibility helpers for contrast checking
+## Implementation Strategy
 
-5. Data Layer Abstraction
-5.1 Repositories and Services
-Create entity repositories to abstract database operations
-Implement service layer for business logic
-Standardize data transformation/normalization
+The refactoring will follow a bottom-up approach, starting with core functionality and working up to UI components.
 
-Implementation Plan
-Start with theme system improvements (4)
-Implement atomic design structure (1.1)
-Create shared hooks and store patterns (2)
-Standardize component APIs (1.2)
-Extract common UI patterns (3)
-Implement data layer abstractions (5)
+### Phase 1: Core Infrastructure (Current)
+
+1. **Database and API Layer**
+   - Move database files to `src/api/`
+   - Rename service files to entity names (`actionService.ts` → `actions.ts`)
+   - Update imports within these files
+
+2. **State Management**
+   - Reorganize Redux files by feature
+   - Update imports to reflect new paths
+   - Create index files for each feature to simplify imports
+
+### Phase 2: Components and UI
+
+1. **Shared Components**
+   - Reorganize atomic design components into shared folder
+   - Update imports
+
+2. **Feature-Specific Components**
+   - Organize by feature (actions, notes, etc.)
+   - Update imports
+
+3. **Screens**
+   - Organize by feature
+   - Update imports
+
+### Phase 3: Integration and Testing
+
+1. **Run TypeScript Compiler**
+   - Verify all imports are correctly updated
+   - Fix any remaining errors
+
+2. **Test Key Functionality**
+   - Ensure app loads correctly
+   - Test CRUD operations for each entity
+   - Test navigation and UI components
+
+3. **Clean Up**
+   - Remove duplicated files once everything is working
+   - Update documentation
+
+## Import Path Updates
+
+For a complete reference of import path changes, see [IMPORT_MAPPING.md](./IMPORT_MAPPING.md).
+
+## Guidance for Developers
+
+When updating imports, follow these patterns:
+
+1. **API/Database Imports**
+   ```typescript
+   // Old
+   import { executeSql } from '../database/database';
+   // New
+   import { executeSql } from '../api/database';
+   ```
+
+2. **Redux/Store Imports**
+   ```typescript
+   // Old
+   import { useActionActions } from '../redux/hooks/useActionActions';
+   // New
+   import { useActionActions } from '../store/actions/hooks';
+   ```
+
+3. **Component Imports**
+   ```typescript
+   // Old
+   import { Button } from '../components/atoms/Button';
+   // New
+   import { Button } from '../components/shared/Button';
+   // OR using index files
+   import { Button } from '../components/shared';
+   ```
+
+## Rollback Plan
+
+If issues arise during the refactoring:
+
+1. Keep both old and new file structures until testing is complete
+2. If major problems occur, revert to the previous structure
+3. Consider a more gradual approach, refactoring one feature at a time

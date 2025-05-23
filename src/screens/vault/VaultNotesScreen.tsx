@@ -28,7 +28,8 @@ export default function VaultNotesScreen() {
     // Extract all unique tags from notes
     const allTags = useMemo(() => {
         const tagSet = new Set<string>();
-        notes.forEach(note => note.tags?.forEach(tag => tagSet.add(tag)));
+        const notesArray = Array.isArray(notes) ? notes : [];
+        notesArray.forEach((note: Note) => note.tags?.forEach(tag => tagSet.add(tag)));
         return Array.from(tagSet).sort();
     }, [notes]);
 
@@ -128,7 +129,7 @@ export default function VaultNotesScreen() {
     return (
         <>
             <FilterableList
-                data={notes}
+                data={Array.isArray(notes) ? notes : []}
                 loadData={loadNotesWrapper}
                 renderItem={renderItem}
                 allTags={allTags}

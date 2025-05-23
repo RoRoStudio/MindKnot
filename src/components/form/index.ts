@@ -1,39 +1,18 @@
 // src/components/form/index.ts
-import Form from './Form';
-import FormInput from './FormInput';
-import FormTextarea from './FormTextarea';
-import FormRichTextarea from './FormRichTextarea';
-import FormSelect from './FormSelect';
-import FormCheckbox from './FormCheckbox';
-import FormSwitch from './FormSwitch';
-import FormRadioGroup from './FormRadioGroup';
-import FormDatePicker from './FormDatePicker';
-import FormArrayField from './FormArrayField';
-import FormErrorMessage from './FormErrorMessage';
-import FormMoodSelector from './FormMoodSelector';
-import FormLabelInput from './FormLabelInput';
-import FormCategorySelector from './FormCategorySelector';
-import { FormModal } from './FormModal';
-import { FormSheet } from './FormSheet';
-
-export {
-    Form,
-    FormInput,
-    FormTextarea,
-    FormRichTextarea,
-    FormSelect,
-    FormCheckbox,
-    FormSwitch,
-    FormRadioGroup,
-    FormDatePicker,
-    FormArrayField,
-    FormErrorMessage,
-    FormMoodSelector,
-    FormLabelInput,
-    FormCategorySelector,
-    FormModal,
-    FormSheet
-};
-
-// Backward compatibility
-export { FormLabelInput as FormTagInput };
+export { default as Form } from './Form';
+export { default as FormInput } from './FormInput';
+export { default as FormTextarea } from './FormTextarea';
+export { default as FormRichTextarea } from './FormRichTextarea';
+export { default as FormSelect } from './FormSelect';
+export { default as FormCheckbox } from './FormCheckbox';
+export { default as FormSwitch } from './FormSwitch';
+export { default as FormRadioGroup } from './FormRadioGroup';
+export { default as FormDatePicker, type FormDatePickerRef } from './FormDatePicker';
+export { default as FormArrayField } from './FormArrayField';
+export { default as FormErrorMessage } from './FormErrorMessage';
+export { default as FormMoodSelector } from './FormMoodSelector';
+export { default as FormLabelInput } from './FormLabelInput';
+export { default as FormCategorySelector } from './FormCategorySelector';
+export { FormModal } from './FormModal';
+export { FormSheet } from './FormSheet';
+export { default as FormTagInput } from './FormTagInput';

@@ -1,8 +1,8 @@
-// src/components/entries/LoopCard.tsx
+// src/components/entries/loops/LoopCard.tsx
 import React from 'react';
 import { Loop } from '../../../types/loop';
 import { EntryCard } from '../EntryCard';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { ENTRY_TYPES, EntryType } from '../../../constants/entryTypes';
 
 interface LoopCardProps {
     loop: Loop;
@@ -13,16 +13,14 @@ interface LoopCardProps {
     onHide?: (id: string) => void;
 }
 
-export const LoopCard: React.FC<LoopCardProps> = ({ 
-    loop, 
+export const LoopCard: React.FC<LoopCardProps> = ({
+    loop,
     onPress,
     onStar,
     onDuplicate,
     onArchive,
-    onHide 
+    onHide
 }) => {
-    const { theme } = useTheme();
-
     // Parse the frequency for display
     let frequencyText = 'Custom schedule';
 
@@ -108,8 +106,8 @@ export const LoopCard: React.FC<LoopCardProps> = ({
             title={loop.title}
             subtitle={subtitle}
             description={loop.description}
-            iconName="calendar-sync"
-            iconColor={theme.colors.secondary}
+            iconName={ENTRY_TYPES[EntryType.LOOP].icon}
+            borderColor={ENTRY_TYPES[EntryType.LOOP].borderColor}
             createdAt={loop.createdAt}
             tags={loop.tags}
             categoryId={loop.categoryId}
@@ -119,6 +117,9 @@ export const LoopCard: React.FC<LoopCardProps> = ({
             onDuplicate={handleDuplicate}
             onArchive={handleArchive}
             onHide={handleHide}
+            // Loops don't need to be expandable for now
+            expandable={false}
+            navigationScreen="LoopScreen"
         />
     );
 };
