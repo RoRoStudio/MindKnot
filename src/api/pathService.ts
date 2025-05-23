@@ -2,6 +2,7 @@
 import { executeSql } from './database';
 import { generateUUID } from '../utils/uuidUtil';
 import { Path, Milestone } from '../types/path';
+import { Action } from '../types/action';
 
 export const createPath = async (path: Omit<Path, 'id' | 'type' | 'createdAt' | 'updatedAt'>): Promise<Path> => {
     const id = await generateUUID();
@@ -397,5 +398,221 @@ export const getPathById = async (id: string): Promise<Path | null> => {
     } catch (error) {
         console.error("Error fetching path by ID:", error);
         return null;
+    }
+};
+
+// Milestone management functions
+export const createMilestone = async (
+    pathId: string,
+    title: string,
+    description?: string,
+    order?: number
+): Promise<Milestone> => {
+    const id = await generateUUID();
+    const now = new Date().toISOString();
+
+    // If no order specified, get the next order number
+    if (order === undefined) {
+        const orderResult = await executeSql(
+            'SELECT MAX(`order`) as maxOrder FROM milestones WHERE pathId = ?',
+            [pathId]
+        );
+        order = (orderResult.rows._array[0]?.maxOrder || 0) + 1;
+    }
+
+    await executeSql(
+        'INSERT INTO milestones (id, pathId, title, description, `order`, collapsed, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [id, pathId, title, description || null, order, 0, now, now]
+    );
+
+    return {
+        id,
+        pathId,
+        title,
+        description,
+        order,
+        collapsed: false,
+        createdAt: now,
+        updatedAt: now
+    };
+};
+
+export const updateMilestone = async (
+    milestoneId: string,
+    updates: Partial<Pick<Milestone, 'title' | 'description' | 'order' | 'collapsed'>>
+): Promise<boolean> => {
+    const now = new Date().toISOString();
+
+    const setClauses: string[] = [];
+    const values: any[] = [];
+
+    Object.entries(updates).forEach(([key, value]) => {
+        if (key === 'order') {
+            setClauses.push('`order` = ?');
+        } else {
+            setClauses.push(`${key} = ?`);
+        }
+        values.push(value);
+    });
+
+    if (setClauses.length === 0) return true;
+
+    setClauses.push('updatedAt = ?');
+    values.push(now, milestoneId);
+
+    await executeSql(
+        `UPDATE milestones SET ${setClauses.join(', ')} WHERE id = ?`,
+        values
+    );
+
+    return true;
+};
+
+export const deleteMilestone = async (milestoneId: string): Promise<boolean> => {
+    try {
+        // First, move all actions in this milestone to ungrouped (parentType = 'path')
+        const parentPathResult = await executeSql(
+            'SELECT pathId FROM milestones WHERE id = ?',
+            [milestoneId]
+        );
+
+        if (parentPathResult.rows._array.length > 0) {
+            const pathId = parentPathResult.rows._array[0].pathId;
+
+            // Update actions to be ungrouped
+            await executeSql(
+                'UPDATE actions SET parentId = ?, parentType = ? WHERE parentId = ? AND parentType = ?',
+                [pathId, 'path', milestoneId, 'milestone']
+            );
+        }
+
+        // Delete the milestone
+        await executeSql('DELETE FROM milestones WHERE id = ?', [milestoneId]);
+
+        return true;
+    } catch (error) {
+        console.error('Error deleting milestone:', error);
+        return false;
+    }
+};
+
+export const getMilestonesByPath = async (pathId: string): Promise<Milestone[]> => {
+    const result = await executeSql(
+        'SELECT * FROM milestones WHERE pathId = ? ORDER BY `order` ASC',
+        [pathId]
+    );
+
+    return result.rows._array.map((row: any) => ({
+        ...row,
+        collapsed: Boolean(row.collapsed)
+    }));
+};
+
+export const reorderMilestones = async (pathId: string, milestoneOrders: { id: string; order: number }[]): Promise<boolean> => {
+    try {
+        for (const { id, order } of milestoneOrders) {
+            await updateMilestone(id, { order });
+        }
+        return true;
+    } catch (error) {
+        console.error('Error reordering milestones:', error);
+        return false;
+    }
+};
+
+// Action linking functions
+export const linkActionToPath = async (
+    actionId: string,
+    pathId: string,
+    milestoneId?: string,
+    order?: number
+): Promise<boolean> => {
+    try {
+        // Get next order if not specified
+        if (order === undefined) {
+            const parentId = milestoneId || pathId;
+            const parentType = milestoneId ? 'milestone' : 'path';
+
+            const orderResult = await executeSql(
+                'SELECT MAX(actionOrder) as maxOrder FROM actions WHERE parentId = ? AND parentType = ?',
+                [parentId, parentType]
+            );
+            order = (orderResult.rows._array[0]?.maxOrder || 0) + 1;
+        }
+
+        // Update the action to link it to the path/milestone
+        const parentId = milestoneId || pathId;
+        const parentType = milestoneId ? 'milestone' : 'path';
+
+        await executeSql(
+            'UPDATE actions SET parentId = ?, parentType = ?, actionOrder = ? WHERE id = ?',
+            [parentId, parentType, order, actionId]
+        );
+
+        return true;
+    } catch (error) {
+        console.error('Error linking action to path:', error);
+        return false;
+    }
+};
+
+export const unlinkActionFromPath = async (actionId: string): Promise<boolean> => {
+    try {
+        // Remove the parent relationship to make it a standalone action
+        await executeSql(
+            'UPDATE actions SET parentId = NULL, parentType = NULL, actionOrder = NULL WHERE id = ?',
+            [actionId]
+        );
+        return true;
+    } catch (error) {
+        console.error('Error unlinking action from path:', error);
+        return false;
+    }
+};
+
+export const getPathActions = async (pathId: string, milestoneId?: string): Promise<Action[]> => {
+    const parentId = milestoneId || pathId;
+    const parentType = milestoneId ? 'milestone' : 'path';
+
+    const result = await executeSql(
+        'SELECT * FROM actions WHERE parentId = ? AND parentType = ? ORDER BY actionOrder ASC, createdAt ASC',
+        [parentId, parentType]
+    );
+
+    return result.rows._array.map((row: any) => ({
+        ...row,
+        type: 'action',
+        done: Boolean(row.done),
+        completed: Boolean(row.completed),
+        tags: row.tags ? JSON.parse(row.tags) : [],
+        subTasks: row.subTasks ? JSON.parse(row.subTasks) : []
+    }));
+};
+
+export const moveActionBetweenContainers = async (
+    actionId: string,
+    newParentId: string,
+    newParentType: 'path' | 'milestone',
+    newOrder?: number
+): Promise<boolean> => {
+    try {
+        // Get next order if not specified
+        if (newOrder === undefined) {
+            const orderResult = await executeSql(
+                'SELECT MAX(actionOrder) as maxOrder FROM actions WHERE parentId = ? AND parentType = ?',
+                [newParentId, newParentType]
+            );
+            newOrder = (orderResult.rows._array[0]?.maxOrder || 0) + 1;
+        }
+
+        await executeSql(
+            'UPDATE actions SET parentId = ?, parentType = ?, actionOrder = ? WHERE id = ?',
+            [newParentId, newParentType, newOrder, actionId]
+        );
+
+        return true;
+    } catch (error) {
+        console.error('Error moving action between containers:', error);
+        return false;
     }
 };

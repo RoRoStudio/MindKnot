@@ -410,6 +410,11 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                 onHide={onHide}
                 done={isDone}
                 dueDate={action.dueDate}
+                // Add linked indicator in subtitle if this action is embedded
+                subtitle={action.parentId && action.parentType ?
+                    `Linked to ${action.parentType === 'path' ? 'Path' : 'Milestone'}` :
+                    undefined
+                }
                 // Checkbox functionality
                 showCheckbox={true}
                 checkboxChecked={isDone}

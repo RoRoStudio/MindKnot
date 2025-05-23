@@ -9,13 +9,7 @@ export interface Path extends BaseEntry {
     target?: string; // The goal or target outcome
     expectedDuration?: string; // Expected time to complete
     milestones?: Milestone[];
-    actions?: Array<{
-        id: string;
-        title: string;
-        description?: string;
-        done: boolean;
-        milestone?: string;
-    }>;
+    // Remove the actions array - actions will be linked via parentId/parentType
 }
 
 export interface Milestone {
@@ -23,12 +17,17 @@ export interface Milestone {
     pathId: string;
     title: string;
     description?: string;
-    actions?: Array<{
-        id: string;
-        name: string;
-        description?: string;
-        done: boolean
-    }>;
+    order: number; // For drag-and-drop reordering
+    collapsed?: boolean; // For UI state
     createdAt: string;
     updatedAt: string;
+}
+
+// Utility type for action references in path context
+export interface PathActionReference {
+    id: string;
+    actionId: string; // Reference to the actual Action
+    isLinked: boolean; // Whether this is a linked existing action or path-specific
+    order: number; // For reordering within milestone or ungrouped
+    milestoneId?: string; // If part of a milestone, otherwise ungrouped
 }

@@ -7,21 +7,33 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
+    TextInput,
+    StyleSheet,
+    StatusBar,
+    Text,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useForm, Control, FieldValues } from 'react-hook-form';
-import * as yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
+import { useForm, Controller } from 'react-hook-form';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useStyles } from '../../hooks/useStyles';
 import { Typography, Icon } from '../../components/common';
-import { EntryDetailHeader } from '../../components/entries';
-import { Form, FormInput, FormRichTextarea, FormTagInput, FormCategorySelector } from '../../components/form';
-import { createPath, updatePath, getPathById } from '../../api/pathService';
+import { EntryDetailHeader, EntryMetadataBar } from '../../components/entries';
+import { ActionCard } from '../../components/entries/actions/ActionCard';
+import { MilestoneSection, ActionEmbedSheet } from '../../components/entries/paths';
+import {
+    createPath,
+    updatePath,
+    getPathById,
+    createMilestone,
+    getMilestonesByPath,
+    getPathActions
+} from '../../api/pathService';
+import { createAction } from '../../api/actionService';
 import { RootStackParamList } from '../../types/navigation-types';
 import { usePaths } from '../../hooks/usePaths';
+import { Path, Milestone } from '../../types/path';
+import { Action } from '../../types/action';
 
 type PathScreenMode = 'create' | 'edit' | 'view';
 
@@ -55,172 +67,13 @@ export default function PathScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [mode, setMode] = useState<PathScreenMode>('create');
     const [pathId, setPathId] = useState<string | undefined>(undefined);
-
-    const styles = useStyles((theme) => ({
-        container: {
-            flex: 1,
-            backgroundColor: theme.colors.background,
-        },
-        content: {
-            flex: 1,
-            padding: theme.spacing.m,
-        },
-        header: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: theme.spacing.m,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.colors.divider,
-        },
-        backButton: {
-            padding: theme.spacing.s,
-        },
-        headerTitle: {
-            flex: 1,
-            marginLeft: theme.spacing.s,
-        },
-        actionButton: {
-            marginHorizontal: theme.spacing.s,
-        },
-        buttonContainer: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: theme.spacing.l,
-            paddingHorizontal: theme.spacing.m,
-            paddingBottom: theme.spacing.m,
-        },
-        submitButton: {
-            backgroundColor: theme.colors.primary,
-            paddingVertical: theme.spacing.m,
-            paddingHorizontal: theme.spacing.l,
-            borderRadius: theme.shape.radius.m,
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 120,
-        },
-        submitButtonText: {
-            color: theme.colors.onPrimary,
-            fontWeight: 'bold',
-        },
-        cancelButton: {
-            paddingVertical: theme.spacing.m,
-            paddingHorizontal: theme.spacing.l,
-            borderRadius: theme.shape.radius.m,
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        cancelButtonText: {
-            color: theme.colors.textSecondary,
-        },
-        loadingContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        metadataSection: {
-            marginTop: theme.spacing.m,
-        },
-        metadataTitle: {
-            marginBottom: theme.spacing.s,
-        },
-        tagsContainer: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            marginBottom: theme.spacing.m,
-        },
-        tag: {
-            backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: theme.shape.radius.m,
-            paddingHorizontal: theme.spacing.s,
-            paddingVertical: theme.spacing.xs,
-            marginRight: theme.spacing.xs,
-            marginBottom: theme.spacing.xs,
-        },
-        dateText: {
-            marginTop: theme.spacing.s,
-            color: theme.colors.textSecondary,
-        },
-        editButton: {
-            position: 'absolute',
-            right: theme.spacing.l,
-            bottom: theme.spacing.l,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            backgroundColor: theme.colors.primary,
-            justifyContent: 'center',
-            alignItems: 'center',
-            elevation: 4,
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 3,
-        },
-        pathContainer: {
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.l,
-            padding: theme.spacing.m,
-            marginVertical: theme.spacing.m,
-            borderLeftWidth: 4,
-            borderLeftColor: theme.colors.primary,
-        },
-        milestonesContainer: {
-            marginTop: theme.spacing.l,
-        },
-        milestonesTitle: {
-            marginBottom: theme.spacing.m,
-        },
-        milestoneItem: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: theme.spacing.m,
-            backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: theme.shape.radius.m,
-            marginBottom: theme.spacing.s,
-        },
-        milestoneNumber: {
-            width: 30,
-            height: 30,
-            borderRadius: 15,
-            backgroundColor: theme.colors.primary,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: theme.spacing.m,
-        },
-        milestoneNumberText: {
-            color: theme.colors.onPrimary,
-            fontWeight: 'bold',
-        },
-        milestoneContent: {
-            flex: 1,
-        },
-        addMilestoneButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: theme.spacing.s,
-            marginTop: theme.spacing.s,
-        },
-        addMilestoneText: {
-            color: theme.colors.primary,
-            marginLeft: theme.spacing.xs,
-        },
-        detailsRow: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginVertical: theme.spacing.xs,
-        },
-        detailsLabel: {
-            width: 100,
-            marginRight: theme.spacing.m,
-        },
-        detailsValue: {
-            flex: 1,
-        },
-    }));
+    const [milestones, setMilestones] = useState<Milestone[]>([]);
+    const [ungroupedActions, setUngroupedActions] = useState<Action[]>([]);
+    const [showActionEmbedSheet, setShowActionEmbedSheet] = useState(false);
+    const [embedTargetMilestone, setEmbedTargetMilestone] = useState<string | undefined>();
 
     // Set up form with default values
-    const { control, handleSubmit, reset, getValues, formState: { errors } } = useForm<PathFormValues>({
+    const { control, handleSubmit, reset, getValues, setValue, watch } = useForm<PathFormValues>({
         defaultValues: {
             title: '',
             description: '',
@@ -231,6 +84,9 @@ export default function PathScreen() {
         },
         mode: 'onChange'
     });
+
+    const categoryId = watch('categoryId');
+    const tags = watch('tags');
 
     // Initialize from route params
     useEffect(() => {
@@ -260,6 +116,9 @@ export default function PathScreen() {
                     tags: path.tags || [],
                     categoryId: path.categoryId || null,
                 });
+
+                // Load milestones and actions
+                await loadMilestonesAndActions(id);
             } else {
                 Alert.alert('Error', 'Path not found');
                 navigation.goBack();
@@ -273,7 +132,21 @@ export default function PathScreen() {
         }
     };
 
-    // Handle form submission
+    const loadMilestonesAndActions = async (pathId: string) => {
+        try {
+            const [milestonesData, ungroupedActionsData] = await Promise.all([
+                getMilestonesByPath(pathId),
+                getPathActions(pathId) // This gets ungrouped actions (parentType = 'path')
+            ]);
+
+            setMilestones(milestonesData);
+            setUngroupedActions(ungroupedActionsData);
+        } catch (error) {
+            console.error('Error loading milestones and actions:', error);
+        }
+    };
+
+    // Handle form submission for path metadata
     const onSubmit = async (data: PathFormValues) => {
         if (isSubmitting) return;
 
@@ -294,13 +167,19 @@ export default function PathScreen() {
             if (mode === 'edit' && pathId) {
                 success = await updatePath(pathId, pathData);
             } else {
-                await createPath(pathData);
-                success = true;
+                const newPath = await createPath(pathData);
+                success = !!newPath;
+                if (success && newPath) {
+                    setPathId(newPath.id);
+                    setMode('view');
+                }
             }
 
             if (success) {
                 await loadPaths();
-                navigation.goBack();
+                if (mode === 'edit') {
+                    setMode('view');
+                }
             } else {
                 Alert.alert('Error', 'Failed to save the path. Please try again.');
             }
@@ -312,201 +191,251 @@ export default function PathScreen() {
         }
     };
 
+    // Handle metadata changes in edit/view mode (auto-save)
+    const handleCategoryChange = async (newCategoryId: string | null) => {
+        setValue('categoryId', newCategoryId);
+        if (pathId && (mode === 'view' || mode === 'edit')) {
+            await autoSave({ categoryId: newCategoryId });
+        }
+    };
+
+    const handleLabelsChange = async (newLabels: string[]) => {
+        setValue('tags', newLabels);
+        if (pathId && (mode === 'view' || mode === 'edit')) {
+            await autoSave({ tags: newLabels });
+        }
+    };
+
+    const handleTitleChange = async (value: string) => {
+        setValue('title', value);
+        if (pathId && (mode === 'view' || mode === 'edit')) {
+            await autoSave({ title: value });
+        }
+    };
+
+    const autoSave = async (updates: Partial<PathFormValues>) => {
+        if (!pathId) return;
+
+        try {
+            const currentData = getValues();
+            const pathData = {
+                ...currentData,
+                ...updates,
+                type: 'path' as const,
+            };
+            await updatePath(pathId, pathData);
+        } catch (error) {
+            console.error('Error auto-saving path:', error);
+        }
+    };
+
     // Switch to edit mode from view mode
     const handleEditPress = () => {
         setMode('edit');
     };
 
-    // Navigate to add action as a milestone
-    const handleAddMilestone = () => {
+    const handleBackPress = () => {
+        navigation.goBack();
+    };
+
+    // Milestone management
+    const handleCreateMilestone = async () => {
         if (!pathId) return;
 
-        // Navigate to ActionScreen with pathId as parent
-        navigation.navigate('ActionScreen', {
-            mode: 'create',
-            parentId: pathId,
-            parentType: 'path'
-        });
+        try {
+            const newMilestone = await createMilestone(pathId, 'New Milestone');
+            await loadMilestonesAndActions(pathId);
+        } catch (error) {
+            console.error('Error creating milestone:', error);
+            Alert.alert('Error', 'Failed to create milestone');
+        }
     };
 
-    // Render header based on mode
-    const renderHeader = () => {
-        let title = "";
-        if (mode === 'create') title = "Create Path";
-        else if (mode === 'edit') title = "Edit Path";
-        else title = "Path Details";
-
-        return (
-            <EntryDetailHeader
-                showEditButton={mode === 'view'}
-                onEditPress={handleEditPress}
-                onBackPress={() => navigation.goBack()}
-                isSaved={!!pathId && mode === 'view'}
-                title={title}
-                entryType="Path"
-            />
+    const handleMilestoneUpdate = (updatedMilestone: Milestone) => {
+        setMilestones(prev =>
+            prev.map(m => m.id === updatedMilestone.id ? updatedMilestone : m)
         );
     };
 
-    // Render form for create and edit modes
-    const renderForm = () => {
-        return (
-            <Form>
-                <FormInput
-                    name="title"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Title"
-                    placeholder="Enter a title..."
-                    rules={{ required: 'Title is required' }}
-                    isTitle={true}
-                />
-
-                <View style={{ flex: 1, paddingHorizontal: theme.spacing.m }}>
-                    <FormRichTextarea
-                        name="description"
-                        control={control as unknown as Control<FieldValues>}
-                        label="Path"
-                        placeholder="Describe the path..."
-                        adaptiveHeight={false}
-                    />
-                </View>
-
-                <FormInput
-                    name="target"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Target Goal"
-                    placeholder="What are you trying to achieve?"
-                />
-
-                <FormInput
-                    name="expectedDuration"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Expected Duration"
-                    placeholder="e.g. 3 months, 6 weeks..."
-                />
-
-                <FormCategorySelector
-                    name="categoryId"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Category"
-                />
-
-                <FormTagInput
-                    name="tags"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Tags"
-                />
-
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity
-                        style={styles.cancelButton}
-                        onPress={() => navigation.goBack()}
-                        disabled={isSubmitting}
-                    >
-                        <Typography style={styles.cancelButtonText}>Cancel</Typography>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.submitButton}
-                        onPress={handleSubmit(onSubmit)}
-                        disabled={isSubmitting}
-                    >
-                        <Typography style={styles.submitButtonText}>
-                            {isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update' : 'Create'}
-                        </Typography>
-                    </TouchableOpacity>
-                </View>
-            </Form>
-        );
+    const handleMilestoneDelete = (milestoneId: string) => {
+        setMilestones(prev => prev.filter(m => m.id !== milestoneId));
+        // Reload ungrouped actions as deleted milestone actions become ungrouped
+        if (pathId) {
+            loadMilestonesAndActions(pathId);
+        }
     };
 
-    // Render read-only view
-    const renderViewMode = () => {
-        const values = getValues();
+    // Action management
+    const handleCreateUngroupedAction = async () => {
+        if (!pathId) return;
 
-        return (
-            <View style={styles.content}>
-                <Typography variant="h4">{values.title}</Typography>
+        try {
+            await createAction({
+                title: 'New Action',
+                description: '',
+                done: false,
+                completed: false,
+                priority: 0,
+                tags: [],
+                parentId: pathId,
+                parentType: 'path'
+            });
 
-                {values.description ? (
-                    <View style={styles.pathContainer}>
-                        <Typography variant="body1">{values.description}</Typography>
-                    </View>
-                ) : null}
-
-                <View style={styles.metadataSection}>
-                    <Typography variant="subtitle1">Details</Typography>
-
-                    {values.target ? (
-                        <View style={styles.detailsRow}>
-                            <Typography variant="body2" style={styles.detailsLabel}>Target:</Typography>
-                            <Typography variant="body2" style={styles.detailsValue}>
-                                {values.target}
-                            </Typography>
-                        </View>
-                    ) : null}
-
-                    {values.expectedDuration ? (
-                        <View style={styles.detailsRow}>
-                            <Typography variant="body2" style={styles.detailsLabel}>Duration:</Typography>
-                            <Typography variant="body2" style={styles.detailsValue}>
-                                {values.expectedDuration}
-                            </Typography>
-                        </View>
-                    ) : null}
-
-                    {values.tags && values.tags.length > 0 && (
-                        <>
-                            <Typography variant="subtitle1" style={[styles.metadataTitle, { marginTop: theme.spacing.m }]}>
-                                Tags:
-                            </Typography>
-                            <View style={styles.tagsContainer}>
-                                {values.tags.map((tag, index) => (
-                                    <View key={index} style={styles.tag}>
-                                        <Typography variant="caption">{tag}</Typography>
-                                    </View>
-                                ))}
-                            </View>
-                        </>
-                    )}
-                </View>
-
-                {pathId && (
-                    <View style={styles.milestonesContainer}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="subtitle1" style={styles.milestonesTitle}>
-                                Milestones
-                            </Typography>
-
-                            <TouchableOpacity
-                                style={styles.addMilestoneButton}
-                                onPress={handleAddMilestone}
-                            >
-                                <Icon name="plus" width={16} height={16} color={theme.colors.primary} />
-                                <Typography style={styles.addMilestoneText}>Add Milestone</Typography>
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Milestone list would go here - we'll load them separately using related actions */}
-                    </View>
-                )}
-
-                <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={handleEditPress}
-                >
-                    <Icon name="pencil" width={24} height={24} color={theme.colors.onPrimary} />
-                </TouchableOpacity>
-            </View>
-        );
+            await loadMilestonesAndActions(pathId);
+        } catch (error) {
+            console.error('Error creating ungrouped action:', error);
+            Alert.alert('Error', 'Failed to create action');
+        }
     };
+
+    const handleLinkExistingAction = (milestoneId?: string) => {
+        setEmbedTargetMilestone(milestoneId);
+        setShowActionEmbedSheet(true);
+    };
+
+    const handleActionLinked = () => {
+        if (pathId) {
+            loadMilestonesAndActions(pathId);
+        }
+    };
+
+    const handleActionUpdate = () => {
+        if (pathId) {
+            loadMilestonesAndActions(pathId);
+        }
+    };
+
+    const handleActionToggleDone = async (actionId: string) => {
+        await loadMilestonesAndActions(pathId!);
+    };
+
+    const styles = StyleSheet.create({
+        safeArea: {
+            flex: 1,
+            backgroundColor: '#FFFFFF',
+        },
+        container: {
+            flex: 1,
+            backgroundColor: '#FFFFFF',
+        },
+        content: {
+            flex: 1,
+        },
+        titleInput: {
+            fontSize: 32,
+            fontWeight: '300',
+            color: '#000000',
+            padding: 16,
+            paddingTop: 16,
+            paddingBottom: 16,
+            fontFamily: 'KantumruyPro-Bold',
+        },
+        divider: {
+            height: 1,
+            backgroundColor: '#EEEEEE',
+            marginHorizontal: 16,
+        },
+        sectionsContainer: {
+            padding: 16,
+        },
+        sectionHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 16,
+            marginTop: 24,
+        },
+        sectionTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            color: '#111827',
+        },
+        addButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 8,
+            backgroundColor: '#F3F4F6',
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: '#D1D5DB',
+            borderStyle: 'dashed',
+        },
+        addButtonText: {
+            fontSize: 14,
+            color: '#6B7280',
+            marginLeft: 6,
+            fontWeight: '500',
+        },
+        ungroupedSection: {
+            marginTop: 16,
+        },
+        ungroupedHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
+        ungroupedTitle: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: '#374151',
+            marginLeft: 8,
+        },
+        actionsContainer: {
+            gap: 12,
+        },
+        addActionsRow: {
+            flexDirection: 'row',
+            gap: 8,
+            marginTop: 12,
+        },
+        emptyState: {
+            alignItems: 'center',
+            padding: 32,
+        },
+        emptyIcon: {
+            marginBottom: 12,
+        },
+        emptyTitle: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: '#374151',
+            marginBottom: 4,
+        },
+        emptyText: {
+            fontSize: 14,
+            color: '#6B7280',
+            textAlign: 'center',
+        },
+        loadingContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        bottomContainer: {
+            padding: 16,
+            paddingBottom: 32,
+            borderTopWidth: 1,
+            borderTopColor: '#F5F5F5',
+        },
+        saveButton: {
+            backgroundColor: '#1B1B1B',
+            borderRadius: 32,
+            paddingVertical: 16,
+            alignItems: 'center',
+        },
+        saveButtonText: {
+            color: '#FFFFFF',
+            fontSize: 16,
+            fontWeight: '600',
+            fontFamily: 'KantumruyPro-SemiBold',
+        },
+    });
 
     if (isLoading) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView style={styles.safeArea}>
                 <EntryDetailHeader
-                    onBackPress={() => navigation.goBack()}
-                    title="Loading..."
+                    onBackPress={handleBackPress}
                     entryType="Path"
                 />
                 <View style={styles.loadingContainer}>
@@ -516,18 +445,165 @@ export default function PathScreen() {
         );
     }
 
+    const isEditing = mode === 'edit' || mode === 'create';
+    const headerTitle = mode === 'create' ? 'New Path' : 'Path';
+
     return (
-        <SafeAreaView style={styles.container}>
-            {renderHeader()}
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-            >
-                <View style={{ flex: 1 }}>
-                    {mode === 'view' ? renderViewMode() : renderForm()}
-                </View>
-            </KeyboardAvoidingView>
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <View style={styles.container}>
+                <EntryDetailHeader
+                    onBackPress={handleBackPress}
+                    entryType={headerTitle}
+                    showEditButton={mode === 'view'}
+                    onEditPress={handleEditPress}
+                    isSaved={!!pathId}
+                />
+
+                <EntryMetadataBar
+                    categoryId={categoryId}
+                    onCategoryChange={handleCategoryChange}
+                    labels={tags}
+                    onLabelsChange={handleLabelsChange}
+                    isEditing={isEditing}
+                />
+
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={{ flex: 1 }}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+                >
+                    <ScrollView style={styles.content}>
+                        <Controller
+                            control={control}
+                            name="title"
+                            rules={{ required: true }}
+                            render={({ field: { value } }) => (
+                                <TextInput
+                                    style={styles.titleInput}
+                                    placeholder="Path title"
+                                    placeholderTextColor="#9E9E9E"
+                                    value={value}
+                                    onChangeText={handleTitleChange}
+                                    editable={isEditing}
+                                />
+                            )}
+                        />
+
+                        <View style={styles.divider} />
+
+                        {/* Path content sections */}
+                        <View style={styles.sectionsContainer}>
+                            {/* Milestones Section */}
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>Milestones</Text>
+                                {isEditing && (
+                                    <TouchableOpacity
+                                        style={styles.addButton}
+                                        onPress={handleCreateMilestone}
+                                    >
+                                        <Icon name="plus" width={16} height={16} color="#6B7280" />
+                                        <Text style={styles.addButtonText}>Add Milestone</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+
+                            {milestones.length > 0 ? (
+                                milestones.map((milestone) => (
+                                    <MilestoneSection
+                                        key={milestone.id}
+                                        milestone={milestone}
+                                        onMilestoneUpdate={handleMilestoneUpdate}
+                                        onMilestoneDelete={handleMilestoneDelete}
+                                        onActionUpdate={handleActionUpdate}
+                                        onLinkExistingAction={handleLinkExistingAction}
+                                        isEditing={isEditing}
+                                    />
+                                ))
+                            ) : (
+                                <View style={styles.emptyState}>
+                                    <Icon name="flag" width={48} height={48} color="#D1D5DB" style={styles.emptyIcon} />
+                                    <Text style={styles.emptyTitle}>No milestones yet</Text>
+                                    <Text style={styles.emptyText}>
+                                        Create milestones to organize your actions into logical phases
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* Ungrouped Actions Section */}
+                            <View style={styles.ungroupedSection}>
+                                <View style={styles.ungroupedHeader}>
+                                    <Icon name="list" width={20} height={20} color="#6B7280" />
+                                    <Text style={styles.ungroupedTitle}>Ungrouped Actions</Text>
+                                </View>
+
+                                {ungroupedActions.length > 0 ? (
+                                    <View style={styles.actionsContainer}>
+                                        {ungroupedActions.map((action) => (
+                                            <ActionCard
+                                                key={action.id}
+                                                action={action}
+                                                onToggleDone={handleActionToggleDone}
+                                            />
+                                        ))}
+                                    </View>
+                                ) : (
+                                    <View style={[styles.emptyState, { paddingVertical: 16 }]}>
+                                        <Text style={styles.emptyText}>No ungrouped actions</Text>
+                                    </View>
+                                )}
+
+                                {isEditing && (
+                                    <View style={styles.addActionsRow}>
+                                        <TouchableOpacity
+                                            style={[styles.addButton, { flex: 1 }]}
+                                            onPress={handleCreateUngroupedAction}
+                                        >
+                                            <Icon name="plus" width={16} height={16} color="#6B7280" />
+                                            <Text style={styles.addButtonText}>Add Action</Text>
+                                        </TouchableOpacity>
+
+                                        <TouchableOpacity
+                                            style={[styles.addButton, { flex: 1 }]}
+                                            onPress={() => handleLinkExistingAction()}
+                                        >
+                                            <Icon name="link" width={16} height={16} color="#6B7280" />
+                                            <Text style={styles.addButtonText}>Link Existing</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
+                        </View>
+
+                        {/* Extra space at the bottom */}
+                        <View style={{ height: 100 }} />
+                    </ScrollView>
+
+                    {/* Save button for create/edit modes */}
+                    {(mode === 'create' || mode === 'edit') && (
+                        <View style={styles.bottomContainer}>
+                            <TouchableOpacity
+                                style={styles.saveButton}
+                                onPress={handleSubmit(onSubmit)}
+                                disabled={isSubmitting}
+                            >
+                                <Text style={styles.saveButtonText}>
+                                    {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create Path' : 'Save Changes'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </KeyboardAvoidingView>
+            </View>
+
+            {/* Action Embed Sheet */}
+            <ActionEmbedSheet
+                visible={showActionEmbedSheet}
+                onClose={() => setShowActionEmbedSheet(false)}
+                pathId={pathId || ''}
+                milestoneId={embedTargetMilestone}
+                onActionLinked={handleActionLinked}
+            />
         </SafeAreaView>
     );
 } 

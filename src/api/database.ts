@@ -30,6 +30,56 @@ export const getDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
 };
 
 /**
+ * Apply database migrations to add missing columns to existing tables
+ */
+async function applyDatabaseMigrations(): Promise<void> {
+    if (!db) return;
+
+    try {
+        console.log('Applying database migrations...');
+
+        // Add missing columns to actions table
+        try {
+            await db.execAsync('ALTER TABLE actions ADD COLUMN subTasks TEXT');
+            console.log('Added subTasks column to actions table');
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log('subTasks column already exists or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync('ALTER TABLE actions ADD COLUMN actionOrder INTEGER');
+            console.log('Added actionOrder column to actions table');
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log('actionOrder column already exists or error adding it:', error);
+        }
+
+        // Add missing columns to milestones table
+        try {
+            await db.execAsync('ALTER TABLE milestones ADD COLUMN `order` INTEGER DEFAULT 0');
+            console.log('Added order column to milestones table');
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log('order column already exists or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync('ALTER TABLE milestones ADD COLUMN collapsed INTEGER DEFAULT 0');
+            console.log('Added collapsed column to milestones table');
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log('collapsed column already exists or error adding it:', error);
+        }
+
+        console.log('Database migrations completed');
+    } catch (error) {
+        console.error('Error applying database migrations:', error);
+        // Don't throw error to prevent app from crashing on migration failures
+    }
+}
+
+/**
  * Create necessary tables in the database
  */
 async function createTables(): Promise<void> {
@@ -128,8 +178,10 @@ async function createTables(): Promise<void> {
                 priority INTEGER DEFAULT 0,
                 dueDate TEXT,
                 subActions TEXT,
+                subTasks TEXT,
                 parentId TEXT,
                 parentType TEXT,
+                actionOrder INTEGER,
                 categoryId TEXT,
                 createdAt TEXT NOT NULL,
                 updatedAt TEXT NOT NULL,
@@ -195,11 +247,16 @@ async function createTables(): Promise<void> {
                 pathId TEXT NOT NULL,
                 title TEXT NOT NULL,
                 description TEXT,
+                \`order\` INTEGER DEFAULT 0,
+                collapsed INTEGER DEFAULT 0,
                 createdAt TEXT NOT NULL,
                 updatedAt TEXT NOT NULL,
                 FOREIGN KEY (pathId) REFERENCES paths(id)
             );
         `);
+
+        // Apply migration for existing tables
+        await applyDatabaseMigrations();
 
         console.log('All tables created successfully');
 
