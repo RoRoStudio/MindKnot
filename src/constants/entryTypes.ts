@@ -16,7 +16,7 @@ export type EntryTypeConfig = {
     pluralLabel: string;
     showInVault: boolean;
     showInMomentum: boolean;
-    borderColor: string;
+    color: string;
 };
 
 export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
@@ -27,7 +27,7 @@ export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
         icon: 'scroll-text',
         showInVault: true,
         showInMomentum: false,
-        borderColor: '#3B82F6'
+        color: '#E11D48' // Vibrant Red-Pink - attention-grabbing for important notes
     },
     [EntryType.SPARK]: {
         type: EntryType.SPARK,
@@ -36,7 +36,7 @@ export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
         icon: 'zap',
         showInVault: true,
         showInMomentum: true,
-        borderColor: '#F59E0B'
+        color: '#F59E0B' // Vibrant Amber - energetic like inspiration and ideas
     },
     [EntryType.ACTION]: {
         type: EntryType.ACTION,
@@ -45,7 +45,7 @@ export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
         icon: 'square-check',
         showInVault: true,
         showInMomentum: true,
-        borderColor: '#4ADE80'
+        color: '#10B981' // Vibrant Emerald - action-oriented, growth-focused
     },
     [EntryType.PATH]: {
         type: EntryType.PATH,
@@ -54,7 +54,7 @@ export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
         icon: 'compass',
         showInVault: true,
         showInMomentum: true,
-        borderColor: '#8B5CF6'
+        color: '#8B5CF6' // Vibrant Purple - journey, direction, planning
     },
     [EntryType.LOOP]: {
         type: EntryType.LOOP,
@@ -63,7 +63,7 @@ export const ENTRY_TYPES: Record<EntryType, EntryTypeConfig> = {
         icon: 'infinity',
         showInVault: true,
         showInMomentum: true,
-        borderColor: '#06B6D4'
+        color: '#06B6D4' // Vibrant Cyan - cycles, recurring processes
     }
 };
 

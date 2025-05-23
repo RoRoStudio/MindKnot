@@ -161,7 +161,7 @@ const Button: React.FC<ButtonProps> = ({
         switch (variant) {
             case 'primary':
                 variantStyle = {
-                    backgroundColor: '#1B1B1B',
+                    backgroundColor: theme.colors.primary,
                     borderWidth: 0,
                 };
                 break;
@@ -226,7 +226,7 @@ const Button: React.FC<ButtonProps> = ({
         switch (variant) {
             case 'primary':
                 variantStyle = {
-                    color: '#FFFFFF',
+                    color: theme.colors.onPrimary,
                 };
                 break;
             case 'secondary':
@@ -246,7 +246,7 @@ const Button: React.FC<ButtonProps> = ({
                 break;
             case 'danger':
                 variantStyle = {
-                    color: theme.colors.error,
+                    color: theme.colors.onPrimary,
                 };
                 break;
             default:

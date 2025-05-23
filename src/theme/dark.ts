@@ -3,92 +3,69 @@ import { TextStyle } from 'react-native';
 import { ThemeType } from './themeTypes';
 import tokens from './tokens';
 
-// Extended color palette with additional colors needed by components
-export const extendedColorPalette = {
-    ...tokens.color.neutral,
-    white: tokens.color.neutral.white,
-    black: tokens.color.neutral.black,
-    text: tokens.color.neutral.white
-};
-
 export const darkTheme: ThemeType = {
     name: 'dark',
     isDark: true,
-    dark: true, // Adding this property for StatusBar
+    dark: true, // For StatusBar
     colors: {
-        // Extended color palette
-        ...extendedColorPalette,
-
-        // Brand color scales
-        brand: {
-            blue: tokens.color.brand.blue,
-            green: tokens.color.brand.green,
-            orange: tokens.color.brand.orange,
-            teal: tokens.color.brand.teal,
-        },
-
-        // Neutral colors
+        // Primary neutral scale - Cool-toned grays for main UI elements, text, and surfaces
         neutral: tokens.color.neutral,
 
-        // Primary colors (semantic mappings)
-        primary: tokens.color.brand.blue[400], // Brighter in dark mode
-        primaryLight: tokens.color.brand.teal[200],
-        primaryDark: tokens.color.brand.blue[500],
-        onPrimary: tokens.color.neutral.white,
+        // MindKnot Brand Colors - Sophisticated navy + elegant gold
+        brand: tokens.color.brand,
 
-        // Secondary colors
-        secondary: tokens.color.brand.green[400], // Darker in dark mode
-        secondaryLight: tokens.color.brand.green[200],
-        secondaryDark: tokens.color.brand.green[500],
-        onSecondary: tokens.color.brand.blue[500],
-        secondaryContainer: '#3A3D2C', // Custom dark color for container
+        // Vibrant functional colors - High-contrast, accessible functional colors
+        functional: tokens.color.functional,
 
-        // Tertiary colors
-        tertiary: tokens.color.brand.orange[200], // Brighter in dark mode
-        tertiaryLight: '#FFBB96', // Custom brighter color
-        tertiaryDark: tokens.color.brand.orange[400],
-        onTertiary: tokens.color.neutral.white,
+        // Semantic mappings for commonly used colors - adapted for dark mode with navy + gold
+        primary: tokens.color.brand.primary[400],        // Lighter navy for dark mode primary actions
+        primaryLight: tokens.color.brand.primary[300],   // Even lighter for hover states
+        primaryDark: tokens.color.brand.primary[500],    // Slightly darker for contrast
+        onPrimary: tokens.color.neutral[900],            // Dark text/icons on light brand backgrounds
 
-        // Accent colors
-        accent: tokens.color.brand.teal[300],
-        accentLight: tokens.color.brand.teal[200],
-        accentDark: tokens.color.brand.teal[400],
-        onAccent: tokens.color.neutral.white,
+        secondary: tokens.color.brand.secondary[500],    // Lighter elegant gold for dark mode
+        secondaryLight: tokens.color.brand.secondary[400], // Lighter gold elements
+        secondaryDark: tokens.color.brand.secondary[600], // Darker gold elements
+        onSecondary: tokens.color.neutral[900],          // Dark text/icons on gold backgrounds
 
-        // Background, surface, and content
-        background: tokens.color.neutral.gray[950],
-        surface: tokens.color.neutral.gray[900],
-        surfaceVariant: tokens.color.neutral.gray[800],
+        // Background and surface colors - dark mode
+        background: tokens.color.neutral[950],           // Deepest neutral for dark background
+        surface: tokens.color.neutral[900],              // Very dark gray for card backgrounds
+        surfaceVariant: tokens.color.neutral[800],       // Dark gray for alternative surfaces
 
-        // Text colors
-        textPrimary: tokens.color.neutral.white,
-        textSecondary: tokens.color.brand.teal[200],
-        textDisabled: tokens.color.neutral.gray[600],
-        textLink: tokens.color.brand.teal[300],
+        // Text colors for hierarchy - inverted for dark mode
+        textPrimary: tokens.color.neutral[50],           // Very light for primary text
+        textSecondary: tokens.color.neutral[300],        // Medium light for secondary text
+        textDisabled: tokens.color.neutral[600],         // Medium dark for disabled text
+        textLink: tokens.color.brand.primary[300],       // Light brand blue for link text
 
-        // Border and divider
-        border: tokens.color.neutral.gray[700],
-        divider: tokens.color.neutral.gray[700],
+        // Border and divider colors - darker for dark mode
+        border: tokens.color.neutral[700],               // Dark gray for borders
+        divider: tokens.color.neutral[800],              // Very dark gray for dividers
 
-        // Feedback colors - brighter in dark mode
-        error: '#FF6B6B',
-        errorLight: 'rgba(255, 107, 107, 0.2)',
-        errorDark: '#FF3333',
-        warning: '#FFAB4C',
-        warningLight: 'rgba(255, 171, 76, 0.2)',
-        warningDark: '#FF9900',
-        success: '#4ADE80',
-        successLight: 'rgba(74, 222, 128, 0.2)',
-        successDark: '#22C55E',
-        info: '#7DD3FC',
-        infoLight: 'rgba(125, 211, 252, 0.2)',
-        infoDark: '#38BDF8',
+        // Feedback colors - using vibrant functional palette (same colors work in dark mode)
+        error: tokens.color.functional.error.main,
+        errorLight: tokens.color.functional.error.light,
+        errorDark: tokens.color.functional.error.dark,
+        warning: tokens.color.functional.warning.main,
+        warningLight: tokens.color.functional.warning.light,
+        warningDark: tokens.color.functional.warning.dark,
+        success: tokens.color.functional.success.main,
+        successLight: tokens.color.functional.success.light,
+        successDark: tokens.color.functional.success.dark,
+        info: tokens.color.functional.info.main,
+        infoLight: tokens.color.functional.info.light,
+        infoDark: tokens.color.functional.info.dark,
 
-        // Shadow color
-        shadow: tokens.color.neutral.black,
+        // Shadow and overlay colors
+        shadow: tokens.color.neutral[950],               // Deepest shadow for dark mode
+        overlay: tokens.color.special.overlay,           // Semi-transparent overlay
+        scrim: tokens.color.special.scrim,               // Light overlay for modals
+        backdrop: tokens.color.special.backdrop,         // Backdrop for modal/drawer components
+        focus: tokens.color.special.focus,               // Brand blue focus indicator
 
         // Utility colors
-        transparent: 'transparent',
+        transparent: 'transparent',                      // Transparent for invisible elements
     },
 
     typography: {
@@ -111,7 +88,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xxxl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
-                color: tokens.color.neutral.white,
+                color: tokens.color.neutral[50], // Very light for maximum contrast in dark mode
             } as TextStyle,
             heading2: {
                 fontFamily: tokens.typography.fontFamily.bold,
@@ -119,7 +96,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xxl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
-                color: tokens.color.neutral.white,
+                color: tokens.color.neutral[50],
             } as TextStyle,
             heading3: {
                 fontFamily: tokens.typography.fontFamily.bold,
@@ -127,7 +104,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
-                color: tokens.color.neutral.white,
+                color: tokens.color.neutral[75], // Slightly darker for hierarchy
             } as TextStyle,
             heading4: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -135,7 +112,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.l * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.white,
+                color: tokens.color.neutral[75],
             } as TextStyle,
             heading5: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -143,7 +120,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.m * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.white,
+                color: tokens.color.neutral[100],
             } as TextStyle,
             heading6: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -151,7 +128,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.white,
+                color: tokens.color.neutral[100],
             } as TextStyle,
             subtitle1: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -159,7 +136,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.m * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.brand.teal[200],
+                color: tokens.color.neutral[200], // Light for secondary text
             } as TextStyle,
             subtitle2: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -167,7 +144,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.brand.teal[200],
+                color: tokens.color.neutral[200],
             } as TextStyle,
             body1: {
                 fontFamily: tokens.typography.fontFamily.regular,
@@ -175,7 +152,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.m * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[300],
+                color: tokens.color.neutral[300], // Primary body text in dark mode
             } as TextStyle,
             body2: {
                 fontFamily: tokens.typography.fontFamily.regular,
@@ -183,7 +160,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[300],
+                color: tokens.color.neutral[300],
             } as TextStyle,
             caption: {
                 fontFamily: tokens.typography.fontFamily.regular,
@@ -191,7 +168,7 @@ export const darkTheme: ThemeType = {
                 fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.xs * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[500],
+                color: tokens.color.neutral[400], // Darker for captions in dark mode
             } as TextStyle,
             overline: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -200,7 +177,7 @@ export const darkTheme: ThemeType = {
                 lineHeight: tokens.typography.fontSize.xs * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.wide,
                 textTransform: 'uppercase',
-                color: tokens.color.neutral.gray[500],
+                color: tokens.color.neutral[400],
             } as TextStyle,
             button: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -213,10 +190,10 @@ export const darkTheme: ThemeType = {
             label: {
                 fontFamily: tokens.typography.fontFamily.medium,
                 fontSize: tokens.typography.fontSize.s,
-                fontWeight: "400",
+                fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[300],
+                color: tokens.color.neutral[200],
             } as TextStyle,
         },
     },
@@ -249,23 +226,23 @@ export const darkTheme: ThemeType = {
 
     components: {
         bottomNavBar: {
-            background: tokens.color.brand.blue[500],
-            activeIcon: tokens.color.brand.green[200],
-            inactiveIcon: `rgba(236, 239, 202, 0.7)`,
-            activeText: tokens.color.brand.green[200],
-            inactiveText: `rgba(236, 239, 202, 0.7)`,
-            fabBackground: tokens.color.brand.teal[300],
-            fabIcon: tokens.color.brand.blue[500],
-            menuItemBackground: tokens.color.brand.blue[400],
-            menuItemIcon: tokens.color.neutral.white,
+            background: tokens.color.neutral[800],                 // Dark neutral for navigation background
+            activeIcon: tokens.color.brand.secondary[500],         // Elegant gold for active icons
+            inactiveIcon: tokens.color.neutral[500],               // Medium neutral for inactive icons
+            activeText: tokens.color.brand.secondary[500],         // Elegant gold for active text
+            inactiveText: tokens.color.neutral[500],               // Medium neutral for inactive text
+            fabBackground: tokens.color.brand.secondary[600],      // Rich sophisticated gold for FAB in dark mode
+            fabIcon: tokens.color.neutral[900],                    // Dark icon on gold FAB
+            menuItemBackground: tokens.color.neutral[800],         // Dark surface for menu items
+            menuItemIcon: tokens.color.neutral[200],               // Light icons in menu
             elevation: 8,
         },
 
         card: {
-            background: tokens.color.neutral.gray[900],
-            border: tokens.color.neutral.gray[700],
-            titleColor: tokens.color.brand.green[200],
-            textColor: tokens.color.brand.teal[200],
+            background: tokens.color.neutral[900],                 // Dark surface for cards
+            border: tokens.color.neutral[700],                     // Dark border
+            titleColor: tokens.color.neutral[100],                 // Light title text
+            textColor: tokens.color.neutral[300],                  // Medium light text color
             radius: tokens.radius.m,
             padding: tokens.spacing.m,
             elevation: tokens.shadow.s,
@@ -273,75 +250,75 @@ export const darkTheme: ThemeType = {
 
         button: {
             primary: {
-                background: tokens.color.brand.blue[400],
-                text: tokens.color.neutral.white,
+                background: tokens.color.brand.primary[400],           // Light brand blue for contrast in dark mode
+                text: tokens.color.neutral[900],                       // Dark text on light background
                 border: 'transparent',
                 radius: tokens.radius.m,
-                pressedBackground: tokens.color.brand.blue[300],
-                disabledBackground: tokens.color.neutral.gray[800],
-                disabledText: tokens.color.neutral.gray[600],
+                pressedBackground: tokens.color.brand.primary[300],    // Lighter on press
+                disabledBackground: tokens.color.neutral[700],         // Dark disabled state
+                disabledText: tokens.color.neutral[500],               // Medium disabled text
             },
             secondary: {
-                background: 'transparent',
-                text: tokens.color.brand.teal[300],
-                border: tokens.color.brand.teal[300],
+                background: 'transparent',                             // Transparent outline style
+                text: tokens.color.brand.primary[300],                 // Light brand blue text
+                border: tokens.color.brand.primary[400],               // Light brand blue border
                 radius: tokens.radius.m,
-                pressedBackground: `rgba(148, 180, 193, 0.2)`,
+                pressedBackground: tokens.color.neutral[800],          // Subtle dark press background
                 disabledBackground: 'transparent',
-                disabledText: tokens.color.neutral.gray[700],
+                disabledText: tokens.color.neutral[600],               // Dark disabled text
             },
             text: {
-                color: tokens.color.brand.green[200],
-                pressedColor: tokens.color.brand.green[300],
-                disabledColor: tokens.color.neutral.gray[700],
+                color: tokens.color.brand.primary[300],                // Light brand blue text button
+                pressedColor: tokens.color.brand.primary[200],         // Lighter on press
+                disabledColor: tokens.color.neutral[600],              // Dark disabled
             },
         },
 
         inputs: {
-            background: tokens.color.neutral.gray[800],
-            text: tokens.color.neutral.white,
-            placeholder: tokens.color.neutral.gray[600],
-            border: tokens.color.neutral.gray[700],
-            focusBorder: tokens.color.brand.teal[300],
+            background: tokens.color.neutral[800],                 // Dark input background
+            text: tokens.color.neutral[100],                       // Light input text
+            placeholder: tokens.color.neutral[500],                // Medium placeholder
+            border: tokens.color.neutral[700],                     // Dark border
+            focusBorder: tokens.color.brand.primary[400],          // Light brand blue focus border
             radius: tokens.radius.m,
-            error: '#FF6B6B',
-            success: '#4ADE80',
+            error: tokens.color.functional.error.main,
+            success: tokens.color.functional.success.main,
             padding: tokens.spacing.m,
             height: 56,
         },
 
         listItem: {
-            background: tokens.color.neutral.gray[900],
-            pressedBackground: tokens.color.neutral.gray[800],
-            titleColor: tokens.color.neutral.white,
-            subtitleColor: tokens.color.brand.teal[200],
-            border: tokens.color.neutral.gray[700],
+            background: tokens.color.neutral[900],                 // Dark list item background
+            pressedBackground: tokens.color.neutral[800],          // Darker on press
+            titleColor: tokens.color.neutral[100],                 // Light title
+            subtitleColor: tokens.color.neutral[300],              // Medium light subtitle
+            border: tokens.color.neutral[800],                     // Dark divider
             height: 72,
         },
 
         modal: {
-            background: tokens.color.neutral.gray[900],
-            overlay: tokens.color.special.overlay,
+            background: tokens.color.neutral[900],                 // Dark modal background
+            overlay: tokens.color.special.overlay,                 // Dark overlay (same as light)
             shadow: tokens.shadow.l,
             radius: tokens.radius.l,
         },
 
         status: {
             info: {
-                background: 'rgba(125, 211, 252, 0.2)',
-                text: '#7DD3FC',
+                background: tokens.color.functional.info.light,
+                text: tokens.color.functional.info.dark,
             },
             success: {
-                background: 'rgba(74, 222, 128, 0.2)',
-                text: '#4ADE80',
+                background: tokens.color.functional.success.light,
+                text: tokens.color.functional.success.dark,
             },
             warning: {
-                background: 'rgba(255, 171, 76, 0.2)',
-                text: '#FFAB4C',
+                background: tokens.color.functional.warning.light,
+                text: tokens.color.functional.warning.dark,
             },
             error: {
-                background: 'rgba(255, 107, 107, 0.2)',
-                text: '#FF6B6B',
+                background: tokens.color.functional.error.light,
+                text: tokens.color.functional.error.dark,
             },
         },
     },

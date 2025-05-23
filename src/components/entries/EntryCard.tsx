@@ -100,6 +100,180 @@ export const EntryCard: React.FC<EntryCardProps> = ({
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
 
+    // Create styles inside component to access theme
+    const styles = StyleSheet.create({
+        container: {
+            marginBottom: 16,
+            position: 'relative',
+        },
+        card: {
+            backgroundColor: theme.colors.surface,
+            borderRadius: 12,
+            borderTopWidth: 1,
+            borderLeftWidth: 1,
+            borderRightWidth: 1,
+            borderBottomWidth: 4,
+            borderTopColor: theme.colors.border,
+            borderLeftColor: theme.colors.border,
+            borderRightColor: theme.colors.border,
+            padding: 16,
+        },
+        header: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+        },
+        headerLeft: {
+            flexDirection: 'row',
+            flex: 1,
+            alignItems: 'flex-start',
+        },
+        headerRight: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginLeft: 8,
+            flexShrink: 0,
+        },
+        contentContainer: {
+            flex: 1,
+            position: 'relative',
+        },
+        title: {
+            fontSize: 18,
+            fontWeight: '600',
+            color: theme.colors.textPrimary,
+            marginBottom: 4,
+            lineHeight: 24,
+        },
+        titleCompleted: {
+            textDecorationLine: 'line-through',
+            color: theme.colors.textDisabled,
+        },
+        doneIndicator: {
+            position: 'absolute',
+            top: 2,
+            right: 0,
+            width: 8,
+            height: 8,
+            borderRadius: 4,
+        },
+        subtitle: {
+            fontSize: 14,
+            color: theme.colors.textSecondary,
+            marginBottom: 4,
+            lineHeight: 18,
+        },
+        description: {
+            fontSize: 14,
+            color: theme.colors.textSecondary,
+            marginBottom: 8,
+            lineHeight: 20,
+        },
+        categoryPill: {
+            marginTop: 4,
+            marginBottom: 8,
+            alignSelf: 'flex-start',
+        },
+        dueDateContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 8,
+        },
+        dueDateText: {
+            fontSize: 14,
+            color: theme.colors.textSecondary,
+            marginLeft: 4,
+        },
+        metaContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 8,
+        },
+        dateText: {
+            fontSize: 12,
+            color: theme.colors.textDisabled,
+        },
+        starIcon: {
+            marginLeft: 8,
+        },
+        tagsContainer: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+        },
+        expandButton: {
+            marginRight: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        moreButton: {
+            padding: 4,
+        },
+        expandedContainer: {
+            marginTop: 16,
+            paddingTop: 16,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.divider,
+        },
+        actionsMenu: {
+            position: 'absolute',
+            top: 40,
+            right: 16,
+            backgroundColor: theme.colors.surface,
+            borderRadius: 8,
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 3,
+            elevation: 3,
+            padding: 8,
+            zIndex: 10,
+            minWidth: 140,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+        },
+        actionMenuItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 8,
+            borderRadius: 4,
+        },
+        actionMenuItemText: {
+            fontSize: 14,
+            color: theme.colors.textSecondary,
+            marginLeft: 8,
+        },
+        checkboxContainer: {
+            marginTop: 4,
+            marginRight: 12,
+            flexShrink: 0,
+        },
+        checkbox: {
+            width: 20,
+            height: 20,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            borderRadius: 4,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: theme.colors.background,
+        },
+        subTaskCounter: {
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 999,
+            paddingHorizontal: 6,
+            height: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: 4,
+        },
+        subTaskCounterText: {
+            fontSize: 12,
+            fontWeight: '500',
+            color: theme.colors.textSecondary,
+        },
+    });
+
     // Fetch category info when categoryId changes
     useEffect(() => {
         const fetchCategoryInfo = async () => {
@@ -350,9 +524,6 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                 <View style={[
                     styles.card,
                     {
-                        borderTopColor: borderColor,
-                        borderLeftColor: borderColor,
-                        borderRightColor: borderColor,
                         borderBottomColor: borderColor,
                     }
                 ]}>
@@ -371,7 +542,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                                         }
                                     ]}>
                                         {checkboxChecked && (
-                                            <Icon name="check" width={14} height={14} color="#FFFFFF" />
+                                            <Icon name="check" width={14} height={14} color={theme.colors.onPrimary} />
                                         )}
                                     </View>
                                 </TouchableOpacity>
@@ -412,7 +583,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
 
                                 {dueDate && (
                                     <View style={styles.dueDateContainer}>
-                                        <Icon name="calendar" width={16} height={16} color="#6B7280" />
+                                        <Icon name="calendar" width={16} height={16} color={theme.colors.textSecondary} />
                                         <Text style={styles.dueDateText}>
                                             Target: {formatDueDate(dueDate)}
                                         </Text>
@@ -424,7 +595,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                                         {formatDate(createdAt)}
                                     </Text>
                                     {isStarred && (
-                                        <Icon name="star" width={16} height={16} color="#FFB800" style={styles.starIcon} />
+                                        <Icon name="star" width={16} height={16} color={theme.colors.warning} style={styles.starIcon} />
                                     )}
                                 </View>
 
@@ -457,7 +628,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                                         name={expanded ? "chevron-up" : "chevron-down"}
                                         width={24}
                                         height={24}
-                                        color="#9CA3AF"
+                                        color={theme.colors.textSecondary}
                                     />
                                 </TouchableOpacity>
                             )}
@@ -467,7 +638,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                                 hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
                                 style={styles.moreButton}
                             >
-                                <Icon name="ellipsis-vertical" width={24} height={24} color="#9CA3AF" />
+                                <Icon name="ellipsis-vertical" width={24} height={24} color={theme.colors.textSecondary} />
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -487,7 +658,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                             onPress={handleStarAction}
                             disabled={isProcessing}
                         >
-                            <Icon name={isStarred ? "star" : "star-off"} width={16} height={16} color="#6B7280" />
+                            <Icon name={isStarred ? "star" : "star-off"} width={16} height={16} color={theme.colors.textSecondary} />
                             <Text style={styles.actionMenuItemText}>{isStarred ? "Unstar" : "Star"}</Text>
                         </TouchableOpacity>
 
@@ -496,7 +667,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                             onPress={handleDuplicateAction}
                             disabled={isProcessing}
                         >
-                            <Icon name="copy" width={16} height={16} color="#6B7280" />
+                            <Icon name="copy" width={16} height={16} color={theme.colors.textSecondary} />
                             <Text style={styles.actionMenuItemText}>Duplicate</Text>
                         </TouchableOpacity>
 
@@ -505,7 +676,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                             onPress={handleHideAction}
                             disabled={isProcessing}
                         >
-                            <Icon name="eye-off" width={16} height={16} color="#6B7280" />
+                            <Icon name="eye-off" width={16} height={16} color={theme.colors.textSecondary} />
                             <Text style={styles.actionMenuItemText}>Hide</Text>
                         </TouchableOpacity>
 
@@ -517,8 +688,8 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                             }}
                             disabled={isProcessing}
                         >
-                            <Icon name="trash" width={16} height={16} color="#DC2626" />
-                            <Text style={[styles.actionMenuItemText, { color: '#DC2626' }]}>Delete</Text>
+                            <Icon name="trash" width={16} height={16} color={theme.colors.error} />
+                            <Text style={[styles.actionMenuItemText, { color: theme.colors.error }]}>Delete</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -539,171 +710,3 @@ export const EntryCard: React.FC<EntryCardProps> = ({
         </>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        marginBottom: 16,
-        position: 'relative',
-    },
-    card: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 12,
-        borderWidth: 1,
-        borderTopWidth: 1,
-        borderLeftWidth: 1,
-        borderRightWidth: 1,
-        borderBottomWidth: 4,
-        padding: 16,
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-    },
-    headerLeft: {
-        flexDirection: 'row',
-        flex: 1,
-        alignItems: 'flex-start',
-    },
-    headerRight: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 8,
-        flexShrink: 0,
-    },
-    contentContainer: {
-        flex: 1,
-        position: 'relative',
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#111827',
-        marginBottom: 4,
-        lineHeight: 24,
-    },
-    titleCompleted: {
-        textDecorationLine: 'line-through',
-        color: '#9CA3AF',
-    },
-    doneIndicator: {
-        position: 'absolute',
-        top: 2,
-        right: 0,
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-    },
-    subtitle: {
-        fontSize: 14,
-        color: '#6B7280',
-        marginBottom: 4,
-        lineHeight: 18,
-    },
-    description: {
-        fontSize: 14,
-        color: '#374151',
-        marginBottom: 8,
-        lineHeight: 20,
-    },
-    categoryPill: {
-        marginTop: 4,
-        marginBottom: 8,
-        alignSelf: 'flex-start',
-    },
-    dueDateContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    dueDateText: {
-        fontSize: 14,
-        color: '#6B7280',
-        marginLeft: 4,
-    },
-    metaContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-    dateText: {
-        fontSize: 12,
-        color: '#9CA3AF',
-    },
-    starIcon: {
-        marginLeft: 8,
-    },
-    tagsContainer: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-    },
-    expandButton: {
-        marginRight: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    moreButton: {
-        padding: 4,
-    },
-    expandedContainer: {
-        marginTop: 16,
-        paddingTop: 16,
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-    },
-    actionsMenu: {
-        position: 'absolute',
-        top: 40,
-        right: 16,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 3,
-        padding: 8,
-        zIndex: 10,
-        minWidth: 140,
-    },
-    actionMenuItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 8,
-        borderRadius: 4,
-    },
-    actionMenuItemText: {
-        fontSize: 14,
-        color: '#4B5563',
-        marginLeft: 8,
-    },
-    checkboxContainer: {
-        marginTop: 4,
-        marginRight: 12,
-        flexShrink: 0,
-    },
-    checkbox: {
-        width: 20,
-        height: 20,
-        borderWidth: 1,
-        borderColor: '#D1D5DB',
-        borderRadius: 4,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    subTaskCounter: {
-        backgroundColor: '#E5E7EB',
-        borderRadius: 999,
-        paddingHorizontal: 6,
-        height: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: 4,
-    },
-    subTaskCounterText: {
-        fontSize: 12,
-        fontWeight: '500',
-        color: '#6B7280',
-    },
-});

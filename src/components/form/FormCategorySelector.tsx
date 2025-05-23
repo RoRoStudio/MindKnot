@@ -511,7 +511,7 @@ const FormCategorySelector = <T extends FieldValues>({
         // Edit Modal Styles
         editModalOverlay: {
             flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: theme.colors.overlay,
             justifyContent: 'center',
             alignItems: 'center',
         },
@@ -520,7 +520,7 @@ const FormCategorySelector = <T extends FieldValues>({
             borderRadius: theme.shape.radius.l,
             width: '90%',
             maxWidth: 400,
-            shadowColor: '#000',
+            shadowColor: theme.colors.shadow,
             shadowOpacity: 0.25,
             shadowRadius: 10,
             shadowOffset: { width: 0, height: 4 },

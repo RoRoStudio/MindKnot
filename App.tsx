@@ -13,6 +13,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { initDatabase } from './src/api/database';
 import { useFonts, KantumruyPro_300Light, KantumruyPro_400Regular, KantumruyPro_500Medium, KantumruyPro_600SemiBold, KantumruyPro_700Bold } from '@expo-google-fonts/kantumruy-pro';
 import * as SplashScreen from 'expo-splash-screen';
+import { lightTheme } from './src/theme/light';
 
 export default function App() {
     const [dbInitialized, setDbInitialized] = useState(false);
@@ -64,7 +65,7 @@ export default function App() {
                     <Text style={{ fontSize: 16, marginBottom: 20, textAlign: 'center' }}>
                         Failed to initialize the database. Please restart the app.
                     </Text>
-                    <Text style={{ color: 'red', fontSize: 14, textAlign: 'center' }}>
+                    <Text style={{ color: lightTheme.colors.error, fontSize: 14, textAlign: 'center' }}>
                         Error: {dbError}
                     </Text>
                 </View>
@@ -77,7 +78,7 @@ export default function App() {
         return (
             <SafeAreaProvider>
                 <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    <ActivityIndicator size="large" color="#213448" />
+                    <ActivityIndicator size="large" color={lightTheme.colors.primary} />
                     <Text style={{ marginTop: 20, fontSize: 16 }}>Initializing database...</Text>
                 </View>
             </SafeAreaProvider>

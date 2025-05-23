@@ -72,8 +72,8 @@ export const CategoryPill: React.FC<CategoryPillProps> = ({
     };
 
     // Get text color based on selection state
-    const getTextColor = () => {
-        return selected ? '#FFFFFF' : theme.isDark ? '#E5E7EB' : '#374151';
+    const getTextColor = (color: string, selected: boolean) => {
+        return selected ? theme.colors.onPrimary : theme.colors.textPrimary;
     };
 
     // Size-based styling
@@ -117,8 +117,8 @@ export const CategoryPill: React.FC<CategoryPillProps> = ({
             paddingHorizontal: sizeStyles.paddingHorizontal,
             borderRadius: 100, // Fully rounded
             borderWidth: 1,
-            borderColor: selected ? color : color,
-            backgroundColor: getBackgroundColor(color),
+            borderColor: selected ? theme.colors.border : color,
+            backgroundColor: selected ? theme.colors.surface : getBackgroundColor(color),
             shadowColor: selected ? color : 'transparent',
             shadowOpacity: selected ? 0.2 : 0,
             shadowRadius: 4,
@@ -129,13 +129,13 @@ export const CategoryPill: React.FC<CategoryPillProps> = ({
             width: sizeStyles.dotSize,
             height: sizeStyles.dotSize,
             borderRadius: sizeStyles.dotSize / 2,
-            backgroundColor: selected ? '#FFFFFF' : color,
+            backgroundColor: selected ? theme.colors.onPrimary : color,
             marginRight: sizeStyles.dotMargin,
         },
         text: {
             fontSize: sizeStyles.fontSize,
             fontWeight: '500',
-            color: getTextColor(),
+            color: getTextColor(color, selected),
             letterSpacing: 0.3,
         },
     });

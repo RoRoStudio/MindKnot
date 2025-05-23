@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Label, LabelProps } from './Label';
 
 /**
@@ -82,6 +83,8 @@ export const LabelRow: React.FC<LabelRowProps> = ({
     style,
     labelStyle,
 }) => {
+    const { theme } = useTheme();
+
     // If no labels, render nothing
     if (!labels || labels.length === 0) {
         return null;
@@ -100,11 +103,11 @@ export const LabelRow: React.FC<LabelRowProps> = ({
             gap: gap,
         },
         overflowLabel: {
-            backgroundColor: '#F9FAFB', // Even lighter background
+            backgroundColor: theme.colors.surface,
             borderWidth: 1,
-            borderColor: '#D1D5DB',
-            borderStyle: 'dashed', // Dashed border to differentiate it
-            opacity: 0.8, // Slight transparency to make it more subtle
+            borderColor: theme.colors.border,
+            borderStyle: 'dashed',
+            opacity: 0.8,
         },
     });
 

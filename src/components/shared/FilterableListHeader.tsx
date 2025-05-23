@@ -133,7 +133,7 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
         },
         searchAndFilterContainer: {
             flexDirection: 'row',
-            backgroundColor: '#F5F5F7',
+            backgroundColor: theme.colors.surfaceVariant,
             borderRadius: 8,
             height: 40,
             overflow: 'hidden',
@@ -172,7 +172,7 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
             zIndex: 1,
         },
         filtersBadgeText: {
-            color: 'white',
+            color: theme.colors.onPrimary,
             fontSize: 10,
             fontWeight: 'bold',
         },
@@ -425,12 +425,12 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
                             name="search"
                             width={18}
                             height={18}
-                            color="#757575"
+                            color={theme.colors.textSecondary}
                         />
                         <TextInput
                             style={styles.searchInput}
                             placeholder="Search..."
-                            placeholderTextColor="#757575"
+                            placeholderTextColor={theme.colors.textSecondary}
                             value={searchTerm}
                             onChangeText={onSearchChange}
                         />
@@ -440,7 +440,7 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
                                     name="x"
                                     width={16}
                                     height={16}
-                                    color="#757575"
+                                    color={theme.colors.textSecondary}
                                 />
                             </TouchableOpacity>
                         ) : null}
@@ -451,7 +451,7 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
                             name="sliders-vertical"
                             width={20}
                             height={20}
-                            color="#333333"
+                            color={theme.colors.textPrimary}
                         />
                         {filterCount > 0 && (
                             <View style={styles.filtersBadge}>

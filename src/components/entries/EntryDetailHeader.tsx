@@ -103,7 +103,7 @@ export const EntryDetailHeader: React.FC<EntryDetailHeaderProps> = ({
             justifyContent: 'space-between',
             paddingHorizontal: theme.spacing.m,
             paddingVertical: theme.spacing.m,
-            backgroundColor: '#FFFFFF', // White background to match the screen
+            backgroundColor: theme.colors.background, // White background to match the screen
             borderBottomWidth: 1,
             borderBottomColor: theme.colors.divider,
         },
@@ -173,8 +173,8 @@ export const EntryDetailHeader: React.FC<EntryDetailHeaderProps> = ({
     return (
         <>
             <StatusBar
-                backgroundColor="#FFFFFF"
-                barStyle={theme.dark ? 'light-content' : 'dark-content'}
+                barStyle={theme.isDark ? 'light-content' : 'dark-content'}
+                backgroundColor={theme.colors.background}
             />
             <View style={[styles.header, style]}>
                 <View style={styles.headerLeftSection}>
@@ -205,10 +205,10 @@ export const EntryDetailHeader: React.FC<EntryDetailHeaderProps> = ({
                                 accessibilityLabel={isStarred ? "Unstar" : "Star"}
                             >
                                 <Icon
-                                    name={isStarred ? "star" : "star-off"}
-                                    width={20}
-                                    height={20}
-                                    color={isStarred ? "#FFB800" : theme.colors.textPrimary}
+                                    name="star"
+                                    width={24}
+                                    height={24}
+                                    color={isStarred ? theme.colors.warning : theme.colors.textPrimary}
                                 />
                             </TouchableOpacity>
 

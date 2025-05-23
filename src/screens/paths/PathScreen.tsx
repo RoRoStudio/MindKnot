@@ -370,11 +370,11 @@ export default function PathScreen() {
     const styles = StyleSheet.create({
         safeArea: {
             flex: 1,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: theme.colors.background,
         },
         container: {
             flex: 1,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: theme.colors.background,
         },
         content: {
             flex: 1,
@@ -382,7 +382,7 @@ export default function PathScreen() {
         titleInput: {
             fontSize: 32,
             fontWeight: '300',
-            color: '#000000',
+            color: theme.colors.textPrimary,
             padding: 16,
             paddingTop: 16,
             paddingBottom: 16,
@@ -390,7 +390,7 @@ export default function PathScreen() {
         },
         divider: {
             height: 1,
-            backgroundColor: '#EEEEEE',
+            backgroundColor: theme.colors.divider,
             marginHorizontal: 16,
         },
         sectionsContainer: {
@@ -406,21 +406,21 @@ export default function PathScreen() {
         sectionTitle: {
             fontSize: 18,
             fontWeight: '600',
-            color: '#111827',
+            color: theme.colors.textPrimary,
         },
         addButton: {
             flexDirection: 'row',
             alignItems: 'center',
             padding: 8,
-            backgroundColor: '#F3F4F6',
+            backgroundColor: theme.colors.surfaceVariant,
             borderRadius: 8,
             borderWidth: 1,
-            borderColor: '#D1D5DB',
+            borderColor: theme.colors.border,
             borderStyle: 'dashed',
         },
         addButtonText: {
             fontSize: 14,
-            color: '#6B7280',
+            color: theme.colors.textSecondary,
             marginLeft: 6,
             fontWeight: '500',
         },
@@ -435,7 +435,7 @@ export default function PathScreen() {
         ungroupedTitle: {
             fontSize: 16,
             fontWeight: '600',
-            color: '#374151',
+            color: theme.colors.textSecondary,
             marginLeft: 8,
         },
         actionsContainer: {
@@ -456,12 +456,12 @@ export default function PathScreen() {
         emptyTitle: {
             fontSize: 16,
             fontWeight: '600',
-            color: '#374151',
+            color: theme.colors.textSecondary,
             marginBottom: 4,
         },
         emptyText: {
             fontSize: 14,
-            color: '#6B7280',
+            color: theme.colors.textDisabled,
             textAlign: 'center',
         },
         loadingContainer: {
@@ -473,16 +473,16 @@ export default function PathScreen() {
             padding: 16,
             paddingBottom: 32,
             borderTopWidth: 1,
-            borderTopColor: '#F5F5F5',
+            borderTopColor: theme.colors.divider,
         },
         saveButton: {
-            backgroundColor: '#1B1B1B',
+            backgroundColor: theme.colors.primary,
             borderRadius: 32,
             paddingVertical: 16,
             alignItems: 'center',
         },
         saveButtonText: {
-            color: '#FFFFFF',
+            color: theme.colors.onPrimary,
             fontSize: 16,
             fontWeight: '600',
             fontFamily: 'KantumruyPro-SemiBold',
@@ -508,7 +508,7 @@ export default function PathScreen() {
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
             <View style={styles.container}>
                 <EntryDetailHeader
                     onBackPress={handleBackPress}
@@ -552,7 +552,7 @@ export default function PathScreen() {
                                         style={styles.addButton}
                                         onPress={handleCreateMilestone}
                                     >
-                                        <Icon name="plus" width={16} height={16} color="#6B7280" />
+                                        <Icon name="plus" width={16} height={16} color={theme.colors.textSecondary} />
                                         <Text style={styles.addButtonText}>Add Milestone</Text>
                                     </TouchableOpacity>
                                 )}
@@ -572,7 +572,7 @@ export default function PathScreen() {
                                 ))
                             ) : (
                                 <View style={styles.emptyState}>
-                                    <Icon name="flag" width={48} height={48} color="#D1D5DB" style={styles.emptyIcon} />
+                                    <Icon name="flag" width={48} height={48} color={theme.colors.border} style={styles.emptyIcon} />
                                     <Text style={styles.emptyTitle}>No milestones yet</Text>
                                     <Text style={styles.emptyText}>
                                         Create milestones to organize your actions into logical phases
@@ -583,7 +583,7 @@ export default function PathScreen() {
                             {/* Ungrouped Actions Section */}
                             <View style={styles.ungroupedSection}>
                                 <View style={styles.ungroupedHeader}>
-                                    <Icon name="list" width={20} height={20} color="#6B7280" />
+                                    <Icon name="list" width={20} height={20} color={theme.colors.textSecondary} />
                                     <Text style={styles.ungroupedTitle}>Ungrouped Actions</Text>
                                 </View>
 
@@ -609,7 +609,7 @@ export default function PathScreen() {
                                             style={[styles.addButton, { flex: 1 }]}
                                             onPress={handleCreateUngroupedAction}
                                         >
-                                            <Icon name="plus" width={16} height={16} color="#6B7280" />
+                                            <Icon name="plus" width={16} height={16} color={theme.colors.textSecondary} />
                                             <Text style={styles.addButtonText}>Add Action</Text>
                                         </TouchableOpacity>
 
@@ -617,7 +617,7 @@ export default function PathScreen() {
                                             style={[styles.addButton, { flex: 1 }]}
                                             onPress={() => handleLinkExistingAction()}
                                         >
-                                            <Icon name="link" width={16} height={16} color="#6B7280" />
+                                            <Icon name="link" width={16} height={16} color={theme.colors.textSecondary} />
                                             <Text style={styles.addButtonText}>Link Existing</Text>
                                         </TouchableOpacity>
                                     </View>

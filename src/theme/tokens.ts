@@ -3,109 +3,107 @@
  * This file defines all the base tokens that are used to create the theme.
  */
 
-// BASE COLOR PALETTE
-// These are the raw color values used across the application
+// NEUTRAL COLOR PALETTE
+// A comprehensive neutral system avoiding pure white/black while maintaining WCAG compliance
 export const colorTokens = {
-    // Brand colors
-    brand: {
-        blue: {
-            50: '#E6EBF0',
-            100: '#C1CDD9',
-            200: '#98ACBF',
-            300: '#6F8BA5',
-            400: '#547792', // primaryLight
-            500: '#213448', // primary
-            600: '#1A2A3A',
-            700: '#0E1924', // primaryDark
-            800: '#07121B',
-            900: '#03080D',
-        },
-        green: {
-            50: '#F8FAE6',
-            100: '#F0F2D6', // secondaryContainer
-            200: '#ECEFCA', // secondary
-            300: '#DFE4AF',
-            400: '#C8CCA6', // secondaryDark
-            500: '#B2B68E',
-            600: '#999C74',
-            700: '#7F825A',
-            800: '#5C5E40',
-            900: '#393A27',
-        },
-        orange: {
-            50: '#FCF1EB',
-            100: '#F7DCCF',
-            200: '#E99470', // tertiaryLight
-            300: '#D47F57',
-            400: '#C06B3E', // tertiary
-            500: '#984B24', // tertiaryDark
-            600: '#7A3D1D',
-            700: '#5C2E16',
-            800: '#3E1F0E',
-            900: '#1F0F07',
-        },
-        teal: {
-            50: '#EBF5F8',
-            100: '#D5E9EF',
-            200: '#B5CEDA', // accentLight
-            300: '#94B4C1', // accent
-            400: '#6E8C99', // accentDark
-            500: '#566D78',
-            600: '#425158',
-            700: '#2D3639',
-            800: '#1A1F21',
-            900: '#0D0F10',
-        },
-    },
-
-    // Neutral colors (grayscale)
+    // Primary neutral scale - Cool-toned grays for main UI elements, text, and surfaces
     neutral: {
-        white: '#FFFFFF',
-        gray: {
-            50: '#F9F9F9',
-            100: '#F2F2F2', // surface in light mode
-            200: '#E6E6E6',
-            300: '#D6D6D6',
-            400: '#BDBDBD', // textDisabled
-            500: '#9E9E9E',
-            600: '#757575',
-            700: '#616161',
-            800: '#424242',
-            900: '#212121',
-            950: '#121212', // background in dark mode
-        },
-        black: '#000000',
+        // Light neutrals - for backgrounds and surfaces
+        25: '#FDFDFD',   // Near-white background - primary light surface
+        50: '#F8F9FA',   // Very light gray - subtle background variation
+        75: '#F1F3F4',   // Light gray - card backgrounds and dividers
+        100: '#E8EAED',  // Light gray - borders and inactive elements
+
+        // Mid-light neutrals - for secondary content and subtle UI elements  
+        200: '#D3D6DB',  // Medium-light gray - secondary borders
+        250: '#C1C7CE',  // Medium-light gray - inactive text backgrounds
+        300: '#9AA0A6',  // Medium gray - placeholder text and secondary icons
+
+        // Mid neutrals - for body text and active UI elements
+        400: '#80868B',  // Medium-dark gray - secondary text
+        500: '#5F6368',  // Balanced gray - primary body text
+        600: '#4D5156',  // Dark gray - headings and emphasis
+
+        // Dark neutrals - for high contrast elements
+        700: '#3C4043',  // Dark gray - navigation and strong emphasis
+        800: '#2D3135',  // Very dark gray - primary headings
+        900: '#1F2124',  // Near-black - maximum contrast text
+        950: '#16191C',  // Deepest neutral - dark mode backgrounds
     },
 
-    // Functional colors for feedback
+    // MINDKNOT BRAND COLORS
+    // Sophisticated and elegant brand identity - deep navy + true gold
+    brand: {
+        // Primary Brand - Sophisticated Deep Navy (trust, intelligence, premium)
+        primary: {
+            50: '#F8FAFC',   // Very light navy tint
+            100: '#F1F5F9',  // Light navy tint  
+            200: '#E2E8F0',  // Medium-light navy
+            300: '#CBD5E1',  // Medium navy
+            400: '#94A3B8',  // Medium-dark navy
+            500: '#64748B',  // Base navy
+            600: '#475569',  // Brand primary navy
+            700: '#334155',  // Deep brand navy
+            800: '#1E293B',  // Very deep navy
+            900: '#0F172A',  // Deepest brand navy - sophisticated and elegant
+            950: '#020617',  // Ultra deep navy
+        },
+
+        // Secondary Brand - True Elegant Gold (luxury, warmth, sophistication)
+        secondary: {
+            50: '#FEFCE8',   // Very light gold tint
+            100: '#FEF9C3',  // Light gold tint
+            200: '#FEF08A',  // Medium-light gold
+            300: '#FDE047',  // Medium gold
+            400: '#FACC15',  // Medium-dark gold
+            500: '#EAB308',  // Base gold - true elegant gold
+            600: '#CA8A04',  // Brand secondary gold - sophisticated
+            700: '#A16207',  // Deep brand gold
+            800: '#854D0E',  // Very deep gold
+            900: '#713F12',  // Deepest brand gold
+            950: '#422006',  // Ultra deep gold
+        },
+    },
+
+    // VIBRANT FUNCTIONAL COLORS
+    // High-contrast, accessible functional colors for feedback and status
     functional: {
-        error: {
-            light: '#FDEBEB',
-            main: '#EB5757', // urgentRed
-            dark: '#C62828',
-        },
-        warning: {
-            light: '#FFF3E0',
-            main: '#F2994A',
-            dark: '#E65100',
-        },
+        // Success - Vibrant green for positive feedback
         success: {
-            light: '#E6F5EB',
-            main: '#27AE60',
-            dark: '#1B5E20',
+            light: '#D1FAE5',    // Very light green background - WCAG compliant
+            main: '#10B981',     // Vibrant emerald green - excellent contrast
+            dark: '#047857',     // Deep green - maximum contrast
         },
+
+        // Warning - Vibrant amber for warnings and alerts
+        warning: {
+            light: '#FEF3C7',    // Very light amber background - WCAG compliant
+            main: '#F59E0B',     // Vibrant amber - excellent visibility
+            dark: '#D97706',     // Deep amber - high contrast
+        },
+
+        // Error - Vibrant red for errors and dangerous actions
+        error: {
+            light: '#FEE2E2',    // Very light red background - WCAG compliant
+            main: '#EF4444',     // Vibrant red - strong error indication
+            dark: '#DC2626',     // Deep red - maximum contrast
+        },
+
+        // Info - Vibrant blue for information and guidance
         info: {
-            light: '#E8F4FD',
-            main: '#56CCF2',
-            dark: '#0277BD',
+            light: '#DBEAFE',    // Very light blue background - WCAG compliant  
+            main: '#3B82F6',     // Vibrant blue - clear information color
+            dark: '#1D4ED8',     // Deep blue - high contrast
         },
     },
 
-    // Special purpose
+    // Special purpose neutrals
     special: {
-        overlay: 'rgba(0, 0, 0, 0.5)',
-        scrim: 'rgba(0, 0, 0, 0.25)',
-        backdrop: 'rgba(33, 52, 72, 0.2)', // primary color with opacity
+        overlay: 'rgba(31, 33, 36, 0.5)',      // Semi-transparent dark overlay
+        scrim: 'rgba(31, 33, 36, 0.25)',       // Light semi-transparent overlay
+        backdrop: 'rgba(95, 99, 104, 0.2)',    // Subtle backdrop for modals
+        focus: 'rgba(59, 130, 246, 0.3)',      // Brand blue focus indicator
+        shadow: 'rgba(31, 33, 36, 0.15)',      // Subtle shadow color
     }
 };
 
@@ -220,35 +218,35 @@ export const shadowTokens = {
         elevation: 0,
     },
     xs: {
-        shadowColor: '#000000',
+        shadowColor: '#1F2124',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
         shadowRadius: 2,
         elevation: 1,
     },
     s: {
-        shadowColor: '#000000',
+        shadowColor: '#1F2124',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.15,
         shadowRadius: 3,
         elevation: 2,
     },
     m: {
-        shadowColor: '#000000',
+        shadowColor: '#1F2124',
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.2,
         shadowRadius: 4,
         elevation: 4,
     },
     l: {
-        shadowColor: '#000000',
+        shadowColor: '#1F2124',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.25,
         shadowRadius: 6,
         elevation: 6,
     },
     xl: {
-        shadowColor: '#000000',
+        shadowColor: '#1F2124',
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.3,
         shadowRadius: 8,

@@ -85,15 +85,15 @@ export const Label: React.FC<LabelProps> = ({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#E5E7EB', // bg-gray-200
-            paddingHorizontal: 10, // px-2.5
-            paddingVertical: 4, // py-1
-            borderRadius: 9999, // rounded-full
+            backgroundColor: theme.colors.surfaceVariant,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+            borderRadius: 9999,
         },
         text: {
-            fontSize: 12, // text-xs
-            fontWeight: '500', // font-medium
-            color: '#4B5563', // text-gray-700
+            color: theme.colors.textSecondary,
+            fontSize: 12,
+            fontWeight: '500',
         },
         removeIcon: {
             marginLeft: 4,
@@ -103,13 +103,19 @@ export const Label: React.FC<LabelProps> = ({
         },
         selectedText: {
             color: theme.colors.onPrimary,
-        }
+        },
+        notSelected: {
+            backgroundColor: theme.colors.surfaceVariant,
+            borderColor: theme.colors.border,
+            borderWidth: 0,
+        },
     });
 
     const renderLabel = () => (
         <View style={[
             styles.container,
             selected && styles.selected,
+            !selected && styles.notSelected,
             style
         ]}>
             <Text style={[styles.text, selected && styles.selectedText]}>

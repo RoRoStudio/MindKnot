@@ -74,7 +74,7 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress,
             alignItems: 'center',
             ...Platform.select({
                 ios: {
-                    shadowColor: theme.colors.black,
+                    shadowColor: theme.colors.shadow,
                     shadowOffset: theme.elevation.l.shadowOffset,
                     shadowOpacity: theme.elevation.l.shadowOpacity,
                     shadowRadius: theme.elevation.l.shadowRadius,

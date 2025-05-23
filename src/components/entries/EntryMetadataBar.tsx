@@ -88,7 +88,7 @@ export const EntryMetadataBar: React.FC<EntryMetadataBarProps> = ({
 
     const styles = useStyles((theme) => ({
         container: {
-            backgroundColor: theme.colors.surface,
+            backgroundColor: theme.colors.background,
             padding: theme.spacing.m,
             width: '100%',
         },

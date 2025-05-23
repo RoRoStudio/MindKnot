@@ -702,11 +702,11 @@ export default function ActionScreen() {
     const styles = StyleSheet.create({
         safeArea: {
             flex: 1,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: theme.colors.background,
         },
         container: {
             flex: 1,
-            backgroundColor: '#FFFFFF',
+            backgroundColor: theme.colors.background,
         },
         content: {
             flex: 1,
@@ -714,7 +714,7 @@ export default function ActionScreen() {
         titleInput: {
             fontSize: 32,
             fontWeight: '300',
-            color: theme.colors.black,
+            color: theme.colors.textPrimary,
             padding: 16,
             paddingTop: 16,
             paddingBottom: 16,
@@ -722,7 +722,7 @@ export default function ActionScreen() {
         },
         divider: {
             height: 1,
-            backgroundColor: '#EEEEEE',
+            backgroundColor: theme.colors.divider,
             marginHorizontal: 16,
         },
         sectionContainer: {
@@ -737,7 +737,7 @@ export default function ActionScreen() {
         sectionLabel: {
             fontSize: 16,
             fontWeight: '500',
-            color: '#000000',
+            color: theme.colors.textPrimary,
             fontFamily: 'KantumruyPro-Medium',
         },
         targetDateContainer: {
@@ -752,13 +752,13 @@ export default function ActionScreen() {
         },
         targetDateValue: {
             fontSize: 16,
-            color: '#757575',
+            color: theme.colors.textSecondary,
             fontFamily: 'KantumruyPro-Regular',
             marginRight: 8,
         },
         targetDatePlaceholder: {
             fontSize: 16,
-            color: '#757575',
+            color: theme.colors.textSecondary,
             fontFamily: 'KantumruyPro-Regular',
         },
         clearButton: {
@@ -795,33 +795,33 @@ export default function ActionScreen() {
             marginRight: 0,
         },
         lowButton: {
-            backgroundColor: priority === 'low' ? '#EEEEEE' : '#FFFFFF',
-            borderColor: priority === 'low' ? '#EEEEEE' : '#E0E0E0',
+            backgroundColor: priority === 'low' ? theme.colors.surfaceVariant : theme.colors.surface,
+            borderColor: priority === 'low' ? theme.colors.border : theme.colors.border,
         },
         mediumButton: {
-            backgroundColor: priority === 'medium' ? '#FFD54F' : '#FFFFFF',
-            borderColor: priority === 'medium' ? '#FFD54F' : '#E0E0E0',
+            backgroundColor: priority === 'medium' ? theme.colors.warning : theme.colors.surface,
+            borderColor: priority === 'medium' ? theme.colors.warning : theme.colors.border,
         },
         highButton: {
-            backgroundColor: priority === 'high' ? '#EF5350' : '#FFFFFF',
-            borderColor: priority === 'high' ? '#EF5350' : '#E0E0E0',
+            backgroundColor: priority === 'high' ? theme.colors.error : theme.colors.surface,
+            borderColor: priority === 'high' ? theme.colors.error : theme.colors.border,
         },
         lowButtonText: {
             fontSize: 14,
             fontWeight: '500',
-            color: '#000000',
+            color: theme.colors.textPrimary,
             fontFamily: 'KantumruyPro-Medium',
         },
         mediumButtonText: {
             fontSize: 14,
             fontWeight: '500',
-            color: '#000000',
+            color: theme.colors.textPrimary,
             fontFamily: 'KantumruyPro-Medium',
         },
         highButtonText: {
             fontSize: 14,
             fontWeight: '500',
-            color: priority === 'high' ? '#FFFFFF' : '#000000',
+            color: priority === 'high' ? theme.colors.onPrimary : theme.colors.textPrimary,
             fontFamily: 'KantumruyPro-Medium',
         },
         subTasksHeader: {
@@ -843,24 +843,24 @@ export default function ActionScreen() {
             height: 24,
             borderRadius: 4,
             borderWidth: 1,
-            borderColor: '#BDBDBD',
+            borderColor: theme.colors.border,
             alignItems: 'center',
             justifyContent: 'center',
             marginRight: 12,
         },
         checkBoxChecked: {
-            backgroundColor: '#1B1B1B',
-            borderColor: '#1B1B1B',
+            backgroundColor: theme.colors.primary,
+            borderColor: theme.colors.primary,
         },
         subTaskInput: {
             flex: 1,
             fontSize: 16,
-            color: '#212121',
+            color: theme.colors.textPrimary,
             padding: 0,
         },
         subTaskInputCompleted: {
             textDecorationLine: 'line-through',
-            color: '#9E9E9E',
+            color: theme.colors.textDisabled,
         },
         subTaskTextContainer: {
             flex: 1,
@@ -868,7 +868,7 @@ export default function ActionScreen() {
         },
         subTaskText: {
             fontSize: 16,
-            color: '#212121',
+            color: theme.colors.textPrimary,
         },
         newSubTaskRow: {
             flexDirection: 'row',
@@ -880,23 +880,23 @@ export default function ActionScreen() {
         },
         newSubTaskText: {
             fontSize: 16,
-            color: '#9E9E9E',
+            color: theme.colors.textSecondary,
             fontFamily: 'KantumruyPro-Regular',
         },
         bottomContainer: {
             padding: 16,
             paddingBottom: 32,
             borderTopWidth: 1,
-            borderTopColor: '#F5F5F5',
+            borderTopColor: theme.colors.divider,
         },
         createButton: {
-            backgroundColor: '#1B1B1B',
+            backgroundColor: theme.colors.primary,
             borderRadius: 32,
             paddingVertical: 16,
             alignItems: 'center',
         },
         createButtonText: {
-            color: '#FFFFFF',
+            color: theme.colors.onPrimary,
             fontSize: 16,
             fontWeight: '600',
             fontFamily: 'KantumruyPro-SemiBold',
@@ -911,7 +911,7 @@ export default function ActionScreen() {
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
             <View style={styles.container}>
                 <EntryDetailHeader
                     onBackPress={handleBackPress}
@@ -957,7 +957,7 @@ export default function ActionScreen() {
                                                 style={styles.clearButton}
                                                 onPress={handleClearTargetDate}
                                             >
-                                                <Icon name="x" width={16} height={16} color="#9E9E9E" />
+                                                <Icon name="x" width={16} height={16} color={theme.colors.textSecondary} />
                                             </TouchableOpacity>
                                         </>
                                     ) : (
@@ -967,7 +967,7 @@ export default function ActionScreen() {
                                                 name="chevron-right"
                                                 width={16}
                                                 height={16}
-                                                color="#9E9E9E"
+                                                color={theme.colors.textSecondary}
                                                 style={styles.chevronRight}
                                             />
                                         </>
@@ -1043,7 +1043,7 @@ export default function ActionScreen() {
                                             onPress={() => handleToggleSubTaskCompletion(index)}
                                         >
                                             {subTask.completed && (
-                                                <Icon name="check" width={16} height={16} color="#FFFFFF" />
+                                                <Icon name="check" width={16} height={16} color={theme.colors.onPrimary} />
                                             )}
                                         </TouchableOpacity>
 
@@ -1084,7 +1084,7 @@ export default function ActionScreen() {
                                         name="plus"
                                         width={20}
                                         height={20}
-                                        color="#9E9E9E"
+                                        color={theme.colors.textSecondary}
                                         style={styles.newSubTaskIcon}
                                     />
                                     <Text style={styles.newSubTaskText}>Add sub-actions</Text>
@@ -1100,7 +1100,7 @@ export default function ActionScreen() {
                         <TouchableOpacity
                             style={[
                                 styles.createButton,
-                                isDone && mode === 'edit' ? { backgroundColor: '#4CAF50' } : {}  // Green bg for completed actions
+                                isDone && mode === 'edit' ? { backgroundColor: theme.colors.success } : {}  // Success color for completed actions
                             ]}
                             onPress={handleSubmit(onSubmit)}
                             disabled={isSubmitting}

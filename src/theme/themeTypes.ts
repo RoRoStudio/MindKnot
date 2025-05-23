@@ -1,140 +1,132 @@
 // src/theme/themeTypes.ts
 import { TextStyle } from 'react-native';
 
-// Base color palette definitions
+// Base color palette definitions - Now focused on neutral + brand + vibrant system
 export interface ColorPalette {
-    // Brand color scales
-    brand: {
-        blue: {
-            50: string;
-            100: string;
-            200: string;
-            300: string;
-            400: string; // primaryLight
-            500: string; // primary
-            600: string;
-            700: string; // primaryDark
-            800: string;
-            900: string;
-        };
-        green: {
-            50: string;
-            100: string; // secondaryContainer
-            200: string; // secondary
-            300: string;
-            400: string; // secondaryDark
-            500: string;
-            600: string;
-            700: string;
-            800: string;
-            900: string;
-        };
-        orange: {
-            50: string;
-            100: string;
-            200: string; // tertiaryLight
-            300: string;
-            400: string; // tertiary
-            500: string; // tertiaryDark
-            600: string;
-            700: string;
-            800: string;
-            900: string;
-        };
-        teal: {
-            50: string;
-            100: string;
-            200: string; // accentLight
-            300: string; // accent
-            400: string; // accentDark
-            500: string;
-            600: string;
-            700: string;
-            800: string;
-            900: string;
-        };
-    };
-
-    // Neutral colors (grayscale)
+    // Primary neutral scale - Cool-toned grays for main UI elements, text, and surfaces
     neutral: {
-        white: string;
-        gray: {
-            50: string;
-            100: string;
-            200: string;
-            300: string;
-            400: string;
-            500: string;
-            600: string;
-            700: string;
-            800: string;
-            900: string;
-            950: string;
-        };
-        black: string;
+        25: string;   // Near-white background - primary light surface
+        50: string;   // Very light gray - subtle background variation
+        75: string;   // Light gray - card backgrounds and dividers
+        100: string;  // Light gray - borders and inactive elements
+        200: string;  // Medium-light gray - secondary borders
+        250: string;  // Medium-light gray - inactive text backgrounds
+        300: string;  // Medium gray - placeholder text and secondary icons
+        400: string;  // Medium-dark gray - secondary text
+        500: string;  // Balanced gray - primary body text
+        600: string;  // Dark gray - headings and emphasis
+        700: string;  // Dark gray - navigation and strong emphasis
+        800: string;  // Very dark gray - primary headings
+        900: string;  // Near-black - maximum contrast text
+        950: string;  // Deepest neutral - dark mode backgrounds
     };
 
-    // Additional utility colors
-    white: string;
-    black: string;
-    text: string;
+    // MindKnot Brand Colors - Sophisticated navy + elegant gold
+    brand: {
+        // Primary Brand - Sophisticated Deep Navy (trust, intelligence, premium)
+        primary: {
+            50: string;   // Very light navy tint
+            100: string;  // Light navy tint  
+            200: string;  // Medium-light navy
+            300: string;  // Medium navy
+            400: string;  // Medium-dark navy
+            500: string;  // Base navy
+            600: string;  // Brand primary navy
+            700: string;  // Deep brand navy
+            800: string;  // Very deep navy
+            900: string;  // Deepest brand navy - sophisticated and elegant
+            950: string;  // Ultra deep navy
+        };
 
-    // Semantic mappings (references to color scales)
-    primary: string;
-    primaryLight: string;
-    primaryDark: string;
-    onPrimary: string;
+        // Secondary Brand - True Elegant Gold (luxury, warmth, sophistication)
+        secondary: {
+            50: string;   // Very light gold tint
+            100: string;  // Light gold tint
+            200: string;  // Medium-light gold
+            300: string;  // Medium gold
+            400: string;  // Medium-dark gold
+            500: string;  // Base gold - true elegant gold
+            600: string;  // Brand secondary gold - sophisticated
+            700: string;  // Deep brand gold
+            800: string;  // Very deep gold
+            900: string;  // Deepest brand gold
+            950: string;  // Ultra deep gold
+        };
+    };
 
-    secondary: string;
-    secondaryLight: string;
-    secondaryDark: string;
-    onSecondary: string;
-    secondaryContainer: string;
+    // Vibrant functional colors - High-contrast, accessible functional colors
+    functional: {
+        success: {
+            light: string;  // Very light green background - WCAG compliant
+            main: string;   // Vibrant emerald green - excellent contrast
+            dark: string;   // Deep green - maximum contrast
+        };
+        warning: {
+            light: string;  // Very light amber background - WCAG compliant
+            main: string;   // Vibrant amber - excellent visibility
+            dark: string;   // Deep amber - high contrast
+        };
+        error: {
+            light: string;  // Very light red background - WCAG compliant
+            main: string;   // Vibrant red - strong error indication
+            dark: string;   // Deep red - maximum contrast
+        };
+        info: {
+            light: string;  // Very light blue background - WCAG compliant  
+            main: string;   // Vibrant blue - clear information color
+            dark: string;   // Deep blue - high contrast
+        };
+    };
 
-    tertiary: string;
-    tertiaryLight: string;
-    tertiaryDark: string;
-    onTertiary: string;
+    // Semantic mappings for easy access to commonly used colors
+    primary: string;        // Maps to brand.primary.900 - main brand color for navigation
+    primaryLight: string;   // Maps to brand.primary.700 - lighter brand elements
+    primaryDark: string;    // Maps to brand.primary.950 - darker brand elements
+    onPrimary: string;      // Maps to neutral.25 - text/icons on brand backgrounds
 
-    accent: string;
-    accentLight: string;
-    accentDark: string;
-    onAccent: string;
+    secondary: string;      // Maps to brand.secondary.600 - secondary brand actions
+    secondaryLight: string; // Maps to brand.secondary.500 - lighter secondary elements
+    secondaryDark: string;  // Maps to brand.secondary.700 - darker secondary elements
+    onSecondary: string;    // Maps to neutral.25 - text/icons on secondary backgrounds
 
-    // Background, surface, and content colors
-    background: string;
-    surface: string;
-    surfaceVariant: string;
+    // Background and surface colors
+    background: string;      // Maps to neutral.25 - primary background
+    surface: string;         // Maps to neutral.50 - card and component backgrounds
+    surfaceVariant: string;  // Maps to neutral.75 - alternative surface color
 
-    // Text colors
-    textPrimary: string;
-    textSecondary: string;
-    textDisabled: string;
-    textLink: string;
+    // Text colors for hierarchy
+    textPrimary: string;     // Maps to neutral.900 - primary text color
+    textSecondary: string;   // Maps to neutral.600 - secondary text color
+    textDisabled: string;    // Maps to neutral.400 - disabled text color
+    textLink: string;        // Maps to brand.primary.700 - link text color
 
-    // Border and divider
-    border: string;
-    divider: string;
+    // Border and divider colors
+    border: string;          // Maps to neutral.200 - primary border color
+    divider: string;         // Maps to neutral.100 - divider and separator color
 
-    // Feedback colors
-    error: string;
-    errorLight: string;
-    errorDark: string;
-    warning: string;
-    warningLight: string;
-    warningDark: string;
-    success: string;
-    successLight: string;
-    successDark: string;
-    info: string;
-    infoLight: string;
-    infoDark: string;
+    // Feedback colors - using vibrant functional palette
+    error: string;           // Maps to functional.error.main
+    errorLight: string;      // Maps to functional.error.light
+    errorDark: string;       // Maps to functional.error.dark
+    warning: string;         // Maps to functional.warning.main
+    warningLight: string;    // Maps to functional.warning.light
+    warningDark: string;     // Maps to functional.warning.dark
+    success: string;         // Maps to functional.success.main
+    successLight: string;    // Maps to functional.success.light
+    successDark: string;     // Maps to functional.success.dark
+    info: string;           // Maps to functional.info.main
+    infoLight: string;      // Maps to functional.info.light
+    infoDark: string;       // Maps to functional.info.dark
 
-    // Shadow color
-    shadow: string;
+    // Shadow and overlay colors
+    shadow: string;          // Maps to neutral.900 - shadow color
+    overlay: string;         // Semi-transparent overlay
+    scrim: string;          // Light overlay for modals
+    backdrop: string;       // Backdrop for modal/drawer components
+    focus: string;          // Brand blue focus indicator
 
     // Utility colors
-    transparent: string;
+    transparent: string;     // Transparent - for invisible elements
 }
 
 // Typography definitions
@@ -321,24 +313,24 @@ export interface OpacitySystem {
 export interface ComponentTheme {
     // Navigation components
     bottomNavBar: {
-        background: string;
-        activeIcon: string;
-        inactiveIcon: string;
-        activeText: string;
-        inactiveText: string;
-        fabBackground: string;
-        fabIcon: string;
-        menuItemBackground: string;
-        menuItemIcon: string;
+        background: string;           // Primary neutral for navigation background
+        activeIcon: string;           // Warm accent for active icons
+        inactiveIcon: string;         // Medium neutral for inactive icons
+        activeText: string;           // Warm accent for active text
+        inactiveText: string;         // Medium neutral for inactive text
+        fabBackground: string;        // Cool accent for floating action button
+        fabIcon: string;              // Light neutral for FAB icon
+        menuItemBackground: string;   // Neutral surface for menu items
+        menuItemIcon: string;         // Dark neutral for menu icons
         elevation: number;
     };
 
     // Card component
     card: {
-        background: string;
-        border: string;
-        titleColor: string;
-        textColor: string;
+        background: string;           // Surface color for card background
+        border: string;              // Subtle border color
+        titleColor: string;          // Dark neutral for card titles
+        textColor: string;           // Medium neutral for card text
         radius: number;
         padding: number;
         elevation: ElevationSystem['s'];
@@ -347,58 +339,58 @@ export interface ComponentTheme {
     // Button variants
     button: {
         primary: {
-            background: string;
-            text: string;
-            border: string;
+            background: string;       // Primary neutral for main actions
+            text: string;            // Light neutral for text on primary
+            border: string;          // Transparent or matching background
             radius: number;
-            pressedBackground: string;
-            disabledBackground: string;
-            disabledText: string;
+            pressedBackground: string; // Slightly darker on press
+            disabledBackground: string; // Light neutral for disabled state
+            disabledText: string;     // Medium neutral for disabled text
         };
         secondary: {
-            background: string;
-            text: string;
-            border: string;
+            background: string;       // Transparent for outline style
+            text: string;            // Primary neutral for text
+            border: string;          // Primary neutral for border
             radius: number;
-            pressedBackground: string;
-            disabledBackground: string;
-            disabledText: string;
+            pressedBackground: string; // Subtle background on press
+            disabledBackground: string; // Transparent
+            disabledText: string;     // Light neutral for disabled text
         };
         text: {
-            color: string;
-            pressedColor: string;
-            disabledColor: string;
+            color: string;           // Primary neutral for text buttons
+            pressedColor: string;    // Slightly darker on press
+            disabledColor: string;   // Light neutral for disabled
         };
     };
 
     // Input fields
     inputs: {
-        background: string;
-        text: string;
-        placeholder: string;
-        border: string;
-        focusBorder: string;
+        background: string;          // Light surface for input background
+        text: string;               // Dark neutral for input text
+        placeholder: string;        // Medium neutral for placeholder
+        border: string;             // Subtle border color
+        focusBorder: string;        // Darker neutral for focus state
         radius: number;
-        error: string;
-        success: string;
+        error: string;              // Error functional color
+        success: string;            // Success functional color
         padding: number;
         height: number;
     };
 
     // List items
     listItem: {
-        background: string;
-        pressedBackground: string;
-        titleColor: string;
-        subtitleColor: string;
-        border: string;
+        background: string;         // Surface color for list items
+        pressedBackground: string;  // Slightly darker on press
+        titleColor: string;         // Dark neutral for titles
+        subtitleColor: string;      // Medium neutral for subtitles
+        border: string;             // Subtle divider color
         height: number;
     };
 
     // Modals and sheets
     modal: {
-        background: string;
-        overlay: string;
+        background: string;         // Surface color for modal content
+        overlay: string;            // Semi-transparent overlay
         shadow: ElevationSystem['l'];
         radius: number;
     };
@@ -406,20 +398,20 @@ export interface ComponentTheme {
     // Status and feedback indicators
     status: {
         info: {
-            background: string;
-            text: string;
+            background: string;     // Info functional light color
+            text: string;          // Info functional dark color
         };
         success: {
-            background: string;
-            text: string;
+            background: string;     // Success functional light color
+            text: string;          // Success functional dark color
         };
         warning: {
-            background: string;
-            text: string;
+            background: string;     // Warning functional light color
+            text: string;          // Warning functional dark color
         };
         error: {
-            background: string;
-            text: string;
+            background: string;     // Error functional light color
+            text: string;          // Error functional dark color
         };
     };
 }

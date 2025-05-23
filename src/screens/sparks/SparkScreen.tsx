@@ -154,7 +154,7 @@ export default function SparkScreen() {
             shadowRadius: 3,
         },
         sparkContainer: {
-            backgroundColor: theme.colors.secondaryContainer || theme.colors.surfaceVariant,
+            backgroundColor: theme.colors.surfaceVariant,
             borderRadius: theme.shape.radius.l,
             padding: theme.spacing.m,
             marginVertical: theme.spacing.m,

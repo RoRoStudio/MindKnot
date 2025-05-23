@@ -270,7 +270,7 @@ export const BottomSheet = React.memo<BottomSheetProps>(({
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: 'black',
+            backgroundColor: theme.colors.overlay,
         },
         sheetContainer: {
             position: 'absolute',
@@ -330,6 +330,11 @@ export const BottomSheet = React.memo<BottomSheetProps>(({
             height: adjustedFooterHeight,
             justifyContent: 'center',
             alignItems: 'center',
+        },
+        overlay: {
+            flex: 1,
+            backgroundColor: theme.colors.overlay,
+            justifyContent: 'flex-end',
         },
     });
 

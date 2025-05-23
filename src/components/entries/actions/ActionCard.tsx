@@ -43,6 +43,76 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     const hasSubActions = subTasks && subTasks.length > 0;
     const inputRef = useRef<TextInput>(null);
 
+    // Define styles inside component to access theme
+    const styles = StyleSheet.create({
+        subActionsContainer: {
+            gap: 12,
+        },
+        subActionsHeading: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: theme.colors.textSecondary,
+            marginBottom: 4,
+        },
+        subActionRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        subActionCheckboxContainer: {
+            marginRight: 12,
+        },
+        subActionCheckbox: {
+            width: 20,
+            height: 20,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            borderRadius: 4,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        subActionTextContainer: {
+            flex: 1,
+            paddingVertical: 4,
+        },
+        subActionText: {
+            fontSize: 14,
+            color: theme.colors.textPrimary,
+        },
+        subActionTextCompleted: {
+            textDecorationLine: 'line-through',
+            color: theme.colors.textSecondary,
+        },
+        subActionInput: {
+            flex: 1,
+            fontSize: 14,
+            color: theme.colors.textPrimary,
+            padding: 0,
+            paddingVertical: 4,
+        },
+        addSubActionContainer: {
+            marginTop: 8,
+        },
+        addSubActionInputContainer: {
+            marginBottom: 8,
+        },
+        addSubActionInput: {
+            fontSize: 14,
+            color: theme.colors.textPrimary,
+            padding: 0,
+            paddingVertical: 4,
+        },
+        addSubActionButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        addSubActionText: {
+            fontSize: 14,
+            fontWeight: '500',
+            color: theme.colors.textSecondary,
+            marginLeft: 8,
+        },
+    });
+
     // Fetch category info when action.categoryId changes
     useEffect(() => {
         const fetchCategoryInfo = async () => {
@@ -306,7 +376,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     };
 
     // Fix the plus-circle icon
-    const plusCircleIcon = <Icon name="circle-plus" width={20} height={20} color="#6B7280" />;
+    const plusCircleIcon = <Icon name="circle-plus" width={20} height={20} color={theme.colors.textSecondary} />;
 
     // Render the expanded content with sub-actions
     const renderExpandedContent = () => (
@@ -324,12 +394,12 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                         <View style={[
                             styles.subActionCheckbox,
                             subTask.completed && {
-                                backgroundColor: ENTRY_TYPES[EntryType.ACTION].borderColor,
-                                borderColor: ENTRY_TYPES[EntryType.ACTION].borderColor
+                                backgroundColor: ENTRY_TYPES[EntryType.ACTION].color,
+                                borderColor: ENTRY_TYPES[EntryType.ACTION].color
                             }
                         ]}>
                             {subTask.completed && (
-                                <Icon name="check" width={14} height={14} color="#FFFFFF" />
+                                <Icon name="check" width={14} height={14} color={theme.colors.onPrimary} />
                             )}
                         </View>
                     </TouchableOpacity>
@@ -370,7 +440,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                     <TextInput
                         style={styles.addSubActionInput}
                         placeholder="Add a sub-action..."
-                        placeholderTextColor="#9CA3AF"
+                        placeholderTextColor={theme.colors.textSecondary}
                         value={newSubAction}
                         onChangeText={setNewSubAction}
                         onSubmitEditing={addNewSubAction}
@@ -396,7 +466,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                 title={action.title}
                 description={action.description}
                 iconName={ENTRY_TYPES[EntryType.ACTION].icon}
-                borderColor={ENTRY_TYPES[EntryType.ACTION].borderColor}
+                borderColor={ENTRY_TYPES[EntryType.ACTION].color}
                 createdAt={action.createdAt}
                 tags={action.tags}
                 categoryId={action.categoryId}
@@ -435,77 +505,8 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                 cancelText="Cancel"
                 onConfirm={handleModalConfirm}
                 onCancel={handleModalCancel}
-                accentColor={ENTRY_TYPES[EntryType.ACTION].borderColor}
+                accentColor={ENTRY_TYPES[EntryType.ACTION].color}
             />
         </>
     );
 };
-
-const styles = StyleSheet.create({
-    subActionsContainer: {
-        gap: 12,
-    },
-    subActionsHeading: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#6B7280',
-        marginBottom: 4,
-    },
-    subActionRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    subActionCheckboxContainer: {
-        marginRight: 12,
-    },
-    subActionCheckbox: {
-        width: 20,
-        height: 20,
-        borderWidth: 1,
-        borderColor: '#D1D5DB',
-        borderRadius: 4,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    subActionTextContainer: {
-        flex: 1,
-        paddingVertical: 4,
-    },
-    subActionText: {
-        fontSize: 14,
-        color: '#374151',
-    },
-    subActionTextCompleted: {
-        textDecorationLine: 'line-through',
-        color: '#9CA3AF',
-    },
-    subActionInput: {
-        flex: 1,
-        fontSize: 14,
-        color: '#374151',
-        padding: 0,
-        paddingVertical: 4,
-    },
-    addSubActionContainer: {
-        marginTop: 8,
-    },
-    addSubActionInputContainer: {
-        marginBottom: 8,
-    },
-    addSubActionInput: {
-        fontSize: 14,
-        color: '#374151',
-        padding: 0,
-        paddingVertical: 4,
-    },
-    addSubActionButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    addSubActionText: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#6B7280',
-        marginLeft: 8,
-    },
-});

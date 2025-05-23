@@ -11,7 +11,7 @@ import {
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Icon } from '../common';
+import { Icon, IconName } from '../common';
 import Svg, { Path } from 'react-native-svg';
 import { DiamondFab } from './DiamondFab';
 import { useStyles } from '../../hooks/useStyles';
@@ -224,8 +224,3 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
         </View>
     );
 }
-
-// Updated IconName type to include new icons
-type IconName = "house" | "book-open" | "vault" | "zap" | "plus" | "arrow-left" |
-    "arrow-right" | "check" | "lightbulb" | "file-text" | "list" | "minus" |
-    "git-branch" | "link" | "map" | "moon" | "sun" | "scroll-text" | "loop" | "path" | "circle-help";

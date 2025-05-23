@@ -164,7 +164,7 @@ export default function LoopScreen() {
             padding: theme.spacing.m,
             marginVertical: theme.spacing.m,
             borderLeftWidth: 4,
-            borderLeftColor: theme.colors.tertiary || theme.colors.primary,
+            borderLeftColor: theme.colors.primary,
         },
         switchContainer: {
             flexDirection: 'row',
@@ -219,6 +219,14 @@ export default function LoopScreen() {
             borderRadius: 5,
             backgroundColor: theme.colors.error,
             marginRight: theme.spacing.s,
+        },
+        loopItemsCard: {
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.shape.radius.m,
+            padding: theme.spacing.m,
+            marginVertical: theme.spacing.m,
+            borderLeftWidth: 4,
+            borderLeftColor: theme.colors.primary,
         },
     }));
 

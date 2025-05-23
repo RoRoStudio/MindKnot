@@ -156,7 +156,7 @@ export default function MomentumScreen() {
                             <Typography variant="h4">{stats.totalNotes}</Typography>
                         </View>
                         <View style={styles.recentActivity}>
-                            <Icon name="lightbulb" width={20} height={20} color="#FFB800" style={styles.activityIcon} />
+                            <Icon name="lightbulb" width={20} height={20} color={theme.colors.warning} style={styles.activityIcon} />
                             <Typography style={styles.activityText}>Sparks</Typography>
                             <Typography variant="h4">{stats.totalSparks}</Typography>
                         </View>

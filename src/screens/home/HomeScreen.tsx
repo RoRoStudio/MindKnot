@@ -33,16 +33,18 @@ import { Spark } from '../../types/spark';
 import { Action } from '../../types/action';
 import { Path } from '../../types/path';
 import { Loop } from '../../types/loop';
+import { ENTRY_TYPES } from '../../constants/entryTypes';
+import { EntryType } from '../../constants/entryTypes';
 
 const { width } = Dimensions.get('window');
 
-// Entry type icon metadata
+// Entry type icon metadata - using theme colors from entryTypes constants
 const iconMap: Record<string, { iconName: IconName; iconColor: string }> = {
-    note: { iconName: 'file-text', iconColor: '#2D9CDB' },
-    spark: { iconName: 'lightbulb', iconColor: '#FFB800' },
-    action: { iconName: 'check', iconColor: '#27AE60' },
-    path: { iconName: 'compass', iconColor: '#6C63FF' },
-    loop: { iconName: 'calendar-sync', iconColor: '#C06C84' },
+    note: { iconName: 'scroll-text', iconColor: ENTRY_TYPES[EntryType.NOTE].color },
+    spark: { iconName: 'zap', iconColor: ENTRY_TYPES[EntryType.SPARK].color },
+    action: { iconName: 'square-check', iconColor: ENTRY_TYPES[EntryType.ACTION].color },
+    path: { iconName: 'compass', iconColor: ENTRY_TYPES[EntryType.PATH].color },
+    loop: { iconName: 'infinity', iconColor: ENTRY_TYPES[EntryType.LOOP].color },
 };
 
 
@@ -179,11 +181,11 @@ export default function HomeScreen() {
 
     const quickActions = [
         { id: '1', title: 'New Note', icon: 'file-text', color: theme.colors.primary, onPress: () => showNoteForm() },
-        { id: '2', title: 'Add Spark', icon: 'lightbulb', color: '#FFB800', onPress: () => showSparkForm() },
+        { id: '2', title: 'Add Spark', icon: 'lightbulb', color: theme.colors.secondary, onPress: () => showSparkForm() },
         { id: '3', title: 'Create Action', icon: 'check', color: theme.colors.success, onPress: () => showActionForm() },
-        { id: '4', title: 'Start Path', icon: 'compass', color: theme.colors.info, onPress: () => showPathForm() },
-        { id: '5', title: 'UI Showcase', icon: 'layout-grid', color: '#9C27B0', onPress: () => navigation.navigate('ComponentShowcase') },
-        { id: '6', title: 'Path Timeline', icon: 'git-branch', color: '#4b6cb7', onPress: () => navigation.navigate('TestScreen') },
+        { id: '4', title: 'Start Path', icon: 'compass', color: theme.colors.textSecondary, onPress: () => showPathForm() },
+        { id: '5', title: 'UI Showcase', icon: 'layout-grid', color: theme.colors.primaryLight, onPress: () => navigation.navigate('ComponentShowcase') },
+        { id: '6', title: 'Path Timeline', icon: 'git-branch', color: theme.colors.secondaryLight, onPress: () => navigation.navigate('TestScreen') },
     ];
 
 
@@ -197,8 +199,8 @@ export default function HomeScreen() {
         entryMeta: { fontSize: theme.typography.fontSize.s, color: theme.colors.textSecondary },
         quickActionsContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginHorizontal: -theme.spacing.xs },
         actionCard: { width: (width - theme.spacing.m * 2 - theme.spacing.xs * 2) / 2, padding: theme.spacing.m, marginHorizontal: theme.spacing.xs, marginBottom: theme.spacing.m, alignItems: 'center', borderRadius: theme.shape.radius.m },
-        actionIcon: { marginBottom: theme.spacing.s, padding: theme.spacing.s, borderRadius: theme.shape.radius.circle, backgroundColor: 'rgba(255,255,255,0.2)' },
-        actionTitle: { color: theme.colors.white, fontWeight: theme.typography.fontWeight.medium, textAlign: 'center' },
+        actionIcon: { marginBottom: theme.spacing.s, padding: theme.spacing.s, borderRadius: theme.shape.radius.circle, backgroundColor: theme.colors.scrim },
+        actionTitle: { color: theme.colors.onPrimary, fontWeight: theme.typography.fontWeight.medium, textAlign: 'center' },
         welcomeMessage: { marginTop: theme.spacing.s, color: theme.colors.textSecondary },
     });
 
@@ -266,7 +268,7 @@ export default function HomeScreen() {
                                         name={action.icon as IconName}
                                         width={24}
                                         height={24}
-                                        color="#FFFFFF"
+                                        color={theme.colors.onPrimary}
                                     />
                                 </View>
                                 <Typography style={styles.actionTitle}>{action.title}</Typography>

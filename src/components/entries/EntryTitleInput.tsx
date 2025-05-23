@@ -1,6 +1,7 @@
 import React from 'react';
-import { TextInput, StyleSheet, TextInputProps } from 'react-native';
+import { TextInput, StyleSheet, TextInputProps, Keyboard } from 'react-native';
 import { Control, Controller, FieldPath, FieldValues } from 'react-hook-form';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface EntryTitleInputProps<TFieldValues extends FieldValues = FieldValues, TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>> extends Omit<TextInputProps, 'value' | 'onChangeText'> {
     /**
@@ -16,7 +17,7 @@ interface EntryTitleInputProps<TFieldValues extends FieldValues = FieldValues, T
     /**
      * Placeholder text when input is empty
      */
-    placeholder: string;
+    placeholder?: string;
 
     /**
      * Whether the input is editable
@@ -30,14 +31,31 @@ interface EntryTitleInputProps<TFieldValues extends FieldValues = FieldValues, T
     onChangeText?: (text: string) => void;
 }
 
-export function EntryTitleInput<TFieldValues extends FieldValues = FieldValues, TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>>({
+export default function EntryTitleInput<
+    TFieldValues extends FieldValues = FieldValues,
+    TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+>({
     control,
     name,
-    placeholder,
+    placeholder = 'Enter title...',
     editable = true,
     onChangeText,
     ...props
 }: EntryTitleInputProps<TFieldValues, TName>) {
+    const { theme } = useTheme();
+
+    const styles = StyleSheet.create({
+        titleInput: {
+            fontSize: 32,
+            fontWeight: '300',
+            color: theme.colors.textPrimary,
+            padding: 16,
+            paddingTop: 16,
+            paddingBottom: 16,
+            fontFamily: 'KantumruyPro-Bold',
+        },
+    });
+
     return (
         <Controller
             control={control}
@@ -45,32 +63,23 @@ export function EntryTitleInput<TFieldValues extends FieldValues = FieldValues, 
             rules={{ required: true }}
             render={({ field: { value, onChange } }) => (
                 <TextInput
-                    style={styles.titleInput}
+                    style={[styles.titleInput, editable ? {} : { opacity: 0.7 }]}
                     placeholder={placeholder}
-                    placeholderTextColor="#9E9E9E"
+                    placeholderTextColor={theme.colors.textSecondary}
                     value={value}
                     onChangeText={(text) => {
                         onChange(text);
-                        onChangeText?.(text);
+                        if (onChangeText) {
+                            onChangeText(text);
+                        }
                     }}
                     editable={editable}
+                    multiline={true}
+                    onSubmitEditing={() => Keyboard.dismiss()}
+                    blurOnSubmit={true}
                     {...props}
                 />
             )}
         />
     );
-}
-
-const styles = StyleSheet.create({
-    titleInput: {
-        fontSize: 32,
-        fontWeight: '300',
-        color: '#000000',
-        padding: 16,
-        paddingTop: 16,
-        paddingBottom: 16,
-        fontFamily: 'KantumruyPro-Bold',
-    },
-});
-
-export { EntryTitleInput }; 
+} 

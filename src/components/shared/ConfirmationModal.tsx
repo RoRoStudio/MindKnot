@@ -91,6 +91,80 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     // Get the color to use for accents
     const color = accentColor || (isDestructive ? theme.colors.error : theme.colors.primary);
 
+    const styles = StyleSheet.create({
+        overlay: {
+            flex: 1,
+            backgroundColor: theme.colors.overlay,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        modalContainer: {
+            width: width * 0.85,
+            maxWidth: 400,
+            backgroundColor: theme.colors.surface,
+            borderRadius: 16,
+            paddingTop: 24,
+            paddingHorizontal: 24,
+            paddingBottom: 20,
+            alignItems: 'center',
+            ...Platform.select({
+                ios: {
+                    shadowColor: theme.colors.shadow,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 10,
+                },
+                android: {
+                    elevation: 5,
+                },
+            }),
+        },
+        iconContainer: {
+            width: 72,
+            height: 72,
+            borderRadius: 36,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 16,
+        },
+        contentContainer: {
+            width: '100%',
+            alignItems: 'center',
+            marginBottom: 24,
+        },
+        title: {
+            fontSize: 20,
+            fontWeight: '600',
+            color: theme.colors.textPrimary,
+            marginBottom: 12,
+            textAlign: 'center',
+        },
+        message: {
+            fontSize: 16,
+            color: theme.colors.textSecondary,
+            textAlign: 'center',
+            lineHeight: 24,
+        },
+        actionsContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            width: '100%',
+        },
+        cancelButton: {
+            flex: 1,
+            marginRight: 8,
+        },
+        confirmButton: {
+            flex: 1,
+            marginLeft: 8,
+        },
+        closeButton: {
+            position: 'absolute',
+            top: 16,
+            right: 16,
+        },
+    });
+
     useEffect(() => {
         if (visible) {
             // Animate in
@@ -179,7 +253,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                                 onPress={onCancel}
                                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                             >
-                                <Icon name="x" width={20} height={20} color="#9CA3AF" />
+                                <Icon name="x" width={20} height={20} color={theme.colors.textSecondary} />
                             </TouchableOpacity>
                         </Animated.View>
                     </TouchableWithoutFeedback>
@@ -187,78 +261,4 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             </TouchableWithoutFeedback>
         </Modal>
     );
-};
-
-const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    modalContainer: {
-        width: width * 0.85,
-        maxWidth: 400,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 16,
-        paddingTop: 24,
-        paddingHorizontal: 24,
-        paddingBottom: 20,
-        alignItems: 'center',
-        ...Platform.select({
-            ios: {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.25,
-                shadowRadius: 10,
-            },
-            android: {
-                elevation: 5,
-            },
-        }),
-    },
-    iconContainer: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    contentContainer: {
-        width: '100%',
-        alignItems: 'center',
-        marginBottom: 24,
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: '600',
-        color: '#111827',
-        marginBottom: 12,
-        textAlign: 'center',
-    },
-    message: {
-        fontSize: 16,
-        color: '#4B5563',
-        textAlign: 'center',
-        lineHeight: 24,
-    },
-    actionsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-    },
-    cancelButton: {
-        flex: 1,
-        marginRight: 8,
-    },
-    confirmButton: {
-        flex: 1,
-        marginLeft: 8,
-    },
-    closeButton: {
-        position: 'absolute',
-        top: 16,
-        right: 16,
-    },
-}); 
+}; 

@@ -10,6 +10,7 @@ import VaultPathsScreen from '../screens/vault/VaultPathsScreen';
 import VaultLoopsScreen from '../screens/vault/VaultLoopsScreen';
 import { Icon, IconName } from '../components/common';
 import { getVaultEntryTypes, EntryType } from '../constants/entryTypes';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Tab = createMaterialTopTabNavigator();
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -33,19 +34,30 @@ interface TabData {
 
 // Pill-shaped tab item with icon in center
 const TabItem = React.memo<TabItemProps>(({ icon, active, onPress }) => {
+    const { theme } = useTheme();
+
+    const tabItemStyles = {
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        borderRadius: 50,
+        marginRight: 8,
+        width: 50,
+        height: 30,
+    };
+
     return (
         <TouchableOpacity
-            style={[
-                styles.tab,
-                active ? styles.activeTab : styles.inactiveTab,
-            ]}
             onPress={onPress}
-            activeOpacity={0.8}
+            style={[
+                tabItemStyles,
+                active && { backgroundColor: theme.colors.primary }
+            ]}
+            activeOpacity={0.7}
         >
             <Icon
                 name={icon}
                 size={18}
-                color={active ? '#FFFFFF' : '#333333'}
+                color={active ? theme.colors.onPrimary : theme.colors.textSecondary}
             />
         </TouchableOpacity>
     );
@@ -53,8 +65,34 @@ const TabItem = React.memo<TabItemProps>(({ icon, active, onPress }) => {
 
 // Tab bar that fits 5 tabs on screen with slight scrolling if needed
 function SimpleTabBar({ state, descriptors, navigation }: MaterialTopTabBarProps) {
+    const { theme } = useTheme();
     const flatListRef = useRef<FlatList<TabData>>(null);
     const tabWidth = Math.min(80, SCREEN_WIDTH / 5 - 16); // Calculate tab width to fit 5 tabs with some spacing
+
+    const styles = StyleSheet.create({
+        container: {
+            backgroundColor: theme.colors.background,
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+        },
+        tabsContainer: {
+            paddingHorizontal: 12,
+            justifyContent: 'space-between',
+        },
+        tabItem: {
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 50,
+            marginRight: 8,
+            width: 50,
+            height: 30,
+        },
+        tabsRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingHorizontal: 16,
+        },
+    });
 
     // Scroll to active tab when index changes
     useEffect(() => {
@@ -136,35 +174,3 @@ export default function VaultTabNavigator() {
         </Tab.Navigator>
     );
 }
-
-// Pill-shaped tab styling with proper spacing
-const styles = StyleSheet.create({
-    container: {
-        backgroundColor: '#FFFFFF',
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-    },
-    tabsContainer: {
-        paddingHorizontal: 12, // use padding on both sides
-        justifyContent: 'space-between', // evenly distribute
-    },
-    tab: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 50,
-        marginRight: 8,
-        width: 50,
-        height: 30,
-    },
-    activeTab: {
-        backgroundColor: '#202030',
-    },
-    inactiveTab: {
-        backgroundColor: '#F5F5F5',
-    },
-    tabsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-    },
-});

@@ -80,30 +80,16 @@ export default function ThemeInspectorScreen() {
     const renderColorSwatches = () => {
         const colorCategories = [
             {
-                title: 'Primary Colors',
+                title: 'Brand Colors',
                 colors: [
                     { name: 'primary', value: theme.colors.primary },
                     { name: 'primaryLight', value: theme.colors.primaryLight },
                     { name: 'primaryDark', value: theme.colors.primaryDark },
                     { name: 'onPrimary', value: theme.colors.onPrimary },
-                ],
-            },
-            {
-                title: 'Secondary Colors',
-                colors: [
                     { name: 'secondary', value: theme.colors.secondary },
                     { name: 'secondaryLight', value: theme.colors.secondaryLight },
                     { name: 'secondaryDark', value: theme.colors.secondaryDark },
                     { name: 'onSecondary', value: theme.colors.onSecondary },
-                ],
-            },
-            {
-                title: 'Accent Colors',
-                colors: [
-                    { name: 'accent', value: theme.colors.accent },
-                    { name: 'accentLight', value: theme.colors.accentLight },
-                    { name: 'accentDark', value: theme.colors.accentDark },
-                    { name: 'onAccent', value: theme.colors.onAccent },
                 ],
             },
             {

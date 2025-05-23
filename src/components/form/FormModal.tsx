@@ -81,7 +81,7 @@ export const FormModal = React.memo<FormModalProps>(({
     const styles = useStyles((theme) => ({
         modalOverlay: {
             flex: 1,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: theme.colors.overlay,
             justifyContent: 'center',
             alignItems: 'center',
             width: '100%',
@@ -93,7 +93,7 @@ export const FormModal = React.memo<FormModalProps>(({
             backgroundColor: theme.colors.background,
             borderRadius: theme.shape.radius.l,
             elevation: 5,
-            shadowColor: "#000",
+            shadowColor: theme.colors.shadow,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.25,
             shadowRadius: 3.84,

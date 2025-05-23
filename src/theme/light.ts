@@ -3,92 +3,69 @@ import { TextStyle } from 'react-native';
 import { ThemeType } from './themeTypes';
 import tokens from './tokens';
 
-// Extended color palette with additional colors needed by components
-export const extendedColorPalette = {
-    ...tokens.color.neutral,
-    white: tokens.color.neutral.white,
-    black: tokens.color.neutral.black,
-    text: tokens.color.neutral.gray[900]
-};
-
 export const lightTheme: ThemeType = {
     name: 'light',
     isDark: false,
-    dark: false, // Adding this property for StatusBar
+    dark: false, // For StatusBar
     colors: {
-        // Extended color palette
-        ...extendedColorPalette,
-
-        // Brand color scales
-        brand: {
-            blue: tokens.color.brand.blue,
-            green: tokens.color.brand.green,
-            orange: tokens.color.brand.orange,
-            teal: tokens.color.brand.teal,
-        },
-
-        // Neutral colors
+        // Primary neutral scale - Cool-toned grays for main UI elements, text, and surfaces
         neutral: tokens.color.neutral,
 
-        // Primary colors (semantic mappings)
-        primary: tokens.color.brand.blue[500],
-        primaryLight: tokens.color.brand.blue[400],
-        primaryDark: tokens.color.brand.blue[700],
-        onPrimary: tokens.color.neutral.white,
+        // MindKnot Brand Colors - Sophisticated navy + elegant gold
+        brand: tokens.color.brand,
 
-        // Secondary colors
-        secondary: tokens.color.brand.green[300],
-        secondaryLight: tokens.color.brand.green[200],
-        secondaryDark: tokens.color.brand.green[500],
-        onSecondary: tokens.color.brand.blue[500],
-        secondaryContainer: tokens.color.brand.green[100],
+        // Vibrant functional colors - High-contrast, accessible functional colors
+        functional: tokens.color.functional,
 
-        // Tertiary colors
-        tertiary: tokens.color.brand.orange[400],
-        tertiaryLight: tokens.color.brand.orange[200],
-        tertiaryDark: tokens.color.brand.orange[500],
-        onTertiary: tokens.color.neutral.white,
+        // Semantic mappings for commonly used colors - sophisticated navy + gold
+        primary: tokens.color.brand.primary[900],        // Deep sophisticated navy for navigation and primary actions
+        primaryLight: tokens.color.brand.primary[700],   // Lighter navy for hover/active states
+        primaryDark: tokens.color.brand.primary[950],    // Darkest navy for high contrast
+        onPrimary: tokens.color.neutral[25],             // Light text/icons on navy backgrounds
 
-        // Accent colors
-        accent: tokens.color.brand.teal[400],
-        accentLight: tokens.color.brand.teal[300],
-        accentDark: tokens.color.brand.teal[500],
-        onAccent: tokens.color.neutral.white,
+        secondary: tokens.color.brand.secondary[600],    // Sophisticated gold for secondary actions and accents
+        secondaryLight: tokens.color.brand.secondary[500], // Lighter elegant gold
+        secondaryDark: tokens.color.brand.secondary[700], // Darker elegant gold
+        onSecondary: tokens.color.neutral[900],          // Dark text/icons on gold backgrounds (better contrast)
 
-        // Background, surface, and content colors
-        background: tokens.color.neutral.white,
-        surface: tokens.color.neutral.white,
-        surfaceVariant: tokens.color.neutral.gray[100],
+        // Background and surface colors
+        background: tokens.color.neutral[25],            // Near-white primary background
+        surface: tokens.color.neutral[50],               // Very light gray for card backgrounds
+        surfaceVariant: tokens.color.neutral[75],        // Light gray for alternative surfaces
 
-        // Text colors
-        textPrimary: tokens.color.neutral.gray[900],
-        textSecondary: tokens.color.neutral.gray[600],
-        textDisabled: tokens.color.neutral.gray[400],
-        textLink: tokens.color.brand.blue[500],
+        // Text colors for hierarchy
+        textPrimary: tokens.color.neutral[900],          // Near-black for primary text
+        textSecondary: tokens.color.neutral[600],        // Dark gray for secondary text
+        textDisabled: tokens.color.neutral[400],         // Medium gray for disabled text
+        textLink: tokens.color.brand.primary[700],       // Brand blue for link text
 
-        // Border and divider
-        border: tokens.color.neutral.black,
-        divider: tokens.color.neutral.gray[200],
+        // Border and divider colors
+        border: tokens.color.neutral[200],               // Medium-light gray for borders
+        divider: tokens.color.neutral[100],              // Light gray for dividers
 
-        // Feedback colors
-        error: '#EF4444',
-        errorLight: '#FEE2E2',
-        errorDark: '#B91C1C',
-        warning: '#FBBF24',
-        warningLight: '#FEF3C7',
-        warningDark: '#D97706',
-        success: '#22C55E',
-        successLight: '#DCFCE7',
-        successDark: '#16A34A',
-        info: '#3B82F6',
-        infoLight: '#DBEAFE',
-        infoDark: '#1D4ED8',
+        // Feedback colors - using vibrant functional palette
+        error: tokens.color.functional.error.main,
+        errorLight: tokens.color.functional.error.light,
+        errorDark: tokens.color.functional.error.dark,
+        warning: tokens.color.functional.warning.main,
+        warningLight: tokens.color.functional.warning.light,
+        warningDark: tokens.color.functional.warning.dark,
+        success: tokens.color.functional.success.main,
+        successLight: tokens.color.functional.success.light,
+        successDark: tokens.color.functional.success.dark,
+        info: tokens.color.functional.info.main,
+        infoLight: tokens.color.functional.info.light,
+        infoDark: tokens.color.functional.info.dark,
 
-        // Shadow color
-        shadow: tokens.color.neutral.gray[900],
+        // Shadow and overlay colors
+        shadow: tokens.color.neutral[900],               // Dark shadow color
+        overlay: tokens.color.special.overlay,           // Semi-transparent overlay
+        scrim: tokens.color.special.scrim,               // Light overlay for modals
+        backdrop: tokens.color.special.backdrop,         // Backdrop for modal/drawer components
+        focus: tokens.color.special.focus,               // Brand blue focus indicator
 
         // Utility colors
-        transparent: 'transparent',
+        transparent: 'transparent',                      // Transparent for invisible elements
     },
 
     typography: {
@@ -109,7 +86,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xxxl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[900], // Near-black for maximum contrast
             } as TextStyle,
             heading2: {
                 fontFamily: tokens.typography.fontFamily.bold,
@@ -117,7 +94,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xxl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[900],
             } as TextStyle,
             heading3: {
                 fontFamily: tokens.typography.fontFamily.bold,
@@ -125,7 +102,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "700",
                 lineHeight: tokens.typography.fontSize.xl * 1.2,
                 letterSpacing: tokens.typography.letterSpacing.tight,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[800], // Slightly lighter for hierarchy
             } as TextStyle,
             heading4: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -133,7 +110,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.l * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[800],
             } as TextStyle,
             heading5: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -141,7 +118,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.m * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[700],
             } as TextStyle,
             heading6: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -149,7 +126,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.3,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[700],
             } as TextStyle,
             subtitle1: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -157,7 +134,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.m * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[600], // Secondary text color
             } as TextStyle,
             subtitle2: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -165,7 +142,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[600],
             } as TextStyle,
             body1: {
                 fontFamily: tokens.typography.fontFamily.regular,
@@ -173,7 +150,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.m * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[500], // Primary body text
             } as TextStyle,
             body2: {
                 fontFamily: tokens.typography.fontFamily.regular,
@@ -181,7 +158,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[500],
             } as TextStyle,
             caption: {
                 fontFamily: tokens.typography.fontFamily.regular,
@@ -189,7 +166,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "400",
                 lineHeight: tokens.typography.fontSize.xs * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[600],
+                color: tokens.color.neutral[400], // Lighter for captions
             } as TextStyle,
             overline: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -198,7 +175,7 @@ export const lightTheme: ThemeType = {
                 lineHeight: tokens.typography.fontSize.xs * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.wide,
                 textTransform: 'uppercase',
-                color: tokens.color.neutral.gray[600],
+                color: tokens.color.neutral[400],
             } as TextStyle,
             button: {
                 fontFamily: tokens.typography.fontFamily.medium,
@@ -214,7 +191,7 @@ export const lightTheme: ThemeType = {
                 fontWeight: "500",
                 lineHeight: tokens.typography.fontSize.s * 1.5,
                 letterSpacing: tokens.typography.letterSpacing.normal,
-                color: tokens.color.neutral.gray[900],
+                color: tokens.color.neutral[600],
             } as TextStyle,
         },
     },
@@ -247,23 +224,23 @@ export const lightTheme: ThemeType = {
 
     components: {
         bottomNavBar: {
-            background: tokens.color.brand.blue[500],
-            activeIcon: tokens.color.brand.green[200],
-            inactiveIcon: `rgba(236, 239, 202, 0.7)`,
-            activeText: tokens.color.brand.green[200],
-            inactiveText: `rgba(236, 239, 202, 0.7)`,
-            fabBackground: tokens.color.brand.teal[400],
-            fabIcon: tokens.color.neutral.white,
-            menuItemBackground: tokens.color.brand.blue[500],
-            menuItemIcon: tokens.color.brand.green[200],
+            background: tokens.color.brand.primary[900],     // Deep sophisticated navy for navigation background
+            activeIcon: tokens.color.brand.secondary[600],   // Elegant gold for active icons
+            inactiveIcon: tokens.color.neutral[400],         // Medium neutral for inactive icons
+            activeText: tokens.color.brand.secondary[600],   // Elegant gold for active text
+            inactiveText: tokens.color.neutral[400],         // Medium neutral for inactive text
+            fabBackground: tokens.color.brand.secondary[600], // Sophisticated gold for floating action button
+            fabIcon: tokens.color.neutral[900],              // Dark icon on gold FAB for excellent contrast
+            menuItemBackground: tokens.color.neutral[50],    // Light surface for menu items
+            menuItemIcon: tokens.color.neutral[700],         // Dark neutral for menu icons
             elevation: 8,
         },
 
         card: {
-            background: tokens.color.neutral.white,
-            border: tokens.color.brand.green[200],
-            titleColor: tokens.color.brand.blue[500],
-            textColor: tokens.color.brand.blue[400],
+            background: tokens.color.neutral[50],            // Light surface for cards
+            border: tokens.color.neutral[200],               // Subtle border
+            titleColor: tokens.color.neutral[800],           // Dark title text
+            textColor: tokens.color.neutral[600],            // Medium text color
             radius: tokens.radius.m,
             padding: tokens.spacing.m,
             elevation: tokens.shadow.s,
@@ -271,36 +248,36 @@ export const lightTheme: ThemeType = {
 
         button: {
             primary: {
-                background: tokens.color.brand.blue[500],
-                text: tokens.color.neutral.white,
+                background: tokens.color.brand.primary[900],     // Deep brand blue background
+                text: tokens.color.neutral[25],                 // Light text on brand background
                 border: 'transparent',
                 radius: tokens.radius.m,
-                pressedBackground: tokens.color.brand.blue[600],
-                disabledBackground: tokens.color.neutral.gray[300],
-                disabledText: tokens.color.neutral.gray[500],
+                pressedBackground: tokens.color.brand.primary[950], // Darker on press
+                disabledBackground: tokens.color.neutral[300],   // Light disabled state
+                disabledText: tokens.color.neutral[500],         // Medium disabled text
             },
             secondary: {
-                background: 'transparent',
-                text: tokens.color.brand.blue[500],
-                border: tokens.color.brand.blue[500],
+                background: 'transparent',                       // Transparent outline style
+                text: tokens.color.brand.primary[900],          // Brand blue text
+                border: tokens.color.brand.primary[900],        // Brand blue border
                 radius: tokens.radius.m,
-                pressedBackground: `rgba(33, 52, 72, 0.1)`,
+                pressedBackground: tokens.color.brand.primary[50], // Subtle brand press background
                 disabledBackground: 'transparent',
-                disabledText: tokens.color.neutral.gray[400],
+                disabledText: tokens.color.neutral[400],         // Light disabled text
             },
             text: {
-                color: tokens.color.brand.blue[500],
-                pressedColor: tokens.color.brand.blue[400],
-                disabledColor: tokens.color.neutral.gray[400],
+                color: tokens.color.brand.primary[900],          // Brand blue text button
+                pressedColor: tokens.color.brand.primary[950],   // Darker on press
+                disabledColor: tokens.color.neutral[400],        // Light disabled
             },
         },
 
         inputs: {
-            background: tokens.color.neutral.white,
-            text: tokens.color.brand.blue[500],
-            placeholder: tokens.color.neutral.gray[400],
-            border: tokens.color.brand.green[200],
-            focusBorder: tokens.color.brand.blue[500],
+            background: tokens.color.neutral[25],             // Near-white input background
+            text: tokens.color.neutral[900],                  // Dark input text
+            placeholder: tokens.color.neutral[400],           // Medium placeholder
+            border: tokens.color.neutral[200],                // Subtle border
+            focusBorder: tokens.color.brand.primary[700],     // Brand blue focus border
             radius: tokens.radius.m,
             error: tokens.color.functional.error.main,
             success: tokens.color.functional.success.main,
@@ -309,17 +286,17 @@ export const lightTheme: ThemeType = {
         },
 
         listItem: {
-            background: tokens.color.neutral.white,
-            pressedBackground: tokens.color.neutral.gray[50],
-            titleColor: tokens.color.brand.blue[500],
-            subtitleColor: tokens.color.brand.blue[400],
-            border: tokens.color.neutral.gray[200],
+            background: tokens.color.neutral[25],             // Light list item background
+            pressedBackground: tokens.color.neutral[75],      // Slightly darker on press
+            titleColor: tokens.color.neutral[800],            // Dark title
+            subtitleColor: tokens.color.neutral[600],         // Medium subtitle
+            border: tokens.color.neutral[100],                // Light divider
             height: 72,
         },
 
         modal: {
-            background: tokens.color.neutral.white,
-            overlay: tokens.color.special.overlay,
+            background: tokens.color.neutral[25],             // Light modal background
+            overlay: tokens.color.special.overlay,            // Dark overlay
             shadow: tokens.shadow.l,
             radius: tokens.radius.l,
         },
