@@ -265,3 +265,18 @@ export const getLoopById = async (id: string): Promise<Loop | null> => {
         return null;
     }
 };
+
+export const deleteLoop = async (id: string): Promise<boolean> => {
+    try {
+        // First delete all loop items associated with this loop
+        await executeSql('DELETE FROM loop_items WHERE loopId = ?', [id]);
+
+        // Then delete the loop itself
+        await executeSql('DELETE FROM loops WHERE id = ?', [id]);
+
+        return true;
+    } catch (error) {
+        console.error('Error deleting loop:', error);
+        return false;
+    }
+};

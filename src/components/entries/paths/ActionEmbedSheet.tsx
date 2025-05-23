@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { Icon } from '../../common';
 import { Action } from '../../../types/action';
@@ -378,13 +378,12 @@ export const ActionEmbedSheet: React.FC<ActionEmbedSheetProps> = ({
                 </View>
 
                 {filteredActions.length > 0 ? (
-                    <FlatList
+                    <ScrollView
                         style={styles.actionsList}
-                        data={filteredActions}
-                        renderItem={renderActionItem}
-                        keyExtractor={(item) => item.id}
                         showsVerticalScrollIndicator={false}
-                    />
+                    >
+                        {filteredActions.map((action) => renderActionItem({ item: action }))}
+                    </ScrollView>
                 ) : (
                     <View style={styles.emptyState}>
                         <Icon name="search" width={48} height={48} color="#D1D5DB" style={styles.emptyIcon} />

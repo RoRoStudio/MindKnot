@@ -55,6 +55,25 @@ async function applyDatabaseMigrations(): Promise<void> {
             console.log('actionOrder column already exists or error adding it:', error);
         }
 
+        // Add starred and hidden columns to all entry tables
+        const entryTables = ['notes', 'sparks', 'actions', 'paths', 'loops'];
+
+        for (const table of entryTables) {
+            try {
+                await db.execAsync(`ALTER TABLE ${table} ADD COLUMN starred INTEGER DEFAULT 0`);
+                console.log(`Added starred column to ${table} table`);
+            } catch (error) {
+                console.log(`starred column already exists in ${table} or error adding it:`, error);
+            }
+
+            try {
+                await db.execAsync(`ALTER TABLE ${table} ADD COLUMN hidden INTEGER DEFAULT 0`);
+                console.log(`Added hidden column to ${table} table`);
+            } catch (error) {
+                console.log(`hidden column already exists in ${table} or error adding it:`, error);
+            }
+        }
+
         // Add missing columns to milestones table
         try {
             await db.execAsync('ALTER TABLE milestones ADD COLUMN `order` INTEGER DEFAULT 0');
@@ -144,6 +163,8 @@ async function createTables(): Promise<void> {
                 body TEXT,
                 tags TEXT,
                 categoryId TEXT,
+                starred INTEGER DEFAULT 0,
+                hidden INTEGER DEFAULT 0,
                 createdAt TEXT NOT NULL,
                 updatedAt TEXT NOT NULL,
                 FOREIGN KEY (categoryId) REFERENCES categories(id)
@@ -159,6 +180,8 @@ async function createTables(): Promise<void> {
                 tags TEXT,
                 linkedEntryIds TEXT,
                 categoryId TEXT,
+                starred INTEGER DEFAULT 0,
+                hidden INTEGER DEFAULT 0,
                 createdAt TEXT NOT NULL,
                 updatedAt TEXT NOT NULL,
                 FOREIGN KEY (categoryId) REFERENCES categories(id)
@@ -183,6 +206,8 @@ async function createTables(): Promise<void> {
                 parentType TEXT,
                 actionOrder INTEGER,
                 categoryId TEXT,
+                starred INTEGER DEFAULT 0,
+                hidden INTEGER DEFAULT 0,
                 createdAt TEXT NOT NULL,
                 updatedAt TEXT NOT NULL,
                 FOREIGN KEY (categoryId) REFERENCES categories(id)
@@ -202,6 +227,8 @@ async function createTables(): Promise<void> {
                 endDate TEXT,
                 tags TEXT,
                 categoryId TEXT,
+                starred INTEGER DEFAULT 0,
+                hidden INTEGER DEFAULT 0,
                 createdAt TEXT NOT NULL,
                 updatedAt TEXT NOT NULL,
                 FOREIGN KEY (categoryId) REFERENCES categories(id)
@@ -234,6 +261,8 @@ async function createTables(): Promise<void> {
                 targetDate TEXT,
                 tags TEXT,
                 categoryId TEXT,
+                starred INTEGER DEFAULT 0,
+                hidden INTEGER DEFAULT 0,
                 createdAt TEXT NOT NULL,
                 updatedAt TEXT NOT NULL,
                 FOREIGN KEY (categoryId) REFERENCES categories(id)

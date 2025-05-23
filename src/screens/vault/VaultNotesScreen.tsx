@@ -116,9 +116,10 @@ export default function VaultNotesScreen() {
             <NoteCard
                 note={item}
                 onPress={() => handleNotePress(item)}
+                onEntryUpdated={loadNotes}
             />
         );
-    }, [handleNotePress]);
+    }, [handleNotePress, loadNotes]);
 
     // Wrap loadNotes with a function that returns Promise<void>
     const loadNotesWrapper = async () => {

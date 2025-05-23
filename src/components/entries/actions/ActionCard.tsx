@@ -93,9 +93,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     const totalSubTasks = subTasks.length;
     const hasIncompleteSubTasks = hasSubActions && completedSubTasks < totalSubTasks;
 
-    const handleToggleDone = async (e: { stopPropagation: () => void }) => {
-        e.stopPropagation();
-
+    const handleToggleDone = async () => {
         // If marking as complete and there are incomplete sub-tasks, show confirmation modal
         if (!isDone && hasIncompleteSubTasks) {
             setShowConfirmModal(true);
@@ -404,10 +402,8 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                 categoryId={action.categoryId}
                 onPress={onPress}
                 isStarred={action.isStarred}
-                onStar={onStar}
-                onDuplicate={onDuplicate}
-                onArchive={onArchive}
-                onHide={onHide}
+                entryType="action"
+                onEntryUpdated={onToggleDone ? () => onToggleDone(action.id) : undefined}
                 done={isDone}
                 dueDate={action.dueDate}
                 // Add linked indicator in subtitle if this action is embedded

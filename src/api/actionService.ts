@@ -93,6 +93,20 @@ export const createAction = async (action: Omit<Action, 'id' | 'type' | 'created
             placeholders += ', ?';
         }
 
+        // Add starred field support
+        if (columnNames.includes('starred')) {
+            sql += ', starred';
+            values.push((action as any).isStarred ? 1 : 0);
+            placeholders += ', ?';
+        }
+
+        // Add hidden field support
+        if (columnNames.includes('hidden')) {
+            sql += ', hidden';
+            values.push(false ? 1 : 0); // Default to not hidden
+            placeholders += ', ?';
+        }
+
         sql += `) VALUES (${placeholders})`;
 
         await executeSql(sql, values);
@@ -105,7 +119,7 @@ export const createAction = async (action: Omit<Action, 'id' | 'type' | 'created
 
 export const getAllActions = async (): Promise<Action[]> => {
     const result = await executeSql(
-        'SELECT * FROM actions ORDER BY createdAt DESC',
+        'SELECT * FROM actions WHERE hidden = 0 OR hidden IS NULL ORDER BY createdAt DESC',
         []
     );
 
@@ -116,11 +130,11 @@ export const getAllActions = async (): Promise<Action[]> => {
             const subActions = row.subActions ? JSON.parse(row.subActions) : [];
 
             // Convert subActions to subTasks format for component consumption
-            const subTasks = subActions.map((subAction: any) => ({
+            const subTasks = (subActions && Array.isArray(subActions)) ? subActions.map((subAction: any) => ({
                 id: subAction.id,
                 text: subAction.text,
                 completed: subAction.done
-            }));
+            })) : [];
 
             return {
                 ...row,
@@ -131,6 +145,7 @@ export const getAllActions = async (): Promise<Action[]> => {
                 completed: Boolean(row.completed),
                 priority: row.priority || 0,
                 description: row.description || '',
+                isStarred: Boolean(row.starred),
                 type: 'action'
             };
         }) as Action[];
@@ -153,11 +168,11 @@ export const getActionById = async (id: string): Promise<Action | null> => {
         const subActions = row.subActions ? JSON.parse(row.subActions) : [];
 
         // Convert subActions to subTasks format for component consumption
-        const subTasks = subActions.map((subAction: any) => ({
+        const subTasks = (subActions && Array.isArray(subActions)) ? subActions.map((subAction: any) => ({
             id: subAction.id,
             text: subAction.text,
             completed: subAction.done
-        }));
+        })) : [];
 
         return {
             ...row,
@@ -168,6 +183,7 @@ export const getActionById = async (id: string): Promise<Action | null> => {
             completed: Boolean(row.completed),
             priority: row.priority || 0,
             description: row.description || '',
+            isStarred: Boolean(row.starred),
             type: 'action'
         } as Action;
     }
@@ -265,6 +281,19 @@ export const updateAction = async (id: string, updates: Partial<Omit<Action, 'id
             values.push(updates.categoryId !== undefined ? updates.categoryId : current.categoryId || null);
         }
 
+        // Add starred field support
+        if (columnNames.includes('starred')) {
+            sql += ', starred = ?';
+            const starredValue = (updates as any).starred !== undefined ? (updates as any).starred : current.isStarred;
+            values.push(starredValue ? 1 : 0);
+        }
+
+        // Add hidden field support
+        if (columnNames.includes('hidden')) {
+            sql += ', hidden = ?';
+            values.push((updates as any).hidden ? 1 : 0);
+        }
+
         sql += ` WHERE id = ?`;
         values.push(id);
 
@@ -303,11 +332,11 @@ export const getActionsWithDueDate = async (): Promise<Action[]> => {
             const subActions = row.subActions ? JSON.parse(row.subActions) : [];
 
             // Convert subActions to subTasks format for component consumption
-            const subTasks = subActions.map((subAction: any) => ({
+            const subTasks = (subActions && Array.isArray(subActions)) ? subActions.map((subAction: any) => ({
                 id: subAction.id,
                 text: subAction.text,
                 completed: subAction.done
-            }));
+            })) : [];
 
             return {
                 ...row,
@@ -340,11 +369,11 @@ export const getActionsByParent = async (parentId: string, parentType: string): 
             const subActions = row.subActions ? JSON.parse(row.subActions) : [];
 
             // Convert subActions to subTasks format for component consumption
-            const subTasks = subActions.map((subAction: any) => ({
+            const subTasks = (subActions && Array.isArray(subActions)) ? subActions.map((subAction: any) => ({
                 id: subAction.id,
                 text: subAction.text,
                 completed: subAction.done
-            }));
+            })) : [];
 
             return {
                 ...row,

@@ -10,20 +10,14 @@ import { Typography, Icon } from '../../common';
 interface PathCardProps {
     path: Path;
     onPress?: () => void;
-    onStar?: (id: string) => void;
-    onDuplicate?: (id: string) => void;
-    onArchive?: (id: string) => void;
-    onHide?: (id: string) => void;
+    onEntryUpdated?: () => void;
     onToggleActionDone?: (id: string) => void;
 }
 
 export const PathCard: React.FC<PathCardProps> = ({
     path,
     onPress,
-    onStar,
-    onDuplicate,
-    onArchive,
-    onHide,
+    onEntryUpdated,
     onToggleActionDone
 }) => {
     const { theme } = useTheme();
@@ -44,22 +38,6 @@ export const PathCard: React.FC<PathCardProps> = ({
     }
 
     // Handle quick actions
-    const handleStar = () => {
-        if (onStar) onStar(path.id);
-    };
-
-    const handleDuplicate = () => {
-        if (onDuplicate) onDuplicate(path.id);
-    };
-
-    const handleArchive = () => {
-        if (onArchive) onArchive(path.id);
-    };
-
-    const handleHide = () => {
-        if (onHide) onHide(path.id);
-    };
-
     const handleToggleExpand = () => {
         setExpanded(!expanded);
     };
@@ -176,15 +154,11 @@ export const PathCard: React.FC<PathCardProps> = ({
 
     const renderPathContent = () => {
         if (!path.milestones || path.milestones.length === 0) {
-            // Render just actions without milestones
-            return (
-                <View style={styles.pathContent}>
-                    {path.actions && path.actions.map(renderAction)}
-                </View>
-            );
+            // No content to render without milestones
+            return null;
         }
 
-        // Render milestones with their actions
+        // Render milestones
         return (
             <View style={styles.pathContent}>
                 {path.milestones.map(renderMilestone)}
@@ -193,8 +167,7 @@ export const PathCard: React.FC<PathCardProps> = ({
     };
 
     const hasMilestonesOrActions =
-        (path.milestones && path.milestones.length > 0) ||
-        (path.actions && path.actions.length > 0);
+        (path.milestones && path.milestones.length > 0);
 
     return (
         <EntryCard
@@ -209,11 +182,9 @@ export const PathCard: React.FC<PathCardProps> = ({
             categoryId={path.categoryId}
             onPress={onPress}
             isStarred={path.isStarred}
-            onStar={handleStar}
-            onDuplicate={handleDuplicate}
-            onArchive={handleArchive}
-            onHide={handleHide}
-            // Paths can be expandable if they have milestones or actions
+            entryType="path"
+            onEntryUpdated={onEntryUpdated}
+            // Paths can be expandable if they have milestones
             expandable={hasMilestonesOrActions}
             expanded={expanded}
             onToggleExpand={handleToggleExpand}

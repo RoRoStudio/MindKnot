@@ -8,20 +8,14 @@ import { ENTRY_TYPES, EntryType } from '../../../constants/entryTypes';
 interface SparkCardProps {
     spark: Spark;
     onPress?: () => void;
-    onStar?: (id: string) => void;
-    onDuplicate?: (id: string) => void;
-    onArchive?: (id: string) => void;
-    onHide?: (id: string) => void;
+    onEntryUpdated?: () => void;
     isNew?: boolean;
 }
 
 export const SparkCard: React.FC<SparkCardProps> = ({
     spark,
     onPress,
-    onStar,
-    onDuplicate,
-    onArchive,
-    onHide,
+    onEntryUpdated,
     isNew = false
 }) => {
     const [animValue] = useState(new Animated.Value(isNew ? 0 : 1));
@@ -36,23 +30,6 @@ export const SparkCard: React.FC<SparkCardProps> = ({
             }).start();
         }
     }, [isNew]);
-
-    // Handle quick actions
-    const handleStar = () => {
-        if (onStar) onStar(spark.id);
-    };
-
-    const handleDuplicate = () => {
-        if (onDuplicate) onDuplicate(spark.id);
-    };
-
-    const handleArchive = () => {
-        if (onArchive) onArchive(spark.id);
-    };
-
-    const handleHide = () => {
-        if (onHide) onHide(spark.id);
-    };
 
     const cardStyle = {
         opacity: animValue,
@@ -79,10 +56,8 @@ export const SparkCard: React.FC<SparkCardProps> = ({
                 categoryId={spark.categoryId}
                 onPress={onPress}
                 isStarred={spark.isStarred}
-                onStar={handleStar}
-                onDuplicate={handleDuplicate}
-                onArchive={handleArchive}
-                onHide={handleHide}
+                entryType="spark"
+                onEntryUpdated={onEntryUpdated}
                 // Sparks don't need to be expandable
                 expandable={false}
                 navigationScreen="SparkScreen"

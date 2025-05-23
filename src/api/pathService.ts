@@ -78,34 +78,6 @@ export const createPath = async (path: Omit<Path, 'id' | 'type' | 'createdAt' | 
                         now
                     ]
                 );
-
-                // If milestone has actions, link them to the milestone
-                if (milestone.actions && Array.isArray(milestone.actions)) {
-                    for (const action of milestone.actions) {
-                        try {
-                            // Create a new action record with the milestone as parent
-                            const actionId = await generateUUID();
-                            await executeSql(
-                                `INSERT INTO actions (
-                                    id, title, body, done, parentId, parentType,
-                                    createdAt, updatedAt
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                                [
-                                    actionId,
-                                    action.name || 'Untitled Action',
-                                    action.description || '',
-                                    action.done ? 1 : 0,
-                                    milestoneId,
-                                    'milestone',
-                                    now,
-                                    now
-                                ]
-                            );
-                        } catch (error) {
-                            console.error('Error linking action to milestone:', error);
-                        }
-                    }
-                }
             }
         }
 
@@ -149,27 +121,6 @@ export const getAllPaths = async (): Promise<Path[]> => {
 
             if (milestonesResult && milestonesResult.rows && milestonesResult.rows._array) {
                 path.milestones = milestonesResult.rows._array as Milestone[];
-
-                // For each milestone, fetch the linked actions
-                for (const milestone of path.milestones) {
-                    const actionsResult = await executeSql(
-                        `SELECT * FROM actions 
-                         WHERE parentId = ? AND parentType = ?
-                         ORDER BY createdAt ASC`,
-                        [milestone.id, 'milestone']
-                    );
-
-                    if (actionsResult && actionsResult.rows && actionsResult.rows._array) {
-                        milestone.actions = actionsResult.rows._array.map((action: { id: string; title: string; body: string; done: number }) => ({
-                            id: action.id,
-                            name: action.title,
-                            description: action.body,
-                            done: Boolean(action.done)
-                        }));
-                    } else {
-                        milestone.actions = [];
-                    }
-                }
             } else {
                 path.milestones = [];
             }
@@ -271,69 +222,6 @@ export const updatePath = async (
 
                     milestone.id = milestoneId;
                 }
-
-                // Handle actions for this milestone
-                if (milestone.actions && Array.isArray(milestone.actions)) {
-                    // Get existing actions for this milestone
-                    const existingActionsResult = await executeSql(
-                        'SELECT id FROM actions WHERE parentId = ? AND parentType = ?',
-                        [milestone.id, 'milestone']
-                    );
-
-                    const existingActionIds = existingActionsResult.rows._array.map((row: any) => row.id);
-                    const newActionIds = milestone.actions.map(a => a.id).filter(Boolean);
-
-                    // Delete actions that are no longer present
-                    for (const existingId of existingActionIds) {
-                        if (!newActionIds.includes(existingId)) {
-                            await executeSql(
-                                'DELETE FROM actions WHERE id = ?',
-                                [existingId]
-                            );
-                        }
-                    }
-
-                    // Update or create actions
-                    for (const action of milestone.actions) {
-                        if (action.id && existingActionIds.includes(action.id)) {
-                            // Update existing action
-                            await executeSql(
-                                `UPDATE actions SET 
-                                title = ?, 
-                                body = ?, 
-                                done = ?,
-                                updatedAt = ?
-                                WHERE id = ?`,
-                                [
-                                    action.name,
-                                    action.description || null,
-                                    action.done ? 1 : 0,
-                                    now,
-                                    action.id
-                                ]
-                            );
-                        } else {
-                            // Create new action
-                            const actionId = action.id || await generateUUID();
-                            await executeSql(
-                                `INSERT INTO actions (
-                                    id, title, body, done, parentId, parentType,
-                                    createdAt, updatedAt
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-                                [
-                                    actionId,
-                                    action.name,
-                                    action.description || null,
-                                    action.done ? 1 : 0,
-                                    milestone.id,
-                                    'milestone',
-                                    now,
-                                    now
-                                ]
-                            );
-                        }
-                    }
-                }
             }
         }
 
@@ -368,27 +256,6 @@ export const getPathById = async (id: string): Promise<Path | null> => {
 
             if (milestonesResult && milestonesResult.rows && milestonesResult.rows._array) {
                 path.milestones = milestonesResult.rows._array as Milestone[];
-
-                // For each milestone, fetch the linked actions
-                for (const milestone of path.milestones) {
-                    const actionsResult = await executeSql(
-                        `SELECT * FROM actions 
-                         WHERE parentId = ? AND parentType = ?
-                         ORDER BY createdAt ASC`,
-                        [milestone.id, 'milestone']
-                    );
-
-                    if (actionsResult && actionsResult.rows && actionsResult.rows._array) {
-                        milestone.actions = actionsResult.rows._array.map((action: { id: string; title: string; body: string; done: number }) => ({
-                            id: action.id,
-                            name: action.title,
-                            description: action.body,
-                            done: Boolean(action.done)
-                        }));
-                    } else {
-                        milestone.actions = [];
-                    }
-                }
             }
 
             return path;
@@ -430,7 +297,7 @@ export const createMilestone = async (
         pathId,
         title,
         description,
-        order,
+        order: order || 1,
         collapsed: false,
         createdAt: now,
         updatedAt: now
@@ -596,23 +463,37 @@ export const moveActionBetweenContainers = async (
     newOrder?: number
 ): Promise<boolean> => {
     try {
-        // Get next order if not specified
-        if (newOrder === undefined) {
-            const orderResult = await executeSql(
-                'SELECT MAX(actionOrder) as maxOrder FROM actions WHERE parentId = ? AND parentType = ?',
-                [newParentId, newParentType]
-            );
-            newOrder = (orderResult.rows._array[0]?.maxOrder || 0) + 1;
-        }
+        const now = new Date().toISOString();
 
+        // Update the action's parent information
         await executeSql(
-            'UPDATE actions SET parentId = ?, parentType = ?, actionOrder = ? WHERE id = ?',
-            [newParentId, newParentType, newOrder, actionId]
+            `UPDATE actions SET 
+             parentId = ?, 
+             parentType = ?,
+             actionOrder = ?,
+             updatedAt = ?
+             WHERE id = ?`,
+            [newParentId, newParentType, newOrder || 0, now, actionId]
         );
 
         return true;
     } catch (error) {
         console.error('Error moving action between containers:', error);
+        return false;
+    }
+};
+
+export const deletePath = async (id: string): Promise<boolean> => {
+    try {
+        // First delete all milestones associated with this path
+        await executeSql('DELETE FROM milestones WHERE pathId = ?', [id]);
+
+        // Then delete the path itself
+        await executeSql('DELETE FROM paths WHERE id = ?', [id]);
+
+        return true;
+    } catch (error) {
+        console.error('Error deleting path:', error);
         return false;
     }
 };

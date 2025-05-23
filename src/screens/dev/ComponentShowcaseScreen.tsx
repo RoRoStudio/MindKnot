@@ -14,8 +14,9 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../contexts/ThemeContext';
 import {
     Typography, Icon, IconName, Button, Card, ColorPicker,
-    BottomSheet, FormModal, FormSheet, IconPicker, LabelRow
+    BottomSheet, FormModal, FormSheet, IconPicker
 } from '../../components/common';
+import { LabelRow } from '../../components/shared';
 import { NoteCard, SparkCard, ActionCard, PathCard, LoopCard } from '../../components/entries';
 import { useForm, Controller } from 'react-hook-form';
 import { BottomSheetConfigProvider } from '../../contexts/BottomSheetConfig';

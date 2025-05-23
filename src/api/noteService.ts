@@ -9,13 +9,16 @@ export const createNote = async (note: Omit<Note, 'id' | 'type' | 'createdAt' | 
 
     await executeSql(
         `INSERT INTO notes (
-            id, title, tags, body, createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?)`,
+            id, title, tags, body, categoryId, starred, hidden, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             id,
             note.title,
             note.tags ? JSON.stringify(note.tags) : null,
             note.body,
+            note.categoryId || null,
+            note.isStarred ? 1 : 0,
+            false ? 1 : 0, // Default to not hidden
             now,
             now,
         ]
@@ -27,6 +30,8 @@ export const createNote = async (note: Omit<Note, 'id' | 'type' | 'createdAt' | 
         title: note.title,
         tags: note.tags || [],
         body: note.body,
+        categoryId: note.categoryId,
+        isStarred: note.isStarred || false,
         createdAt: now,
         updatedAt: now
     };
@@ -34,7 +39,7 @@ export const createNote = async (note: Omit<Note, 'id' | 'type' | 'createdAt' | 
 
 export const getAllNotes = async (): Promise<Note[]> => {
     const result = await executeSql(
-        'SELECT * FROM notes ORDER BY createdAt DESC',
+        'SELECT * FROM notes WHERE hidden = 0 OR hidden IS NULL ORDER BY createdAt DESC',
         []
     );
 
@@ -42,6 +47,7 @@ export const getAllNotes = async (): Promise<Note[]> => {
         return result.rows._array.map((row: any) => ({
             ...row,
             tags: row.tags ? JSON.parse(row.tags) : [],
+            isStarred: Boolean(row.starred),
             type: 'note'
         })) as Note[];
     }
@@ -60,6 +66,7 @@ export const getNoteById = async (id: string): Promise<Note | null> => {
         return {
             ...row,
             tags: row.tags ? JSON.parse(row.tags) : [],
+            isStarred: Boolean(row.starred),
             type: 'note'
         } as Note;
     }
@@ -85,12 +92,18 @@ export const updateNote = async (id: string, updates: Partial<Omit<Note, 'id' | 
                 title = ?, 
                 body = ?, 
                 tags = ?,
+                categoryId = ?,
+                starred = ?,
+                hidden = ?,
                 updatedAt = ?
              WHERE id = ?`,
             [
                 updatedNote.title,
                 updatedNote.body,
                 updatedNote.tags ? JSON.stringify(updatedNote.tags) : null,
+                updatedNote.categoryId || null,
+                updatedNote.isStarred ? 1 : 0,
+                (updates as any).hidden ? 1 : 0,
                 now,
                 id
             ]

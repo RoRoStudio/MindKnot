@@ -18,7 +18,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useForm, Controller } from 'react-hook-form';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Typography, Icon } from '../../components/common';
-import { EntryDetailHeader, EntryMetadataBar } from '../../components/entries';
+import { EntryDetailHeader, EntryMetadataBar, EntryTitleInput } from '../../components/entries';
 import { ActionCard } from '../../components/entries/actions/ActionCard';
 import { MilestoneSection, ActionEmbedSheet } from '../../components/entries/paths';
 import {
@@ -176,7 +176,7 @@ export default function PathScreen() {
             }
 
             if (success) {
-                await loadPaths();
+                await loadPaths(); // Refresh paths list immediately
                 if (mode === 'edit') {
                     setMode('view');
                 }
@@ -196,6 +196,7 @@ export default function PathScreen() {
         setValue('categoryId', newCategoryId);
         if (pathId && (mode === 'view' || mode === 'edit')) {
             await autoSave({ categoryId: newCategoryId });
+            await loadPaths(); // Refresh paths list
         }
     };
 
@@ -203,6 +204,7 @@ export default function PathScreen() {
         setValue('tags', newLabels);
         if (pathId && (mode === 'view' || mode === 'edit')) {
             await autoSave({ tags: newLabels });
+            await loadPaths(); // Refresh paths list
         }
     };
 
@@ -210,6 +212,7 @@ export default function PathScreen() {
         setValue('title', value);
         if (pathId && (mode === 'view' || mode === 'edit')) {
             await autoSave({ title: value });
+            await loadPaths(); // Refresh paths list
         }
     };
 
@@ -221,6 +224,7 @@ export default function PathScreen() {
             const pathData = {
                 ...currentData,
                 ...updates,
+                categoryId: updates.categoryId || currentData.categoryId || undefined,
                 type: 'path' as const,
             };
             await updatePath(pathId, pathData);
@@ -240,34 +244,45 @@ export default function PathScreen() {
 
     // Milestone management
     const handleCreateMilestone = async () => {
-        if (!pathId) return;
+        // Auto-save path if not saved yet
+        if (!pathId) {
+            await autoSavePath();
+            if (!pathId) return; // If auto-save failed, don't proceed
+        }
 
         try {
             const newMilestone = await createMilestone(pathId, 'New Milestone');
             await loadMilestonesAndActions(pathId);
+            await loadPaths(); // Refresh paths list
         } catch (error) {
             console.error('Error creating milestone:', error);
             Alert.alert('Error', 'Failed to create milestone');
         }
     };
 
-    const handleMilestoneUpdate = (updatedMilestone: Milestone) => {
+    const handleMilestoneUpdate = async (updatedMilestone: Milestone) => {
         setMilestones(prev =>
             prev.map(m => m.id === updatedMilestone.id ? updatedMilestone : m)
         );
+        await loadPaths(); // Refresh paths list
     };
 
-    const handleMilestoneDelete = (milestoneId: string) => {
+    const handleMilestoneDelete = async (milestoneId: string) => {
         setMilestones(prev => prev.filter(m => m.id !== milestoneId));
         // Reload ungrouped actions as deleted milestone actions become ungrouped
         if (pathId) {
-            loadMilestonesAndActions(pathId);
+            await loadMilestonesAndActions(pathId);
         }
+        await loadPaths(); // Refresh paths list
     };
 
     // Action management
     const handleCreateUngroupedAction = async () => {
-        if (!pathId) return;
+        // Auto-save path if not saved yet
+        if (!pathId) {
+            await autoSavePath();
+            if (!pathId) return; // If auto-save failed, don't proceed
+        }
 
         try {
             await createAction({
@@ -282,31 +297,74 @@ export default function PathScreen() {
             });
 
             await loadMilestonesAndActions(pathId);
+            await loadPaths(); // Refresh paths list
         } catch (error) {
             console.error('Error creating ungrouped action:', error);
             Alert.alert('Error', 'Failed to create action');
         }
     };
 
-    const handleLinkExistingAction = (milestoneId?: string) => {
+    const handleLinkExistingAction = async (milestoneId?: string) => {
+        // Auto-save path if not saved yet
+        if (!pathId) {
+            await autoSavePath();
+            if (!pathId) return; // If auto-save failed, don't proceed
+        }
+
         setEmbedTargetMilestone(milestoneId);
         setShowActionEmbedSheet(true);
     };
 
-    const handleActionLinked = () => {
+    const handleActionLinked = async () => {
         if (pathId) {
-            loadMilestonesAndActions(pathId);
+            await loadMilestonesAndActions(pathId);
+            await loadPaths(); // Refresh paths list
         }
     };
 
-    const handleActionUpdate = () => {
+    const handleActionUpdate = async () => {
         if (pathId) {
-            loadMilestonesAndActions(pathId);
+            await loadMilestonesAndActions(pathId);
+            await loadPaths(); // Refresh paths list
         }
     };
 
     const handleActionToggleDone = async (actionId: string) => {
         await loadMilestonesAndActions(pathId!);
+        await loadPaths(); // Refresh paths list
+    };
+
+    // Auto-save function for when path doesn't exist yet
+    const autoSavePath = async () => {
+        if (pathId) return; // Already saved
+
+        try {
+            const currentData = getValues();
+            if (!currentData.title.trim()) {
+                currentData.title = 'New Path'; // Set default title if empty
+                setValue('title', 'New Path');
+            }
+
+            const pathData = {
+                title: currentData.title,
+                description: currentData.description,
+                target: currentData.target,
+                expectedDuration: currentData.expectedDuration,
+                tags: currentData.tags,
+                categoryId: currentData.categoryId || undefined,
+                type: 'path' as const,
+            };
+
+            const newPath = await createPath(pathData);
+            if (newPath) {
+                setPathId(newPath.id);
+                setMode('view');
+                await loadPaths(); // Update paths list
+            }
+        } catch (error) {
+            console.error('Error auto-saving path:', error);
+            Alert.alert('Error', 'Failed to save path automatically');
+        }
     };
 
     const styles = StyleSheet.create({
@@ -465,7 +523,7 @@ export default function PathScreen() {
                     onCategoryChange={handleCategoryChange}
                     labels={tags}
                     onLabelsChange={handleLabelsChange}
-                    isEditing={isEditing}
+                    isEditing={true}
                 />
 
                 <KeyboardAvoidingView
@@ -474,20 +532,12 @@ export default function PathScreen() {
                     keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
                 >
                     <ScrollView style={styles.content}>
-                        <Controller
+                        <EntryTitleInput
                             control={control}
                             name="title"
-                            rules={{ required: true }}
-                            render={({ field: { value } }) => (
-                                <TextInput
-                                    style={styles.titleInput}
-                                    placeholder="Path title"
-                                    placeholderTextColor="#9E9E9E"
-                                    value={value}
-                                    onChangeText={handleTitleChange}
-                                    editable={isEditing}
-                                />
-                            )}
+                            placeholder="Path title"
+                            editable={isEditing}
+                            onChangeText={handleTitleChange}
                         />
 
                         <View style={styles.divider} />

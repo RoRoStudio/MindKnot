@@ -7,19 +7,13 @@ import { ENTRY_TYPES, EntryType } from '../../../constants/entryTypes';
 interface LoopCardProps {
     loop: Loop;
     onPress?: () => void;
-    onStar?: (id: string) => void;
-    onDuplicate?: (id: string) => void;
-    onArchive?: (id: string) => void;
-    onHide?: (id: string) => void;
+    onEntryUpdated?: () => void;
 }
 
 export const LoopCard: React.FC<LoopCardProps> = ({
     loop,
     onPress,
-    onStar,
-    onDuplicate,
-    onArchive,
-    onHide
+    onEntryUpdated
 }) => {
     // Parse the frequency for display
     let frequencyText = 'Custom schedule';
@@ -83,23 +77,6 @@ export const LoopCard: React.FC<LoopCardProps> = ({
         ? `${loop.items.length} item${loop.items.length !== 1 ? 's' : ''} • ${frequencyText}`
         : frequencyText;
 
-    // Handle quick actions
-    const handleStar = () => {
-        if (onStar) onStar(loop.id);
-    };
-
-    const handleDuplicate = () => {
-        if (onDuplicate) onDuplicate(loop.id);
-    };
-
-    const handleArchive = () => {
-        if (onArchive) onArchive(loop.id);
-    };
-
-    const handleHide = () => {
-        if (onHide) onHide(loop.id);
-    };
-
     return (
         <EntryCard
             id={loop.id}
@@ -113,10 +90,8 @@ export const LoopCard: React.FC<LoopCardProps> = ({
             categoryId={loop.categoryId}
             onPress={onPress}
             isStarred={loop.isStarred}
-            onStar={handleStar}
-            onDuplicate={handleDuplicate}
-            onArchive={handleArchive}
-            onHide={handleHide}
+            entryType="loop"
+            onEntryUpdated={onEntryUpdated}
             // Loops don't need to be expandable for now
             expandable={false}
             navigationScreen="LoopScreen"

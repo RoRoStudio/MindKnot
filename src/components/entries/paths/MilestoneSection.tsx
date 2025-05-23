@@ -10,9 +10,9 @@ import { createAction } from '../../../api/actionService';
 
 interface MilestoneSectionProps {
     milestone: Milestone;
-    onMilestoneUpdate: (milestone: Milestone) => void;
-    onMilestoneDelete: (milestoneId: string) => void;
-    onActionUpdate: () => void;
+    onMilestoneUpdate: (milestone: Milestone) => Promise<void>;
+    onMilestoneDelete: (milestoneId: string) => Promise<void>;
+    onActionUpdate: () => Promise<void>;
     onLinkExistingAction: (milestoneId: string) => void;
     isEditing: boolean;
 }
@@ -56,7 +56,7 @@ export const MilestoneSection: React.FC<MilestoneSectionProps> = ({
         if (isEditing) {
             try {
                 await updateMilestone(milestone.id, { collapsed: newCollapsed });
-                onMilestoneUpdate({ ...milestone, collapsed: newCollapsed });
+                await onMilestoneUpdate({ ...milestone, collapsed: newCollapsed });
             } catch (error) {
                 console.error('Error updating milestone collapse state:', error);
             }
@@ -67,7 +67,7 @@ export const MilestoneSection: React.FC<MilestoneSectionProps> = ({
         if (titleText.trim() && titleText !== milestone.title) {
             try {
                 await updateMilestone(milestone.id, { title: titleText.trim() });
-                onMilestoneUpdate({ ...milestone, title: titleText.trim() });
+                await onMilestoneUpdate({ ...milestone, title: titleText.trim() });
             } catch (error) {
                 console.error('Error updating milestone title:', error);
                 setTitleText(milestone.title); // Revert on error
@@ -88,7 +88,7 @@ export const MilestoneSection: React.FC<MilestoneSectionProps> = ({
                     onPress: async () => {
                         try {
                             await deleteMilestone(milestone.id);
-                            onMilestoneDelete(milestone.id);
+                            await onMilestoneDelete(milestone.id);
                         } catch (error) {
                             console.error('Error deleting milestone:', error);
                             Alert.alert('Error', 'Failed to delete milestone');
@@ -114,7 +114,7 @@ export const MilestoneSection: React.FC<MilestoneSectionProps> = ({
 
             if (newAction) {
                 await loadMilestoneActions();
-                onActionUpdate();
+                await onActionUpdate();
             }
         } catch (error) {
             console.error('Error creating action:', error);
@@ -124,7 +124,7 @@ export const MilestoneSection: React.FC<MilestoneSectionProps> = ({
 
     const handleActionToggleDone = async (actionId: string) => {
         await loadMilestoneActions();
-        onActionUpdate();
+        await onActionUpdate();
     };
 
     const styles = StyleSheet.create({
@@ -269,7 +269,10 @@ export const MilestoneSection: React.FC<MilestoneSectionProps> = ({
                         </TouchableOpacity>
                     )}
 
-                    <TouchableOpacity style={styles.headerButton}>
+                    <TouchableOpacity
+                        style={styles.headerButton}
+                        onPress={handleToggleCollapse}
+                    >
                         <Icon
                             name={collapsed ? "chevron-down" : "chevron-up"}
                             width={20}

@@ -19,8 +19,7 @@ import { Icon, ConfirmationModal } from '../../components/common';
 import { createAction, updateAction, getActionById } from '../../api/actionService';
 import { RootStackParamList } from '../../types/navigation-types';
 import { useActions } from '../../hooks/useActions';
-import { EntryDetailHeader } from '../../components/entries';
-import { EntryMetadataBar } from '../../components/entries';
+import { EntryDetailHeader, EntryMetadataBar, EntryTitleInput } from '../../components/entries';
 import { FormDatePicker, FormDatePickerRef } from '../../components/form';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -933,19 +932,11 @@ export default function ActionScreen() {
                     keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
                 >
                     <ScrollView style={styles.content}>
-                        <Controller
+                        <EntryTitleInput
                             control={control}
                             name="title"
-                            rules={{ required: true }}
-                            render={({ field: { value } }) => (
-                                <TextInput
-                                    style={styles.titleInput}
-                                    placeholder="Action title"
-                                    placeholderTextColor="#9E9E9E"
-                                    value={value}
-                                    onChangeText={handleTitleChange}
-                                />
-                            )}
+                            placeholder="Action title"
+                            onChangeText={handleTitleChange}
                         />
 
                         <View style={styles.divider} />

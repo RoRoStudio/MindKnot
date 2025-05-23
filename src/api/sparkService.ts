@@ -9,14 +9,17 @@ export const createSpark = async (spark: Omit<Spark, 'id' | 'type' | 'createdAt'
 
     await executeSql(
         `INSERT INTO sparks (
-            id, title, tags, body, linkedEntryIds, createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            id, title, tags, body, linkedEntryIds, categoryId, starred, hidden, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             id,
             spark.title,
             spark.tags ? JSON.stringify(spark.tags) : null,
             spark.body,
             spark.linkedEntryIds ? JSON.stringify(spark.linkedEntryIds) : null,
+            spark.categoryId || null,
+            spark.isStarred ? 1 : 0,
+            false ? 1 : 0, // Default to not hidden
             now,
             now,
         ]
@@ -29,6 +32,8 @@ export const createSpark = async (spark: Omit<Spark, 'id' | 'type' | 'createdAt'
         tags: spark.tags || [],
         body: spark.body,
         linkedEntryIds: spark.linkedEntryIds || [],
+        categoryId: spark.categoryId,
+        isStarred: spark.isStarred || false,
         createdAt: now,
         updatedAt: now
     };
@@ -36,7 +41,7 @@ export const createSpark = async (spark: Omit<Spark, 'id' | 'type' | 'createdAt'
 
 export const getAllSparks = async (): Promise<Spark[]> => {
     const result = await executeSql(
-        'SELECT * FROM sparks ORDER BY createdAt DESC',
+        'SELECT * FROM sparks WHERE hidden = 0 OR hidden IS NULL ORDER BY createdAt DESC',
         []
     );
 
@@ -45,6 +50,7 @@ export const getAllSparks = async (): Promise<Spark[]> => {
             ...row,
             tags: row.tags ? JSON.parse(row.tags) : [],
             linkedEntryIds: row.linkedEntryIds ? JSON.parse(row.linkedEntryIds) : [],
+            isStarred: Boolean(row.starred),
             type: 'spark'
         })) as Spark[];
     }
@@ -64,6 +70,7 @@ export const getSparkById = async (id: string): Promise<Spark | null> => {
             ...row,
             tags: row.tags ? JSON.parse(row.tags) : [],
             linkedEntryIds: row.linkedEntryIds ? JSON.parse(row.linkedEntryIds) : [],
+            isStarred: Boolean(row.starred),
             type: 'spark'
         } as Spark;
     }
@@ -90,6 +97,9 @@ export const updateSpark = async (id: string, updates: Partial<Omit<Spark, 'id' 
                 body = ?, 
                 tags = ?,
                 linkedEntryIds = ?,
+                categoryId = ?,
+                starred = ?,
+                hidden = ?,
                 updatedAt = ?
              WHERE id = ?`,
             [
@@ -97,6 +107,9 @@ export const updateSpark = async (id: string, updates: Partial<Omit<Spark, 'id' 
                 updatedSpark.body,
                 updatedSpark.tags ? JSON.stringify(updatedSpark.tags) : null,
                 updatedSpark.linkedEntryIds ? JSON.stringify(updatedSpark.linkedEntryIds) : null,
+                updatedSpark.categoryId || null,
+                updatedSpark.isStarred ? 1 : 0,
+                (updates as any).hidden ? 1 : 0,
                 now,
                 id
             ]
