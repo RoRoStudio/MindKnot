@@ -85,8 +85,8 @@ export default function VaultLoopsScreen() {
         if (searchTerm) {
             const searchLower = searchTerm.toLowerCase();
             return (
-                (loop.title?.toLowerCase().includes(searchLower) ||
-                    loop.description?.toLowerCase().includes(searchLower))
+                (loop.title?.toLowerCase().includes(searchLower) ?? false) ||
+                (loop.description?.toLowerCase().includes(searchLower) ?? false)
             );
         }
 

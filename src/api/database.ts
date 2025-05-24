@@ -251,6 +251,108 @@ async function createTables(): Promise<void> {
             );
         `);
 
+        // Activity templates table
+        await db.execAsync(`
+            CREATE TABLE IF NOT EXISTS activity_templates (
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                icon TEXT NOT NULL,
+                description TEXT,
+                type TEXT,
+                navigateTarget TEXT,
+                isPredefined INTEGER DEFAULT 0,
+                createdAt TEXT NOT NULL,
+                updatedAt TEXT NOT NULL
+            );
+        `);
+
+        // Loop activities table
+        await db.execAsync(`
+            CREATE TABLE IF NOT EXISTS loop_activities (
+                id TEXT PRIMARY KEY,
+                loopId TEXT NOT NULL,
+                baseActivityId TEXT NOT NULL,
+                durationSeconds INTEGER,
+                subActions TEXT,
+                navigateTarget TEXT,
+                \`order\` INTEGER DEFAULT 0,
+                createdAt TEXT NOT NULL,
+                updatedAt TEXT NOT NULL,
+                FOREIGN KEY (loopId) REFERENCES loops(id),
+                FOREIGN KEY (baseActivityId) REFERENCES activity_templates(id)
+            );
+        `);
+
+        // Loop activity instances table (new structure)
+        await db.execAsync(`
+            CREATE TABLE IF NOT EXISTS loop_activity_instances (
+                id TEXT PRIMARY KEY,
+                loopId TEXT NOT NULL,
+                templateId TEXT NOT NULL,
+                overriddenTitle TEXT,
+                quantityValue INTEGER,
+                quantityUnit TEXT,
+                durationMinutes INTEGER,
+                subActions TEXT,
+                navigateTarget TEXT,
+                \`order\` INTEGER DEFAULT 0,
+                createdAt TEXT NOT NULL,
+                updatedAt TEXT NOT NULL,
+                FOREIGN KEY (loopId) REFERENCES loops(id),
+                FOREIGN KEY (templateId) REFERENCES activity_templates(id)
+            );
+        `);
+
+        // Loop execution state table
+        await db.execAsync(`
+            CREATE TABLE IF NOT EXISTS loop_execution_state (
+                id TEXT PRIMARY KEY,
+                loopId TEXT NOT NULL,
+                currentActivityIndex INTEGER DEFAULT 0,
+                startedAt TEXT NOT NULL,
+                completedActivities TEXT,
+                completedSubActions TEXT,
+                isPaused INTEGER DEFAULT 0,
+                pausedAt TEXT,
+                timeSpentSeconds INTEGER DEFAULT 0,
+                activityTimeTracking TEXT,
+                createdAt TEXT NOT NULL,
+                updatedAt TEXT NOT NULL,
+                FOREIGN KEY (loopId) REFERENCES loops(id)
+            );
+        `);
+
+        // Update loops table to include new fields (with error handling)
+        try {
+            await db.execAsync(`
+                ALTER TABLE loops ADD COLUMN currentActivityIndex INTEGER DEFAULT 0;
+            `);
+            console.log('Added currentActivityIndex column to loops table');
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log('currentActivityIndex column already exists or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync(`
+                ALTER TABLE loops ADD COLUMN isExecuting INTEGER DEFAULT 0;
+            `);
+            console.log('Added isExecuting column to loops table');
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log('isExecuting column already exists or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync(`
+                ALTER TABLE loops ADD COLUMN lastExecutionDate TEXT;
+            `);
+            console.log('Added lastExecutionDate column to loops table');
+        } catch (error) {
+            // Column might already exist, ignore error
+            console.log('lastExecutionDate column already exists or error adding it:', error);
+        }
+
         // Paths table
         await db.execAsync(`
             CREATE TABLE IF NOT EXISTS paths (
@@ -286,6 +388,43 @@ async function createTables(): Promise<void> {
 
         // Apply migration for existing tables
         await applyDatabaseMigrations();
+
+        // Add missing columns to activity_templates table if they don't exist
+        try {
+            await db.execAsync('ALTER TABLE activity_templates ADD COLUMN description TEXT');
+            console.log('Added description column to activity_templates table');
+        } catch (error) {
+            console.log('description column already exists in activity_templates or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync('ALTER TABLE activity_templates ADD COLUMN navigateTarget TEXT');
+            console.log('Added navigateTarget column to activity_templates table');
+        } catch (error) {
+            console.log('navigateTarget column already exists in activity_templates or error adding it:', error);
+        }
+
+        // Add missing columns to loop_execution_state table if they don't exist
+        try {
+            await db.execAsync('ALTER TABLE loop_execution_state ADD COLUMN completedSubActions TEXT');
+            console.log('Added completedSubActions column to loop_execution_state table');
+        } catch (error) {
+            console.log('completedSubActions column already exists in loop_execution_state or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync('ALTER TABLE loop_execution_state ADD COLUMN timeSpentSeconds INTEGER DEFAULT 0');
+            console.log('Added timeSpentSeconds column to loop_execution_state table');
+        } catch (error) {
+            console.log('timeSpentSeconds column already exists in loop_execution_state or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync('ALTER TABLE loop_execution_state ADD COLUMN activityTimeTracking TEXT');
+            console.log('Added activityTimeTracking column to loop_execution_state table');
+        } catch (error) {
+            console.log('activityTimeTracking column already exists in loop_execution_state or error adding it:', error);
+        }
 
         console.log('All tables created successfully');
 

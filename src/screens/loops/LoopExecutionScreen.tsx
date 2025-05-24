@@ -1,0 +1,1205 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    Alert,
+    ScrollView,
+    Modal,
+    SafeAreaView,
+    StatusBar,
+    Animated,
+    Dimensions,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { useTheme } from '../../contexts/ThemeContext';
+import { Icon } from '../../components/shared/Icon';
+
+import { useLoopActions } from '../../store/loops';
+import {
+    Loop,
+    LoopActivityInstance,
+    LoopExecutionState,
+    ActivityTemplate,
+    ActivityExecutionResult,
+    ActivitySubAction,
+    NavigateTarget
+} from '../../types/loop';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+interface LoopExecutionScreenProps {
+    visible: boolean;
+    onClose: () => void;
+}
+
+interface TimerComponentProps {
+    durationMinutes?: number;
+    onComplete: () => void;
+    onSkip: () => void;
+    isPaused: boolean;
+    onPause: (paused: boolean) => void;
+    isRunning: boolean;
+    onReset?: () => void;
+    autoCompleteOnTimerEnd?: boolean;
+    styles: any;
+    theme: any;
+}
+
+interface ProgressCircleProps {
+    progress: number; // 0-1
+    size: number;
+    strokeWidth: number;
+    children?: React.ReactNode;
+    theme: any;
+}
+
+const ProgressCircle: React.FC<ProgressCircleProps> = ({
+    progress,
+    size,
+    strokeWidth,
+    children,
+    theme
+}) => {
+    return (
+        <View style={{ width: size, height: size, position: 'relative' }}>
+            {/* Background circle */}
+            <View
+                style={{
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                    borderWidth: strokeWidth,
+                    borderColor: theme.colors.textSecondary + '40',
+                    position: 'absolute',
+                }}
+            />
+
+            {/* Progress using overlay approach */}
+            <View
+                style={{
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                    position: 'absolute',
+                    overflow: 'hidden',
+                }}
+            >
+                <View
+                    style={{
+                        width: size,
+                        height: size * progress,
+                        backgroundColor: theme.colors.secondary + '60',
+                        position: 'absolute',
+                        bottom: 0,
+                    }}
+                />
+            </View>
+
+            {/* Inner content area */}
+            <View
+                style={{
+                    width: size - strokeWidth * 2,
+                    height: size - strokeWidth * 2,
+                    borderRadius: (size - strokeWidth * 2) / 2,
+                    backgroundColor: theme.colors.background + '20',
+                    position: 'absolute',
+                    top: strokeWidth,
+                    left: strokeWidth,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}
+            >
+                {children}
+            </View>
+        </View>
+    );
+};
+
+const TimerComponent: React.FC<TimerComponentProps> = ({
+    durationMinutes,
+    onComplete,
+    onSkip,
+    isPaused,
+    onPause,
+    isRunning,
+    onReset,
+    autoCompleteOnTimerEnd = true,
+    styles,
+    theme
+}) => {
+    const [timeLeft, setTimeLeft] = useState(durationMinutes ? durationMinutes * 60 : 0);
+    const [totalTime] = useState(durationMinutes ? durationMinutes * 60 : 0);
+    const [overtime, setOvertime] = useState(0);
+    const [isCountingUp, setIsCountingUp] = useState(false);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        if (durationMinutes) {
+            setTimeLeft(durationMinutes * 60);
+            setOvertime(0);
+            setIsCountingUp(false);
+        }
+    }, [durationMinutes]);
+
+    useEffect(() => {
+        if (isRunning && !isPaused) {
+            intervalRef.current = setInterval(() => {
+                if (!isCountingUp && timeLeft > 0) {
+                    // Countdown phase
+                    setTimeLeft(prev => {
+                        if (prev <= 1) {
+                            if (autoCompleteOnTimerEnd) {
+                                onComplete();
+                                return 0;
+                            } else {
+                                setIsCountingUp(true);
+                                setOvertime(1);
+                                return 0;
+                            }
+                        }
+                        return prev - 1;
+                    });
+                } else if (isCountingUp) {
+                    // Count up phase (overtime)
+                    setOvertime(prev => prev + 1);
+                }
+            }, 1000);
+        } else {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        }
+
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
+    }, [isRunning, isPaused, timeLeft, isCountingUp, autoCompleteOnTimerEnd, onComplete]);
+
+    const formatTime = (seconds: number) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    };
+
+    const progress = totalTime > 0 ? (totalTime - timeLeft) / totalTime : 0;
+
+    const handleReset = () => {
+        setTimeLeft(totalTime);
+        setOvertime(0);
+        setIsCountingUp(false);
+        if (onReset) {
+            onReset();
+        }
+    };
+
+    if (!durationMinutes) {
+        return (
+            <View style={styles.noTimerContainer}>
+                <View style={styles.manualTimerIcon}>
+                    <Icon name="clock" size={40} color={theme.colors.textSecondary} />
+                </View>
+                <Text style={styles.noTimerText}>No timer set</Text>
+                <Text style={styles.noTimerSubtext}>Complete when ready</Text>
+            </View>
+        );
+    }
+
+    return (
+        <View style={styles.timerContainer}>
+            <ProgressCircle progress={progress} size={200} strokeWidth={8} theme={theme}>
+                <Text style={styles.timerText}>
+                    {isCountingUp ? formatTime(totalTime) : formatTime(timeLeft)}
+                </Text>
+                {isCountingUp && (
+                    <Text style={styles.overtimeText}>+{formatTime(overtime)}</Text>
+                )}
+                <Text style={styles.timerLabel}>
+                    {Math.round(totalTime / 60)} min
+                </Text>
+            </ProgressCircle>
+
+            <View style={styles.timerControls}>
+                <TouchableOpacity
+                    style={[styles.timerButton, styles.resetButton]}
+                    onPress={handleReset}
+                >
+                    <Icon name="refresh" size={20} color={theme.colors.textSecondary} />
+                    <Text style={styles.resetButtonText}>Reset</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.timerButton, styles.pauseButton]}
+                    onPress={() => onPause(!isPaused)}
+                >
+                    <Icon
+                        name={isPaused ? "circle-play" : "circle-pause"}
+                        size={24}
+                        color={theme.colors.primary}
+                    />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.timerButton, styles.skipButton]}
+                    onPress={onSkip}
+                >
+                    <Icon name="skip-forward" size={20} color={theme.colors.textSecondary} />
+                    <Text style={styles.skipButtonText}>Skip</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+};
+
+interface SubActionsComponentProps {
+    subActions: Array<{ id: string; text: string; done: boolean }>;
+    completedSubActions: string[];
+    onToggleSubAction: (id: string) => void;
+    styles: any;
+    theme: any;
+}
+
+const SubActionsComponent: React.FC<SubActionsComponentProps> = ({
+    subActions,
+    completedSubActions,
+    onToggleSubAction,
+    styles,
+    theme
+}) => {
+    if (!subActions || subActions.length === 0) return null;
+
+    return (
+        <View style={styles.subActionsContainer}>
+            <Text style={styles.subActionsTitle}>Sub-actions</Text>
+            {subActions.map((subAction) => {
+                const isCompleted = completedSubActions.includes(subAction.id) || subAction.done;
+
+                return (
+                    <TouchableOpacity
+                        key={subAction.id}
+                        style={styles.subActionItem}
+                        onPress={() => onToggleSubAction(subAction.id)}
+                    >
+                        <View style={[
+                            styles.checkbox,
+                            isCompleted && styles.checkboxChecked
+                        ]}>
+                            {isCompleted && (
+                                <Icon name="check" size={16} color={theme.colors.background} />
+                            )}
+                        </View>
+                        <Text style={[
+                            styles.subActionText,
+                            isCompleted && styles.subActionTextDone
+                        ]}>
+                            {subAction.text}
+                        </Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
+    );
+};
+
+interface ActivityDisplayProps {
+    activity: LoopActivityInstance;
+    template: ActivityTemplate;
+    currentIndex: number;
+    totalActivities: number;
+    styles: any;
+    theme: any;
+}
+
+const ActivityDisplay: React.FC<ActivityDisplayProps> = ({
+    activity,
+    template,
+    currentIndex,
+    totalActivities,
+    styles,
+    theme
+}) => {
+    const title = activity.overriddenTitle || template.title;
+
+    return (
+        <View style={styles.activityHeader}>
+            <View style={styles.progressHeader}>
+                <Text style={styles.progressText}>
+                    {currentIndex + 1} of {totalActivities}
+                </Text>
+                <View style={styles.progressBarBackground}>
+                    <View
+                        style={[
+                            styles.progressBarFill,
+                            { width: `${((currentIndex + 1) / totalActivities) * 100}%` }
+                        ]}
+                    />
+                </View>
+            </View>
+
+            <View style={styles.activityTitleContainer}>
+                <Text style={styles.activityIcon}>{template.icon}</Text>
+                <View style={styles.activityTitleWrapper}>
+                    <Text style={styles.activityTitle}>{title}</Text>
+                    {template.description && (
+                        <Text style={styles.activityDescription}>{template.description}</Text>
+                    )}
+                </View>
+            </View>
+
+            {activity.quantity && (
+                <View style={styles.quantityContainer}>
+                    <View style={styles.quantityBadge}>
+                        <Text style={styles.quantityValue}>{activity.quantity.value}</Text>
+                        <Text style={styles.quantityUnit}>{activity.quantity.unit}</Text>
+                    </View>
+                </View>
+            )}
+        </View>
+    );
+};
+
+// Helper function to get navigation label
+const getNavigationLabel = (target: NavigateTarget): string => {
+    const modeLabel = target.mode === 'create' ? 'Create' :
+        target.mode === 'review' ? 'Review' :
+            target.mode === 'select' ? 'Select' : 'View';
+    const typeLabel = target.type.charAt(0).toUpperCase() + target.type.slice(1);
+    return `${modeLabel} ${typeLabel}`;
+};
+
+const createStyles = (theme: any) => StyleSheet.create({
+    container: {
+        flex: 1,
+    },
+    content: {
+        flex: 1,
+    },
+    safeArea: {
+        flex: 1,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        paddingTop: 20,
+    },
+    headerButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: theme.colors.background + '30',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    loopTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: theme.colors.background,
+        flex: 1,
+        textAlign: 'center',
+        marginHorizontal: 16,
+    },
+    scrollContent: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    activityHeader: {
+        marginBottom: 32,
+    },
+    progressHeader: {
+        marginBottom: 24,
+    },
+    progressText: {
+        fontSize: 14,
+        color: theme.colors.background + 'CC',
+        textAlign: 'center',
+        marginBottom: 8,
+    },
+    progressBarBackground: {
+        height: 4,
+        backgroundColor: theme.colors.background + '30',
+        borderRadius: 2,
+    },
+    progressBarFill: {
+        height: 4,
+        backgroundColor: theme.colors.background,
+        borderRadius: 2,
+    },
+    activityTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    activityIcon: {
+        fontSize: 48,
+        marginRight: 16,
+    },
+    activityTitleWrapper: {
+        flex: 1,
+    },
+    activityTitle: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: theme.colors.background,
+        marginBottom: 4,
+    },
+    activityDescription: {
+        fontSize: 16,
+        color: theme.colors.background + 'CC',
+    },
+    quantityContainer: {
+        alignItems: 'center',
+    },
+    quantityBadge: {
+        backgroundColor: theme.colors.background + '30',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    quantityValue: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: theme.colors.background,
+        marginRight: 4,
+    },
+    quantityUnit: {
+        fontSize: 16,
+        color: theme.colors.background + 'CC',
+    },
+    activityNavigation: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        marginBottom: 20,
+    },
+    navButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        backgroundColor: theme.colors.background + '30',
+        borderRadius: 20,
+        gap: 8,
+    },
+    navButtonDisabled: {
+        opacity: 0.3,
+    },
+    navButtonText: {
+        color: theme.colors.background,
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    timerContainer: {
+        alignItems: 'center',
+        marginVertical: 32,
+    },
+    timerText: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: theme.colors.background,
+    },
+    timerLabel: {
+        fontSize: 14,
+        color: theme.colors.background + 'AA',
+        marginTop: 4,
+    },
+    timerControls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 24,
+        gap: 16,
+    },
+    timerButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        gap: 8,
+    },
+    pauseButton: {
+        backgroundColor: theme.colors.background + '30',
+    },
+    skipButton: {
+        backgroundColor: theme.colors.background + '20',
+    },
+    resetButton: {
+        backgroundColor: theme.colors.background + '20',
+    },
+    skipButtonText: {
+        color: theme.colors.background + 'CC',
+        fontSize: 14,
+    },
+    resetButtonText: {
+        color: theme.colors.background + 'CC',
+        fontSize: 14,
+    },
+    noTimerContainer: {
+        alignItems: 'center',
+        marginVertical: 40,
+    },
+    manualTimerIcon: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: theme.colors.background + '20',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+    },
+    noTimerText: {
+        fontSize: 18,
+        color: theme.colors.background,
+        marginBottom: 4,
+    },
+    noTimerSubtext: {
+        fontSize: 14,
+        color: theme.colors.background + 'BB',
+    },
+    subActionsContainer: {
+        backgroundColor: theme.colors.background + '20',
+        borderRadius: 16,
+        padding: 20,
+        marginVertical: 20,
+    },
+    subActionsTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: theme.colors.background,
+        marginBottom: 16,
+    },
+    subActionItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+    },
+    checkbox: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: theme.colors.background + '80',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 12,
+    },
+    checkboxChecked: {
+        backgroundColor: theme.colors.background,
+        borderColor: theme.colors.background,
+    },
+    subActionText: {
+        fontSize: 16,
+        color: theme.colors.background,
+        flex: 1,
+    },
+    subActionTextDone: {
+        opacity: 0.6,
+        textDecorationLine: 'line-through',
+    },
+    navigationContainer: {
+        marginVertical: 20,
+    },
+    navigationButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.colors.surface,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: theme.colors.primary,
+        marginVertical: 8,
+    },
+    navigationSection: {
+        marginVertical: 16,
+    },
+    navigationButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: theme.colors.primary,
+        marginLeft: 8,
+    },
+    nextActivityContainer: {
+        backgroundColor: theme.colors.background + '20',
+        padding: 16,
+        borderRadius: 12,
+        marginVertical: 20,
+        alignItems: 'center',
+    },
+    nextActivityLabel: {
+        fontSize: 14,
+        color: theme.colors.background + 'BB',
+        marginBottom: 4,
+    },
+    nextActivityTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: theme.colors.background,
+    },
+    bottomActions: {
+        flexDirection: 'row',
+        paddingHorizontal: 20,
+        paddingVertical: 20,
+        gap: 12,
+    },
+    actionButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 16,
+        borderRadius: 12,
+        gap: 8,
+    },
+    actionButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: theme.colors.textSecondary,
+    },
+    completeButton: {
+        backgroundColor: theme.colors.background,
+    },
+    completeButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: theme.colors.primary,
+    },
+    modalOverlay: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    exitModal: {
+        backgroundColor: theme.colors.background,
+        borderRadius: 16,
+        padding: 24,
+        marginHorizontal: 40,
+        minWidth: 280,
+    },
+    exitModalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: theme.colors.textPrimary,
+        textAlign: 'center',
+        marginBottom: 12,
+    },
+    exitModalText: {
+        fontSize: 16,
+        color: theme.colors.textSecondary,
+        textAlign: 'center',
+        marginBottom: 24,
+        lineHeight: 22,
+    },
+    exitModalActions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    exitModalButton: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    cancelButton: {
+        backgroundColor: theme.colors.border,
+    },
+    cancelButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: theme.colors.textSecondary,
+    },
+    confirmButton: {
+        backgroundColor: theme.colors.primary,
+    },
+    confirmButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: theme.colors.background,
+    },
+    overtimeText: {
+        fontSize: 14,
+        color: theme.colors.secondary,
+        marginTop: 4,
+        fontWeight: '600',
+    },
+});
+
+export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visible, onClose }) => {
+    const navigation = useNavigation<any>();
+    const { theme } = useTheme();
+    const styles = createStyles(theme);
+    const {
+        activeExecution,
+        currentActivityWithTemplate,
+        currentActivityProgress,
+        advanceActivity,
+        pauseLoopExecution,
+        completeLoopExecution,
+        loadActiveExecution,
+        activityTemplates
+    } = useLoopActions();
+
+    const [isTimerPaused, setIsTimerPaused] = useState(false);
+    const [completedSubActions, setCompletedSubActions] = useState<string[]>([]);
+    const [showExitModal, setShowExitModal] = useState(false);
+    const [activityStartTime] = useState(Date.now());
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (visible) {
+            loadActiveExecution();
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+            }).start();
+        } else {
+            Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+            }).start();
+        }
+    }, [visible, fadeAnim, loadActiveExecution]);
+
+    const handleNavigateToTarget = () => {
+        const currentActivity = currentActivityWithTemplate?.activity;
+        const currentTemplate = currentActivityWithTemplate?.template;
+        const target = currentActivity?.navigateTarget || currentTemplate?.navigateTarget;
+
+        if (!target) return;
+
+        try {
+            // Close the execution screen but keep the loop running
+            onClose();
+
+            // Navigate to the target screen
+            switch (target.type) {
+                case 'note':
+                    if (target.mode === 'create') {
+                        navigation.navigate('NoteCreate');
+                    } else if (target.mode === 'review') {
+                        if (target.filter?.starred) {
+                            navigation.navigate('NoteList', { filter: 'starred' });
+                        } else {
+                            navigation.navigate('NoteList');
+                        }
+                    } else {
+                        navigation.navigate('NoteList');
+                    }
+                    break;
+
+                case 'action':
+                    if (target.mode === 'create') {
+                        navigation.navigate('ActionCreate');
+                    } else if (target.mode === 'select') {
+                        if (target.filter?.done === false) {
+                            navigation.navigate('ActionList', { filter: 'pending' });
+                        } else {
+                            navigation.navigate('ActionList');
+                        }
+                    } else {
+                        navigation.navigate('ActionList');
+                    }
+                    break;
+
+                case 'spark':
+                    if (target.mode === 'review' || target.mode === 'view') {
+                        navigation.navigate('SparkList');
+                    } else if (target.mode === 'create') {
+                        navigation.navigate('SparkCreate');
+                    } else {
+                        navigation.navigate('SparkList');
+                    }
+                    break;
+
+                case 'path':
+                    if (target.mode === 'view' || target.mode === 'review') {
+                        navigation.navigate('PathList');
+                    } else if (target.mode === 'create') {
+                        navigation.navigate('PathCreate');
+                    } else {
+                        navigation.navigate('PathList');
+                    }
+                    break;
+
+                case 'saga':
+                    navigation.navigate('SagaList');
+                    break;
+
+                default:
+                    console.warn('Unknown navigation target type:', target.type);
+                    break;
+            }
+        } catch (error) {
+            console.error('Navigation error:', error);
+            Alert.alert(
+                'Navigation Error',
+                'Unable to navigate to the target screen. Please continue with the loop.',
+                [{ text: 'OK' }]
+            );
+        }
+    };
+
+    const handleNavigateToPrevious = async () => {
+        if (!activeExecution || !currentActivityProgress) return;
+
+        const currentIndex = currentActivityProgress.currentIndex;
+        if (currentIndex <= 0) return;
+
+        // For now, we'll just show a message. In a full implementation,
+        // we would need to implement backward navigation in the execution state
+        Alert.alert(
+            'Previous Activity',
+            'Previous activity navigation will be implemented in the next update.',
+            [{ text: 'OK' }]
+        );
+    };
+
+    const handleNavigateToNext = async () => {
+        if (!activeExecution || !currentActivityProgress) return;
+
+        const currentIndex = currentActivityProgress.currentIndex;
+        if (currentIndex >= currentActivityProgress.totalActivities - 1) return;
+
+        // For now, we'll just show a message. In a full implementation,
+        // we would need to implement forward navigation in the execution state
+        Alert.alert(
+            'Next Activity',
+            'Next activity navigation will be implemented in the next update.',
+            [{ text: 'OK' }]
+        );
+    };
+
+    const handleCompleteActivity = useCallback(async (skipped: boolean = false) => {
+        if (!activeExecution || !currentActivityWithTemplate) return;
+
+        const timeSpent = Math.floor((Date.now() - activityStartTime) / 1000);
+
+        const result: ActivityExecutionResult = {
+            activityId: currentActivityWithTemplate.activity.id,
+            completed: !skipped,
+            skipped,
+            timeSpentSeconds: timeSpent,
+            completedSubActions,
+        };
+
+        try {
+            const success = await advanceActivity(activeExecution.loop.id, result);
+            if (success) {
+                setCompletedSubActions([]);
+                setIsTimerPaused(false);
+
+                // Check if this was the last activity
+                if (currentActivityProgress &&
+                    currentActivityProgress.currentIndex >= currentActivityProgress.totalActivities - 1) {
+                    // Loop completed
+                    await completeLoopExecution(activeExecution.loop.id);
+                    onClose();
+                }
+            }
+        } catch (error) {
+            console.error('Error completing activity:', error);
+            Alert.alert('Error', 'Failed to complete activity. Please try again.');
+        }
+    }, [
+        activeExecution,
+        currentActivityWithTemplate,
+        activityStartTime,
+        completedSubActions,
+        advanceActivity,
+        currentActivityProgress,
+        completeLoopExecution,
+        onClose
+    ]);
+
+    const handleExitLoop = () => {
+        setShowExitModal(true);
+    };
+
+    const confirmExitLoop = async () => {
+        if (activeExecution) {
+            await pauseLoopExecution(activeExecution.loop.id, true);
+        }
+        setShowExitModal(false);
+        onClose();
+    };
+
+    const handlePauseLoop = async (isPaused: boolean) => {
+        if (activeExecution) {
+            await pauseLoopExecution(activeExecution.loop.id, isPaused);
+            setIsTimerPaused(isPaused);
+        }
+    };
+
+    const handleToggleSubAction = (subActionId: string) => {
+        setCompletedSubActions(prev => {
+            const updated = prev.includes(subActionId)
+                ? prev.filter(id => id !== subActionId)
+                : [...prev, subActionId];
+
+            // Also update the actual activity instance to persist the changes
+            if (currentActivityWithTemplate?.activity && 'subActions' in currentActivityWithTemplate.activity) {
+                const activity = currentActivityWithTemplate.activity;
+                if (activity.subActions) {
+                    const updatedSubActions = activity.subActions.map(subAction => {
+                        if (typeof subAction === 'string') {
+                            // Convert string to ActivitySubAction if needed
+                            return {
+                                id: subAction,
+                                text: subAction,
+                                done: updated.includes(subAction)
+                            };
+                        } else {
+                            // Already an ActivitySubAction object
+                            return {
+                                ...subAction,
+                                done: updated.includes(subAction.id)
+                            };
+                        }
+                    });
+
+                    // Update the activity instance with the new sub-action states
+                    // This will be saved when the activity is completed
+                }
+            }
+
+            return updated;
+        });
+    };
+
+    if (!visible || !activeExecution || !currentActivityWithTemplate) {
+        return null;
+    }
+
+    const { activity, template } = currentActivityWithTemplate;
+
+    // Ensure we have the right activity structure
+    const currentActivity = currentActivityWithTemplate?.activity as LoopActivityInstance;
+    const currentTemplate = currentActivityWithTemplate?.template;
+
+    if (!currentActivity || !currentTemplate) {
+        return null;
+    }
+
+    const canNavigate = currentActivity.navigateTarget || currentTemplate.navigateTarget;
+    const navigationTarget = currentActivity.navigateTarget || currentTemplate.navigateTarget;
+
+    return (
+        <Modal
+            visible={visible}
+            animationType="fade"
+            presentationStyle="fullScreen"
+            statusBarTranslucent
+        >
+            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+            <LinearGradient
+                colors={[theme.colors.primary, theme.colors.primaryDark || theme.colors.primary]}
+                style={styles.container}
+            >
+                <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+                    <SafeAreaView style={styles.safeArea}>
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <TouchableOpacity
+                                style={styles.headerButton}
+                                onPress={handleExitLoop}
+                            >
+                                <Icon name="x" size={24} color={theme.colors.background} />
+                            </TouchableOpacity>
+
+                            <Text style={styles.loopTitle}>{activeExecution.loop.title}</Text>
+
+                            <TouchableOpacity
+                                style={styles.headerButton}
+                                onPress={() => handlePauseLoop(!isTimerPaused)}
+                            >
+                                <Icon
+                                    name={isTimerPaused ? "circle-play" : "circle-pause"}
+                                    size={24}
+                                    color={theme.colors.background}
+                                />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                            {/* Activity Display */}
+                            <ActivityDisplay
+                                activity={currentActivity}
+                                template={currentTemplate}
+                                currentIndex={currentActivityProgress?.currentIndex || 0}
+                                totalActivities={currentActivityProgress?.totalActivities || 1}
+                                styles={styles}
+                                theme={theme}
+                            />
+
+                            {/* Activity Navigation */}
+                            <View style={styles.activityNavigation}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.navButton,
+                                        (currentActivityProgress?.currentIndex || 0) === 0 && styles.navButtonDisabled
+                                    ]}
+                                    onPress={handleNavigateToPrevious}
+                                    disabled={(currentActivityProgress?.currentIndex || 0) === 0}
+                                >
+                                    <Icon name="chevron-left" size={20} color={theme.colors.background} />
+                                    <Text style={styles.navButtonText}>Previous</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[
+                                        styles.navButton,
+                                        (currentActivityProgress?.currentIndex || 0) >= (currentActivityProgress?.totalActivities || 1) - 1 && styles.navButtonDisabled
+                                    ]}
+                                    onPress={handleNavigateToNext}
+                                    disabled={(currentActivityProgress?.currentIndex || 0) >= (currentActivityProgress?.totalActivities || 1) - 1}
+                                >
+                                    <Text style={styles.navButtonText}>Next</Text>
+                                    <Icon name="chevron-right" size={20} color={theme.colors.background} />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Timer */}
+                            <TimerComponent
+                                durationMinutes={currentActivity.durationMinutes}
+                                onComplete={() => handleCompleteActivity(false)}
+                                onSkip={() => handleCompleteActivity(true)}
+                                isPaused={isTimerPaused}
+                                onPause={handlePauseLoop}
+                                isRunning={!isTimerPaused}
+                                onReset={() => {
+                                    // Reset timer state
+                                    setIsTimerPaused(false);
+                                }}
+                                autoCompleteOnTimerEnd={true}
+                                styles={styles}
+                                theme={theme}
+                            />
+
+                            {/* Sub-actions */}
+                            {currentActivity.subActions && currentActivity.subActions.length > 0 && (
+                                <SubActionsComponent
+                                    subActions={currentActivity.subActions}
+                                    completedSubActions={completedSubActions}
+                                    onToggleSubAction={handleToggleSubAction}
+                                    styles={styles}
+                                    theme={theme}
+                                />
+                            )}
+
+                            {/* Navigation Target Button */}
+                            {(() => {
+                                const navigationTarget = currentActivity?.navigateTarget || currentTemplate?.navigateTarget;
+
+                                if (!navigationTarget) return null;
+
+                                return (
+                                    <View style={styles.navigationSection}>
+                                        <TouchableOpacity
+                                            style={styles.navigationButton}
+                                            onPress={handleNavigateToTarget}
+                                        >
+                                            <Icon name="arrow-right" size={20} color={theme.colors.primary} />
+                                            <Text style={styles.navigationButtonText}>
+                                                Go to {getNavigationLabel(navigationTarget)}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                );
+                            })()}
+
+                            {/* Next Activity Preview */}
+                            {(() => {
+                                if (!currentActivityProgress || currentActivityProgress.currentIndex >= currentActivityProgress.totalActivities - 1) {
+                                    return null;
+                                }
+
+                                // Get the next activity instance
+                                const nextIndex = currentActivityProgress.currentIndex + 1;
+                                const nextActivityInstance = activeExecution?.loop?.activityInstances?.[nextIndex];
+
+                                if (!nextActivityInstance) {
+                                    return null;
+                                }
+
+                                // Find the template for the next activity
+                                const nextTemplate = activityTemplates.find(t => t.id === nextActivityInstance.templateId);
+                                const nextActivityTitle = nextActivityInstance.overriddenTitle || nextTemplate?.title || `Activity ${nextIndex + 1}`;
+
+                                return (
+                                    <View style={styles.nextActivityContainer}>
+                                        <Text style={styles.nextActivityLabel}>Next up:</Text>
+                                        <Text style={styles.nextActivityTitle}>
+                                            {nextActivityTitle}
+                                        </Text>
+                                    </View>
+                                );
+                            })()}
+                        </ScrollView>
+
+                        {/* Bottom Actions */}
+                        <View style={styles.bottomActions}>
+                            <TouchableOpacity
+                                style={[styles.actionButton, styles.skipButton]}
+                                onPress={() => handleCompleteActivity(true)}
+                            >
+                                <Icon name="skip-forward" size={20} color={theme.colors.textSecondary} />
+                                <Text style={styles.actionButtonText}>Skip</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.actionButton, styles.completeButton]}
+                                onPress={() => handleCompleteActivity(false)}
+                            >
+                                <Icon name="check" size={24} color={theme.colors.background} />
+                                <Text style={styles.completeButtonText}>Complete</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </SafeAreaView>
+                </Animated.View>
+            </LinearGradient>
+
+            {/* Exit Confirmation Modal */}
+            <Modal
+                visible={showExitModal}
+                transparent
+                animationType="fade"
+            >
+                <BlurView intensity={50} style={styles.modalOverlay}>
+                    <View style={styles.exitModal}>
+                        <Text style={styles.exitModalTitle}>Exit Loop?</Text>
+                        <Text style={styles.exitModalText}>
+                            Your progress will be saved and you can continue later.
+                        </Text>
+                        <View style={styles.exitModalActions}>
+                            <TouchableOpacity
+                                style={[styles.exitModalButton, styles.cancelButton]}
+                                onPress={() => setShowExitModal(false)}
+                            >
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.exitModalButton, styles.confirmButton]}
+                                onPress={confirmExitLoop}
+                            >
+                                <Text style={styles.confirmButtonText}>Exit</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </BlurView>
+            </Modal>
+        </Modal>
+    );
+}; 

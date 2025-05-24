@@ -77,6 +77,13 @@ import Tag from '../../assets/icons/lucide/tag.svg';
 import Hash from '../../assets/icons/lucide/hash.svg';
 import Infinity from '../../assets/icons/lucide/infinity.svg';
 
+// Loop-specific icons
+import CircleCheck from '../../assets/icons/lucide/circle-check.svg';
+import LogOut from '../../assets/icons/lucide/log-out.svg';
+import CirclePlay from '../../assets/icons/lucide/circle-play.svg';
+import CirclePause from '../../assets/icons/lucide/circle-pause.svg';
+import SkipForward from '../../assets/icons/lucide/skip-forward.svg';
+
 /**
  * Map of icon names to their SVG components
  * @private
@@ -149,6 +156,13 @@ const iconMap = {
     hash: Hash,
     infinity: Infinity,
     // Additional needed icons
+    // Loop-specific icons
+    'circle-check': CircleCheck,
+    'log-out': LogOut,
+    'circle-play': CirclePlay,
+    'circle-pause': CirclePause,
+    'skip-forward': SkipForward,
+    'refresh': Undo,
 };
 
 /**

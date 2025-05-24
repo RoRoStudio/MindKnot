@@ -7,20 +7,22 @@ import {
     KeyboardAvoidingView,
     Platform,
     ActivityIndicator,
-    Switch,
+    Text,
+    StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useForm, Control, FieldValues } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useStyles } from '../../hooks/useStyles';
 import { Typography, Icon } from '../../components/common';
-import { EntryDetailHeader } from '../../components/entries';
-import { Form, FormInput, FormRichTextarea, FormTagInput, FormCategorySelector } from '../../components/form';
-import { createLoop, updateLoop, getLoopById } from '../../api/loopService';
+import { EntryDetailHeader, EntryMetadataBar, EntryTitleInput } from '../../components/entries';
+import { LoopCreationFlow, LoopProgressIndicator, ActivityPicker, LoopExecutionStatusCard, LoopInterruptionModal } from '../../components/entries/loops';
+import { LoopExecutionScreen } from './LoopExecutionScreen';
+import { useLoopActions } from '../../store/loops/useLoopActions';
 import { RootStackParamList } from '../../types/navigation-types';
-import { useLoops } from '../../hooks/useLoops';
+import { Loop, ActivityTemplate, LoopActivity, LoopActivityInstance } from '../../types/loop';
+import { ENTRY_TYPES, EntryType } from '../../constants/entryTypes';
 
 type LoopScreenMode = 'create' | 'edit' | 'view';
 
@@ -39,10 +41,6 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 interface LoopFormValues {
     title: string;
     description: string;
-    frequency: string;
-    active: boolean;
-    startDate?: string;
-    endDate?: string;
     tags: string[];
     categoryId: string | null;
 }
@@ -51,201 +49,221 @@ export default function LoopScreen() {
     const route = useRoute<LoopScreenRouteProp>();
     const navigation = useNavigation<NavigationProp>();
     const { theme } = useTheme();
-    const { loadLoops } = useLoops();
+
+    const {
+        loops,
+        activeExecution,
+        currentActivityProgress,
+        loadLoops,
+        updateLoop,
+        deleteLoop,
+        startLoopExecution,
+        getLoopById,
+        getActivityTemplatesByIds,
+        loadActiveExecution,
+        addLoopActivity,
+        removeLoopActivity,
+        completeLoopExecution,
+        addLoopActivityInstance,
+        reorderActivityInstances,
+        removeLoopActivityInstance,
+        editLoopActivityInstance,
+    } = useLoopActions();
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [mode, setMode] = useState<LoopScreenMode>('create');
     const [loopId, setLoopId] = useState<string | undefined>(undefined);
+    const [currentLoop, setCurrentLoop] = useState<Loop | null>(null);
+    const [activityTemplates, setActivityTemplates] = useState<ActivityTemplate[]>([]);
+    const [showCreationFlow, setShowCreationFlow] = useState(false);
+    const [showExecutionScreen, setShowExecutionScreen] = useState(false);
+    const [showActivityPicker, setShowActivityPicker] = useState(false);
+    const [showInterruptionModal, setShowInterruptionModal] = useState(false);
+    const [interruptionLoop, setInterruptionLoop] = useState<Loop | null>(null);
 
-    const styles = useStyles((theme) => ({
-        container: {
-            flex: 1,
-            backgroundColor: theme.colors.background,
-        },
-        content: {
-            flex: 1,
-            padding: theme.spacing.m,
-        },
-        header: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: theme.spacing.m,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.colors.divider,
-        },
-        backButton: {
-            padding: theme.spacing.s,
-        },
-        headerTitle: {
-            flex: 1,
-            marginLeft: theme.spacing.s,
-        },
-        actionButton: {
-            marginHorizontal: theme.spacing.s,
-        },
-        buttonContainer: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: theme.spacing.l,
-            paddingHorizontal: theme.spacing.m,
-            paddingBottom: theme.spacing.m,
-        },
-        submitButton: {
-            backgroundColor: theme.colors.primary,
-            paddingVertical: theme.spacing.m,
-            paddingHorizontal: theme.spacing.l,
-            borderRadius: theme.shape.radius.m,
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 120,
-        },
-        submitButtonText: {
-            color: theme.colors.onPrimary,
-            fontWeight: 'bold',
-        },
-        cancelButton: {
-            paddingVertical: theme.spacing.m,
-            paddingHorizontal: theme.spacing.l,
-            borderRadius: theme.shape.radius.m,
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        cancelButtonText: {
-            color: theme.colors.textSecondary,
-        },
-        loadingContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        metadataSection: {
-            marginTop: theme.spacing.m,
-        },
-        metadataTitle: {
-            marginBottom: theme.spacing.s,
-        },
-        tagsContainer: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            marginBottom: theme.spacing.m,
-        },
-        tag: {
-            backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: theme.shape.radius.m,
-            paddingHorizontal: theme.spacing.s,
-            paddingVertical: theme.spacing.xs,
-            marginRight: theme.spacing.xs,
-            marginBottom: theme.spacing.xs,
-        },
-        dateText: {
-            marginTop: theme.spacing.s,
-            color: theme.colors.textSecondary,
-        },
-        editButton: {
-            position: 'absolute',
-            right: theme.spacing.l,
-            bottom: theme.spacing.l,
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            backgroundColor: theme.colors.primary,
-            justifyContent: 'center',
-            alignItems: 'center',
-            elevation: 4,
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 3,
-        },
-        loopContainer: {
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.l,
-            padding: theme.spacing.m,
-            marginVertical: theme.spacing.m,
-            borderLeftWidth: 4,
-            borderLeftColor: theme.colors.primary,
-        },
-        switchContainer: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.m,
-            padding: theme.spacing.m,
-            marginBottom: theme.spacing.m,
-        },
-        switchLabel: {
-            flex: 1,
-        },
-        detailsRow: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginVertical: theme.spacing.xs,
-        },
-        detailsLabel: {
-            width: 100,
-            marginRight: theme.spacing.m,
-        },
-        detailsValue: {
-            flex: 1,
-        },
-        loopItemsContainer: {
-            marginTop: theme.spacing.l,
-        },
-        loopItemsTitle: {
-            marginBottom: theme.spacing.m,
-        },
-        addItemButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: theme.spacing.s,
-            marginTop: theme.spacing.s,
-        },
-        addItemText: {
-            color: theme.colors.primary,
-            marginLeft: theme.spacing.xs,
-        },
-        activeIndicator: {
-            width: 10,
-            height: 10,
-            borderRadius: 5,
-            backgroundColor: theme.colors.success,
-            marginRight: theme.spacing.s,
-        },
-        inactiveIndicator: {
-            width: 10,
-            height: 10,
-            borderRadius: 5,
-            backgroundColor: theme.colors.error,
-            marginRight: theme.spacing.s,
-        },
-        loopItemsCard: {
-            backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.m,
-            padding: theme.spacing.m,
-            marginVertical: theme.spacing.m,
-            borderLeftWidth: 4,
-            borderLeftColor: theme.colors.primary,
-        },
-    }));
+    // Get loop theme color
+    const loopColor = ENTRY_TYPES[EntryType.LOOP].color;
 
     // Set up form with default values
-    const { control, handleSubmit, reset, setValue, watch, getValues, formState: { errors } } = useForm<LoopFormValues>({
+    const { control, handleSubmit, reset, getValues, setValue, watch } = useForm<LoopFormValues>({
         defaultValues: {
             title: '',
             description: '',
-            frequency: '',
-            active: true,
-            startDate: undefined,
-            endDate: undefined,
             tags: [],
             categoryId: null,
         },
         mode: 'onChange'
     });
 
-    const active = watch('active');
+    const categoryId = watch('categoryId');
+    const tags = watch('tags');
+
+    const styles = StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.background,
+        },
+        content: {
+            flex: 1,
+        },
+        scrollContent: {
+            padding: theme.spacing.m,
+        },
+        section: {
+            marginBottom: theme.spacing.l,
+        },
+        sectionHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: theme.spacing.m,
+        },
+        sectionTitle: {
+            fontSize: 18,
+            fontWeight: '600',
+            color: theme.colors.textPrimary,
+        },
+        activitiesContainer: {
+            backgroundColor: theme.colors.surface,
+            borderRadius: 12,
+            padding: theme.spacing.m,
+            borderLeftWidth: 4,
+            borderLeftColor: loopColor,
+        },
+        activityItem: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: theme.spacing.s,
+            paddingHorizontal: theme.spacing.m,
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 8,
+            marginBottom: theme.spacing.s,
+        },
+        activityIcon: {
+            fontSize: 24,
+            marginRight: theme.spacing.m,
+        },
+        activityInfo: {
+            flex: 1,
+        },
+        activityTitle: {
+            fontSize: 16,
+            fontWeight: '500',
+            color: theme.colors.textPrimary,
+        },
+        activityType: {
+            fontSize: 12,
+            color: theme.colors.textSecondary,
+            textTransform: 'capitalize',
+            marginTop: 2,
+        },
+        activityActions: {
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        removeActivityButton: {
+            padding: 4,
+            marginLeft: 8,
+        },
+        addButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: theme.spacing.m,
+            paddingHorizontal: theme.spacing.l,
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 8,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            borderStyle: 'dashed',
+        },
+        addButtonText: {
+            fontSize: 16,
+            color: theme.colors.textSecondary,
+            marginLeft: theme.spacing.s,
+        },
+        actionButton: {
+            backgroundColor: loopColor,
+            paddingVertical: theme.spacing.m,
+            paddingHorizontal: theme.spacing.l,
+            borderRadius: 8,
+            alignItems: 'center',
+            marginTop: theme.spacing.m,
+        },
+        actionButtonText: {
+            color: theme.colors.onPrimary,
+            fontSize: 16,
+            fontWeight: '600',
+        },
+        executionCard: {
+            backgroundColor: loopColor + '20',
+            borderRadius: 12,
+            padding: theme.spacing.m,
+            borderWidth: 1,
+            borderColor: loopColor,
+            marginBottom: theme.spacing.l,
+        },
+        executionTitle: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: loopColor,
+            marginBottom: theme.spacing.s,
+        },
+        statsContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-around',
+            backgroundColor: theme.colors.surface,
+            borderRadius: 12,
+            padding: theme.spacing.m,
+            marginBottom: theme.spacing.l,
+        },
+        statItem: {
+            alignItems: 'center',
+        },
+        statNumber: {
+            fontSize: 20,
+            fontWeight: '600',
+            color: theme.colors.textPrimary,
+        },
+        statLabel: {
+            fontSize: 12,
+            color: theme.colors.textSecondary,
+            marginTop: 4,
+        },
+        emptyState: {
+            alignItems: 'center',
+            padding: theme.spacing.l,
+        },
+        emptyText: {
+            fontSize: 16,
+            color: theme.colors.textSecondary,
+            textAlign: 'center',
+            marginBottom: theme.spacing.m,
+        },
+        loadingContainer: {
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+        },
+        bottomContainer: {
+            padding: theme.spacing.m,
+            paddingBottom: theme.spacing.l,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.divider,
+        },
+        saveButton: {
+            backgroundColor: loopColor,
+            borderRadius: 8,
+            paddingVertical: theme.spacing.m,
+            alignItems: 'center',
+        },
+        saveButtonText: {
+            color: theme.colors.onPrimary,
+            fontSize: 16,
+            fontWeight: '600',
+        },
+    });
 
     // Initialize from route params
     useEffect(() => {
@@ -256,6 +274,8 @@ export default function LoopScreen() {
 
             if ((routeMode === 'edit' || routeMode === 'view') && id) {
                 loadLoopData(id);
+            } else if (routeMode === 'create') {
+                setShowCreationFlow(true);
             }
         }
     }, [route.params]);
@@ -267,16 +287,16 @@ export default function LoopScreen() {
             const loop = await getLoopById(id);
 
             if (loop) {
+                setCurrentLoop(loop);
                 reset({
                     title: loop.title,
                     description: loop.description || '',
-                    frequency: loop.frequency || '',
-                    active: loop.active !== undefined ? loop.active : true,
-                    startDate: loop.startDate,
-                    endDate: loop.endDate,
                     tags: loop.tags || [],
                     categoryId: loop.categoryId || null,
                 });
+
+                // Load activity templates for this loop
+                await loadActivityTemplates(loop);
             } else {
                 Alert.alert('Error', 'Loop not found');
                 navigation.goBack();
@@ -290,39 +310,41 @@ export default function LoopScreen() {
         }
     };
 
-    // Handle form submission
+    const loadActivityTemplates = async (loop: Loop) => {
+        if (loop.activityInstances && loop.activityInstances.length > 0) {
+            try {
+                const templateIds = loop.activityInstances.map(instance => instance.templateId);
+                const templates = await getActivityTemplatesByIds(templateIds);
+                setActivityTemplates(templates);
+            } catch (error) {
+                console.error('Error loading activity templates:', error);
+            }
+        }
+    };
+
+    // Handle form submission for loop metadata
     const onSubmit = async (data: LoopFormValues) => {
-        if (isSubmitting) return;
+        if (isSubmitting || !currentLoop) return;
 
         try {
             setIsSubmitting(true);
 
-            // Ensure startDate is always a string
-            const currentDate = new Date().toISOString();
-
             const loopData = {
+                ...currentLoop,
                 title: data.title,
                 description: data.description,
-                frequency: data.frequency,
-                active: data.active,
-                startDate: data.startDate || currentDate, // Use current date if startDate is not provided
-                endDate: data.endDate,
                 tags: data.tags,
                 categoryId: data.categoryId || undefined,
-                type: 'loop' as const,
             };
 
-            let success;
-            if (mode === 'edit' && loopId) {
-                success = await updateLoop(loopId, loopData);
-            } else {
-                await createLoop(loopData);
-                success = true;
-            }
+            const success = await updateLoop(currentLoop.id, loopData);
 
             if (success) {
-                await loadLoops();
-                navigation.goBack();
+                setCurrentLoop(loopData);
+                await loadLoops(); // Refresh loops list
+                if (mode === 'edit') {
+                    setMode('view');
+                }
             } else {
                 Alert.alert('Error', 'Failed to save the loop. Please try again.');
             }
@@ -334,226 +356,417 @@ export default function LoopScreen() {
         }
     };
 
-    // Switch to edit mode from view mode
+    // Handle metadata changes in edit/view mode (auto-save)
+    const handleCategoryChange = async (newCategoryId: string | null) => {
+        setValue('categoryId', newCategoryId);
+        if (currentLoop && (mode === 'view' || mode === 'edit')) {
+            await autoSave({ categoryId: newCategoryId });
+        }
+    };
+
+    const handleLabelsChange = async (newLabels: string[]) => {
+        setValue('tags', newLabels);
+        if (currentLoop && (mode === 'view' || mode === 'edit')) {
+            await autoSave({ tags: newLabels });
+        }
+    };
+
+    const handleTitleChange = async (value: string) => {
+        setValue('title', value);
+        if (currentLoop && (mode === 'view' || mode === 'edit')) {
+            await autoSave({ title: value });
+        }
+    };
+
+    const autoSave = async (updates: Partial<LoopFormValues>) => {
+        if (!currentLoop) return;
+
+        try {
+            const updatedLoop = {
+                ...currentLoop,
+                ...updates,
+                categoryId: updates.categoryId || undefined,
+            };
+
+            const success = await updateLoop(currentLoop.id, updatedLoop);
+            if (success) {
+                setCurrentLoop(updatedLoop);
+                await loadLoops(); // Refresh loops list
+            }
+        } catch (error) {
+            console.error('Error auto-saving loop:', error);
+        }
+    };
+
     const handleEditPress = () => {
         setMode('edit');
     };
 
-    // Navigate to add action as a loop item
-    const handleAddLoopItem = () => {
-        if (!loopId) return;
-
-        // Navigate to ActionScreen with loopId as parent
-        navigation.navigate('ActionScreen', {
-            mode: 'create',
-            parentId: loopId,
-            parentType: 'loop-item'
-        });
+    const handleBackPress = () => {
+        if (mode === 'edit' && currentLoop) {
+            // Auto-save before going back
+            handleSubmit(onSubmit)();
+        }
+        navigation.goBack();
     };
 
-    // Render header based on mode
-    const renderHeader = () => {
-        let title = "";
-        if (mode === 'create') title = "Create Loop";
-        else if (mode === 'edit') title = "Edit Loop";
-        else title = "Loop Details";
+    const handleStartExecution = async () => {
+        if (!currentLoop) return;
 
-        return (
-            <EntryDetailHeader
-                showEditButton={mode === 'view'}
-                onEditPress={handleEditPress}
-                onBackPress={() => navigation.goBack()}
-                isSaved={!!loopId && mode === 'view'}
-                title={title}
-                entryType="Loop"
-            />
+        try {
+            // Check if there's an active execution first
+            if (activeExecution && activeExecution.loop.id !== currentLoop.id) {
+                // Show the new interruption modal instead of Alert
+                setInterruptionLoop(currentLoop);
+                setShowInterruptionModal(true);
+                return;
+            }
+
+            await startNewLoopExecution();
+        } catch (error) {
+            console.error('Error starting loop execution:', error);
+            Alert.alert('Error', 'Failed to start loop execution');
+        }
+    };
+
+    const handleInterruptionContinueCurrentLoop = () => {
+        setShowInterruptionModal(false);
+        setInterruptionLoop(null);
+        setShowExecutionScreen(true);
+    };
+
+    const handleInterruptionStartNewLoop = async () => {
+        setShowInterruptionModal(false);
+        if (interruptionLoop) {
+            try {
+                const success = await startLoopExecution(interruptionLoop.id);
+                if (success) {
+                    await loadActiveExecution();
+                    setShowExecutionScreen(true);
+                } else {
+                    Alert.alert('Error', 'Failed to start loop execution');
+                }
+            } catch (error) {
+                console.error('Error starting new loop execution:', error);
+                Alert.alert('Error', 'Failed to start loop execution');
+            }
+        }
+        setInterruptionLoop(null);
+    };
+
+    const handleInterruptionCancel = () => {
+        setShowInterruptionModal(false);
+        setInterruptionLoop(null);
+    };
+
+    const handleContinueExecution = () => {
+        setShowExecutionScreen(true);
+    };
+
+    const handleLoopCreated = async (loop: Loop) => {
+        setShowCreationFlow(false);
+
+        // Reload loops to ensure we have the latest data
+        await loadLoops();
+
+        // Find the most recently created loop (since we don't have the actual ID)
+        // This is a bit of a hack, but necessary since createLoop returns boolean
+        const latestLoop = loops.length > 0 ? loops[0] : null;
+
+        if (latestLoop) {
+            setCurrentLoop(latestLoop);
+            setLoopId(latestLoop.id);
+            setMode('view');
+            await loadLoopData(latestLoop.id);
+        } else {
+            // Fallback: try to create a mock loop object
+            setCurrentLoop(loop);
+            setLoopId(loop.id);
+            setMode('view');
+        }
+    };
+
+    const handleActivitySelect = async (activityInstance: Omit<LoopActivityInstance, 'id'>) => {
+        if (!currentLoop) {
+            setShowActivityPicker(false);
+            return;
+        }
+
+        try {
+            const success = await addLoopActivityInstance(currentLoop.id, activityInstance);
+
+            if (success) {
+                // Reload the loop data to get the updated activities
+                await loadLoopData(currentLoop.id);
+                setShowActivityPicker(false);
+            } else {
+                Alert.alert('Error', 'Failed to add activity to loop');
+            }
+        } catch (error) {
+            console.error('Error adding activity to loop:', error);
+            Alert.alert('Error', 'Failed to add activity to loop');
+        }
+    };
+
+    const handleActivityReorder = async (reorderedInstances: LoopActivityInstance[]) => {
+        if (!currentLoop) return;
+
+        try {
+            const instanceOrders = reorderedInstances.map((instance, index) => ({
+                id: instance.id,
+                order: index
+            }));
+
+            const success = await reorderActivityInstances(currentLoop.id, instanceOrders);
+            if (success) {
+                await loadLoopData(currentLoop.id);
+            }
+        } catch (error) {
+            console.error('Error reordering activities:', error);
+            Alert.alert('Error', 'Failed to reorder activities');
+        }
+    };
+
+    const handleActivityRemoveFromPicker = async (instanceId: string) => {
+        try {
+            const success = await removeLoopActivityInstance(instanceId);
+            if (success && currentLoop) {
+                await loadLoopData(currentLoop.id);
+            }
+        } catch (error) {
+            console.error('Error removing activity:', error);
+            Alert.alert('Error', 'Failed to remove activity');
+        }
+    };
+
+    const handleActivityEdit = async (instanceId: string, updates: Partial<LoopActivityInstance>) => {
+        try {
+            const success = await editLoopActivityInstance(instanceId, updates);
+            if (success && currentLoop) {
+                await loadLoopData(currentLoop.id);
+            }
+        } catch (error) {
+            console.error('Error editing activity:', error);
+            Alert.alert('Error', 'Failed to edit activity');
+        }
+    };
+
+    const handleRemoveActivity = async (activityId: string) => {
+        if (!currentLoop) return;
+
+        Alert.alert(
+            'Remove Activity',
+            'Are you sure you want to remove this activity from the loop?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Remove',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const success = await removeLoopActivity(activityId);
+                            if (success) {
+                                // Reload the loop data
+                                await loadLoopData(currentLoop.id);
+                            } else {
+                                Alert.alert('Error', 'Failed to remove activity');
+                            }
+                        } catch (error) {
+                            console.error('Error removing activity:', error);
+                            Alert.alert('Error', 'Failed to remove activity');
+                        }
+                    },
+                },
+            ]
         );
     };
 
-    // Render form for create and edit modes
-    const renderForm = () => {
-        return (
-            <Form>
-                <FormInput
-                    name="title"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Title"
-                    placeholder="Enter a title..."
-                    rules={{ required: 'Title is required' }}
-                    isTitle={true}
-                />
+    const handleDeleteLoop = async () => {
+        if (!currentLoop) return;
 
-                <View style={{ flex: 1, paddingHorizontal: theme.spacing.m }}>
-                    <FormRichTextarea
-                        name="description"
-                        control={control as unknown as Control<FieldValues>}
-                        label="Loop"
-                        placeholder="Describe the loop..."
-                        adaptiveHeight={false}
-                    />
-                </View>
-
-                <FormInput
-                    name="frequency"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Frequency"
-                    placeholder="e.g. Daily, Weekly, Every 3 days..."
-                />
-
-                <FormInput
-                    name="startDate"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Start Date"
-                    placeholder="YYYY-MM-DD"
-                />
-
-                <FormInput
-                    name="endDate"
-                    control={control as unknown as Control<FieldValues>}
-                    label="End Date (optional)"
-                    placeholder="YYYY-MM-DD"
-                />
-
-                <View style={styles.switchContainer}>
-                    <Typography variant="body1" style={styles.switchLabel}>
-                        Active
-                    </Typography>
-                    <Switch
-                        value={active}
-                        onValueChange={(value) => setValue('active', value)}
-                        trackColor={{ false: theme.colors.surfaceVariant, true: theme.colors.primary }}
-                        thumbColor={theme.colors.surface}
-                    />
-                </View>
-
-                <FormCategorySelector
-                    name="categoryId"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Category"
-                />
-
-                <FormTagInput
-                    name="tags"
-                    control={control as unknown as Control<FieldValues>}
-                    label="Tags"
-                />
-
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity
-                        style={styles.cancelButton}
-                        onPress={() => navigation.goBack()}
-                        disabled={isSubmitting}
-                    >
-                        <Typography style={styles.cancelButtonText}>Cancel</Typography>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.submitButton}
-                        onPress={handleSubmit(onSubmit)}
-                        disabled={isSubmitting}
-                    >
-                        <Typography style={styles.submitButtonText}>
-                            {isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update' : 'Create'}
-                        </Typography>
-                    </TouchableOpacity>
-                </View>
-            </Form>
+        Alert.alert(
+            'Delete Loop',
+            `Are you sure you want to delete "${currentLoop.title}"? This action cannot be undone.`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const success = await deleteLoop(currentLoop.id);
+                            if (success) {
+                                await loadLoops();
+                                navigation.goBack();
+                            } else {
+                                Alert.alert('Error', 'Failed to delete loop');
+                            }
+                        } catch (error) {
+                            console.error('Error deleting loop:', error);
+                            Alert.alert('Error', 'Failed to delete loop');
+                        }
+                    },
+                },
+            ]
         );
     };
 
-    // Render read-only view
-    const renderViewMode = () => {
-        const values = getValues();
+    const startNewLoopExecution = async () => {
+        if (!currentLoop) return;
+
+        try {
+            const success = await startLoopExecution(currentLoop.id);
+            if (success) {
+                await loadActiveExecution();
+                setShowExecutionScreen(true);
+            } else {
+                Alert.alert('Error', 'Failed to start loop execution');
+            }
+        } catch (error) {
+            console.error('Error starting new loop execution:', error);
+            Alert.alert('Error', 'Failed to start loop execution');
+        }
+    };
+
+    const renderExecutionStatus = () => {
+        if (!currentLoop) return null;
+
+        const isCurrentlyExecuting = activeExecution && activeExecution.loop.id === currentLoop.id;
+
+        if (isCurrentlyExecuting && currentActivityProgress && activeExecution) {
+            return (
+                <LoopExecutionStatusCard
+                    loop={activeExecution.loop}
+                    executionState={activeExecution.executionState}
+                    currentActivityProgress={currentActivityProgress}
+                    onContinueExecution={handleContinueExecution}
+                    onCompleteLoop={async () => {
+                        try {
+                            await completeLoopExecution(currentLoop.id);
+                            await loadLoops();
+                        } catch (error) {
+                            console.error('Error completing loop:', error);
+                            Alert.alert('Error', 'Failed to complete loop');
+                        }
+                    }}
+                />
+            );
+        }
+
+        return null;
+    };
+
+    const renderLoopStats = () => {
+        if (!currentLoop) return null;
+
+        const totalActivities = currentLoop.activityInstances?.length || 0;
+        const completedExecutions = 0; // TODO: Track execution history
 
         return (
-            <View style={styles.content}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Typography variant="h4">{values.title}</Typography>
-                    <View style={values.active ? styles.activeIndicator : styles.inactiveIndicator} />
-                    <Typography variant="caption">
-                        {values.active ? 'Active' : 'Inactive'}
-                    </Typography>
+            <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>{totalActivities}</Text>
+                    <Text style={styles.statLabel}>Activities</Text>
                 </View>
+                <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>{completedExecutions}</Text>
+                    <Text style={styles.statLabel}>Completed</Text>
+                </View>
+                <View style={styles.statItem}>
+                    <Text style={styles.statNumber}>{currentLoop.active ? 'Active' : 'Inactive'}</Text>
+                    <Text style={styles.statLabel}>Status</Text>
+                </View>
+            </View>
+        );
+    };
 
-                {values.description ? (
-                    <View style={styles.loopContainer}>
-                        <Typography variant="body1">{values.description}</Typography>
+    const renderActivities = () => {
+        if (!currentLoop || !currentLoop.activityInstances || currentLoop.activityInstances.length === 0) {
+            return (
+                <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Activities</Text>
                     </View>
-                ) : null}
-
-                <View style={styles.metadataSection}>
-                    <Typography variant="subtitle1">Details</Typography>
-
-                    {values.frequency ? (
-                        <View style={styles.detailsRow}>
-                            <Typography variant="body2" style={styles.detailsLabel}>Frequency:</Typography>
-                            <Typography variant="body2" style={styles.detailsValue}>
-                                {values.frequency}
-                            </Typography>
-                        </View>
-                    ) : null}
-
-                    {values.startDate ? (
-                        <View style={styles.detailsRow}>
-                            <Typography variant="body2" style={styles.detailsLabel}>Start Date:</Typography>
-                            <Typography variant="body2" style={styles.detailsValue}>
-                                {values.startDate}
-                            </Typography>
-                        </View>
-                    ) : null}
-
-                    {values.endDate ? (
-                        <View style={styles.detailsRow}>
-                            <Typography variant="body2" style={styles.detailsLabel}>End Date:</Typography>
-                            <Typography variant="body2" style={styles.detailsValue}>
-                                {values.endDate}
-                            </Typography>
-                        </View>
-                    ) : null}
-
-                    {values.tags && values.tags.length > 0 && (
-                        <>
-                            <Typography variant="subtitle1" style={[styles.metadataTitle, { marginTop: theme.spacing.m }]}>
-                                Tags:
-                            </Typography>
-                            <View style={styles.tagsContainer}>
-                                {values.tags.map((tag, index) => (
-                                    <View key={index} style={styles.tag}>
-                                        <Typography variant="caption">{tag}</Typography>
-                                    </View>
-                                ))}
-                            </View>
-                        </>
-                    )}
-                </View>
-
-                {loopId && (
-                    <View style={styles.loopItemsContainer}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="subtitle1" style={styles.loopItemsTitle}>
-                                Loop Items
-                            </Typography>
-
+                    <View style={styles.activitiesContainer}>
+                        <View style={styles.emptyState}>
+                            <Text style={styles.emptyText}>
+                                No activities added yet.{'\n'}
+                                Add activities to build your loop.
+                            </Text>
                             <TouchableOpacity
-                                style={styles.addItemButton}
-                                onPress={handleAddLoopItem}
+                                style={styles.addButton}
+                                onPress={() => setShowActivityPicker(true)}
                             >
-                                <Icon name="plus" width={16} height={16} color={theme.colors.primary} />
-                                <Typography style={styles.addItemText}>Add Item</Typography>
+                                <Icon name="circle-plus" width={20} height={20} color={theme.colors.textSecondary} />
+                                <Text style={styles.addButtonText}>Add Activity</Text>
                             </TouchableOpacity>
                         </View>
-
-                        {/* Loop items list would go here - we'll load them separately using related actions */}
                     </View>
-                )}
+                </View>
+            );
+        }
 
-                <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={handleEditPress}
-                >
-                    <Icon name="pencil" width={24} height={24} color={theme.colors.onPrimary} />
-                </TouchableOpacity>
+        return (
+            <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Activities ({currentLoop.activityInstances.length})</Text>
+                    <TouchableOpacity onPress={() => setShowActivityPicker(true)}>
+                        <Icon name="circle-plus" width={24} height={24} color={loopColor} />
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.activitiesContainer}>
+                    {currentLoop.activityInstances.map((instance, index) => {
+                        const template = activityTemplates.find(t => t.id === instance.templateId);
+                        const displayTitle = instance.overriddenTitle || template?.title || `Activity ${index + 1}`;
+                        const displayIcon = template?.icon || '📝';
+
+                        return (
+                            <View key={instance.id} style={styles.activityItem}>
+                                <Text style={styles.activityIcon}>{displayIcon}</Text>
+                                <View style={styles.activityInfo}>
+                                    <Text style={styles.activityTitle}>{displayTitle}</Text>
+                                    <Text style={styles.activityType}>
+                                        {template?.type || 'custom'}
+                                        {instance.durationMinutes && ` • ${instance.durationMinutes}min`}
+                                        {instance.quantity && ` • ${instance.quantity.value} ${instance.quantity.unit}`}
+                                    </Text>
+                                </View>
+                                {mode === 'edit' && (
+                                    <View style={styles.activityActions}>
+                                        <TouchableOpacity
+                                            style={styles.removeActivityButton}
+                                            onPress={() => handleActivityRemoveFromPicker(instance.id)}
+                                        >
+                                            <Icon name="x" width={20} height={20} color={theme.colors.error} />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
+                        );
+                    })}
+                </View>
             </View>
+        );
+    };
+
+    const renderActionButtons = () => {
+        if (!currentLoop || !currentLoop.activityInstances || currentLoop.activityInstances.length === 0) {
+            return null;
+        }
+
+        const isCurrentlyExecuting = activeExecution && activeExecution.loop.id === currentLoop.id;
+
+        if (isCurrentlyExecuting) {
+            return null; // Execution button is in the execution card
+        }
+
+        return (
+            <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleStartExecution}
+            >
+                <Text style={styles.actionButtonText}>Start Loop Execution</Text>
+            </TouchableOpacity>
         );
     };
 
@@ -561,12 +774,54 @@ export default function LoopScreen() {
         return (
             <SafeAreaView style={styles.container}>
                 <EntryDetailHeader
-                    onBackPress={() => navigation.goBack()}
-                    title="Loading..."
+                    onBackPress={handleBackPress}
                     entryType="Loop"
                 />
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
+                    <ActivityIndicator size="large" color={loopColor} />
+                    <Typography style={{ marginTop: 16, color: theme.colors.textSecondary }}>
+                        Loading loop...
+                    </Typography>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    // Show creation flow for new loops
+    if (mode === 'create' || (!currentLoop && showCreationFlow)) {
+        return (
+            <>
+                <SafeAreaView style={styles.container}>
+                    <EntryDetailHeader
+                        onBackPress={() => navigation.goBack()}
+                        entryType="Loop"
+                    />
+                    <View style={styles.loadingContainer}>
+                        <Typography style={{ color: theme.colors.textSecondary }}>
+                            Creating new loop...
+                        </Typography>
+                    </View>
+                </SafeAreaView>
+                <LoopCreationFlow
+                    visible={true}
+                    onClose={() => navigation.goBack()}
+                    onLoopCreated={handleLoopCreated}
+                />
+            </>
+        );
+    }
+
+    if (!currentLoop) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <EntryDetailHeader
+                    onBackPress={handleBackPress}
+                    entryType="Loop"
+                />
+                <View style={styles.loadingContainer}>
+                    <Typography style={{ color: theme.colors.error }}>
+                        Loop not found
+                    </Typography>
                 </View>
             </SafeAreaView>
         );
@@ -574,16 +829,105 @@ export default function LoopScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            {renderHeader()}
+            <EntryDetailHeader
+                isStarred={currentLoop.isStarred}
+                onStarPress={() => {/* TODO: Implement star toggle */ }}
+                showEditButton={mode === 'view'}
+                onEditPress={handleEditPress}
+                onBackPress={handleBackPress}
+                onDuplicatePress={() => {/* TODO: Implement duplicate */ }}
+                onArchivePress={() => {/* TODO: Implement archive */ }}
+                onHidePress={handleDeleteLoop}
+                isSaved={!!currentLoop.id && mode === 'view'}
+                entryType="Loop"
+            />
+
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
+                style={styles.content}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
             >
-                <View style={{ flex: 1 }}>
-                    {mode === 'view' ? renderViewMode() : renderForm()}
-                </View>
+                <ScrollView
+                    style={styles.content}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Title Input */}
+                    <EntryTitleInput
+                        name="title"
+                        control={control}
+                        placeholder="Loop title..."
+                        editable={mode === 'edit'}
+                        onChangeText={mode === 'view' ? handleTitleChange : undefined}
+                    />
+
+                    {/* Metadata Bar */}
+                    <EntryMetadataBar
+                        categoryId={categoryId}
+                        onCategoryChange={handleCategoryChange}
+                        labels={tags}
+                        onLabelsChange={handleLabelsChange}
+                        isEditing={mode === 'edit' || mode === 'view'}
+                    />
+
+                    {/* Execution Status */}
+                    {renderExecutionStatus()}
+
+                    {/* Loop Statistics */}
+                    {renderLoopStats()}
+
+                    {/* Activities */}
+                    {renderActivities()}
+
+                    {/* Action Buttons */}
+                    {renderActionButtons()}
+
+                    {/* Extra space at the bottom */}
+                    <View style={{ height: 100 }} />
+                </ScrollView>
             </KeyboardAvoidingView>
+
+            {/* Save button for edit mode only (create mode uses creation flow) */}
+            {mode === 'edit' && (
+                <View style={styles.bottomContainer}>
+                    <TouchableOpacity
+                        style={styles.saveButton}
+                        onPress={handleSubmit(onSubmit)}
+                        disabled={isSubmitting}
+                    >
+                        <Text style={styles.saveButtonText}>
+                            {isSubmitting ? 'Saving...' : 'Save Changes'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {/* Activity Picker */}
+            <ActivityPicker
+                visible={showActivityPicker}
+                onClose={() => setShowActivityPicker(false)}
+                onSelectActivity={handleActivitySelect}
+                selectedActivityInstances={currentLoop.activityInstances || []}
+                onReorderActivities={handleActivityReorder}
+                onRemoveActivity={handleActivityRemoveFromPicker}
+                onEditActivity={handleActivityEdit}
+            />
+
+            {/* Loop Execution Screen */}
+            <LoopExecutionScreen
+                visible={showExecutionScreen}
+                onClose={() => setShowExecutionScreen(false)}
+            />
+
+            {/* Loop Interruption Modal */}
+            <LoopInterruptionModal
+                visible={showInterruptionModal}
+                currentLoop={activeExecution?.loop || currentLoop}
+                newLoop={interruptionLoop || currentLoop}
+                onContinueCurrentLoop={handleInterruptionContinueCurrentLoop}
+                onStartNewLoop={handleInterruptionStartNewLoop}
+                onCancel={handleInterruptionCancel}
+            />
         </SafeAreaView>
     );
 } 
