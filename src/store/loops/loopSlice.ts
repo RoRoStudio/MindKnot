@@ -19,7 +19,8 @@ import {
     pauseLoopExecution,
     advanceLoopActivity,
     getActiveLoopExecution,
-    initializePredefinedActivityTemplates
+    initializePredefinedActivityTemplates,
+    saveLoopExecutionState
 } from '../../api/loopService';
 
 interface LoopState {
@@ -240,6 +241,44 @@ export const advanceLoopActivityThunk = createAsyncThunk(
     }
 );
 
+export const navigateToActivityThunk = createAsyncThunk(
+    'loops/navigateToActivity',
+    async ({ loopId, targetIndex }: { loopId: string; targetIndex: number }, { rejectWithValue, getState }) => {
+        try {
+            const state = getState() as { loop: LoopState };
+            const execution = state.loop.activeExecution;
+
+            if (!execution) {
+                return rejectWithValue('No active execution found');
+            }
+
+            const totalActivities = execution.loop.activityInstances?.length || execution.loop.activities?.length || 0;
+
+            if (targetIndex < 0 || targetIndex >= totalActivities) {
+                return rejectWithValue('Invalid activity index');
+            }
+
+            // Update the execution state to point to the new activity
+            const updatedExecutionState: LoopExecutionState = {
+                ...execution.executionState,
+                currentActivityIndex: targetIndex,
+                // Don't mark the previous activity as completed since we're just navigating
+            };
+
+            // Save the updated execution state
+            const success = await saveLoopExecutionState(updatedExecutionState);
+            if (success) {
+                const activeExecution = await getActiveLoopExecution();
+                return activeExecution;
+            }
+            return rejectWithValue('Failed to navigate to activity');
+        } catch (error) {
+            console.error('Failed to navigate to activity:', error);
+            return rejectWithValue('Failed to navigate to activity');
+        }
+    }
+);
+
 export const fetchActiveExecution = createAsyncThunk(
     'loops/fetchActiveExecution',
     async (_, { rejectWithValue }) => {
@@ -405,6 +444,9 @@ const loopSlice = createSlice({
                 state.activeExecution = action.payload;
             })
             .addCase(advanceLoopActivityThunk.fulfilled, (state, action) => {
+                state.activeExecution = action.payload;
+            })
+            .addCase(navigateToActivityThunk.fulfilled, (state, action) => {
                 state.activeExecution = action.payload;
             })
             .addCase(fetchActiveExecution.fulfilled, (state, action) => {

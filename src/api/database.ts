@@ -295,6 +295,7 @@ async function createTables(): Promise<void> {
                 durationMinutes INTEGER,
                 subActions TEXT,
                 navigateTarget TEXT,
+                autoCompleteOnTimerEnd INTEGER DEFAULT 1,
                 \`order\` INTEGER DEFAULT 0,
                 createdAt TEXT NOT NULL,
                 updatedAt TEXT NOT NULL,
@@ -424,6 +425,13 @@ async function createTables(): Promise<void> {
             console.log('Added activityTimeTracking column to loop_execution_state table');
         } catch (error) {
             console.log('activityTimeTracking column already exists in loop_execution_state or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync('ALTER TABLE loop_activity_instances ADD COLUMN autoCompleteOnTimerEnd INTEGER DEFAULT 1');
+            console.log('Added autoCompleteOnTimerEnd column to loop_activity_instances table');
+        } catch (error) {
+            console.log('autoCompleteOnTimerEnd column already exists in loop_activity_instances or error adding it:', error);
         }
 
         console.log('All tables created successfully');

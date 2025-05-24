@@ -74,7 +74,7 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({
                     height: size,
                     borderRadius: size / 2,
                     borderWidth: strokeWidth,
-                    borderColor: theme.colors.textSecondary + '40',
+                    borderColor: theme.colors.border,
                     position: 'absolute',
                 }}
             />
@@ -93,7 +93,7 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({
                     style={{
                         width: size,
                         height: size * progress,
-                        backgroundColor: theme.colors.secondary + '60',
+                        backgroundColor: theme.colors.primary + '40',
                         position: 'absolute',
                         bottom: 0,
                     }}
@@ -106,12 +106,14 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({
                     width: size - strokeWidth * 2,
                     height: size - strokeWidth * 2,
                     borderRadius: (size - strokeWidth * 2) / 2,
-                    backgroundColor: theme.colors.background + '20',
+                    backgroundColor: theme.colors.surface,
                     position: 'absolute',
                     top: strokeWidth,
                     left: strokeWidth,
                     alignItems: 'center',
                     justifyContent: 'center',
+                    borderWidth: 1,
+                    borderColor: theme.colors.border,
                 }}
             >
                 {children}
@@ -241,7 +243,7 @@ const TimerComponent: React.FC<TimerComponentProps> = ({
                     <Icon
                         name={isPaused ? "circle-play" : "circle-pause"}
                         size={24}
-                        color={theme.colors.primary}
+                        color={theme.colors.background}
                     />
                 </TouchableOpacity>
 
@@ -390,12 +392,13 @@ const createStyles = (theme: any) => StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 16,
         paddingTop: 20,
+        backgroundColor: theme.colors.primary,
     },
     headerButton: {
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: theme.colors.background + '30',
+        backgroundColor: theme.colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -419,18 +422,18 @@ const createStyles = (theme: any) => StyleSheet.create({
     },
     progressText: {
         fontSize: 14,
-        color: theme.colors.background + 'CC',
+        color: theme.colors.textSecondary,
         textAlign: 'center',
         marginBottom: 8,
     },
     progressBarBackground: {
         height: 4,
-        backgroundColor: theme.colors.background + '30',
+        backgroundColor: theme.colors.border,
         borderRadius: 2,
     },
     progressBarFill: {
         height: 4,
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.primary,
         borderRadius: 2,
     },
     activityTitleContainer: {
@@ -448,33 +451,35 @@ const createStyles = (theme: any) => StyleSheet.create({
     activityTitle: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: theme.colors.background,
+        color: theme.colors.textPrimary,
         marginBottom: 4,
     },
     activityDescription: {
         fontSize: 16,
-        color: theme.colors.background + 'CC',
+        color: theme.colors.textSecondary,
     },
     quantityContainer: {
         alignItems: 'center',
     },
     quantityBadge: {
-        backgroundColor: theme.colors.background + '30',
+        backgroundColor: theme.colors.surface,
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
         flexDirection: 'row',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     quantityValue: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: theme.colors.background,
+        color: theme.colors.textPrimary,
         marginRight: 4,
     },
     quantityUnit: {
         fontSize: 16,
-        color: theme.colors.background + 'CC',
+        color: theme.colors.textSecondary,
     },
     activityNavigation: {
         flexDirection: 'row',
@@ -487,15 +492,17 @@ const createStyles = (theme: any) => StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 8,
-        backgroundColor: theme.colors.background + '30',
+        backgroundColor: theme.colors.surface,
         borderRadius: 20,
         gap: 8,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     navButtonDisabled: {
         opacity: 0.3,
     },
     navButtonText: {
-        color: theme.colors.background,
+        color: theme.colors.textPrimary,
         fontSize: 14,
         fontWeight: '500',
     },
@@ -506,11 +513,11 @@ const createStyles = (theme: any) => StyleSheet.create({
     timerText: {
         fontSize: 32,
         fontWeight: 'bold',
-        color: theme.colors.background,
+        color: theme.colors.textPrimary,
     },
     timerLabel: {
         fontSize: 14,
-        color: theme.colors.background + 'AA',
+        color: theme.colors.textSecondary,
         marginTop: 4,
     },
     timerControls: {
@@ -528,20 +535,24 @@ const createStyles = (theme: any) => StyleSheet.create({
         gap: 8,
     },
     pauseButton: {
-        backgroundColor: theme.colors.background + '30',
+        backgroundColor: theme.colors.primary,
     },
     skipButton: {
-        backgroundColor: theme.colors.background + '20',
+        backgroundColor: theme.colors.surface,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     resetButton: {
-        backgroundColor: theme.colors.background + '20',
+        backgroundColor: theme.colors.surface,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     skipButtonText: {
-        color: theme.colors.background + 'CC',
+        color: theme.colors.textSecondary,
         fontSize: 14,
     },
     resetButtonText: {
-        color: theme.colors.background + 'CC',
+        color: theme.colors.textSecondary,
         fontSize: 14,
     },
     noTimerContainer: {
@@ -552,30 +563,34 @@ const createStyles = (theme: any) => StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: theme.colors.background + '20',
+        backgroundColor: theme.colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 16,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     noTimerText: {
         fontSize: 18,
-        color: theme.colors.background,
+        color: theme.colors.textPrimary,
         marginBottom: 4,
     },
     noTimerSubtext: {
         fontSize: 14,
-        color: theme.colors.background + 'BB',
+        color: theme.colors.textSecondary,
     },
     subActionsContainer: {
-        backgroundColor: theme.colors.background + '20',
+        backgroundColor: theme.colors.surface,
         borderRadius: 16,
         padding: 20,
         marginVertical: 20,
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     subActionsTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: theme.colors.background,
+        color: theme.colors.textPrimary,
         marginBottom: 16,
     },
     subActionItem: {
@@ -588,18 +603,18 @@ const createStyles = (theme: any) => StyleSheet.create({
         height: 24,
         borderRadius: 12,
         borderWidth: 2,
-        borderColor: theme.colors.background + '80',
+        borderColor: theme.colors.border,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 12,
     },
     checkboxChecked: {
-        backgroundColor: theme.colors.background,
-        borderColor: theme.colors.background,
+        backgroundColor: theme.colors.primary,
+        borderColor: theme.colors.primary,
     },
     subActionText: {
         fontSize: 16,
-        color: theme.colors.background,
+        color: theme.colors.textPrimary,
         flex: 1,
     },
     subActionTextDone: {
@@ -631,27 +646,32 @@ const createStyles = (theme: any) => StyleSheet.create({
         marginLeft: 8,
     },
     nextActivityContainer: {
-        backgroundColor: theme.colors.background + '20',
+        backgroundColor: theme.colors.surface,
         padding: 16,
         borderRadius: 12,
         marginVertical: 20,
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: theme.colors.border,
     },
     nextActivityLabel: {
         fontSize: 14,
-        color: theme.colors.background + 'BB',
+        color: theme.colors.textSecondary,
         marginBottom: 4,
     },
     nextActivityTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: theme.colors.background,
+        color: theme.colors.textPrimary,
     },
     bottomActions: {
         flexDirection: 'row',
         paddingHorizontal: 20,
         paddingVertical: 20,
         gap: 12,
+        backgroundColor: theme.colors.background,
+        borderTopWidth: 1,
+        borderTopColor: theme.colors.border,
     },
     actionButton: {
         flex: 1,
@@ -668,12 +688,12 @@ const createStyles = (theme: any) => StyleSheet.create({
         color: theme.colors.textSecondary,
     },
     completeButton: {
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.primary,
     },
     completeButtonText: {
         fontSize: 16,
         fontWeight: '600',
-        color: theme.colors.primary,
+        color: theme.colors.background,
     },
     modalOverlay: {
         flex: 1,
@@ -747,7 +767,8 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
         pauseLoopExecution,
         completeLoopExecution,
         loadActiveExecution,
-        activityTemplates
+        activityTemplates,
+        navigateToActivity
     } = useLoopActions();
 
     const [isTimerPaused, setIsTimerPaused] = useState(false);
@@ -858,13 +879,15 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
         const currentIndex = currentActivityProgress.currentIndex;
         if (currentIndex <= 0) return;
 
-        // For now, we'll just show a message. In a full implementation,
-        // we would need to implement backward navigation in the execution state
-        Alert.alert(
-            'Previous Activity',
-            'Previous activity navigation will be implemented in the next update.',
-            [{ text: 'OK' }]
-        );
+        try {
+            const success = await navigateToActivity(activeExecution.loop.id, currentIndex - 1);
+            if (!success) {
+                Alert.alert('Error', 'Failed to navigate to previous activity');
+            }
+        } catch (error) {
+            console.error('Navigation error:', error);
+            Alert.alert('Error', 'Failed to navigate to previous activity');
+        }
     };
 
     const handleNavigateToNext = async () => {
@@ -873,13 +896,15 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
         const currentIndex = currentActivityProgress.currentIndex;
         if (currentIndex >= currentActivityProgress.totalActivities - 1) return;
 
-        // For now, we'll just show a message. In a full implementation,
-        // we would need to implement forward navigation in the execution state
-        Alert.alert(
-            'Next Activity',
-            'Next activity navigation will be implemented in the next update.',
-            [{ text: 'OK' }]
-        );
+        try {
+            const success = await navigateToActivity(activeExecution.loop.id, currentIndex + 1);
+            if (!success) {
+                Alert.alert('Error', 'Failed to navigate to next activity');
+            }
+        } catch (error) {
+            console.error('Navigation error:', error);
+            Alert.alert('Error', 'Failed to navigate to next activity');
+        }
     };
 
     const handleCompleteActivity = useCallback(async (skipped: boolean = false) => {
@@ -1003,11 +1028,8 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
             presentationStyle="fullScreen"
             statusBarTranslucent
         >
-            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-            <LinearGradient
-                colors={[theme.colors.primary, theme.colors.primaryDark || theme.colors.primary]}
-                style={styles.container}
-            >
+            <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
+            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
                 <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
                     <SafeAreaView style={styles.safeArea}>
                         {/* Header */}
@@ -1016,7 +1038,7 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
                                 style={styles.headerButton}
                                 onPress={handleExitLoop}
                             >
-                                <Icon name="x" size={24} color={theme.colors.background} />
+                                <Icon name="x" size={24} color={theme.colors.textPrimary} />
                             </TouchableOpacity>
 
                             <Text style={styles.loopTitle}>{activeExecution.loop.title}</Text>
@@ -1028,7 +1050,7 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
                                 <Icon
                                     name={isTimerPaused ? "circle-play" : "circle-pause"}
                                     size={24}
-                                    color={theme.colors.background}
+                                    color={theme.colors.textPrimary}
                                 />
                             </TouchableOpacity>
                         </View>
@@ -1083,7 +1105,7 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
                                     // Reset timer state
                                     setIsTimerPaused(false);
                                 }}
-                                autoCompleteOnTimerEnd={true}
+                                autoCompleteOnTimerEnd={currentActivity.autoCompleteOnTimerEnd !== false}
                                 styles={styles}
                                 theme={theme}
                             />
@@ -1169,7 +1191,7 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
                         </View>
                     </SafeAreaView>
                 </Animated.View>
-            </LinearGradient>
+            </View>
 
             {/* Exit Confirmation Modal */}
             <Modal

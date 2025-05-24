@@ -28,6 +28,7 @@ import {
     pauseLoopExecutionThunk,
     advanceLoopActivityThunk,
     fetchActiveExecution,
+    navigateToActivityThunk,
 
     // Actions
     setDraft,
@@ -304,6 +305,11 @@ export const useLoopActions = () => {
         return advanceLoopActivityThunk.fulfilled.match(resultAction);
     }, [dispatch]);
 
+    const navigateToActivity = useCallback(async (loopId: string, targetIndex: number) => {
+        const resultAction = await dispatch(navigateToActivityThunk({ loopId, targetIndex }));
+        return navigateToActivityThunk.fulfilled.match(resultAction);
+    }, [dispatch]);
+
     const loadActiveExecution = useCallback(async () => {
         const resultAction = await dispatch(fetchActiveExecution());
         return fetchActiveExecution.fulfilled.match(resultAction);
@@ -428,6 +434,7 @@ export const useLoopActions = () => {
         completeLoopExecution,
         pauseLoopExecution,
         advanceActivity,
+        navigateToActivity,
         loadActiveExecution,
 
         // Draft management

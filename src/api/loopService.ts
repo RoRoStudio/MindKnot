@@ -175,8 +175,9 @@ export const createLoopActivityInstance = async (
     await executeSql(
         `INSERT INTO loop_activity_instances (
             id, loopId, templateId, overriddenTitle, quantityValue, quantityUnit, 
-            durationMinutes, subActions, navigateTarget, \`order\`, createdAt, updatedAt
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            durationMinutes, subActions, navigateTarget, autoCompleteOnTimerEnd,
+            \`order\`, createdAt, updatedAt
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             id,
             loopId,
@@ -187,6 +188,7 @@ export const createLoopActivityInstance = async (
             instance.durationMinutes || null,
             instance.subActions ? JSON.stringify(instance.subActions) : null,
             instance.navigateTarget ? JSON.stringify(instance.navigateTarget) : null,
+            instance.autoCompleteOnTimerEnd !== undefined ? (instance.autoCompleteOnTimerEnd ? 1 : 0) : 1,
             instance.order,
             now,
             now
@@ -207,13 +209,17 @@ export const createLoopActivityInstance = async (
 
 export const getLoopActivityInstances = async (loopId: string): Promise<LoopActivityInstance[]> => {
     try {
-        const result = await executeSql(
-            'SELECT * FROM loop_activity_instances WHERE loopId = ? ORDER BY `order` ASC',
+        const instances = await executeSql(
+            `SELECT id, templateId, overriddenTitle, quantityValue, quantityUnit,
+             durationMinutes, subActions, navigateTarget, autoCompleteOnTimerEnd, \`order\`
+             FROM loop_activity_instances 
+             WHERE loopId = ? 
+             ORDER BY \`order\``,
             [loopId]
         );
 
-        if (result && result.rows && result.rows._array) {
-            return result.rows._array.map((row: any) => ({
+        if (instances && instances.rows && instances.rows._array) {
+            return instances.rows._array.map((row: any) => ({
                 id: row.id,
                 templateId: row.templateId,
                 overriddenTitle: row.overriddenTitle || undefined,
@@ -224,6 +230,7 @@ export const getLoopActivityInstances = async (loopId: string): Promise<LoopActi
                 durationMinutes: row.durationMinutes || undefined,
                 subActions: row.subActions ? JSON.parse(row.subActions) : undefined,
                 navigateTarget: row.navigateTarget ? JSON.parse(row.navigateTarget) : undefined,
+                autoCompleteOnTimerEnd: Boolean(row.autoCompleteOnTimerEnd),
                 order: row.order
             })) as LoopActivityInstance[];
         }
@@ -251,6 +258,7 @@ export const updateLoopActivityInstance = async (
              durationMinutes = COALESCE(?, durationMinutes),
              subActions = COALESCE(?, subActions),
              navigateTarget = COALESCE(?, navigateTarget),
+             autoCompleteOnTimerEnd = COALESCE(?, autoCompleteOnTimerEnd),
              \`order\` = COALESCE(?, \`order\`),
              updatedAt = ?
              WHERE id = ?`,
@@ -262,6 +270,7 @@ export const updateLoopActivityInstance = async (
                 updates.durationMinutes || null,
                 updates.subActions ? JSON.stringify(updates.subActions) : null,
                 updates.navigateTarget ? JSON.stringify(updates.navigateTarget) : null,
+                updates.autoCompleteOnTimerEnd !== undefined ? (updates.autoCompleteOnTimerEnd ? 1 : 0) : null,
                 updates.order !== undefined ? updates.order : null,
                 now,
                 instanceId

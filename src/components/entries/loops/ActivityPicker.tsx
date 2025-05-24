@@ -45,6 +45,7 @@ interface ActivityInstanceConfiguration {
     durationMinutes?: number;
     subActions?: ActivitySubAction[];
     navigateTarget?: NavigateTarget;
+    autoCompleteOnTimerEnd?: boolean;
 }
 
 interface ReorderableActivityListProps {
@@ -52,7 +53,7 @@ interface ReorderableActivityListProps {
     templates: ActivityTemplate[];
     onReorder: (reorderedInstances: LoopActivityInstance[]) => void;
     onRemove: (instanceId: string) => void;
-    onEdit: (instanceId: string, updates: Partial<LoopActivityInstance>) => void;
+    onEdit: (instance: LoopActivityInstance) => void;
 }
 
 const ReorderableActivityList: React.FC<ReorderableActivityListProps> = ({
@@ -63,6 +64,8 @@ const ReorderableActivityList: React.FC<ReorderableActivityListProps> = ({
     onEdit
 }) => {
     const { theme } = useTheme();
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
     const getTemplateForInstance = (instance: LoopActivityInstance) => {
         return templates.find(t => t.id === instance.templateId);
@@ -100,6 +103,29 @@ const ReorderableActivityList: React.FC<ReorderableActivityListProps> = ({
         onReorder(withUpdatedOrder);
     };
 
+    const handleDragStart = (index: number) => {
+        setDraggedIndex(index);
+    };
+
+    const handleDragOver = (index: number) => {
+        if (draggedIndex !== null && draggedIndex !== index) {
+            setDragOverIndex(index);
+        }
+    };
+
+    const handleDragEnd = () => {
+        if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+            moveActivity(draggedIndex, dragOverIndex);
+        }
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    };
+
+    const handleDragCancel = () => {
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    };
+
     const listStyles = StyleSheet.create({
         container: {
             flex: 1,
@@ -119,6 +145,14 @@ const ReorderableActivityList: React.FC<ReorderableActivityListProps> = ({
             borderRadius: 12,
             borderWidth: 1,
             borderColor: theme.colors.border,
+        },
+        activityItemDragging: {
+            opacity: 0.5,
+            transform: [{ scale: 1.05 }],
+        },
+        activityItemDragOver: {
+            borderColor: theme.colors.primary,
+            borderWidth: 2,
         },
         dragHandle: {
             marginRight: 12,
@@ -208,13 +242,30 @@ const ReorderableActivityList: React.FC<ReorderableActivityListProps> = ({
                     const displayIcon = template?.icon || '📝';
 
                     return (
-                        <View key={instance.id} style={listStyles.activityItem}>
+                        <View
+                            key={instance.id}
+                            style={[
+                                listStyles.activityItem,
+                                draggedIndex === index && listStyles.activityItemDragging,
+                                dragOverIndex === index && listStyles.activityItemDragOver
+                            ]}
+                            onTouchMove={() => {
+                                if (draggedIndex !== null) {
+                                    handleDragOver(index);
+                                }
+                            }}
+                            onTouchEnd={() => {
+                                if (draggedIndex === index) {
+                                    handleDragEnd();
+                                }
+                            }}
+                        >
                             <TouchableOpacity
                                 style={listStyles.dragHandle}
                                 onLongPress={() => {
-                                    // Could implement drag-and-drop here in the future
-                                    // For now, users can use the chevron buttons
+                                    handleDragStart(index);
                                 }}
+                                onPressOut={handleDragEnd}
                             >
                                 <Icon name="ellipsis-vertical" size={20} color={theme.colors.textSecondary} />
                             </TouchableOpacity>
@@ -262,11 +313,7 @@ const ReorderableActivityList: React.FC<ReorderableActivityListProps> = ({
                             <View style={listStyles.actionButtons}>
                                 <TouchableOpacity
                                     style={listStyles.editButton}
-                                    onPress={() => {
-                                        // TODO: Implement edit functionality
-                                        // For now, show an alert
-                                        Alert.alert('Edit Activity', 'Edit functionality coming soon!');
-                                    }}
+                                    onPress={() => onEdit(instance)}
                                 >
                                     <Icon name="pencil" size={16} color={theme.colors.textSecondary} />
                                 </TouchableOpacity>
@@ -438,6 +485,7 @@ interface CreateActivityFormProps {
 interface ActivityConfigurationModalProps {
     visible: boolean;
     template: ActivityTemplate | null;
+    editingInstance?: LoopActivityInstance | null;
     onConfirm: (configuration: ActivityInstanceConfiguration) => void;
     onCancel: () => void;
 }
@@ -445,6 +493,7 @@ interface ActivityConfigurationModalProps {
 const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
     visible,
     template,
+    editingInstance,
     onConfirm,
     onCancel,
 }) => {
@@ -458,20 +507,39 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
     const [hasCustomNavigation, setHasCustomNavigation] = useState(false);
     const [navigationType, setNavigationType] = useState<'note' | 'action' | 'spark' | 'path' | 'saga'>('note');
     const [navigationMode, setNavigationMode] = useState<'create' | 'review' | 'view' | 'select'>('view');
+    const [autoCompleteOnTimerEnd, setAutoCompleteOnTimerEnd] = useState(true);
+    const [editingSubActionIndex, setEditingSubActionIndex] = useState<number | null>(null);
+    const [editingSubActionText, setEditingSubActionText] = useState('');
 
     useEffect(() => {
         if (template && visible) {
-            setOverriddenTitle('');
-            setQuantityValue('');
-            setQuantityUnit('');
-            setDurationMinutes('');
-            setSubActions([]);
-            setNewSubAction('');
-            setHasCustomNavigation(false);
-            setNavigationType('note');
-            setNavigationMode('view');
+            if (editingInstance) {
+                // Pre-fill with existing instance data
+                setOverriddenTitle(editingInstance.overriddenTitle || '');
+                setQuantityValue(editingInstance.quantity?.value?.toString() || '');
+                setQuantityUnit(editingInstance.quantity?.unit || '');
+                setDurationMinutes(editingInstance.durationMinutes?.toString() || '');
+                setSubActions(editingInstance.subActions?.map(sa => sa.text) || []);
+                setNewSubAction('');
+                setHasCustomNavigation(!!editingInstance.navigateTarget);
+                setNavigationType(editingInstance.navigateTarget?.type || 'note');
+                setNavigationMode(editingInstance.navigateTarget?.mode || 'view');
+                setAutoCompleteOnTimerEnd(editingInstance.autoCompleteOnTimerEnd !== false);
+            } else {
+                // Reset for new instance
+                setOverriddenTitle('');
+                setQuantityValue('');
+                setQuantityUnit('');
+                setDurationMinutes('');
+                setSubActions([]);
+                setNewSubAction('');
+                setHasCustomNavigation(false);
+                setNavigationType('note');
+                setNavigationMode('view');
+                setAutoCompleteOnTimerEnd(true);
+            }
         }
-    }, [template, visible]);
+    }, [template, visible, editingInstance]);
 
     const handleAddSubAction = () => {
         if (newSubAction.trim()) {
@@ -482,6 +550,26 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
 
     const handleRemoveSubAction = (index: number) => {
         setSubActions(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleStartEditSubAction = (index: number) => {
+        setEditingSubActionIndex(index);
+        setEditingSubActionText(subActions[index]);
+    };
+
+    const handleSaveEditSubAction = () => {
+        if (editingSubActionIndex !== null && editingSubActionText.trim()) {
+            setSubActions(prev => prev.map((action, index) =>
+                index === editingSubActionIndex ? editingSubActionText.trim() : action
+            ));
+        }
+        setEditingSubActionIndex(null);
+        setEditingSubActionText('');
+    };
+
+    const handleCancelEditSubAction = () => {
+        setEditingSubActionIndex(null);
+        setEditingSubActionText('');
     };
 
     const handleConfirm = () => {
@@ -503,7 +591,8 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
             navigateTarget: hasCustomNavigation ? {
                 type: navigationType,
                 mode: navigationMode
-            } : template.navigateTarget
+            } : template.navigateTarget,
+            autoCompleteOnTimerEnd: autoCompleteOnTimerEnd
         };
 
         onConfirm(configuration);
@@ -518,6 +607,9 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
         setSubActions([]);
         setNewSubAction('');
         setHasCustomNavigation(false);
+        setAutoCompleteOnTimerEnd(true);
+        setEditingSubActionIndex(null);
+        setEditingSubActionText('');
     };
 
     if (!template) return null;
@@ -622,6 +714,9 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
             borderRadius: 8,
             marginBottom: 8,
         },
+        subActionTextContainer: {
+            flex: 1,
+        },
         subActionText: {
             flex: 1,
             fontSize: 14,
@@ -629,6 +724,10 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
         },
         removeButton: {
             padding: 4,
+        },
+        editActionButton: {
+            padding: 4,
+            marginLeft: 4,
         },
         addSubActionRow: {
             flexDirection: 'row',
@@ -788,18 +887,93 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
                                 />
                             </View>
 
+                            {/* Timer Behavior */}
+                            {durationMinutes && parseInt(durationMinutes) > 0 && (
+                                <View style={modalStyles.configSection}>
+                                    <View style={modalStyles.navigationHeader}>
+                                        <Text style={modalStyles.sectionTitle}>Timer Behavior</Text>
+                                    </View>
+                                    <View style={modalStyles.navigationConfig}>
+                                        <Text style={modalStyles.navigationLabel}>When timer ends:</Text>
+                                        <View style={modalStyles.navigationOptions}>
+                                            <TouchableOpacity
+                                                style={[
+                                                    modalStyles.navigationOption,
+                                                    autoCompleteOnTimerEnd && modalStyles.navigationOptionActive
+                                                ]}
+                                                onPress={() => setAutoCompleteOnTimerEnd(true)}
+                                            >
+                                                <Text style={[
+                                                    modalStyles.navigationOptionText,
+                                                    autoCompleteOnTimerEnd && modalStyles.navigationOptionTextActive
+                                                ]}>
+                                                    Auto-complete activity
+                                                </Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={[
+                                                    modalStyles.navigationOption,
+                                                    !autoCompleteOnTimerEnd && modalStyles.navigationOptionActive
+                                                ]}
+                                                onPress={() => setAutoCompleteOnTimerEnd(false)}
+                                            >
+                                                <Text style={[
+                                                    modalStyles.navigationOptionText,
+                                                    !autoCompleteOnTimerEnd && modalStyles.navigationOptionTextActive
+                                                ]}>
+                                                    Count up (show overtime)
+                                                </Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                </View>
+                            )}
+
                             {/* Sub-actions */}
                             <View style={modalStyles.configSection}>
                                 <Text style={modalStyles.sectionTitle}>Sub-actions (Optional)</Text>
                                 {subActions.map((action, index) => (
                                     <View key={index} style={modalStyles.subActionItem}>
-                                        <Text style={modalStyles.subActionText}>{action}</Text>
-                                        <TouchableOpacity
-                                            onPress={() => handleRemoveSubAction(index)}
-                                            style={modalStyles.removeButton}
-                                        >
-                                            <Ionicons name="close" size={16} color={theme.colors.textSecondary} />
-                                        </TouchableOpacity>
+                                        {editingSubActionIndex === index ? (
+                                            <>
+                                                <TextInput
+                                                    style={[modalStyles.textInput, { flex: 1, marginRight: 8 }]}
+                                                    value={editingSubActionText}
+                                                    onChangeText={setEditingSubActionText}
+                                                    onSubmitEditing={handleSaveEditSubAction}
+                                                    autoFocus
+                                                    placeholder="Sub-action text..."
+                                                    placeholderTextColor={theme.colors.textSecondary}
+                                                />
+                                                <TouchableOpacity
+                                                    onPress={handleSaveEditSubAction}
+                                                    style={modalStyles.editActionButton}
+                                                >
+                                                    <Ionicons name="checkmark" size={16} color={theme.colors.success} />
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    onPress={handleCancelEditSubAction}
+                                                    style={modalStyles.editActionButton}
+                                                >
+                                                    <Ionicons name="close" size={16} color={theme.colors.error} />
+                                                </TouchableOpacity>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <TouchableOpacity
+                                                    style={modalStyles.subActionTextContainer}
+                                                    onPress={() => handleStartEditSubAction(index)}
+                                                >
+                                                    <Text style={modalStyles.subActionText}>{action}</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    onPress={() => handleRemoveSubAction(index)}
+                                                    style={modalStyles.removeButton}
+                                                >
+                                                    <Ionicons name="close" size={16} color={theme.colors.textSecondary} />
+                                                </TouchableOpacity>
+                                            </>
+                                        )}
                                     </View>
                                 ))}
                                 <View style={modalStyles.addSubActionRow}>
@@ -1091,7 +1265,8 @@ export const ActivityPicker: React.FC<ActivityPickerProps> = ({
     const [configurationModal, setConfigurationModal] = useState<{
         visible: boolean;
         template: ActivityTemplate | null;
-    }>({ visible: false, template: null });
+        editingInstance?: LoopActivityInstance | null;
+    }>({ visible: false, template: null, editingInstance: null });
 
     useEffect(() => {
         if (visible) {
@@ -1130,19 +1305,34 @@ export const ActivityPicker: React.FC<ActivityPickerProps> = ({
     };
 
     const handleConfigurationConfirm = (configuration: ActivityInstanceConfiguration) => {
-        const activityInstance: Omit<LoopActivityInstance, 'id'> = {
-            templateId: configuration.templateId,
-            overriddenTitle: configuration.overriddenTitle,
-            quantity: configuration.quantity,
-            durationMinutes: configuration.durationMinutes,
-            subActions: configuration.subActions,
-            navigateTarget: configuration.navigateTarget,
-            order: selectedActivityInstances.length // Next order position
-        };
+        if (configurationModal.editingInstance) {
+            // Update existing instance
+            const updates: Partial<LoopActivityInstance> = {
+                overriddenTitle: configuration.overriddenTitle,
+                quantity: configuration.quantity,
+                durationMinutes: configuration.durationMinutes,
+                subActions: configuration.subActions,
+                navigateTarget: configuration.navigateTarget,
+                autoCompleteOnTimerEnd: configuration.autoCompleteOnTimerEnd
+            };
+            onEditActivity(configurationModal.editingInstance.id, updates);
+        } else {
+            // Create new instance
+            const activityInstance: Omit<LoopActivityInstance, 'id'> = {
+                templateId: configuration.templateId,
+                overriddenTitle: configuration.overriddenTitle,
+                quantity: configuration.quantity,
+                durationMinutes: configuration.durationMinutes,
+                subActions: configuration.subActions,
+                navigateTarget: configuration.navigateTarget,
+                autoCompleteOnTimerEnd: configuration.autoCompleteOnTimerEnd,
+                order: selectedActivityInstances.length // Next order position
+            };
+            onSelectActivity(activityInstance);
+        }
 
-        onSelectActivity(activityInstance);
-        setConfigurationModal({ visible: false, template: null });
-        setViewMode('list'); // Return to list view after adding
+        setConfigurationModal({ visible: false, template: null, editingInstance: null });
+        setViewMode('list'); // Return to list view after adding/editing
     };
 
     const categories = [
@@ -1305,7 +1495,16 @@ export const ActivityPicker: React.FC<ActivityPickerProps> = ({
                                         templates={activityTemplates}
                                         onReorder={onReorderActivities}
                                         onRemove={onRemoveActivity}
-                                        onEdit={onEditActivity}
+                                        onEdit={(instance) => {
+                                            const template = activityTemplates.find(t => t.id === instance.templateId);
+                                            if (template) {
+                                                setConfigurationModal({
+                                                    visible: true,
+                                                    template,
+                                                    editingInstance: instance
+                                                });
+                                            }
+                                        }}
                                     />
 
                                     {selectedActivityInstances.length > 0 && (
@@ -1375,8 +1574,9 @@ export const ActivityPicker: React.FC<ActivityPickerProps> = ({
             <ActivityConfigurationModal
                 visible={configurationModal.visible}
                 template={configurationModal.template}
+                editingInstance={configurationModal.editingInstance}
                 onConfirm={handleConfigurationConfirm}
-                onCancel={() => setConfigurationModal({ visible: false, template: null })}
+                onCancel={() => setConfigurationModal({ visible: false, template: null, editingInstance: null })}
             />
         </>
     );

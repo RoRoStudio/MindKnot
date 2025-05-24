@@ -48,6 +48,7 @@ export interface LoopActivityInstance {
     durationMinutes?: number; // Duration in minutes
     subActions?: ActivitySubAction[]; // Checklist of sub-actions
     navigateTarget?: NavigateTarget; // Can override template's navigation target
+    autoCompleteOnTimerEnd?: boolean; // Whether to auto-complete when timer ends
     order: number; // Position in the loop sequence
 }
 
