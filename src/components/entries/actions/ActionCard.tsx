@@ -43,7 +43,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     const hasSubActions = subTasks && subTasks.length > 0;
     const inputRef = useRef<TextInput>(null);
 
-    // Define styles inside component to access theme
+    // Create styles inside component to access theme
     const styles = StyleSheet.create({
         subActionsContainer: {
             gap: 12,
@@ -110,6 +110,24 @@ export const ActionCard: React.FC<ActionCardProps> = ({
             fontWeight: '500',
             color: theme.colors.textSecondary,
             marginLeft: 8,
+        },
+        checkboxContainer: {
+            marginTop: 4,
+            marginRight: 12,
+            flexShrink: 0,
+            // Increase touch area for better usability
+            padding: 8,
+            margin: -8, // Negative margin to offset the padding
+        },
+        checkbox: {
+            width: 20,
+            height: 20,
+            borderRadius: 4,
+            borderWidth: 1.5,
+            borderColor: theme.colors.border,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme.colors.background,
         },
     });
 
@@ -476,11 +494,14 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                 onEntryUpdated={onToggleDone ? () => onToggleDone(action.id) : undefined}
                 done={isDone}
                 dueDate={action.dueDate}
-                // Add linked indicator in subtitle if this action is embedded
-                subtitle={action.parentId && action.parentType ?
-                    `Linked to ${action.parentType === 'path' ? 'Path' : 'Milestone'}` :
-                    undefined
-                }
+                // Use new linking system instead of subtitle
+                linkedTo={action.parentId && action.parentType ? {
+                    type: action.parentType,
+                    id: action.parentId,
+                    label: action.parentType === 'path' ? 'Path' : 'Milestone'
+                } : undefined}
+                // Don't show created date for actions - only for notes and sparks
+                showCreatedDate={false}
                 // Checkbox functionality
                 showCheckbox={true}
                 checkboxChecked={isDone}

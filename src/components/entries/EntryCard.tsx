@@ -59,6 +59,14 @@ interface EntryCardProps {
     onCheckboxPress?: () => void;
     // Sub-task counter for ActionCard
     subTaskCounter?: string;
+    // Show created date only for certain entry types
+    showCreatedDate?: boolean;
+    // Link information for general linking system
+    linkedTo?: {
+        type: string;
+        id: string;
+        label?: string;
+    };
 }
 
 export const EntryCard: React.FC<EntryCardProps> = ({
@@ -92,6 +100,8 @@ export const EntryCard: React.FC<EntryCardProps> = ({
     checkboxChecked = false,
     onCheckboxPress,
     subTaskCounter,
+    showCreatedDate = true,
+    linkedTo,
 }) => {
     const { theme } = useTheme();
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -149,14 +159,6 @@ export const EntryCard: React.FC<EntryCardProps> = ({
             textDecorationLine: 'line-through',
             color: theme.colors.textDisabled,
         },
-        doneIndicator: {
-            position: 'absolute',
-            top: 2,
-            right: 0,
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-        },
         subtitle: {
             fontSize: 14,
             color: theme.colors.textSecondary,
@@ -169,10 +171,32 @@ export const EntryCard: React.FC<EntryCardProps> = ({
             marginBottom: 8,
             lineHeight: 20,
         },
-        categoryPill: {
+        pillsContainer: {
+            flexDirection: 'row',
+            alignItems: 'center',
             marginTop: 4,
             marginBottom: 8,
+            gap: 8,
+        },
+        categoryPill: {
             alignSelf: 'flex-start',
+        },
+        linkPill: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: theme.colors.surfaceVariant,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+            borderRadius: 12,
+            alignSelf: 'flex-start',
+        },
+        linkIcon: {
+            marginRight: 4,
+        },
+        linkText: {
+            fontSize: 11,
+            fontWeight: '500',
+            color: theme.colors.textSecondary,
         },
         dueDateContainer: {
             flexDirection: 'row',
@@ -189,6 +213,15 @@ export const EntryCard: React.FC<EntryCardProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             marginBottom: 8,
+        },
+        leftMeta: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            flex: 1,
+        },
+        rightMeta: {
+            flexDirection: 'row',
+            alignItems: 'center',
         },
         dateText: {
             fontSize: 12,
@@ -533,6 +566,8 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                                 <TouchableOpacity
                                     onPress={onCheckboxPress}
                                     style={styles.checkboxContainer}
+                                    hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                                    activeOpacity={0.7}
                                 >
                                     <View style={[
                                         styles.checkbox,
@@ -556,10 +591,6 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                                     {title}
                                 </Text>
 
-                                {done && (
-                                    <View style={[styles.doneIndicator, { backgroundColor: borderColor }]} />
-                                )}
-
                                 {subtitle && (
                                     <Text style={styles.subtitle}>
                                         {subtitle}
@@ -572,13 +603,33 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                                     </Text>
                                 )}
 
-                                {categoryInfo && (
-                                    <CategoryPill
-                                        title={categoryInfo.title}
-                                        color={categoryInfo.color}
-                                        size="small"
-                                        style={styles.categoryPill}
-                                    />
+                                {/* Pills container for category and link pills */}
+                                {(categoryInfo || linkedTo) && (
+                                    <View style={styles.pillsContainer}>
+                                        {categoryInfo && (
+                                            <CategoryPill
+                                                title={categoryInfo.title}
+                                                color={categoryInfo.color}
+                                                size="small"
+                                                style={styles.categoryPill}
+                                            />
+                                        )}
+
+                                        {linkedTo && (
+                                            <View style={styles.linkPill}>
+                                                <Icon
+                                                    name="link"
+                                                    width={12}
+                                                    height={12}
+                                                    color={theme.colors.textSecondary}
+                                                    style={styles.linkIcon}
+                                                />
+                                                <Text style={styles.linkText}>
+                                                    {linkedTo.label || `Linked to ${linkedTo.type}`}
+                                                </Text>
+                                            </View>
+                                        )}
+                                    </View>
                                 )}
 
                                 {dueDate && (
@@ -591,12 +642,18 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                                 )}
 
                                 <View style={styles.metaContainer}>
-                                    <Text style={styles.dateText}>
-                                        {formatDate(createdAt)}
-                                    </Text>
-                                    {isStarred && (
-                                        <Icon name="star" width={16} height={16} color={theme.colors.warning} style={styles.starIcon} />
-                                    )}
+                                    <View style={styles.leftMeta}>
+                                        {showCreatedDate && (
+                                            <Text style={styles.dateText}>
+                                                {formatDate(createdAt)}
+                                            </Text>
+                                        )}
+                                    </View>
+                                    <View style={styles.rightMeta}>
+                                        {isStarred && (
+                                            <Icon name="star" width={16} height={16} color={theme.colors.warning} />
+                                        )}
+                                    </View>
                                 </View>
 
                                 {tags && tags.length > 0 && (
