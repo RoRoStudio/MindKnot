@@ -41,7 +41,6 @@ export const LoopExecutionHeader: React.FC<LoopExecutionHeaderProps> = ({
     isPaused,
 }) => {
     const { theme } = useTheme();
-    const [isExpanded, setIsExpanded] = useState(false);
 
     const styles = StyleSheet.create({
         container: {
@@ -84,39 +83,6 @@ export const LoopExecutionHeader: React.FC<LoopExecutionHeaderProps> = ({
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
             alignItems: 'center',
             justifyContent: 'center',
-        },
-        expandButton: {
-            width: 24,
-            height: 24,
-            borderRadius: 12,
-            backgroundColor: 'rgba(255, 255, 255, 0.15)',
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        expandedView: {
-            paddingTop: 8,
-            borderTopWidth: 1,
-            borderTopColor: 'rgba(255, 255, 255, 0.1)',
-            marginTop: 8,
-        },
-        expandedControls: {
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            paddingVertical: 8,
-        },
-        expandedButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: 16,
-            gap: 6,
-        },
-        expandedButtonText: {
-            fontSize: 12,
-            fontWeight: '500',
-            color: theme.colors.background,
         },
         progressBar: {
             height: 3,
@@ -168,17 +134,6 @@ export const LoopExecutionHeader: React.FC<LoopExecutionHeaderProps> = ({
                                 color={theme.colors.background}
                             />
                         </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.expandButton}
-                            onPress={() => setIsExpanded(!isExpanded)}
-                        >
-                            <Icon
-                                name={isExpanded ? "chevron-up" : "chevron-down"}
-                                size={12}
-                                color={theme.colors.background}
-                            />
-                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -191,31 +146,6 @@ export const LoopExecutionHeader: React.FC<LoopExecutionHeaderProps> = ({
                         ]}
                     />
                 </View>
-
-                {/* Expanded View */}
-                {isExpanded && (
-                    <View style={styles.expandedView}>
-                        <View style={styles.expandedControls}>
-                            <TouchableOpacity
-                                style={styles.expandedButton}
-                                onPress={onOpenExecution}
-                            >
-                                <Icon name="circle-play" size={14} color={theme.colors.background} />
-                                <Text style={styles.expandedButtonText}>Open</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={styles.expandedButton}
-                                onPress={() => {
-                                    // TODO: Implement stop loop functionality
-                                }}
-                            >
-                                <Icon name="x" size={14} color={theme.colors.background} />
-                                <Text style={styles.expandedButtonText}>Stop</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                )}
             </SafeAreaView>
         </View>
     );

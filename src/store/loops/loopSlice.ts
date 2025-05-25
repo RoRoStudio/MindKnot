@@ -1,27 +1,13 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Loop, ActivityTemplate, LoopActivity, LoopExecutionState, ActivityExecutionResult } from '../../types/loop';
 import {
-    getAllLoops,
-    createLoop,
-    updateLoop,
-    deleteLoop,
-    getAllActivityTemplates,
-    createActivityTemplate,
-    updateActivityTemplate,
-    deleteActivityTemplate,
-    getLoopActivities,
-    createLoopActivity,
-    updateLoopActivity,
-    deleteLoopActivity,
-    reorderLoopActivities,
-    startLoopExecution,
-    completeLoopExecution,
-    pauseLoopExecution,
-    advanceLoopActivity,
-    getActiveLoopExecution,
-    initializePredefinedActivityTemplates,
-    saveLoopExecutionState
-} from '../../api/loopService';
+    Loop,
+    LoopExecutionState,
+    ActivityExecutionResult,
+    LoopActivityInstance,
+    ActivityTemplate,
+    LoopProgressInfo
+} from '../../types/loop';
+import * as loopService from '../../api/loopService';
 
 interface LoopState {
     // Loops data
@@ -30,6 +16,7 @@ interface LoopState {
 
     // Activity templates
     activityTemplates: ActivityTemplate[];
+    activityTemplatesByCategory: Record<string, ActivityTemplate[]>;
 
     // Execution state
     activeExecution: {
@@ -43,16 +30,37 @@ interface LoopState {
 
     // Draft state for creation/editing
     draft: Partial<Loop> | null;
+
+    // Enhanced time tracking state
+    activityTimers: Record<string, {
+        startTime: string;
+        elapsedSeconds: number;
+        isRunning: boolean;
+        lastUpdateTime: string;
+    }>;
+
+    // Current activity with template
+    currentActivityWithTemplate: {
+        activity: LoopActivityInstance;
+        template: ActivityTemplate;
+    } | null;
+
+    // Current activity progress
+    currentActivityProgress: LoopProgressInfo | null;
 }
 
 const initialState: LoopState = {
     loops: [],
     currentLoop: null,
     activityTemplates: [],
+    activityTemplatesByCategory: {},
     activeExecution: null,
     loading: false,
     error: null,
-    draft: null
+    draft: null,
+    activityTimers: {},
+    currentActivityWithTemplate: null,
+    currentActivityProgress: null
 };
 
 // =====================
@@ -64,7 +72,7 @@ export const fetchLoops = createAsyncThunk(
     'loops/fetchAll',
     async (_, { rejectWithValue }) => {
         try {
-            return await getAllLoops();
+            return await loopService.getAllLoops();
         } catch (error) {
             console.error('Failed to load loops:', error);
             return rejectWithValue('Failed to load loops');
@@ -76,7 +84,7 @@ export const addLoop = createAsyncThunk(
     'loops/add',
     async (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedAt'>, { rejectWithValue }) => {
         try {
-            return await createLoop(loop);
+            return await loopService.createLoop(loop);
         } catch (error) {
             console.error('Failed to create loop:', error);
             return rejectWithValue('Failed to create loop');
@@ -88,7 +96,7 @@ export const updateLoopThunk = createAsyncThunk(
     'loops/update',
     async ({ id, updates }: { id: string; updates: Partial<Omit<Loop, 'id' | 'createdAt' | 'updatedAt'>> }, { rejectWithValue }) => {
         try {
-            const success = await updateLoop(id, updates as any);
+            const success = await loopService.updateLoop(id, updates as any);
             if (success) {
                 return { id, updates };
             }
@@ -104,7 +112,7 @@ export const removeLoop = createAsyncThunk(
     'loops/remove',
     async (id: string, { rejectWithValue }) => {
         try {
-            const success = await deleteLoop(id);
+            const success = await loopService.deleteLoop(id);
             if (success) {
                 return id;
             }
@@ -121,7 +129,7 @@ export const fetchActivityTemplates = createAsyncThunk(
     'loops/fetchActivityTemplates',
     async (_, { rejectWithValue }) => {
         try {
-            return await getAllActivityTemplates();
+            return await loopService.getAllActivityTemplates();
         } catch (error) {
             console.error('Failed to load activity templates:', error);
             return rejectWithValue('Failed to load activity templates');
@@ -133,7 +141,7 @@ export const addActivityTemplate = createAsyncThunk(
     'loops/addActivityTemplate',
     async (template: Omit<ActivityTemplate, 'id' | 'createdAt' | 'updatedAt'>, { rejectWithValue }) => {
         try {
-            return await createActivityTemplate(template);
+            return await loopService.createActivityTemplate(template);
         } catch (error) {
             console.error('Failed to create activity template:', error);
             return rejectWithValue('Failed to create activity template');
@@ -145,7 +153,7 @@ export const updateActivityTemplateThunk = createAsyncThunk(
     'loops/updateActivityTemplate',
     async ({ id, updates }: { id: string; updates: Partial<Omit<ActivityTemplate, 'id' | 'createdAt' | 'updatedAt'>> }, { rejectWithValue }) => {
         try {
-            const success = await updateActivityTemplate(id, updates);
+            const success = await loopService.updateActivityTemplate(id, updates);
             if (success) {
                 return { id, updates };
             }
@@ -161,7 +169,7 @@ export const removeActivityTemplate = createAsyncThunk(
     'loops/removeActivityTemplate',
     async (id: string, { rejectWithValue }) => {
         try {
-            const success = await deleteActivityTemplate(id);
+            const success = await loopService.deleteActivityTemplate(id);
             if (success) {
                 return id;
             }
@@ -178,9 +186,9 @@ export const startLoopExecutionThunk = createAsyncThunk(
     'loops/startExecution',
     async (loopId: string, { rejectWithValue }) => {
         try {
-            const success = await startLoopExecution(loopId);
+            const success = await loopService.startLoopExecution(loopId);
             if (success) {
-                const activeExecution = await getActiveLoopExecution();
+                const activeExecution = await loopService.getActiveLoopExecution();
                 return activeExecution;
             }
             return rejectWithValue('Failed to start loop execution');
@@ -195,7 +203,7 @@ export const completeLoopExecutionThunk = createAsyncThunk(
     'loops/completeExecution',
     async (loopId: string, { rejectWithValue }) => {
         try {
-            const success = await completeLoopExecution(loopId);
+            const success = await loopService.completeLoopExecution(loopId);
             if (success) {
                 return loopId;
             }
@@ -211,9 +219,9 @@ export const pauseLoopExecutionThunk = createAsyncThunk(
     'loops/pauseExecution',
     async ({ loopId, isPaused }: { loopId: string; isPaused: boolean }, { rejectWithValue }) => {
         try {
-            const success = await pauseLoopExecution(loopId, isPaused);
+            const success = await loopService.pauseLoopExecution(loopId, isPaused);
             if (success) {
-                const activeExecution = await getActiveLoopExecution();
+                const activeExecution = await loopService.getActiveLoopExecution();
                 return activeExecution;
             }
             return rejectWithValue('Failed to pause/resume loop execution');
@@ -228,9 +236,9 @@ export const advanceLoopActivityThunk = createAsyncThunk(
     'loops/advanceActivity',
     async ({ loopId, activityResult }: { loopId: string; activityResult: ActivityExecutionResult }, { rejectWithValue }) => {
         try {
-            const success = await advanceLoopActivity(loopId, activityResult);
+            const success = await loopService.advanceLoopActivity(loopId, activityResult);
             if (success) {
-                const activeExecution = await getActiveLoopExecution();
+                const activeExecution = await loopService.getActiveLoopExecution();
                 return activeExecution;
             }
             return rejectWithValue('Failed to advance loop activity');
@@ -266,9 +274,9 @@ export const navigateToActivityThunk = createAsyncThunk(
             };
 
             // Save the updated execution state
-            const success = await saveLoopExecutionState(updatedExecutionState);
+            const success = await loopService.saveLoopExecutionState(updatedExecutionState);
             if (success) {
-                const activeExecution = await getActiveLoopExecution();
+                const activeExecution = await loopService.getActiveLoopExecution();
                 return activeExecution;
             }
             return rejectWithValue('Failed to navigate to activity');
@@ -283,7 +291,7 @@ export const fetchActiveExecution = createAsyncThunk(
     'loops/fetchActiveExecution',
     async (_, { rejectWithValue }) => {
         try {
-            return await getActiveLoopExecution();
+            return await loopService.getActiveLoopExecution();
         } catch (error) {
             console.error('Failed to fetch active execution:', error);
             return rejectWithValue('Failed to fetch active execution');
@@ -295,12 +303,233 @@ export const initializePredefinedTemplates = createAsyncThunk(
     'loops/initializePredefinedTemplates',
     async (_, { rejectWithValue }) => {
         try {
-            await initializePredefinedActivityTemplates();
-            return await getAllActivityTemplates();
+            await loopService.initializePredefinedActivityTemplates();
+            return await loopService.getAllActivityTemplates();
         } catch (error) {
             console.error('Failed to initialize predefined templates:', error);
             return rejectWithValue('Failed to initialize predefined templates');
         }
+    }
+);
+
+// Enhanced async thunks with proper time tracking
+export const loadActiveExecution = createAsyncThunk(
+    'loops/loadActiveExecution',
+    async (_, { getState, dispatch }) => {
+        const activeExecution = await loopService.getActiveLoopExecution();
+        if (activeExecution) {
+            // Restore timer states from execution state
+            const { executionState } = activeExecution;
+            const currentActivityId = activeExecution.loop.activityInstances[executionState.currentActivityIndex]?.id;
+
+            if (currentActivityId) {
+                // Calculate current elapsed time including background time
+                const now = new Date().toISOString();
+                const activityStartTime = executionState.activityStartTimes[currentActivityId];
+                const backgroundStartTime = executionState.backgroundStartTime;
+
+                let elapsedSeconds = executionState.activityElapsedSeconds[currentActivityId] || 0;
+
+                // Add background time if app was backgrounded
+                if (backgroundStartTime && activityStartTime) {
+                    const backgroundDuration = Math.floor(
+                        (new Date(now).getTime() - new Date(backgroundStartTime).getTime()) / 1000
+                    );
+                    elapsedSeconds += backgroundDuration;
+                }
+
+                // Update timer state
+                dispatch(updateActivityTimer({
+                    activityId: currentActivityId,
+                    startTime: activityStartTime || now,
+                    elapsedSeconds,
+                    isRunning: !executionState.isPaused,
+                    lastUpdateTime: now
+                }));
+            }
+        }
+        return activeExecution;
+    }
+);
+
+export const navigateToActivity = createAsyncThunk(
+    'loops/navigateToActivity',
+    async ({ loopId, activityIndex }: { loopId: string; activityIndex: number }, { getState, dispatch }) => {
+        const state = getState() as { loops: LoopState };
+        const { activeExecution, activityTimers } = state.loops;
+
+        if (!activeExecution) return false;
+
+        const now = new Date().toISOString();
+        const currentActivityId = activeExecution.loop.activityInstances[activeExecution.executionState.currentActivityIndex]?.id;
+        const targetActivityId = activeExecution.loop.activityInstances[activityIndex]?.id;
+
+        // Pause current activity timer
+        if (currentActivityId && activityTimers[currentActivityId]) {
+            const timer = activityTimers[currentActivityId];
+            const additionalElapsed = timer.isRunning ?
+                Math.floor((new Date(now).getTime() - new Date(timer.lastUpdateTime).getTime()) / 1000) : 0;
+
+            dispatch(updateActivityTimer({
+                activityId: currentActivityId,
+                startTime: timer.startTime,
+                elapsedSeconds: timer.elapsedSeconds + additionalElapsed,
+                isRunning: false,
+                lastUpdateTime: now
+            }));
+        }
+
+        // Update execution state
+        const updatedExecutionState: LoopExecutionState = {
+            ...activeExecution.executionState,
+            currentActivityIndex: activityIndex,
+            lastActiveTimestamp: now,
+            activityStartTimes: {
+                ...activeExecution.executionState.activityStartTimes,
+                [targetActivityId]: activeExecution.executionState.activityStartTimes[targetActivityId] || now
+            },
+            activityElapsedSeconds: {
+                ...activeExecution.executionState.activityElapsedSeconds,
+                [currentActivityId]: activityTimers[currentActivityId]?.elapsedSeconds || 0
+            }
+        };
+
+        // Save to database
+        await loopService.saveLoopExecutionState(updatedExecutionState);
+
+        // Start timer for target activity if not paused
+        if (targetActivityId && !updatedExecutionState.isPaused) {
+            dispatch(updateActivityTimer({
+                activityId: targetActivityId,
+                startTime: updatedExecutionState.activityStartTimes[targetActivityId],
+                elapsedSeconds: updatedExecutionState.activityElapsedSeconds[targetActivityId] || 0,
+                isRunning: true,
+                lastUpdateTime: now
+            }));
+        }
+
+        return true;
+    }
+);
+
+export const advanceActivity = createAsyncThunk(
+    'loops/advanceActivity',
+    async ({ loopId, result }: { loopId: string; result: ActivityExecutionResult }, { getState, dispatch }) => {
+        const state = getState() as { loops: LoopState };
+        const { activeExecution, activityTimers } = state.loops;
+
+        if (!activeExecution) return false;
+
+        const now = new Date().toISOString();
+        const currentActivityId = result.activityId;
+        const nextActivityIndex = activeExecution.executionState.currentActivityIndex + 1;
+        const nextActivityId = activeExecution.loop.activityInstances[nextActivityIndex]?.id;
+
+        // Finalize current activity timer
+        if (activityTimers[currentActivityId]) {
+            const timer = activityTimers[currentActivityId];
+            const finalElapsed = timer.elapsedSeconds + (timer.isRunning ?
+                Math.floor((new Date(now).getTime() - new Date(timer.lastUpdateTime).getTime()) / 1000) : 0);
+
+            dispatch(updateActivityTimer({
+                activityId: currentActivityId,
+                startTime: timer.startTime,
+                elapsedSeconds: finalElapsed,
+                isRunning: false,
+                lastUpdateTime: now
+            }));
+        }
+
+        // Update execution state with enhanced time tracking
+        const updatedExecutionState: LoopExecutionState = {
+            ...activeExecution.executionState,
+            currentActivityIndex: nextActivityIndex,
+            completedActivities: result.completed ?
+                [...activeExecution.executionState.completedActivities, currentActivityId] :
+                activeExecution.executionState.completedActivities,
+            completedSubActions: {
+                ...activeExecution.executionState.completedSubActions,
+                [currentActivityId]: result.completedSubActions
+            },
+            timeSpentSeconds: activeExecution.executionState.timeSpentSeconds + result.timeSpentSeconds,
+            activityTimeTracking: {
+                ...activeExecution.executionState.activityTimeTracking,
+                [currentActivityId]: result.timeSpentSeconds
+            },
+            activityEndTimes: {
+                ...activeExecution.executionState.activityEndTimes,
+                [currentActivityId]: now
+            },
+            activityElapsedSeconds: {
+                ...activeExecution.executionState.activityElapsedSeconds,
+                [currentActivityId]: activityTimers[currentActivityId]?.elapsedSeconds || result.timeSpentSeconds
+            },
+            activityStartTimes: nextActivityId ? {
+                ...activeExecution.executionState.activityStartTimes,
+                [nextActivityId]: now
+            } : activeExecution.executionState.activityStartTimes,
+            lastActiveTimestamp: now
+        };
+
+        // Save to database
+        await loopService.saveLoopExecutionState(updatedExecutionState);
+
+        // Start timer for next activity if exists and not paused
+        if (nextActivityId && !updatedExecutionState.isPaused) {
+            dispatch(updateActivityTimer({
+                activityId: nextActivityId,
+                startTime: now,
+                elapsedSeconds: 0,
+                isRunning: true,
+                lastUpdateTime: now
+            }));
+        }
+
+        return await loopService.advanceLoopActivity(loopId, result);
+    }
+);
+
+export const pauseLoopExecution = createAsyncThunk(
+    'loops/pauseLoopExecution',
+    async ({ loopId, isPaused }: { loopId: string; isPaused: boolean }, { getState, dispatch }) => {
+        const state = getState() as { loops: LoopState };
+        const { activeExecution, activityTimers } = state.loops;
+
+        if (!activeExecution) return false;
+
+        const now = new Date().toISOString();
+        const currentActivityId = activeExecution.loop.activityInstances[activeExecution.executionState.currentActivityIndex]?.id;
+
+        // Update current activity timer
+        if (currentActivityId && activityTimers[currentActivityId]) {
+            const timer = activityTimers[currentActivityId];
+            const additionalElapsed = timer.isRunning ?
+                Math.floor((new Date(now).getTime() - new Date(timer.lastUpdateTime).getTime()) / 1000) : 0;
+
+            dispatch(updateActivityTimer({
+                activityId: currentActivityId,
+                startTime: timer.startTime,
+                elapsedSeconds: timer.elapsedSeconds + additionalElapsed,
+                isRunning: !isPaused,
+                lastUpdateTime: now
+            }));
+        }
+
+        // Update execution state
+        const updatedExecutionState: LoopExecutionState = {
+            ...activeExecution.executionState,
+            isPaused,
+            pausedAt: isPaused ? now : undefined,
+            backgroundStartTime: isPaused ? now : undefined,
+            lastActiveTimestamp: now,
+            activityElapsedSeconds: currentActivityId ? {
+                ...activeExecution.executionState.activityElapsedSeconds,
+                [currentActivityId]: activityTimers[currentActivityId]?.elapsedSeconds || 0
+            } : activeExecution.executionState.activityElapsedSeconds
+        };
+
+        await loopService.saveLoopExecutionState(updatedExecutionState);
+        return await loopService.pauseLoopExecution(loopId, isPaused);
     }
 );
 
@@ -354,6 +583,44 @@ const loopSlice = createSlice({
         // Loading state
         setLoading: (state, action: PayloadAction<boolean>) => {
             state.loading = action.payload;
+        },
+
+        updateActivityTimer: (state, action: PayloadAction<{
+            activityId: string;
+            startTime: string;
+            elapsedSeconds: number;
+            isRunning: boolean;
+            lastUpdateTime: string;
+        }>) => {
+            const { activityId, startTime, elapsedSeconds, isRunning, lastUpdateTime } = action.payload;
+            state.activityTimers[activityId] = {
+                startTime,
+                elapsedSeconds,
+                isRunning,
+                lastUpdateTime
+            };
+        },
+
+        syncActivityTimer: (state, action: PayloadAction<{ activityId: string }>) => {
+            const { activityId } = action.payload;
+            const timer = state.activityTimers[activityId];
+
+            if (timer && timer.isRunning) {
+                const now = new Date().toISOString();
+                const additionalElapsed = Math.floor(
+                    (new Date(now).getTime() - new Date(timer.lastUpdateTime).getTime()) / 1000
+                );
+
+                state.activityTimers[activityId] = {
+                    ...timer,
+                    elapsedSeconds: timer.elapsedSeconds + additionalElapsed,
+                    lastUpdateTime: now
+                };
+            }
+        },
+
+        clearActivityTimers: (state) => {
+            state.activityTimers = {};
         }
     },
     extraReducers: (builder) => {
@@ -454,6 +721,45 @@ const loopSlice = createSlice({
             })
             .addCase(initializePredefinedTemplates.fulfilled, (state, action) => {
                 state.activityTemplates = action.payload;
+            })
+            .addCase(loadActiveExecution.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(loadActiveExecution.fulfilled, (state, action) => {
+                state.loading = false;
+                state.activeExecution = action.payload;
+
+                if (action.payload) {
+                    const { loop, executionState } = action.payload;
+                    const currentActivity = loop.activityInstances[executionState.currentActivityIndex];
+
+                    if (currentActivity) {
+                        // Find template for current activity
+                        const template = state.activityTemplates.find(t => t.id === currentActivity.templateId);
+                        if (template) {
+                            state.currentActivityWithTemplate = { activity: currentActivity, template };
+                        }
+
+                        // Set progress info
+                        state.currentActivityProgress = {
+                            currentIndex: executionState.currentActivityIndex,
+                            totalActivities: loop.activityInstances.length,
+                            completedCount: executionState.completedActivities.length,
+                            progress: (executionState.completedActivities.length / loop.activityInstances.length) * 100,
+                            isComplete: executionState.currentActivityIndex >= loop.activityInstances.length,
+                            currentActivity,
+                            nextActivity: loop.activityInstances[executionState.currentActivityIndex + 1]
+                        };
+                    }
+                } else {
+                    state.currentActivityWithTemplate = null;
+                    state.currentActivityProgress = null;
+                }
+            })
+            .addCase(loadActiveExecution.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.error.message || 'Failed to load active execution';
             });
     },
 });
@@ -468,7 +774,10 @@ export const {
     setActiveExecution,
     clearError,
     setError,
-    setLoading
+    setLoading,
+    updateActivityTimer,
+    syncActivityTimer,
+    clearActivityTimers
 } = loopSlice.actions;
 
 export default loopSlice.reducer; 

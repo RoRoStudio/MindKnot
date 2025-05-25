@@ -17,6 +17,7 @@ import { BlurView } from 'expo-blur';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useLoopActions } from '../../../store/loops';
 import { Icon } from '../../shared/Icon';
+import { BottomSheet } from '../../shared/BottomSheet';
 import {
     ActivityTemplate,
     LoopActivityInstance,
@@ -615,26 +616,14 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
     if (!template) return null;
 
     const modalStyles = StyleSheet.create({
-        modalOverlay: {
-            flex: 1,
-            justifyContent: 'flex-end',
-        },
-        modalContainer: {
-            flex: 1,
-            justifyContent: 'flex-end',
-        },
         configModal: {
-            backgroundColor: theme.colors.background,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            maxHeight: screenWidth * 0.85,
-            minHeight: 400,
+            flex: 1,
+            padding: 20,
         },
         configHeader: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            paddingHorizontal: 20,
             paddingVertical: 16,
             borderBottomWidth: 1,
             borderBottomColor: theme.colors.border,
@@ -644,14 +633,33 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
             fontWeight: '600',
             color: theme.colors.textPrimary,
         },
-        doneButton: {
+        footerContainer: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 12,
+        },
+        cancelButton: {
+            padding: 12,
+            borderRadius: 8,
+            backgroundColor: theme.colors.border,
+            alignItems: 'center',
+        },
+        cancelButtonText: {
             fontSize: 16,
             fontWeight: '600',
-            color: theme.colors.primary,
+            color: theme.colors.textSecondary,
         },
-        configContent: {
-            flex: 1,
-            padding: 20,
+        confirmButton: {
+            padding: 12,
+            borderRadius: 8,
+            backgroundColor: theme.colors.primary,
+            alignItems: 'center',
+        },
+        confirmButtonText: {
+            fontSize: 16,
+            fontWeight: '600',
+            color: theme.colors.background,
         },
         templatePreview: {
             alignItems: 'center',
@@ -722,9 +730,6 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
             fontSize: 14,
             color: theme.colors.textPrimary,
         },
-        removeButton: {
-            padding: 4,
-        },
         editActionButton: {
             padding: 4,
             marginLeft: 4,
@@ -745,33 +750,6 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
             alignItems: 'center',
             justifyContent: 'space-between',
             marginBottom: 12,
-        },
-        toggleSwitch: {
-            padding: 4,
-        },
-        switchTrack: {
-            width: 44,
-            height: 24,
-            borderRadius: 12,
-            backgroundColor: theme.colors.border,
-            padding: 2,
-        },
-        switchTrackActive: {
-            backgroundColor: theme.colors.primary,
-        },
-        switchThumb: {
-            width: 20,
-            height: 20,
-            borderRadius: 10,
-            backgroundColor: theme.colors.background,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.2,
-            shadowRadius: 2,
-            elevation: 2,
-        },
-        switchThumbActive: {
-            transform: [{ translateX: 20 }],
         },
         navigationConfig: {
             marginTop: 12,
@@ -809,262 +787,299 @@ const ActivityConfigurationModal: React.FC<ActivityConfigurationModalProps> = ({
         navigationOptionTextActive: {
             color: theme.colors.primary,
         },
+        toggleSwitch: {
+            padding: 4,
+            borderRadius: 8,
+            backgroundColor: theme.colors.surface,
+        },
+        switchTrack: {
+            width: 40,
+            height: 20,
+            borderRadius: 10,
+            backgroundColor: theme.colors.surfaceVariant,
+        },
+        switchTrackActive: {
+            backgroundColor: theme.colors.primary,
+        },
+        switchThumb: {
+            width: 16,
+            height: 16,
+            borderRadius: 8,
+            backgroundColor: theme.colors.surface,
+        },
+        switchThumbActive: {
+            backgroundColor: theme.colors.primary,
+        },
+        configContent: {
+            flex: 1,
+        },
+        removeButton: {
+            padding: 4,
+            marginLeft: 4,
+        },
     });
 
     return (
-        <Modal
+        <BottomSheet
             visible={visible}
-            transparent
-            animationType="slide"
+            onClose={onCancel}
+            snapPoints={[0.9, 0.7]}
+            showDragIndicator={true}
+            footerContent={
+                <View style={modalStyles.footerContainer}>
+                    <TouchableOpacity
+                        style={modalStyles.cancelButton}
+                        onPress={onCancel}
+                    >
+                        <Text style={modalStyles.cancelButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={modalStyles.confirmButton}
+                        onPress={handleConfirm}
+                    >
+                        <Text style={modalStyles.confirmButtonText}>Done</Text>
+                    </TouchableOpacity>
+                </View>
+            }
         >
-            <BlurView intensity={50} style={modalStyles.modalOverlay}>
-                <SafeAreaView style={modalStyles.modalContainer}>
-                    <View style={modalStyles.configModal}>
-                        <View style={modalStyles.configHeader}>
-                            <TouchableOpacity onPress={onCancel}>
-                                <Ionicons name="close" size={24} color={theme.colors.textSecondary} />
+            <View style={modalStyles.configModal}>
+                <View style={modalStyles.configHeader}>
+                    <Text style={modalStyles.configTitle}>Configure Activity</Text>
+                </View>
+
+                <ScrollView style={modalStyles.configContent} showsVerticalScrollIndicator={false}>
+                    {/* Template Info */}
+                    <View style={modalStyles.templatePreview}>
+                        <Text style={modalStyles.templatePreviewIcon}>{template.icon}</Text>
+                        <Text style={modalStyles.templatePreviewTitle}>{template.title}</Text>
+                        {template.description && (
+                            <Text style={modalStyles.templatePreviewDescription}>{template.description}</Text>
+                        )}
+                    </View>
+
+                    {/* Custom Title */}
+                    <View style={modalStyles.configSection}>
+                        <Text style={modalStyles.sectionTitle}>Custom Title (Optional)</Text>
+                        <TextInput
+                            style={modalStyles.textInput}
+                            value={overriddenTitle}
+                            onChangeText={setOverriddenTitle}
+                            placeholder={`Default: ${template.title}`}
+                            placeholderTextColor={theme.colors.textSecondary}
+                        />
+                    </View>
+
+                    {/* Quantity */}
+                    <View style={modalStyles.configSection}>
+                        <Text style={modalStyles.sectionTitle}>Quantity (Optional)</Text>
+                        <View style={modalStyles.quantityRow}>
+                            <TextInput
+                                style={[modalStyles.textInput, modalStyles.quantityInput]}
+                                value={quantityValue}
+                                onChangeText={setQuantityValue}
+                                placeholder="Number"
+                                placeholderTextColor={theme.colors.textSecondary}
+                                keyboardType="numeric"
+                            />
+                            <TextInput
+                                style={[modalStyles.textInput, modalStyles.unitInput]}
+                                value={quantityUnit}
+                                onChangeText={setQuantityUnit}
+                                placeholder="Unit (e.g., pages, reps)"
+                                placeholderTextColor={theme.colors.textSecondary}
+                            />
+                        </View>
+                    </View>
+
+                    {/* Duration */}
+                    <View style={modalStyles.configSection}>
+                        <Text style={modalStyles.sectionTitle}>Duration (Optional)</Text>
+                        <TextInput
+                            style={modalStyles.textInput}
+                            value={durationMinutes}
+                            onChangeText={setDurationMinutes}
+                            placeholder="Minutes"
+                            placeholderTextColor={theme.colors.textSecondary}
+                            keyboardType="numeric"
+                        />
+                    </View>
+
+                    {/* Timer Behavior */}
+                    {durationMinutes && parseInt(durationMinutes) > 0 && (
+                        <View style={modalStyles.configSection}>
+                            <View style={modalStyles.navigationHeader}>
+                                <Text style={modalStyles.sectionTitle}>Timer Behavior</Text>
+                            </View>
+                            <View style={modalStyles.navigationConfig}>
+                                <Text style={modalStyles.navigationLabel}>When timer ends:</Text>
+                                <View style={modalStyles.navigationOptions}>
+                                    <TouchableOpacity
+                                        style={[
+                                            modalStyles.navigationOption,
+                                            autoCompleteOnTimerEnd && modalStyles.navigationOptionActive
+                                        ]}
+                                        onPress={() => setAutoCompleteOnTimerEnd(true)}
+                                    >
+                                        <Text style={[
+                                            modalStyles.navigationOptionText,
+                                            autoCompleteOnTimerEnd && modalStyles.navigationOptionTextActive
+                                        ]}>
+                                            Auto-complete activity
+                                        </Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[
+                                            modalStyles.navigationOption,
+                                            !autoCompleteOnTimerEnd && modalStyles.navigationOptionActive
+                                        ]}
+                                        onPress={() => setAutoCompleteOnTimerEnd(false)}
+                                    >
+                                        <Text style={[
+                                            modalStyles.navigationOptionText,
+                                            !autoCompleteOnTimerEnd && modalStyles.navigationOptionTextActive
+                                        ]}>
+                                            Count up (show overtime)
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Sub-actions */}
+                    <View style={modalStyles.configSection}>
+                        <Text style={modalStyles.sectionTitle}>Sub-actions (Optional)</Text>
+                        {subActions.map((action, index) => (
+                            <View key={index} style={modalStyles.subActionItem}>
+                                {editingSubActionIndex === index ? (
+                                    <>
+                                        <TextInput
+                                            style={[modalStyles.textInput, { flex: 1, marginRight: 8 }]}
+                                            value={editingSubActionText}
+                                            onChangeText={setEditingSubActionText}
+                                            onSubmitEditing={handleSaveEditSubAction}
+                                            autoFocus
+                                            placeholder="Sub-action text..."
+                                            placeholderTextColor={theme.colors.textSecondary}
+                                        />
+                                        <TouchableOpacity
+                                            onPress={handleSaveEditSubAction}
+                                            style={modalStyles.editActionButton}
+                                        >
+                                            <Ionicons name="checkmark" size={16} color={theme.colors.success} />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            onPress={handleCancelEditSubAction}
+                                            style={modalStyles.editActionButton}
+                                        >
+                                            <Ionicons name="close" size={16} color={theme.colors.error} />
+                                        </TouchableOpacity>
+                                    </>
+                                ) : (
+                                    <>
+                                        <TouchableOpacity
+                                            style={modalStyles.subActionTextContainer}
+                                            onPress={() => handleStartEditSubAction(index)}
+                                        >
+                                            <Text style={modalStyles.subActionText}>{action}</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            onPress={() => handleRemoveSubAction(index)}
+                                            style={modalStyles.removeButton}
+                                        >
+                                            <Ionicons name="close" size={16} color={theme.colors.textSecondary} />
+                                        </TouchableOpacity>
+                                    </>
+                                )}
+                            </View>
+                        ))}
+                        <View style={modalStyles.addSubActionRow}>
+                            <TextInput
+                                style={[modalStyles.textInput, modalStyles.subActionInput]}
+                                value={newSubAction}
+                                onChangeText={setNewSubAction}
+                                placeholder="Add sub-action..."
+                                placeholderTextColor={theme.colors.textSecondary}
+                                onSubmitEditing={handleAddSubAction}
+                            />
+                            <TouchableOpacity
+                                onPress={handleAddSubAction}
+                                style={modalStyles.addButton}
+                            >
+                                <Ionicons name="add" size={20} color={theme.colors.primary} />
                             </TouchableOpacity>
-                            <Text style={modalStyles.configTitle}>Configure Activity</Text>
-                            <TouchableOpacity onPress={handleConfirm}>
-                                <Text style={modalStyles.doneButton}>Done</Text>
+                        </View>
+                    </View>
+
+                    {/* Navigation Target */}
+                    <View style={modalStyles.configSection}>
+                        <View style={modalStyles.navigationHeader}>
+                            <Text style={modalStyles.sectionTitle}>Custom Navigation</Text>
+                            <TouchableOpacity
+                                style={modalStyles.toggleSwitch}
+                                onPress={() => setHasCustomNavigation(!hasCustomNavigation)}
+                            >
+                                <View style={[
+                                    modalStyles.switchTrack,
+                                    hasCustomNavigation && modalStyles.switchTrackActive
+                                ]}>
+                                    <View style={[
+                                        modalStyles.switchThumb,
+                                        hasCustomNavigation && modalStyles.switchThumbActive
+                                    ]} />
+                                </View>
                             </TouchableOpacity>
                         </View>
 
-                        <ScrollView style={modalStyles.configContent} showsVerticalScrollIndicator={false}>
-                            {/* Template Info */}
-                            <View style={modalStyles.templatePreview}>
-                                <Text style={modalStyles.templatePreviewIcon}>{template.icon}</Text>
-                                <Text style={modalStyles.templatePreviewTitle}>{template.title}</Text>
-                                {template.description && (
-                                    <Text style={modalStyles.templatePreviewDescription}>{template.description}</Text>
-                                )}
-                            </View>
-
-                            {/* Custom Title */}
-                            <View style={modalStyles.configSection}>
-                                <Text style={modalStyles.sectionTitle}>Custom Title (Optional)</Text>
-                                <TextInput
-                                    style={modalStyles.textInput}
-                                    value={overriddenTitle}
-                                    onChangeText={setOverriddenTitle}
-                                    placeholder={`Default: ${template.title}`}
-                                    placeholderTextColor={theme.colors.textSecondary}
-                                />
-                            </View>
-
-                            {/* Quantity */}
-                            <View style={modalStyles.configSection}>
-                                <Text style={modalStyles.sectionTitle}>Quantity (Optional)</Text>
-                                <View style={modalStyles.quantityRow}>
-                                    <TextInput
-                                        style={[modalStyles.textInput, modalStyles.quantityInput]}
-                                        value={quantityValue}
-                                        onChangeText={setQuantityValue}
-                                        placeholder="Number"
-                                        placeholderTextColor={theme.colors.textSecondary}
-                                        keyboardType="numeric"
-                                    />
-                                    <TextInput
-                                        style={[modalStyles.textInput, modalStyles.unitInput]}
-                                        value={quantityUnit}
-                                        onChangeText={setQuantityUnit}
-                                        placeholder="Unit (e.g., pages, reps)"
-                                        placeholderTextColor={theme.colors.textSecondary}
-                                    />
-                                </View>
-                            </View>
-
-                            {/* Duration */}
-                            <View style={modalStyles.configSection}>
-                                <Text style={modalStyles.sectionTitle}>Duration (Optional)</Text>
-                                <TextInput
-                                    style={modalStyles.textInput}
-                                    value={durationMinutes}
-                                    onChangeText={setDurationMinutes}
-                                    placeholder="Minutes"
-                                    placeholderTextColor={theme.colors.textSecondary}
-                                    keyboardType="numeric"
-                                />
-                            </View>
-
-                            {/* Timer Behavior */}
-                            {durationMinutes && parseInt(durationMinutes) > 0 && (
-                                <View style={modalStyles.configSection}>
-                                    <View style={modalStyles.navigationHeader}>
-                                        <Text style={modalStyles.sectionTitle}>Timer Behavior</Text>
-                                    </View>
-                                    <View style={modalStyles.navigationConfig}>
-                                        <Text style={modalStyles.navigationLabel}>When timer ends:</Text>
-                                        <View style={modalStyles.navigationOptions}>
-                                            <TouchableOpacity
-                                                style={[
-                                                    modalStyles.navigationOption,
-                                                    autoCompleteOnTimerEnd && modalStyles.navigationOptionActive
-                                                ]}
-                                                onPress={() => setAutoCompleteOnTimerEnd(true)}
-                                            >
-                                                <Text style={[
-                                                    modalStyles.navigationOptionText,
-                                                    autoCompleteOnTimerEnd && modalStyles.navigationOptionTextActive
-                                                ]}>
-                                                    Auto-complete activity
-                                                </Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={[
-                                                    modalStyles.navigationOption,
-                                                    !autoCompleteOnTimerEnd && modalStyles.navigationOptionActive
-                                                ]}
-                                                onPress={() => setAutoCompleteOnTimerEnd(false)}
-                                            >
-                                                <Text style={[
-                                                    modalStyles.navigationOptionText,
-                                                    !autoCompleteOnTimerEnd && modalStyles.navigationOptionTextActive
-                                                ]}>
-                                                    Count up (show overtime)
-                                                </Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                </View>
-                            )}
-
-                            {/* Sub-actions */}
-                            <View style={modalStyles.configSection}>
-                                <Text style={modalStyles.sectionTitle}>Sub-actions (Optional)</Text>
-                                {subActions.map((action, index) => (
-                                    <View key={index} style={modalStyles.subActionItem}>
-                                        {editingSubActionIndex === index ? (
-                                            <>
-                                                <TextInput
-                                                    style={[modalStyles.textInput, { flex: 1, marginRight: 8 }]}
-                                                    value={editingSubActionText}
-                                                    onChangeText={setEditingSubActionText}
-                                                    onSubmitEditing={handleSaveEditSubAction}
-                                                    autoFocus
-                                                    placeholder="Sub-action text..."
-                                                    placeholderTextColor={theme.colors.textSecondary}
-                                                />
-                                                <TouchableOpacity
-                                                    onPress={handleSaveEditSubAction}
-                                                    style={modalStyles.editActionButton}
-                                                >
-                                                    <Ionicons name="checkmark" size={16} color={theme.colors.success} />
-                                                </TouchableOpacity>
-                                                <TouchableOpacity
-                                                    onPress={handleCancelEditSubAction}
-                                                    style={modalStyles.editActionButton}
-                                                >
-                                                    <Ionicons name="close" size={16} color={theme.colors.error} />
-                                                </TouchableOpacity>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <TouchableOpacity
-                                                    style={modalStyles.subActionTextContainer}
-                                                    onPress={() => handleStartEditSubAction(index)}
-                                                >
-                                                    <Text style={modalStyles.subActionText}>{action}</Text>
-                                                </TouchableOpacity>
-                                                <TouchableOpacity
-                                                    onPress={() => handleRemoveSubAction(index)}
-                                                    style={modalStyles.removeButton}
-                                                >
-                                                    <Ionicons name="close" size={16} color={theme.colors.textSecondary} />
-                                                </TouchableOpacity>
-                                            </>
-                                        )}
-                                    </View>
-                                ))}
-                                <View style={modalStyles.addSubActionRow}>
-                                    <TextInput
-                                        style={[modalStyles.textInput, modalStyles.subActionInput]}
-                                        value={newSubAction}
-                                        onChangeText={setNewSubAction}
-                                        placeholder="Add sub-action..."
-                                        placeholderTextColor={theme.colors.textSecondary}
-                                        onSubmitEditing={handleAddSubAction}
-                                    />
-                                    <TouchableOpacity
-                                        onPress={handleAddSubAction}
-                                        style={modalStyles.addButton}
-                                    >
-                                        <Ionicons name="add" size={20} color={theme.colors.primary} />
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-
-                            {/* Navigation Target */}
-                            <View style={modalStyles.configSection}>
-                                <View style={modalStyles.navigationHeader}>
-                                    <Text style={modalStyles.sectionTitle}>Custom Navigation</Text>
-                                    <TouchableOpacity
-                                        style={modalStyles.toggleSwitch}
-                                        onPress={() => setHasCustomNavigation(!hasCustomNavigation)}
-                                    >
-                                        <View style={[
-                                            modalStyles.switchTrack,
-                                            hasCustomNavigation && modalStyles.switchTrackActive
-                                        ]}>
-                                            <View style={[
-                                                modalStyles.switchThumb,
-                                                hasCustomNavigation && modalStyles.switchThumbActive
-                                            ]} />
-                                        </View>
-                                    </TouchableOpacity>
+                        {hasCustomNavigation && (
+                            <View style={modalStyles.navigationConfig}>
+                                <Text style={modalStyles.navigationLabel}>Target Type</Text>
+                                <View style={modalStyles.navigationOptions}>
+                                    {(['note', 'action', 'spark', 'path', 'saga'] as const).map((type) => (
+                                        <TouchableOpacity
+                                            key={type}
+                                            style={[
+                                                modalStyles.navigationOption,
+                                                navigationType === type && modalStyles.navigationOptionActive
+                                            ]}
+                                            onPress={() => setNavigationType(type)}
+                                        >
+                                            <Text style={[
+                                                modalStyles.navigationOptionText,
+                                                navigationType === type && modalStyles.navigationOptionTextActive
+                                            ]}>
+                                                {type}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
                                 </View>
 
-                                {hasCustomNavigation && (
-                                    <View style={modalStyles.navigationConfig}>
-                                        <Text style={modalStyles.navigationLabel}>Target Type</Text>
-                                        <View style={modalStyles.navigationOptions}>
-                                            {(['note', 'action', 'spark', 'path', 'saga'] as const).map((type) => (
-                                                <TouchableOpacity
-                                                    key={type}
-                                                    style={[
-                                                        modalStyles.navigationOption,
-                                                        navigationType === type && modalStyles.navigationOptionActive
-                                                    ]}
-                                                    onPress={() => setNavigationType(type)}
-                                                >
-                                                    <Text style={[
-                                                        modalStyles.navigationOptionText,
-                                                        navigationType === type && modalStyles.navigationOptionTextActive
-                                                    ]}>
-                                                        {type}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            ))}
-                                        </View>
-
-                                        <Text style={modalStyles.navigationLabel}>Mode</Text>
-                                        <View style={modalStyles.navigationOptions}>
-                                            {(['create', 'review', 'view', 'select'] as const).map((mode) => (
-                                                <TouchableOpacity
-                                                    key={mode}
-                                                    style={[
-                                                        modalStyles.navigationOption,
-                                                        navigationMode === mode && modalStyles.navigationOptionActive
-                                                    ]}
-                                                    onPress={() => setNavigationMode(mode)}
-                                                >
-                                                    <Text style={[
-                                                        modalStyles.navigationOptionText,
-                                                        navigationMode === mode && modalStyles.navigationOptionTextActive
-                                                    ]}>
-                                                        {mode}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            ))}
-                                        </View>
-                                    </View>
-                                )}
+                                <Text style={modalStyles.navigationLabel}>Mode</Text>
+                                <View style={modalStyles.navigationOptions}>
+                                    {(['create', 'review', 'view', 'select'] as const).map((mode) => (
+                                        <TouchableOpacity
+                                            key={mode}
+                                            style={[
+                                                modalStyles.navigationOption,
+                                                navigationMode === mode && modalStyles.navigationOptionActive
+                                            ]}
+                                            onPress={() => setNavigationMode(mode)}
+                                        >
+                                            <Text style={[
+                                                modalStyles.navigationOptionText,
+                                                navigationMode === mode && modalStyles.navigationOptionTextActive
+                                            ]}>
+                                                {mode}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
                             </View>
-                        </ScrollView>
+                        )}
                     </View>
-                </SafeAreaView>
-            </BlurView>
-        </Modal>
+                </ScrollView>
+            </View>
+        </BottomSheet>
     );
 };
 

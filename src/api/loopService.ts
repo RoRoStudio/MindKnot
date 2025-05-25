@@ -341,6 +341,11 @@ export const saveLoopExecutionState = async (state: LoopExecutionState): Promise
                  pausedAt = ?,
                  timeSpentSeconds = ?,
                  activityTimeTracking = ?,
+                 activityStartTimes = ?,
+                 activityEndTimes = ?,
+                 activityElapsedSeconds = ?,
+                 lastActiveTimestamp = ?,
+                 backgroundStartTime = ?,
                  updatedAt = ?
                  WHERE loopId = ?`,
                 [
@@ -352,6 +357,11 @@ export const saveLoopExecutionState = async (state: LoopExecutionState): Promise
                     state.pausedAt || null,
                     state.timeSpentSeconds,
                     JSON.stringify(state.activityTimeTracking),
+                    JSON.stringify(state.activityStartTimes || {}),
+                    JSON.stringify(state.activityEndTimes || {}),
+                    JSON.stringify(state.activityElapsedSeconds || {}),
+                    state.lastActiveTimestamp || new Date().toISOString(),
+                    state.backgroundStartTime || null,
                     now,
                     state.loopId
                 ]
@@ -363,8 +373,10 @@ export const saveLoopExecutionState = async (state: LoopExecutionState): Promise
                 `INSERT INTO loop_execution_state (
                     id, loopId, currentActivityIndex, startedAt, completedActivities, 
                     completedSubActions, isPaused, pausedAt, timeSpentSeconds, 
-                    activityTimeTracking, createdAt, updatedAt
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    activityTimeTracking, activityStartTimes, activityEndTimes,
+                    activityElapsedSeconds, lastActiveTimestamp, backgroundStartTime,
+                    createdAt, updatedAt
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     id,
                     state.loopId,
@@ -376,6 +388,11 @@ export const saveLoopExecutionState = async (state: LoopExecutionState): Promise
                     state.pausedAt || null,
                     state.timeSpentSeconds,
                     JSON.stringify(state.activityTimeTracking),
+                    JSON.stringify(state.activityStartTimes || {}),
+                    JSON.stringify(state.activityEndTimes || {}),
+                    JSON.stringify(state.activityElapsedSeconds || {}),
+                    state.lastActiveTimestamp || new Date().toISOString(),
+                    state.backgroundStartTime || null,
                     now,
                     now
                 ]
@@ -408,7 +425,13 @@ export const getLoopExecutionState = async (loopId: string): Promise<LoopExecuti
                 isPaused: Boolean(row.isPaused),
                 pausedAt: row.pausedAt,
                 timeSpentSeconds: row.timeSpentSeconds || 0,
-                activityTimeTracking: row.activityTimeTracking ? JSON.parse(row.activityTimeTracking) : {}
+                activityTimeTracking: row.activityTimeTracking ? JSON.parse(row.activityTimeTracking) : {},
+                // Enhanced time tracking fields with defaults
+                activityStartTimes: row.activityStartTimes ? JSON.parse(row.activityStartTimes) : {},
+                activityEndTimes: row.activityEndTimes ? JSON.parse(row.activityEndTimes) : {},
+                activityElapsedSeconds: row.activityElapsedSeconds ? JSON.parse(row.activityElapsedSeconds) : {},
+                lastActiveTimestamp: row.lastActiveTimestamp || new Date().toISOString(),
+                backgroundStartTime: row.backgroundStartTime || undefined
             };
         }
 
@@ -927,7 +950,11 @@ export const startLoopExecution = async (loopId: string): Promise<boolean> => {
             completedSubActions: {},
             isPaused: false,
             timeSpentSeconds: 0,
-            activityTimeTracking: {}
+            activityTimeTracking: {},
+            activityStartTimes: {},
+            activityEndTimes: {},
+            activityElapsedSeconds: {},
+            lastActiveTimestamp: now
         };
 
         await saveLoopExecutionState(executionState);

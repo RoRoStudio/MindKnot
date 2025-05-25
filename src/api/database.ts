@@ -427,6 +427,42 @@ async function createTables(): Promise<void> {
             console.log('activityTimeTracking column already exists in loop_execution_state or error adding it:', error);
         }
 
+        // Add enhanced time tracking columns
+        try {
+            await db.execAsync('ALTER TABLE loop_execution_state ADD COLUMN activityStartTimes TEXT');
+            console.log('Added activityStartTimes column to loop_execution_state table');
+        } catch (error) {
+            console.log('activityStartTimes column already exists in loop_execution_state or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync('ALTER TABLE loop_execution_state ADD COLUMN activityEndTimes TEXT');
+            console.log('Added activityEndTimes column to loop_execution_state table');
+        } catch (error) {
+            console.log('activityEndTimes column already exists in loop_execution_state or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync('ALTER TABLE loop_execution_state ADD COLUMN activityElapsedSeconds TEXT');
+            console.log('Added activityElapsedSeconds column to loop_execution_state table');
+        } catch (error) {
+            console.log('activityElapsedSeconds column already exists in loop_execution_state or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync('ALTER TABLE loop_execution_state ADD COLUMN lastActiveTimestamp TEXT');
+            console.log('Added lastActiveTimestamp column to loop_execution_state table');
+        } catch (error) {
+            console.log('lastActiveTimestamp column already exists in loop_execution_state or error adding it:', error);
+        }
+
+        try {
+            await db.execAsync('ALTER TABLE loop_execution_state ADD COLUMN backgroundStartTime TEXT');
+            console.log('Added backgroundStartTime column to loop_execution_state table');
+        } catch (error) {
+            console.log('backgroundStartTime column already exists in loop_execution_state or error adding it:', error);
+        }
+
         try {
             await db.execAsync('ALTER TABLE loop_activity_instances ADD COLUMN autoCompleteOnTimerEnd INTEGER DEFAULT 1');
             console.log('Added autoCompleteOnTimerEnd column to loop_activity_instances table');

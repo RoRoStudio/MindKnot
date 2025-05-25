@@ -8,14 +8,38 @@ export * from './actions';
 export * from './notes';
 export * from './sparks';
 
-// Re-export specific items from loops
-import {
-    useLoopDraft
-} from './loops';
-
+// Re-export all loop-related functionality
 export {
-    useLoopDraft
-};
+    loopReducer,
+    useLoopActions,
+    // Async thunks
+    fetchLoops,
+    addLoop,
+    updateLoopThunk,
+    removeLoop,
+    fetchActivityTemplates,
+    addActivityTemplate,
+    updateActivityTemplateThunk,
+    removeActivityTemplate,
+    initializePredefinedTemplates,
+    startLoopExecutionThunk,
+    completeLoopExecutionThunk,
+    // Enhanced actions
+    loadActiveExecution,
+    navigateToActivity,
+    advanceActivity,
+    pauseLoopExecution,
+    updateActivityTimer,
+    syncActivityTimer,
+    clearActivityTimers,
+    // Regular actions
+    setDraft,
+    resetDraft,
+    updateDraft,
+    setCurrentLoop,
+    clearError,
+    setError
+} from './loops';
 
 // Re-export specific items from paths
 import {

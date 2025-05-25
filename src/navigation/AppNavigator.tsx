@@ -62,24 +62,27 @@ const AppWithLoopHeader: React.FC<{ children: React.ReactNode }> = ({ children }
 
     const handleResume = async () => {
         if (activeExecution) {
-            await pauseLoopExecution(activeExecution.loop.id, false);
+            await pauseLoopExecution({ loopId: activeExecution.loop.id, isPaused: false });
         }
     };
 
     const handlePause = async () => {
         if (activeExecution) {
-            await pauseLoopExecution(activeExecution.loop.id, true);
+            await pauseLoopExecution({ loopId: activeExecution.loop.id, isPaused: true });
         }
     };
 
     const handleSkip = async () => {
         if (activeExecution && currentActivityWithTemplate) {
-            await advanceActivity(activeExecution.loop.id, {
-                activityId: currentActivityWithTemplate.activity.id,
-                completed: false,
-                skipped: true,
-                timeSpentSeconds: 0,
-                completedSubActions: [],
+            await advanceActivity({
+                loopId: activeExecution.loop.id,
+                result: {
+                    activityId: currentActivityWithTemplate.activity.id,
+                    completed: false,
+                    skipped: true,
+                    timeSpentSeconds: 0,
+                    completedSubActions: [],
+                }
             });
         }
     };

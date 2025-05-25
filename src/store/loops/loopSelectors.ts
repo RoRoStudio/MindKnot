@@ -1,6 +1,6 @@
 import { RootState } from '../../store/shared/store';
 import { createSelector } from '@reduxjs/toolkit';
-import { Loop, ActivityTemplate, LoopExecutionState, LoopActivityInstance } from '../../types/loop';
+import { Loop, ActivityTemplate, LoopExecutionState, LoopActivityInstance, LoopProgressInfo } from '../../types/loop';
 
 // Basic selectors
 export const selectLoops = (state: RootState) => state.loop.loops;
@@ -70,7 +70,7 @@ export const selectLegacyLoops = (state: RootState) =>
     state.loop.loops.filter(loop => loop.items && loop.items.length > 0 && (!loop.activities || loop.activities.length === 0));
 
 // Execution progress selectors - updated for new structure
-export const selectCurrentActivityProgress = (state: RootState) => {
+export const selectCurrentActivityProgress = (state: RootState): LoopProgressInfo | null => {
     const execution = state.loop.activeExecution;
     if (!execution) return null;
 
@@ -81,13 +81,19 @@ export const selectCurrentActivityProgress = (state: RootState) => {
     const totalActivities = activityInstances?.length || legacyActivities?.length || 0;
     const currentIndex = execution.executionState.currentActivityIndex;
     const completedCount = execution.executionState.completedActivities.length;
+    const currentActivity = activityInstances?.[currentIndex];
+    const nextActivity = activityInstances?.[currentIndex + 1];
+
+    if (!currentActivity) return null;
 
     return {
         currentIndex,
         totalActivities,
         completedCount,
-        progress: totalActivities > 0 ? (currentIndex / totalActivities) * 100 : 0,
-        isComplete: currentIndex >= totalActivities
+        progress: totalActivities > 0 ? (completedCount / totalActivities) * 100 : 0,
+        isComplete: currentIndex >= totalActivities,
+        currentActivity,
+        nextActivity
     };
 };
 

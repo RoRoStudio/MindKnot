@@ -10,10 +10,41 @@ import { Provider } from 'react-redux';
 import { store } from './src/store';
 import { ThemeProvider } from './src/contexts/ThemeContext';
 import AppNavigator from './src/navigation/AppNavigator';
+import { ExpandableLoopHeader } from './src/components/shared/ExpandableLoopHeader';
+import { LoopExecutionScreen } from './src/screens/loops/LoopExecutionScreen';
+import { useExpandableLoopHeader } from './src/hooks/useExpandableLoopHeader';
 import { initDatabase } from './src/api/database';
 import { useFonts, KantumruyPro_300Light, KantumruyPro_400Regular, KantumruyPro_500Medium, KantumruyPro_600SemiBold, KantumruyPro_700Bold } from '@expo-google-fonts/kantumruy-pro';
 import * as SplashScreen from 'expo-splash-screen';
 import { lightTheme } from './src/theme/light';
+
+// Main App Content Component (needs to be inside Provider to use hooks)
+const AppContent: React.FC = () => {
+    const {
+        showExecutionScreen,
+        hasActiveLoop,
+        openExecution,
+        closeExecution,
+    } = useExpandableLoopHeader();
+
+    return (
+        <>
+            <AppNavigator />
+
+            {/* Expandable Loop Header - shows when there's an active loop */}
+            <ExpandableLoopHeader
+                visible={hasActiveLoop}
+                onOpenExecution={openExecution}
+            />
+
+            {/* Loop Execution Screen - modal overlay */}
+            <LoopExecutionScreen
+                visible={showExecutionScreen}
+                onClose={closeExecution}
+            />
+        </>
+    );
+};
 
 export default function App() {
     const [dbInitialized, setDbInitialized] = useState(false);
@@ -97,7 +128,7 @@ export default function App() {
                     <ThemeProvider>
                         <ActionSheetProvider>
                             <NavigationContainer>
-                                <AppNavigator />
+                                <AppContent />
                             </NavigationContainer>
                         </ActionSheetProvider>
                     </ThemeProvider>

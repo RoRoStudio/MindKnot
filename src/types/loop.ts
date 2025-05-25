@@ -88,6 +88,12 @@ export interface LoopExecutionState {
     pausedAt?: string;
     timeSpentSeconds: number; // Total time spent in this execution
     activityTimeTracking: Record<string, number>; // Time spent per activity instance
+    // Enhanced time tracking
+    activityStartTimes: Record<string, string>; // ISO timestamps when each activity started
+    activityEndTimes: Record<string, string>; // ISO timestamps when each activity ended
+    activityElapsedSeconds: Record<string, number>; // Accumulated time per activity (for navigation scenarios)
+    lastActiveTimestamp: string; // Last time the execution was active (for background recovery)
+    backgroundStartTime?: string; // When app went to background (if timer was running)
 }
 
 // Result of completing an activity
@@ -135,13 +141,13 @@ export interface LoopCreationDraft {
     activityInstances: LoopActivityInstance[];
 }
 
-// Progress tracking for UI
+// Progress tracking for current loop execution
 export interface LoopProgressInfo {
     currentIndex: number;
     totalActivities: number;
     completedCount: number;
     progress: number; // 0-100 percentage
     isComplete: boolean;
-    currentActivity?: LoopActivityInstance;
+    currentActivity: LoopActivityInstance;
     nextActivity?: LoopActivityInstance;
 }

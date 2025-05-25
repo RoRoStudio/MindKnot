@@ -25,10 +25,15 @@ import {
     // Execution operations
     startLoopExecutionThunk,
     completeLoopExecutionThunk,
-    pauseLoopExecutionThunk,
-    advanceLoopActivityThunk,
-    fetchActiveExecution,
-    navigateToActivityThunk,
+    pauseLoopExecution,
+    advanceActivity,
+    loadActiveExecution,
+    navigateToActivity,
+
+    // Enhanced timer actions
+    updateActivityTimer,
+    syncActivityTimer,
+    clearActivityTimers,
 
     // Actions
     setDraft,
@@ -88,6 +93,7 @@ export const useLoopActions = () => {
     const currentActivityProgress = useAppSelector(selectCurrentActivityProgress);
     const currentActivityInstance = useAppSelector(selectCurrentActivityInstance);
     const nextActivityInstance = useAppSelector(selectNextActivityInstance);
+    const activityTimers = useAppSelector(state => state.loop.activityTimers);
 
     // =====================
     // LOOP OPERATIONS
@@ -295,24 +301,46 @@ export const useLoopActions = () => {
         return completeLoopExecutionThunk.fulfilled.match(resultAction);
     }, [dispatch]);
 
-    const pauseLoopExecution = useCallback(async (loopId: string, isPaused: boolean) => {
-        const resultAction = await dispatch(pauseLoopExecutionThunk({ loopId, isPaused }));
-        return pauseLoopExecutionThunk.fulfilled.match(resultAction);
+    const pauseLoopExecutionAction = useCallback(async (params: { loopId: string; isPaused: boolean }) => {
+        const resultAction = await dispatch(pauseLoopExecution(params));
+        return pauseLoopExecution.fulfilled.match(resultAction);
     }, [dispatch]);
 
-    const advanceActivity = useCallback(async (loopId: string, activityResult: ActivityExecutionResult) => {
-        const resultAction = await dispatch(advanceLoopActivityThunk({ loopId, activityResult }));
-        return advanceLoopActivityThunk.fulfilled.match(resultAction);
+    const advanceActivityAction = useCallback(async (params: { loopId: string; result: ActivityExecutionResult }) => {
+        const resultAction = await dispatch(advanceActivity(params));
+        return advanceActivity.fulfilled.match(resultAction);
     }, [dispatch]);
 
-    const navigateToActivity = useCallback(async (loopId: string, targetIndex: number) => {
-        const resultAction = await dispatch(navigateToActivityThunk({ loopId, targetIndex }));
-        return navigateToActivityThunk.fulfilled.match(resultAction);
+    const navigateToActivityAction = useCallback(async (params: { loopId: string; activityIndex: number }) => {
+        const resultAction = await dispatch(navigateToActivity(params));
+        return navigateToActivity.fulfilled.match(resultAction);
     }, [dispatch]);
 
-    const loadActiveExecution = useCallback(async () => {
-        const resultAction = await dispatch(fetchActiveExecution());
-        return fetchActiveExecution.fulfilled.match(resultAction);
+    const loadActiveExecutionAction = useCallback(async () => {
+        const resultAction = await dispatch(loadActiveExecution());
+        return loadActiveExecution.fulfilled.match(resultAction);
+    }, [dispatch]);
+
+    // =====================
+    // ENHANCED TIMER MANAGEMENT
+    // =====================
+
+    const updateActivityTimerAction = useCallback((params: {
+        activityId: string;
+        startTime: string;
+        elapsedSeconds: number;
+        isRunning: boolean;
+        lastUpdateTime: string;
+    }) => {
+        dispatch(updateActivityTimer(params));
+    }, [dispatch]);
+
+    const syncActivityTimerAction = useCallback((params: { activityId: string }) => {
+        dispatch(syncActivityTimer(params));
+    }, [dispatch]);
+
+    const clearActivityTimersAction = useCallback(() => {
+        dispatch(clearActivityTimers());
     }, [dispatch]);
 
     // =====================
@@ -356,9 +384,9 @@ export const useLoopActions = () => {
     // =====================
 
     const checkForActiveExecution = useCallback(async () => {
-        await loadActiveExecution();
+        await loadActiveExecutionAction();
         return activeExecution !== null;
-    }, [loadActiveExecution, activeExecution]);
+    }, [loadActiveExecutionAction, activeExecution]);
 
     const hasUnfinishedLoop = useCallback(() => {
         return isAnyLoopExecuting;
@@ -399,6 +427,7 @@ export const useLoopActions = () => {
         currentActivityProgress,
         currentActivityInstance,
         nextActivityInstance,
+        activityTimers,
 
         // Loop operations
         loadLoops,
@@ -432,10 +461,15 @@ export const useLoopActions = () => {
         // Execution operations
         startLoopExecution,
         completeLoopExecution,
-        pauseLoopExecution,
-        advanceActivity,
-        navigateToActivity,
-        loadActiveExecution,
+        pauseLoopExecution: pauseLoopExecutionAction,
+        advanceActivity: advanceActivityAction,
+        navigateToActivity: navigateToActivityAction,
+        loadActiveExecution: loadActiveExecutionAction,
+
+        // Enhanced timer management
+        updateActivityTimer: updateActivityTimerAction,
+        syncActivityTimer: syncActivityTimerAction,
+        clearActivityTimers: clearActivityTimersAction,
 
         // Draft management
         setLoopDraft,

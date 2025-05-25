@@ -18,6 +18,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Icon } from '../../components/shared/Icon';
+import { ConfirmationModal } from '../../components/shared/ConfirmationModal';
+import { BeautifulTimer } from '../../components/shared/BeautifulTimer';
+import { useBackgroundTimer } from '../../hooks/useBackgroundTimer';
 
 import { useLoopActions } from '../../store/loops';
 import {
@@ -37,228 +40,6 @@ interface LoopExecutionScreenProps {
     onClose: () => void;
 }
 
-interface TimerComponentProps {
-    durationMinutes?: number;
-    onComplete: () => void;
-    onSkip: () => void;
-    isPaused: boolean;
-    onPause: (paused: boolean) => void;
-    isRunning: boolean;
-    onReset?: () => void;
-    autoCompleteOnTimerEnd?: boolean;
-    styles: any;
-    theme: any;
-}
-
-interface ProgressCircleProps {
-    progress: number; // 0-1
-    size: number;
-    strokeWidth: number;
-    children?: React.ReactNode;
-    theme: any;
-}
-
-const ProgressCircle: React.FC<ProgressCircleProps> = ({
-    progress,
-    size,
-    strokeWidth,
-    children,
-    theme
-}) => {
-    return (
-        <View style={{ width: size, height: size, position: 'relative' }}>
-            {/* Background circle */}
-            <View
-                style={{
-                    width: size,
-                    height: size,
-                    borderRadius: size / 2,
-                    borderWidth: strokeWidth,
-                    borderColor: theme.colors.border,
-                    position: 'absolute',
-                }}
-            />
-
-            {/* Progress using overlay approach */}
-            <View
-                style={{
-                    width: size,
-                    height: size,
-                    borderRadius: size / 2,
-                    position: 'absolute',
-                    overflow: 'hidden',
-                }}
-            >
-                <View
-                    style={{
-                        width: size,
-                        height: size * progress,
-                        backgroundColor: theme.colors.primary + '40',
-                        position: 'absolute',
-                        bottom: 0,
-                    }}
-                />
-            </View>
-
-            {/* Inner content area */}
-            <View
-                style={{
-                    width: size - strokeWidth * 2,
-                    height: size - strokeWidth * 2,
-                    borderRadius: (size - strokeWidth * 2) / 2,
-                    backgroundColor: theme.colors.surface,
-                    position: 'absolute',
-                    top: strokeWidth,
-                    left: strokeWidth,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: 1,
-                    borderColor: theme.colors.border,
-                }}
-            >
-                {children}
-            </View>
-        </View>
-    );
-};
-
-const TimerComponent: React.FC<TimerComponentProps> = ({
-    durationMinutes,
-    onComplete,
-    onSkip,
-    isPaused,
-    onPause,
-    isRunning,
-    onReset,
-    autoCompleteOnTimerEnd = true,
-    styles,
-    theme
-}) => {
-    const [timeLeft, setTimeLeft] = useState(durationMinutes ? durationMinutes * 60 : 0);
-    const [totalTime] = useState(durationMinutes ? durationMinutes * 60 : 0);
-    const [overtime, setOvertime] = useState(0);
-    const [isCountingUp, setIsCountingUp] = useState(false);
-    const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-    useEffect(() => {
-        if (durationMinutes) {
-            setTimeLeft(durationMinutes * 60);
-            setOvertime(0);
-            setIsCountingUp(false);
-        }
-    }, [durationMinutes]);
-
-    useEffect(() => {
-        if (isRunning && !isPaused) {
-            intervalRef.current = setInterval(() => {
-                if (!isCountingUp && timeLeft > 0) {
-                    // Countdown phase
-                    setTimeLeft(prev => {
-                        if (prev <= 1) {
-                            if (autoCompleteOnTimerEnd) {
-                                onComplete();
-                                return 0;
-                            } else {
-                                setIsCountingUp(true);
-                                setOvertime(1);
-                                return 0;
-                            }
-                        }
-                        return prev - 1;
-                    });
-                } else if (isCountingUp) {
-                    // Count up phase (overtime)
-                    setOvertime(prev => prev + 1);
-                }
-            }, 1000);
-        } else {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
-        }
-
-        return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
-        };
-    }, [isRunning, isPaused, timeLeft, isCountingUp, autoCompleteOnTimerEnd, onComplete]);
-
-    const formatTime = (seconds: number) => {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    };
-
-    const progress = totalTime > 0 ? (totalTime - timeLeft) / totalTime : 0;
-
-    const handleReset = () => {
-        setTimeLeft(totalTime);
-        setOvertime(0);
-        setIsCountingUp(false);
-        if (onReset) {
-            onReset();
-        }
-    };
-
-    if (!durationMinutes) {
-        return (
-            <View style={styles.noTimerContainer}>
-                <View style={styles.manualTimerIcon}>
-                    <Icon name="clock" size={40} color={theme.colors.textSecondary} />
-                </View>
-                <Text style={styles.noTimerText}>No timer set</Text>
-                <Text style={styles.noTimerSubtext}>Complete when ready</Text>
-            </View>
-        );
-    }
-
-    return (
-        <View style={styles.timerContainer}>
-            <ProgressCircle progress={progress} size={200} strokeWidth={8} theme={theme}>
-                <Text style={styles.timerText}>
-                    {isCountingUp ? formatTime(totalTime) : formatTime(timeLeft)}
-                </Text>
-                {isCountingUp && (
-                    <Text style={styles.overtimeText}>+{formatTime(overtime)}</Text>
-                )}
-                <Text style={styles.timerLabel}>
-                    {Math.round(totalTime / 60)} min
-                </Text>
-            </ProgressCircle>
-
-            <View style={styles.timerControls}>
-                <TouchableOpacity
-                    style={[styles.timerButton, styles.resetButton]}
-                    onPress={handleReset}
-                >
-                    <Icon name="refresh" size={20} color={theme.colors.textSecondary} />
-                    <Text style={styles.resetButtonText}>Reset</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.timerButton, styles.pauseButton]}
-                    onPress={() => onPause(!isPaused)}
-                >
-                    <Icon
-                        name={isPaused ? "circle-play" : "circle-pause"}
-                        size={24}
-                        color={theme.colors.background}
-                    />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.timerButton, styles.skipButton]}
-                    onPress={onSkip}
-                >
-                    <Icon name="skip-forward" size={20} color={theme.colors.textSecondary} />
-                    <Text style={styles.skipButtonText}>Skip</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
-};
-
 interface SubActionsComponentProps {
     subActions: Array<{ id: string; text: string; done: boolean }>;
     completedSubActions: string[];
@@ -266,48 +47,6 @@ interface SubActionsComponentProps {
     styles: any;
     theme: any;
 }
-
-const SubActionsComponent: React.FC<SubActionsComponentProps> = ({
-    subActions,
-    completedSubActions,
-    onToggleSubAction,
-    styles,
-    theme
-}) => {
-    if (!subActions || subActions.length === 0) return null;
-
-    return (
-        <View style={styles.subActionsContainer}>
-            <Text style={styles.subActionsTitle}>Sub-actions</Text>
-            {subActions.map((subAction) => {
-                const isCompleted = completedSubActions.includes(subAction.id) || subAction.done;
-
-                return (
-                    <TouchableOpacity
-                        key={subAction.id}
-                        style={styles.subActionItem}
-                        onPress={() => onToggleSubAction(subAction.id)}
-                    >
-                        <View style={[
-                            styles.checkbox,
-                            isCompleted && styles.checkboxChecked
-                        ]}>
-                            {isCompleted && (
-                                <Icon name="check" size={16} color={theme.colors.background} />
-                            )}
-                        </View>
-                        <Text style={[
-                            styles.subActionText,
-                            isCompleted && styles.subActionTextDone
-                        ]}>
-                            {subAction.text}
-                        </Text>
-                    </TouchableOpacity>
-                );
-            })}
-        </View>
-    );
-};
 
 interface ActivityDisplayProps {
     activity: LoopActivityInstance;
@@ -317,54 +56,6 @@ interface ActivityDisplayProps {
     styles: any;
     theme: any;
 }
-
-const ActivityDisplay: React.FC<ActivityDisplayProps> = ({
-    activity,
-    template,
-    currentIndex,
-    totalActivities,
-    styles,
-    theme
-}) => {
-    const title = activity.overriddenTitle || template.title;
-
-    return (
-        <View style={styles.activityHeader}>
-            <View style={styles.progressHeader}>
-                <Text style={styles.progressText}>
-                    {currentIndex + 1} of {totalActivities}
-                </Text>
-                <View style={styles.progressBarBackground}>
-                    <View
-                        style={[
-                            styles.progressBarFill,
-                            { width: `${((currentIndex + 1) / totalActivities) * 100}%` }
-                        ]}
-                    />
-                </View>
-            </View>
-
-            <View style={styles.activityTitleContainer}>
-                <Text style={styles.activityIcon}>{template.icon}</Text>
-                <View style={styles.activityTitleWrapper}>
-                    <Text style={styles.activityTitle}>{title}</Text>
-                    {template.description && (
-                        <Text style={styles.activityDescription}>{template.description}</Text>
-                    )}
-                </View>
-            </View>
-
-            {activity.quantity && (
-                <View style={styles.quantityContainer}>
-                    <View style={styles.quantityBadge}>
-                        <Text style={styles.quantityValue}>{activity.quantity.value}</Text>
-                        <Text style={styles.quantityUnit}>{activity.quantity.unit}</Text>
-                    </View>
-                </View>
-            )}
-        </View>
-    );
-};
 
 // Helper function to get navigation label
 const getNavigationLabel = (target: NavigateTarget): string => {
@@ -755,6 +446,98 @@ const createStyles = (theme: any) => StyleSheet.create({
     },
 });
 
+const SubActionsComponent: React.FC<SubActionsComponentProps> = ({
+    subActions,
+    completedSubActions,
+    onToggleSubAction,
+    styles,
+    theme
+}) => {
+    if (!subActions || subActions.length === 0) return null;
+
+    return (
+        <View style={styles.subActionsContainer}>
+            <Text style={styles.subActionsTitle}>Sub-actions</Text>
+            {subActions.map((subAction) => {
+                const isCompleted = completedSubActions.includes(subAction.id) || subAction.done;
+
+                return (
+                    <TouchableOpacity
+                        key={subAction.id}
+                        style={styles.subActionItem}
+                        onPress={() => onToggleSubAction(subAction.id)}
+                    >
+                        <View style={[
+                            styles.checkbox,
+                            isCompleted && styles.checkboxChecked
+                        ]}>
+                            {isCompleted && (
+                                <Icon name="check" size={16} color={theme.colors.background} />
+                            )}
+                        </View>
+                        <Text style={[
+                            styles.subActionText,
+                            isCompleted && styles.subActionTextDone
+                        ]}>
+                            {subAction.text}
+                        </Text>
+                    </TouchableOpacity>
+                );
+            })}
+        </View>
+    );
+};
+
+const ActivityDisplay: React.FC<ActivityDisplayProps> = ({
+    activity,
+    template,
+    currentIndex,
+    totalActivities,
+    styles,
+    theme
+}) => {
+    const title = 'overriddenTitle' in activity ?
+        (activity.overriddenTitle || template.title) :
+        template.title;
+
+    return (
+        <View style={styles.activityHeader}>
+            <View style={styles.progressHeader}>
+                <Text style={styles.progressText}>
+                    {currentIndex + 1} of {totalActivities}
+                </Text>
+                <View style={styles.progressBarBackground}>
+                    <View
+                        style={[
+                            styles.progressBarFill,
+                            { width: `${((currentIndex + 1) / totalActivities) * 100}%` }
+                        ]}
+                    />
+                </View>
+            </View>
+
+            <View style={styles.activityTitleContainer}>
+                <Text style={styles.activityIcon}>{template.icon}</Text>
+                <View style={styles.activityTitleWrapper}>
+                    <Text style={styles.activityTitle}>{title}</Text>
+                    {template.description && (
+                        <Text style={styles.activityDescription}>{template.description}</Text>
+                    )}
+                </View>
+            </View>
+
+            {'quantity' in activity && activity.quantity && (
+                <View style={styles.quantityContainer}>
+                    <View style={styles.quantityBadge}>
+                        <Text style={styles.quantityValue}>{activity.quantity.value}</Text>
+                        <Text style={styles.quantityUnit}>{activity.quantity.unit}</Text>
+                    </View>
+                </View>
+            )}
+        </View>
+    );
+};
+
 export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visible, onClose }) => {
     const navigation = useNavigation<any>();
     const { theme } = useTheme();
@@ -763,19 +546,43 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
         activeExecution,
         currentActivityWithTemplate,
         currentActivityProgress,
+        activityTimers,
         advanceActivity,
         pauseLoopExecution,
         completeLoopExecution,
         loadActiveExecution,
         activityTemplates,
-        navigateToActivity
+        navigateToActivity,
+        updateActivityTimer,
+        syncActivityTimer
     } = useLoopActions();
 
-    const [isTimerPaused, setIsTimerPaused] = useState(false);
     const [completedSubActions, setCompletedSubActions] = useState<string[]>([]);
     const [showExitModal, setShowExitModal] = useState(false);
-    const [activityStartTime] = useState(Date.now());
+    const [showSubActionConfirmModal, setShowSubActionConfirmModal] = useState(false);
+    const [pendingCompletion, setPendingCompletion] = useState<{ skipped: boolean } | null>(null);
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    const { startBackgroundTimer, stopBackgroundTimer, pauseBackgroundTimer, resumeBackgroundTimer } = useBackgroundTimer();
+
+    // Initialize timer when component mounts or activity changes
+    useEffect(() => {
+        if (visible && activeExecution && currentActivityWithTemplate) {
+            const currentActivity = currentActivityWithTemplate.activity;
+            const currentTimer = activityTimers[currentActivity.id];
+
+            // Initialize timer if it doesn't exist
+            if (!currentTimer) {
+                const now = new Date().toISOString();
+                updateActivityTimer({
+                    activityId: currentActivity.id,
+                    startTime: now,
+                    elapsedSeconds: 0,
+                    isRunning: !activeExecution.executionState.isPaused,
+                    lastUpdateTime: now
+                });
+            }
+        }
+    }, [visible, activeExecution, currentActivityWithTemplate, activityTimers, updateActivityTimer]);
 
     useEffect(() => {
         if (visible) {
@@ -880,7 +687,10 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
         if (currentIndex <= 0) return;
 
         try {
-            const success = await navigateToActivity(activeExecution.loop.id, currentIndex - 1);
+            const success = await navigateToActivity({
+                loopId: activeExecution.loop.id,
+                activityIndex: currentIndex - 1
+            });
             if (!success) {
                 Alert.alert('Error', 'Failed to navigate to previous activity');
             }
@@ -897,7 +707,10 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
         if (currentIndex >= currentActivityProgress.totalActivities - 1) return;
 
         try {
-            const success = await navigateToActivity(activeExecution.loop.id, currentIndex + 1);
+            const success = await navigateToActivity({
+                loopId: activeExecution.loop.id,
+                activityIndex: currentIndex + 1
+            });
             if (!success) {
                 Alert.alert('Error', 'Failed to navigate to next activity');
             }
@@ -910,7 +723,32 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
     const handleCompleteActivity = useCallback(async (skipped: boolean = false) => {
         if (!activeExecution || !currentActivityWithTemplate) return;
 
-        const timeSpent = Math.floor((Date.now() - activityStartTime) / 1000);
+        // Check if there are incomplete sub-activities when not skipping
+        if (!skipped && currentActivityWithTemplate.activity.subActions && currentActivityWithTemplate.activity.subActions.length > 0) {
+            const totalSubActions = currentActivityWithTemplate.activity.subActions.length;
+            const completedCount = completedSubActions.length;
+
+            if (completedCount < totalSubActions) {
+                // Show confirmation modal for incomplete sub-activities
+                setPendingCompletion({ skipped });
+                setShowSubActionConfirmModal(true);
+                return;
+            }
+        }
+
+        // Proceed with completion
+        await executeActivityCompletion(skipped);
+    }, [
+        activeExecution,
+        currentActivityWithTemplate,
+        completedSubActions,
+    ]);
+
+    const executeActivityCompletion = useCallback(async (skipped: boolean = false) => {
+        if (!activeExecution || !currentActivityWithTemplate) return;
+
+        const currentTimer = activityTimers[currentActivityWithTemplate.activity.id];
+        const timeSpent = currentTimer?.elapsedSeconds || 0;
 
         const result: ActivityExecutionResult = {
             activityId: currentActivityWithTemplate.activity.id,
@@ -921,10 +759,10 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
         };
 
         try {
-            const success = await advanceActivity(activeExecution.loop.id, result);
+            const success = await advanceActivity({ loopId: activeExecution.loop.id, result });
             if (success) {
                 setCompletedSubActions([]);
-                setIsTimerPaused(false);
+                await stopBackgroundTimer();
 
                 // Check if this was the last activity
                 if (currentActivityProgress &&
@@ -941,13 +779,24 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
     }, [
         activeExecution,
         currentActivityWithTemplate,
-        activityStartTime,
+        activityTimers,
         completedSubActions,
         advanceActivity,
         currentActivityProgress,
         completeLoopExecution,
-        onClose
+        onClose,
+        stopBackgroundTimer
     ]);
+
+    const handleSubActionConfirmation = (proceed: boolean) => {
+        setShowSubActionConfirmModal(false);
+
+        if (proceed && pendingCompletion) {
+            executeActivityCompletion(pendingCompletion.skipped);
+        }
+
+        setPendingCompletion(null);
+    };
 
     const handleExitLoop = () => {
         setShowExitModal(true);
@@ -955,7 +804,7 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
 
     const confirmExitLoop = async () => {
         if (activeExecution) {
-            await pauseLoopExecution(activeExecution.loop.id, true);
+            await pauseLoopExecution({ loopId: activeExecution.loop.id, isPaused: true });
         }
         setShowExitModal(false);
         onClose();
@@ -963,8 +812,13 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
 
     const handlePauseLoop = async (isPaused: boolean) => {
         if (activeExecution) {
-            await pauseLoopExecution(activeExecution.loop.id, isPaused);
-            setIsTimerPaused(isPaused);
+            await pauseLoopExecution({ loopId: activeExecution.loop.id, isPaused });
+
+            if (isPaused) {
+                await pauseBackgroundTimer();
+            } else {
+                await resumeBackgroundTimer();
+            }
         }
     };
 
@@ -1020,6 +874,8 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
 
     const canNavigate = currentActivity.navigateTarget || currentTemplate.navigateTarget;
     const navigationTarget = currentActivity.navigateTarget || currentTemplate.navigateTarget;
+    const currentTimer = activityTimers[currentActivity.id];
+    const isPaused = activeExecution.executionState.isPaused;
 
     return (
         <Modal
@@ -1045,10 +901,10 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
 
                             <TouchableOpacity
                                 style={styles.headerButton}
-                                onPress={() => handlePauseLoop(!isTimerPaused)}
+                                onPress={() => handlePauseLoop(!isPaused)}
                             >
                                 <Icon
-                                    name={isTimerPaused ? "circle-play" : "circle-pause"}
+                                    name={isPaused ? "circle-play" : "circle-pause"}
                                     size={24}
                                     color={theme.colors.textPrimary}
                                 />
@@ -1094,19 +950,28 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
                             </View>
 
                             {/* Timer */}
-                            <TimerComponent
-                                durationMinutes={currentActivity.durationMinutes}
-                                onComplete={() => handleCompleteActivity(false)}
-                                onSkip={() => handleCompleteActivity(true)}
-                                isPaused={isTimerPaused}
+                            <BeautifulTimer
+                                durationMinutes={'durationMinutes' in currentActivity ?
+                                    currentActivity.durationMinutes : undefined}
+                                elapsedSeconds={currentTimer?.elapsedSeconds || 0}
+                                isRunning={!isPaused}
+                                isPaused={isPaused}
                                 onPause={handlePauseLoop}
-                                isRunning={!isTimerPaused}
                                 onReset={() => {
                                     // Reset timer state
-                                    setIsTimerPaused(false);
+                                    if (currentActivityWithTemplate) {
+                                        updateActivityTimer({
+                                            activityId: currentActivityWithTemplate.activity.id,
+                                            startTime: new Date().toISOString(),
+                                            elapsedSeconds: 0,
+                                            isRunning: !isPaused,
+                                            lastUpdateTime: new Date().toISOString()
+                                        });
+                                    }
                                 }}
+                                onSkip={() => handleCompleteActivity(true)}
+                                onComplete={() => handleCompleteActivity(false)}
                                 autoCompleteOnTimerEnd={currentActivity.autoCompleteOnTimerEnd !== false}
-                                styles={styles}
                                 theme={theme}
                             />
 
@@ -1222,6 +1087,19 @@ export const LoopExecutionScreen: React.FC<LoopExecutionScreenProps> = ({ visibl
                     </View>
                 </BlurView>
             </Modal>
+
+            {/* Sub-Activity Completion Confirmation Modal */}
+            <ConfirmationModal
+                visible={showSubActionConfirmModal}
+                title="Incomplete Sub-activities"
+                message={`You have ${(currentActivityWithTemplate?.activity?.subActions?.length || 0) - completedSubActions.length} incomplete sub-activities. Do you want to complete this activity anyway?`}
+                icon="circle-alert"
+                confirmText="Complete Anyway"
+                cancelText="Go Back"
+                onConfirm={() => handleSubActionConfirmation(true)}
+                onCancel={() => handleSubActionConfirmation(false)}
+                isDestructive={false}
+            />
         </Modal>
     );
 }; 
