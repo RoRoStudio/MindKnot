@@ -1,7 +1,11 @@
-
-```
 MindKnot
-
+├─ .pnp.cjs
+├─ .pnp.loader.mjs
+├─ App.tsx
+├─ CODEBASE_STRUCTURE.md
+├─ IMPORT_MAPPING.md
+├─ README.md
+├─ REFACTORING_PLAN.md
 ├─ app.json
 ├─ assets
 │  ├─ adaptive-icon.png
@@ -16,36 +20,60 @@ MindKnot
 ├─ package-lock.json
 ├─ package.json
 ├─ src
+│  ├─ api
+│  │  ├─ actionService.ts
+│  │  ├─ actions.ts
+│  │  ├─ categoryService.ts
+│  │  ├─ database.ts
+│  │  ├─ index.ts
+│  │  ├─ loopService.ts
+│  │  ├─ noteService.ts
+│  │  ├─ pathService.ts
+│  │  ├─ sagaService.ts
+│  │  ├─ schema.ts
+│  │  └─ sparkService.ts
 │  ├─ assets
 │  │  └─ icons
 │  │     └─ lucide
 │  │        ├─ a-arrow-down.svg
 │  │        ├─ a-arrow-up.svg
-│  │        ├─ (and a lot more)
+│  │        ├─ (and a lots more)
 │  ├─ components
-│  │  ├─ atoms
-│  │  │  ├─ Button.tsx
-│  │  │  ├─ DottedPillButton.tsx
-│  │  │  ├─ Icon.tsx
-│  │  │  ├─ Label.tsx
-│  │  │  ├─ Typography.tsx
-│  │  │  └─ index.ts
 │  │  ├─ common
-│  │  │  ├─ ConfirmationModal.tsx
 │  │  │  └─ index.ts
 │  │  ├─ entries
 │  │  │  ├─ EntryCard.tsx
+│  │  │  ├─ EntryDetailHeader.tsx
+│  │  │  ├─ EntryMetadataBar.tsx
+│  │  │  ├─ EntryTitleInput.tsx
 │  │  │  ├─ actions
-│  │  │  │  └─ ActionCard.tsx
+│  │  │  │  ├─ ActionCard.tsx
+│  │  │  │  └─ index.ts
 │  │  │  ├─ index.ts
 │  │  │  ├─ loops
-│  │  │  │  └─ LoopCard.tsx
+│  │  │  │  ├─ ActivityPicker.tsx
+│  │  │  │  ├─ ActivityTemplateSelector.tsx
+│  │  │  │  ├─ LoopCard.tsx
+│  │  │  │  ├─ LoopCreationFlow.tsx
+│  │  │  │  ├─ LoopExecutionStatusCard.tsx
+│  │  │  │  ├─ LoopInterruptionModal.tsx
+│  │  │  │  ├─ LoopProgressIndicator.tsx
+│  │  │  │  └─ index.ts
 │  │  │  ├─ notes
-│  │  │  │  └─ NoteCard.tsx
+│  │  │  │  ├─ NoteCard.tsx
+│  │  │  │  └─ index.ts
 │  │  │  ├─ paths
-│  │  │  │  └─ PathCard.tsx
+│  │  │  │  ├─ ActionEmbedSheet.tsx
+│  │  │  │  ├─ MilestoneSection.tsx
+│  │  │  │  ├─ PathCard.tsx
+│  │  │  │  └─ index.ts
+│  │  │  ├─ sagas
+│  │  │  │  ├─ AnimatedBookSaga.tsx
+│  │  │  │  ├─ SagaCreationSheet.tsx
+│  │  │  │  └─ index.ts
 │  │  │  └─ sparks
-│  │  │     └─ SparkCard.tsx
+│  │  │     ├─ SparkCard.tsx
+│  │  │     └─ index.ts
 │  │  ├─ form
 │  │  │  ├─ Form.tsx
 │  │  │  ├─ FormArrayField.tsx
@@ -62,27 +90,33 @@ MindKnot
 │  │  │  ├─ FormSelect.tsx
 │  │  │  ├─ FormSheet.tsx
 │  │  │  ├─ FormSwitch.tsx
+│  │  │  ├─ FormTagInput.tsx
 │  │  │  ├─ FormTextarea.tsx
-│  │  │  └─ index.ts
-│  │  ├─ molecules
-│  │  │  ├─ BottomSheet.tsx
-│  │  │  ├─ Card.tsx
-│  │  │  ├─ CategoryPill.tsx
-│  │  │  ├─ ColorPicker.tsx
-│  │  │  ├─ IconPicker.tsx
 │  │  │  └─ index.ts
 │  │  ├─ navigation
 │  │  │  ├─ CustomBottomNavBar.tsx
-│  │  │  └─ DiamondFab.tsx
-│  │  ├─ organisms
-│  │  │  ├─ EntryDetailHeader.tsx
-│  │  │  ├─ EntryMetadataBar.tsx
+│  │  │  ├─ DiamondFab.tsx
+│  │  │  └─ index.ts
+│  │  ├─ shared
+│  │  │  ├─ BeautifulTimer.tsx
+│  │  │  ├─ BottomSheet.tsx
+│  │  │  ├─ Button.tsx
+│  │  │  ├─ Card.tsx
+│  │  │  ├─ CategoryManager.tsx
+│  │  │  ├─ CategoryPill.tsx
+│  │  │  ├─ ColorPicker.tsx
+│  │  │  ├─ ConfirmationModal.tsx
+│  │  │  ├─ DottedPillButton.tsx
+│  │  │  ├─ ExpandableLoopHeader.tsx
 │  │  │  ├─ FilterableList.tsx
 │  │  │  ├─ FilterableListHeader.tsx
+│  │  │  ├─ Icon.tsx
+│  │  │  ├─ IconPicker.tsx
+│  │  │  ├─ Label.tsx
+│  │  │  ├─ LabelRow.tsx
+│  │  │  ├─ LoopExecutionHeader.tsx
+│  │  │  ├─ Typography.tsx
 │  │  │  └─ index.ts
-│  │  ├─ sagas
-│  │  │  ├─ AnimatedBookSaga.tsx
-│  │  │  └─ SagaCreationSheet.tsx
 │  │  ├─ shared-props.ts
 │  │  └─ templates
 │  │     ├─ BaseEntityScreen.tsx
@@ -94,12 +128,12 @@ MindKnot
 │  │  ├─ BottomSheetContext.tsx
 │  │  ├─ ThemeContext.tsx
 │  │  └─ VaultFiltersContext.tsx
-│  ├─ database
-│  │  ├─ database.ts
-│  │  └─ schema.ts
 │  ├─ hooks
+│  │  ├─ index.ts
 │  │  ├─ useActions.ts
+│  │  ├─ useBackgroundTimer.ts
 │  │  ├─ useCategories.ts
+│  │  ├─ useExpandableLoopHeader.ts
 │  │  ├─ useLoops.ts
 │  │  ├─ useNotes.ts
 │  │  ├─ usePaths.ts
@@ -111,46 +145,30 @@ MindKnot
 │  │  ├─ AppNavigator.tsx
 │  │  ├─ TabNavigator.tsx
 │  │  └─ VaultTabNavigator.tsx
-│  ├─ redux
-│  │  ├─ hooks
-│  │  │  ├─ index.ts
-│  │  │  ├─ stateHooks.ts
-│  │  │  ├─ useActionActions.ts
-│  │  │  ├─ useLoopActions.ts
-│  │  │  ├─ useNoteActions.ts
-│  │  │  ├─ usePathActions.ts
-│  │  │  ├─ useSagaActions.ts
-│  │  │  └─ useSparkActions.ts
-│  │  ├─ selectors
-│  │  │  ├─ actionSelectors.ts
-│  │  │  ├─ loopSelectors.ts
-│  │  │  ├─ noteSelectors.ts
-│  │  │  ├─ pathSelectors.ts
-│  │  │  ├─ sagaSelectors.ts
-│  │  │  └─ sparkSelectors.ts
-│  │  ├─ slices
-│  │  │  ├─ actionSlice.ts
-│  │  │  ├─ loopSlice.ts
-│  │  │  ├─ noteSlice.ts
-│  │  │  ├─ pathSlice.ts
-│  │  │  ├─ sagaSlice.ts
-│  │  │  └─ sparkSlice.ts
-│  │  └─ store.ts
 │  ├─ screens
-│  │  ├─ ActionScreen.tsx
-│  │  ├─ ComponentShowcaseScreen.tsx
-│  │  ├─ HomeScreen.tsx
-│  │  ├─ LoopScreen.tsx
-│  │  ├─ MomentumScreen.tsx
-│  │  ├─ NoteScreen.tsx
-│  │  ├─ PathScreen.tsx
-│  │  ├─ SagaDetailScreen.tsx
-│  │  ├─ SagaScreen.tsx
-│  │  ├─ SparkScreen.tsx
-│  │  ├─ TestScreen.tsx
-│  │  ├─ ThemeInspectorScreen.tsx
-│  │  ├─ VaultScreen.tsx
+│  │  ├─ actions
+│  │  │  └─ ActionScreen.tsx
 │  │  ├─ detail
+│  │  ├─ dev
+│  │  │  ├─ ComponentShowcaseScreen.tsx
+│  │  │  ├─ TestScreen.tsx
+│  │  │  └─ ThemeInspectorScreen.tsx
+│  │  ├─ home
+│  │  │  └─ HomeScreen.tsx
+│  │  ├─ loops
+│  │  │  ├─ LoopExecutionScreen.tsx
+│  │  │  └─ LoopScreen.tsx
+│  │  ├─ momentum
+│  │  │  └─ MomentumScreen.tsx
+│  │  ├─ notes
+│  │  │  └─ NoteScreen.tsx
+│  │  ├─ paths
+│  │  │  └─ PathScreen.tsx
+│  │  ├─ sagas
+│  │  │  ├─ SagaDetailScreen.tsx
+│  │  │  └─ SagaScreen.tsx
+│  │  ├─ sparks
+│  │  │  └─ SparkScreen.tsx
 │  │  └─ vault
 │  │     ├─ BaseVaultScreen.tsx
 │  │     ├─ VaultActionsScreen.tsx
@@ -158,24 +176,54 @@ MindKnot
 │  │     ├─ VaultLoopsScreen.tsx
 │  │     ├─ VaultNotesScreen.tsx
 │  │     ├─ VaultPathsScreen.tsx
+│  │     ├─ VaultScreen.tsx
 │  │     └─ VaultSparksScreen.tsx
-│  ├─ services
-│  │  ├─ actionService.ts
-│  │  ├─ categoryService.ts
-│  │  ├─ loopService.ts
-│  │  ├─ noteService.ts
-│  │  ├─ pathService.ts
-│  │  ├─ sagaService.ts
-│  │  └─ sparkService.ts
-│  ├─ styles
-│  │  ├─ colors.ts
+│  ├─ store
+│  │  ├─ actions
+│  │  │  ├─ actionSelectors.ts
+│  │  │  ├─ actionSlice.ts
+│  │  │  ├─ index.ts
+│  │  │  └─ useActionActions.ts
 │  │  ├─ index.ts
-│  │  ├─ spacing.ts
-│  │  └─ typography.ts
+│  │  ├─ loops
+│  │  │  ├─ index.ts
+│  │  │  ├─ loopSelectors.ts
+│  │  │  ├─ loopSlice.ts
+│  │  │  └─ useLoopActions.ts
+│  │  ├─ notes
+│  │  │  ├─ index.ts
+│  │  │  ├─ noteSelectors.ts
+│  │  │  ├─ noteSlice.ts
+│  │  │  └─ useNoteActions.ts
+│  │  ├─ paths
+│  │  │  ├─ index.ts
+│  │  │  ├─ pathSelectors.ts
+│  │  │  ├─ pathSlice.ts
+│  │  │  └─ usePathActions.ts
+│  │  ├─ sagas
+│  │  │  ├─ index.ts
+│  │  │  ├─ sagaSelectors.ts
+│  │  │  ├─ sagaSlice.ts
+│  │  │  └─ useSagaActions.ts
+│  │  ├─ shared
+│  │  │  ├─ hooks.ts
+│  │  │  ├─ index.ts
+│  │  │  ├─ stateHooks.ts
+│  │  │  └─ store.ts
+│  │  └─ sparks
+│  │     ├─ index.ts
+│  │     ├─ sparkSelectors.ts
+│  │     ├─ sparkSlice.ts
+│  │     └─ useSparkActions.ts
 │  ├─ theme
 │  │  ├─ dark.ts
 │  │  ├─ light.ts
 │  │  ├─ styleConstants.ts
+│  │  ├─ styles
+│  │  │  ├─ colors.ts
+│  │  │  ├─ index.ts
+│  │  │  ├─ spacing.ts
+│  │  │  └─ typography.ts
 │  │  ├─ themeTypes.ts
 │  │  ├─ themeUtils.ts
 │  │  └─ tokens.ts
@@ -196,6 +244,7 @@ MindKnot
 │     ├─ databaseReset.ts
 │     ├─ dateUtils.ts
 │     ├─ themeUtils.ts
+│     ├─ uuid.ts
 │     └─ uuidUtil.ts
 └─ tsconfig.json
 
