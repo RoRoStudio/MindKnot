@@ -1,11 +1,11 @@
-# Complete Codebase Restructure: Feature-Based Clean Architecture
+# Complete Codebase Restructure: Simplified Clean Architecture
 
 ## Project Overview
 
-**Objective**: Complete restructure of the entire codebase using feature-based clean architecture, with special focus on implementing a robust Loop entry type with background execution capabilities.
+**Objective**: Complete restructure of the entire codebase using simplified clean architecture, with special focus on implementing a robust Loop entry type with background execution capabilities.
 
 **Current Status**: Planning phase - no implementation started
-**Target Architecture**: Feature-based clean architecture with domain-driven design for ALL entry types
+**Target Architecture**: Simplified feature-based architecture for ALL entry types
 **Key Requirement**: Background execution for loops that persists across app navigation, backgrounding, and closure
 **Migration Status**: No migration needed - app is in initial development phase
 **Theme Requirement**: ALL components must use theme colors - NO hardcoded colors allowed
@@ -16,21 +16,19 @@
 ## Architecture Philosophy
 
 ### Core Principles
-1. **Feature-Based Organization**: Each entry type lives in its own `features/` folder
-2. **Clean Architecture**: Clear separation between domain, data, and presentation layers
+1. **Simple Feature Organization**: Each entry type lives in its own `features/` folder with minimal subfolders
+2. **Easy to Find**: If you need something for loops, it's in `features/loops/`
 3. **Background Execution**: Persistent execution state with recovery mechanisms (loops only)
 4. **Single Responsibility**: Each file has one clear purpose
-5. **Dependency Inversion**: Domain layer independent of external concerns
-6. **Shared Components**: Reuse components across entry types via `shared/` folder
-7. **Theme Consistency**: NEVER hardcode colors - ALWAYS use theme settings
-8. **Code Reuse**: Eliminate duplicate code through shared utilities and components
+5. **Shared First**: Reuse components across entry types via `shared/` folder
+6. **Theme Consistency**: NEVER hardcode colors - ALWAYS use theme settings
+7. **Code Reuse**: Eliminate duplicate code through shared utilities and components
 
-### Layer Responsibilities
-- **Domain Layer**: Business logic, entities, and rules (what each entry type does)
-- **Data Layer**: Data access, repositories, and external APIs (how to save/load)
-- **Presentation Layer**: UI components, screens, and user interactions (what users see)
-- **State Layer**: Redux state management and selectors
+### Simple Layer Structure
 - **Shared Layer**: Reusable components, hooks, services, and utilities across all features
+- **Feature Layer**: Entry-type specific screens, components, hooks, and state
+- **App Layer**: Navigation, theme, contexts, and store setup
+- **Background Services**: Only for loops - background execution capabilities
 
 ---
 
@@ -41,17 +39,17 @@
 #### Shared Infrastructure (MOVE + ENHANCE)
 ```
 # Components to move to shared/
-src/components/common/                  → src/shared/components/ui/ (MOVE + ENHANCE)
-src/components/form/                    → src/shared/components/form/ (MOVE + ENHANCE)
-src/components/navigation/              → src/shared/components/navigation/ (MOVE)
-src/components/shared/                  → src/shared/components/ui/ (MOVE + MERGE)
-src/components/templates/               → src/shared/components/layout/ (MOVE + ENHANCE)
+src/components/common/                  → src/shared/components/ (MOVE + ENHANCE)
+src/components/form/                    → src/shared/components/ (MOVE + ENHANCE)
+src/components/navigation/              → src/shared/components/ (MOVE)
+src/components/shared/                  → src/shared/components/ (MOVE + MERGE)
+src/components/templates/               → src/shared/components/ (MOVE + ENHANCE)
 
 # Entry-shared components
-src/components/entries/EntryCard.tsx           → src/shared/components/entries/ (MOVE)
-src/components/entries/EntryDetailHeader.tsx   → src/shared/components/entries/ (MOVE)
-src/components/entries/EntryMetadataBar.tsx    → src/shared/components/entries/ (MOVE)
-src/components/entries/EntryTitleInput.tsx     → src/shared/components/entries/ (MOVE)
+src/components/entries/EntryCard.tsx           → src/shared/components/ (MOVE)
+src/components/entries/EntryDetailHeader.tsx   → src/shared/components/ (MOVE)
+src/components/entries/EntryMetadataBar.tsx    → src/shared/components/ (MOVE)
+src/components/entries/EntryTitleInput.tsx     → src/shared/components/ (MOVE)
 
 # App-level files to move
 src/navigation/                         → src/app/navigation/ (MOVE)
@@ -65,9 +63,9 @@ src/hooks/useCategories.ts              → src/shared/hooks/ (MOVE)
 src/hooks/useStyles.ts                  → src/shared/hooks/ (MOVE)
 src/hooks/useThemedStyles.ts            → src/shared/hooks/ (MOVE)
 src/hooks/useBackgroundTimer.ts         → src/shared/hooks/ (MOVE)
-src/api/categoryService.ts              → src/shared/services/api/ (MOVE)
-src/api/database.ts                     → src/shared/services/database/ (MOVE)
-src/api/schema.ts                       → src/shared/services/database/ (MOVE)
+src/api/categoryService.ts              → src/shared/services/ (MOVE)
+src/api/database.ts                     → src/shared/services/ (MOVE)
+src/api/schema.ts                       → src/shared/services/ (MOVE)
 
 # Shared types
 src/types/baseEntry.ts                  → src/shared/types/ (MOVE)
@@ -78,47 +76,47 @@ src/types/navigation-types.ts           → src/shared/types/ (MOVE)
 #### Entry-Specific Files (MOVE to features/)
 ```
 # Actions feature
-src/components/entries/actions/         → src/features/actions/presentation/components/ (MOVE)
-src/screens/actions/                    → src/features/actions/presentation/screens/ (MOVE)
-src/store/actions/                      → src/features/actions/state/ (MOVE)
-src/api/actionService.ts                → src/features/actions/data/api/ (MOVE + ENHANCE)
-src/hooks/useActions.ts                 → src/features/actions/presentation/hooks/ (MOVE)
-src/types/action.ts                     → src/features/actions/types/ (MOVE)
+src/components/entries/actions/         → src/features/actions/components/ (MOVE)
+src/screens/actions/                    → src/features/actions/screens/ (MOVE)
+src/store/actions/                      → src/features/actions/store/ (MOVE)
+src/api/actionService.ts                → src/features/actions/hooks/ (MOVE + ENHANCE)
+src/hooks/useActions.ts                 → src/features/actions/hooks/ (MOVE)
+src/types/action.ts                     → src/shared/types/ (MOVE)
 
 # Notes feature
-src/components/entries/notes/           → src/features/notes/presentation/components/ (MOVE)
-src/screens/notes/                      → src/features/notes/presentation/screens/ (MOVE)
-src/store/notes/                        → src/features/notes/state/ (MOVE)
-src/api/noteService.ts                  → src/features/notes/data/api/ (MOVE + ENHANCE)
-src/hooks/useNotes.ts                   → src/features/notes/presentation/hooks/ (MOVE)
-src/types/note.ts                       → src/features/notes/types/ (MOVE)
+src/components/entries/notes/           → src/features/notes/components/ (MOVE)
+src/screens/notes/                      → src/features/notes/screens/ (MOVE)
+src/store/notes/                        → src/features/notes/store/ (MOVE)
+src/api/noteService.ts                  → src/features/notes/hooks/ (MOVE + ENHANCE)
+src/hooks/useNotes.ts                   → src/features/notes/hooks/ (MOVE)
+src/types/note.ts                       → src/shared/types/ (MOVE)
 
 # Paths feature
-src/components/entries/paths/           → src/features/paths/presentation/components/ (MOVE)
-src/screens/paths/                      → src/features/paths/presentation/screens/ (MOVE)
-src/store/paths/                        → src/features/paths/state/ (MOVE)
-src/api/pathService.ts                  → src/features/paths/data/api/ (MOVE + ENHANCE)
-src/hooks/usePaths.ts                   → src/features/paths/presentation/hooks/ (MOVE)
-src/types/path.ts                       → src/features/paths/types/ (MOVE)
+src/components/entries/paths/           → src/features/paths/components/ (MOVE)
+src/screens/paths/                      → src/features/paths/screens/ (MOVE)
+src/store/paths/                        → src/features/paths/store/ (MOVE)
+src/api/pathService.ts                  → src/features/paths/hooks/ (MOVE + ENHANCE)
+src/hooks/usePaths.ts                   → src/features/paths/hooks/ (MOVE)
+src/types/path.ts                       → src/shared/types/ (MOVE)
 
 # Sagas feature
-src/components/entries/sagas/           → src/features/sagas/presentation/components/ (MOVE)
-src/screens/sagas/                      → src/features/sagas/presentation/screens/ (MOVE)
-src/store/sagas/                        → src/features/sagas/state/ (MOVE)
-src/api/sagaService.ts                  → src/features/sagas/data/api/ (MOVE + ENHANCE)
-src/hooks/useSagas.ts                   → src/features/sagas/presentation/hooks/ (MOVE)
-src/types/saga.ts                       → src/features/sagas/types/ (MOVE)
+src/components/entries/sagas/           → src/features/sagas/components/ (MOVE)
+src/screens/sagas/                      → src/features/sagas/screens/ (MOVE)
+src/store/sagas/                        → src/features/sagas/store/ (MOVE)
+src/api/sagaService.ts                  → src/features/sagas/hooks/ (MOVE + ENHANCE)
+src/hooks/useSagas.ts                   → src/features/sagas/hooks/ (MOVE)
+src/types/saga.ts                       → src/shared/types/ (MOVE)
 
 # Sparks feature
-src/components/entries/sparks/          → src/features/sparks/presentation/components/ (MOVE)
-src/screens/sparks/                     → src/features/sparks/presentation/screens/ (MOVE)
-src/store/sparks/                       → src/features/sparks/state/ (MOVE)
-src/api/sparkService.ts                 → src/features/sparks/data/api/ (MOVE + ENHANCE)
-src/hooks/useSparks.ts                  → src/features/sparks/presentation/hooks/ (MOVE)
-src/types/spark.ts                      → src/features/sparks/types/ (MOVE)
+src/components/entries/sparks/          → src/features/sparks/components/ (MOVE)
+src/screens/sparks/                     → src/features/sparks/screens/ (MOVE)
+src/store/sparks/                       → src/features/sparks/store/ (MOVE)
+src/api/sparkService.ts                 → src/features/sparks/hooks/ (MOVE + ENHANCE)
+src/hooks/useSparks.ts                  → src/features/sparks/hooks/ (MOVE)
+src/types/spark.ts                      → src/shared/types/ (MOVE)
 
 # Cross-feature screens
-src/screens/vault/                      → src/shared/screens/vault/ (MOVE)
+src/screens/vault/                      → src/shared/screens/ (MOVE)
 ```
 
 ### Files to be DELETED (old loop implementation):
@@ -137,359 +135,250 @@ src/types/loop.ts                       # Single file - complete rewrite
 # Complete new loop implementation
 src/features/loops/                     → COMPLETE NEW IMPLEMENTATION
 
-# Shared infrastructure enhancements
-src/shared/services/background/         → NEW: Background task management
-src/shared/services/storage/            → NEW: Storage abstractions
-src/app/store/                          → NEW: Centralized store setup
+# Background services for loops only
+src/features/loops/services/            → NEW: Background execution services
 
-# Domain layers for all entry types
-src/features/*/domain/                  → NEW: Business logic layer for all features
-src/features/*/data/repositories/       → NEW: Data access layer for all features
-src/features/*/data/storage/            → NEW: Storage implementations where needed
+# Centralized store setup
+src/app/store/                          → NEW: Centralized store setup
 ```
 
 ---
 
-## Target Architecture Structure
+## Target Architecture Structure (Simplified)
 
 ### Complete Folder Structure
 ```
 src/
 ├── shared/                            # Truly shared utilities and components
-│   ├── components/
-│   │   ├── ui/                        # Basic reusable UI components
-│   │   │   ├── Button.tsx             # MOVED + ENHANCED from components/shared/Button.tsx
-│   │   │   ├── Card.tsx               # MOVED + ENHANCED from components/shared/Card.tsx
-│   │   │   ├── Input.tsx              # MOVED + ENHANCED from components/form/FormInput.tsx
-│   │   │   ├── Modal.tsx              # MOVED + ENHANCED from components/shared/ConfirmationModal.tsx
-│   │   │   ├── Typography.tsx         # MOVED from components/shared/Typography.tsx
-│   │   │   ├── Icon.tsx               # MOVED from components/shared/Icon.tsx
-│   │   │   ├── BottomSheet.tsx        # MOVED from components/shared/BottomSheet.tsx
-│   │   │   ├── Timer.tsx              # MOVED from components/shared/BeautifulTimer.tsx
-│   │   │   ├── ColorPicker.tsx        # MOVED from components/shared/ColorPicker.tsx
-│   │   │   ├── IconPicker.tsx         # MOVED from components/shared/IconPicker.tsx
-│   │   │   ├── ProgressBar.tsx        # NEW: Reusable progress visualization
-│   │   │   ├── StatusBadge.tsx        # NEW: Status indicators
-│   │   │   └── index.ts               # NEW
-│   │   ├── form/                      # Form-specific components
-│   │   │   ├── FormInput.tsx          # MOVED from components/form/FormInput.tsx
-│   │   │   ├── FormSelect.tsx         # MOVED from components/form/FormSelect.tsx
-│   │   │   ├── FormTextarea.tsx       # MOVED from components/form/FormTextarea.tsx
-│   │   │   ├── FormCheckbox.tsx       # MOVED from components/form/FormCheckbox.tsx
-│   │   │   ├── FormSwitch.tsx         # MOVED from components/form/FormSwitch.tsx
-│   │   │   ├── FormTagInput.tsx       # MOVED from components/form/FormTagInput.tsx
-│   │   │   ├── FormCategorySelector.tsx # MOVED from components/form/FormCategorySelector.tsx
-│   │   │   ├── FormDatePicker.tsx     # MOVED from components/form/FormDatePicker.tsx
-│   │   │   ├── FormMoodSelector.tsx   # MOVED from components/form/FormMoodSelector.tsx
-│   │   │   ├── FormRadioGroup.tsx     # MOVED from components/form/FormRadioGroup.tsx
-│   │   │   ├── FormRichTextarea.tsx   # MOVED from components/form/FormRichTextarea.tsx
-│   │   │   └── index.ts               # MOVED from components/form/index.ts
-│   │   ├── layout/                    # Layout components
-│   │   │   ├── Screen.tsx             # MOVED + ENHANCED from components/templates/BaseEntityScreen.tsx
-│   │   │   ├── Section.tsx            # NEW: Content section wrapper
-│   │   │   ├── Header.tsx             # NEW: Reusable header component
-│   │   │   └── index.ts               # NEW
-│   │   ├── navigation/                # Navigation components
-│   │   │   ├── TabBar.tsx             # MOVED from components/navigation/CustomBottomNavBar.tsx
-│   │   │   ├── DiamondFab.tsx         # MOVED from components/navigation/DiamondFab.tsx
-│   │   │   └── index.ts               # NEW
-│   │   ├── entries/                   # Shared entry components
-│   │   │   ├── EntryCard.tsx          # MOVED from components/entries/EntryCard.tsx
-│   │   │   ├── EntryDetailHeader.tsx  # MOVED from components/entries/EntryDetailHeader.tsx
-│   │   │   ├── EntryMetadataBar.tsx   # MOVED from components/entries/EntryMetadataBar.tsx
-│   │   │   ├── EntryTitleInput.tsx    # MOVED from components/entries/EntryTitleInput.tsx
-│   │   │   └── index.ts               # NEW
-│   │   ├── lists/                     # Shared list components
-│   │   │   ├── FilterableList.tsx     # MOVED from components/shared/FilterableList.tsx
-│   │   │   ├── FilterableListHeader.tsx # MOVED from components/shared/FilterableListHeader.tsx
-│   │   │   ├── CategoryPill.tsx       # MOVED from components/shared/CategoryPill.tsx
-│   │   │   ├── Label.tsx              # MOVED from components/shared/Label.tsx
-│   │   │   ├── LabelRow.tsx           # MOVED from components/shared/LabelRow.tsx
-│   │   │   └── index.ts               # NEW
-│   │   └── index.ts                   # NEW
+│   ├── components/                    # All reusable UI components
+│   │   ├── Button.tsx                 # MOVED + ENHANCED from components/shared/Button.tsx
+│   │   ├── Card.tsx                   # MOVED + ENHANCED from components/shared/Card.tsx
+│   │   ├── Input.tsx                  # MOVED + ENHANCED from components/form/FormInput.tsx
+│   │   ├── Modal.tsx                  # MOVED + ENHANCED from components/shared/ConfirmationModal.tsx
+│   │   ├── Typography.tsx             # MOVED from components/shared/Typography.tsx
+│   │   ├── Icon.tsx                   # MOVED from components/shared/Icon.tsx
+│   │   ├── BottomSheet.tsx            # MOVED from components/shared/BottomSheet.tsx
+│   │   ├── Timer.tsx                  # MOVED from components/shared/BeautifulTimer.tsx
+│   │   ├── ColorPicker.tsx            # MOVED from components/shared/ColorPicker.tsx
+│   │   ├── IconPicker.tsx             # MOVED from components/shared/IconPicker.tsx
+│   │   ├── ProgressBar.tsx            # NEW: Reusable progress visualization
+│   │   ├── StatusBadge.tsx            # NEW: Status indicators
+│   │   ├── EntryCard.tsx              # MOVED from components/entries/EntryCard.tsx
+│   │   ├── EntryDetailHeader.tsx      # MOVED from components/entries/EntryDetailHeader.tsx
+│   │   ├── EntryMetadataBar.tsx       # MOVED from components/entries/EntryMetadataBar.tsx
+│   │   ├── EntryTitleInput.tsx        # MOVED from components/entries/EntryTitleInput.tsx
+│   │   ├── FormInput.tsx              # MOVED from components/form/FormInput.tsx
+│   │   ├── FormSelect.tsx             # MOVED from components/form/FormSelect.tsx
+│   │   ├── FormTextarea.tsx           # MOVED from components/form/FormTextarea.tsx
+│   │   ├── FormCheckbox.tsx           # MOVED from components/form/FormCheckbox.tsx
+│   │   ├── FormSwitch.tsx             # MOVED from components/form/FormSwitch.tsx
+│   │   ├── FormTagInput.tsx           # MOVED from components/form/FormTagInput.tsx
+│   │   ├── FormCategorySelector.tsx   # MOVED from components/form/FormCategorySelector.tsx
+│   │   ├── FormDatePicker.tsx         # MOVED from components/form/FormDatePicker.tsx
+│   │   ├── FormMoodSelector.tsx       # MOVED from components/form/FormMoodSelector.tsx
+│   │   ├── FormRadioGroup.tsx         # MOVED from components/form/FormRadioGroup.tsx
+│   │   ├── FormRichTextarea.tsx       # MOVED from components/form/FormRichTextarea.tsx
+│   │   ├── Screen.tsx                 # MOVED + ENHANCED from components/templates/BaseEntityScreen.tsx
+│   │   ├── Section.tsx                # NEW: Content section wrapper
+│   │   ├── Header.tsx                 # NEW: Reusable header component
+│   │   ├── TabBar.tsx                 # MOVED from components/navigation/CustomBottomNavBar.tsx
+│   │   ├── DiamondFab.tsx             # MOVED from components/navigation/DiamondFab.tsx
+│   │   ├── FilterableList.tsx         # MOVED from components/shared/FilterableList.tsx
+│   │   ├── FilterableListHeader.tsx   # MOVED from components/shared/FilterableListHeader.tsx
+│   │   ├── CategoryPill.tsx           # MOVED from components/shared/CategoryPill.tsx
+│   │   ├── Label.tsx                  # MOVED from components/shared/Label.tsx
+│   │   ├── LabelRow.tsx               # MOVED from components/shared/LabelRow.tsx
+│   │   └── index.ts                   # NEW: Export all shared components
 │   ├── screens/                       # Cross-feature screens
-│   │   ├── vault/                     # Vault screens (cross-feature)
-│   │   │   ├── BaseVaultScreen.tsx    # MOVED from screens/vault/BaseVaultScreen.tsx
-│   │   │   ├── VaultScreen.tsx        # MOVED from screens/vault/VaultScreen.tsx
-│   │   │   ├── VaultEmptyState.tsx    # MOVED from screens/vault/VaultEmptyState.tsx
-│   │   │   └── index.ts               # NEW
+│   │   ├── VaultScreen.tsx            # MOVED from screens/vault/VaultScreen.tsx
+│   │   ├── BaseVaultScreen.tsx        # MOVED from screens/vault/BaseVaultScreen.tsx
+│   │   ├── VaultEmptyState.tsx        # MOVED from screens/vault/VaultEmptyState.tsx
 │   │   └── index.ts                   # NEW
-│   ├── hooks/
-│   │   ├── useAsyncStorage.ts         # NEW: Generic storage operations
-│   │   ├── useDatabase.ts             # NEW: Generic database operations
+│   ├── hooks/                         # Shared hooks
 │   │   ├── useTheme.ts                # MOVED from contexts/ThemeContext.tsx (hook part)
 │   │   ├── useStyles.ts               # MOVED from hooks/useStyles.ts
 │   │   ├── useThemedStyles.ts         # MOVED from hooks/useThemedStyles.ts
 │   │   ├── useBackgroundTimer.ts      # MOVED from hooks/useBackgroundTimer.ts
 │   │   ├── useCategories.ts           # MOVED from hooks/useCategories.ts
+│   │   ├── useDatabase.ts             # NEW: Generic database operations
+│   │   ├── useAsyncStorage.ts         # NEW: Generic storage operations
 │   │   └── index.ts                   # NEW
-│   ├── services/
-│   │   ├── database/                  # Database utilities
-│   │   │   ├── Database.ts            # MOVED + ENHANCED from api/database.ts
-│   │   │   ├── migrations.ts          # NEW: Database migration utilities
-│   │   │   ├── schema.ts              # MOVED from api/schema.ts
-│   │   │   └── index.ts               # NEW
-│   │   ├── storage/                   # Storage utilities
-│   │   │   ├── AsyncStorage.ts        # NEW: AsyncStorage wrapper
-│   │   │   ├── SecureStorage.ts       # NEW: Secure storage wrapper
-│   │   │   └── index.ts               # NEW
-│   │   ├── background/                # Background task utilities
-│   │   │   ├── BackgroundTasks.ts     # NEW: iOS/Android background processing
-│   │   │   ├── AppStateManager.ts     # NEW: App lifecycle management
-│   │   │   ├── NotificationManager.ts # NEW: Future notification support
-│   │   │   └── index.ts               # NEW
-│   │   ├── api/                       # Shared API services
-│   │   │   ├── categoryService.ts     # MOVED from api/categoryService.ts
-│   │   │   └── index.ts               # NEW
+│   ├── services/                      # Shared services
+│   │   ├── database.ts                # MOVED + ENHANCED from api/database.ts
+│   │   ├── schema.ts                  # MOVED from api/schema.ts
+│   │   ├── categoryService.ts         # MOVED from api/categoryService.ts
+│   │   ├── storage.ts                 # NEW: Storage utilities
 │   │   └── index.ts                   # NEW
-│   ├── types/
+│   ├── types/                         # Shared types
 │   │   ├── common.ts                  # NEW: Shared type definitions
 │   │   ├── navigation.ts              # MOVED from types/navigation-types.ts
-│   │   ├── database.ts                # NEW: Database-related types
-│   │   ├── storage.ts                 # NEW: Storage-related types
 │   │   ├── baseEntry.ts               # MOVED from types/baseEntry.ts
 │   │   ├── category.ts                # MOVED from types/category.ts
+│   │   ├── action.ts                  # MOVED from types/action.ts
+│   │   ├── note.ts                    # MOVED from types/note.ts
+│   │   ├── path.ts                    # MOVED from types/path.ts
+│   │   ├── saga.ts                    # MOVED from types/saga.ts
+│   │   ├── spark.ts                   # MOVED from types/spark.ts
+│   │   ├── loop.ts                    # NEW: Loop type definitions
 │   │   └── index.ts                   # NEW
-│   ├── utils/
+│   ├── utils/                         # Shared utilities
 │   │   ├── dateUtils.ts               # MOVED from utils/dateUtils.ts
 │   │   ├── uuid.ts                    # MOVED + MERGED from utils/uuid.ts + utils/uuidUtil.ts
 │   │   ├── themeUtils.ts              # MOVED from utils/themeUtils.ts
 │   │   ├── validation.ts              # NEW: Input validation utilities
 │   │   ├── databaseReset.ts           # MOVED from utils/databaseReset.ts
 │   │   └── index.ts                   # NEW
-│   ├── constants/
+│   ├── constants/                     # Shared constants
 │   │   ├── entryTypes.ts              # MOVED from constants/entryTypes.ts
 │   │   └── index.ts                   # NEW
 │   └── index.ts                       # NEW
 
-├── features/
+├── features/                          # Feature-specific code
 │   ├── actions/                       # Actions feature
-│   │   ├── domain/                    # NEW: Business logic layer
-│   │   │   ├── entities/
-│   │   │   │   ├── Action.ts          # NEW: Action entity with business rules
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── services/
-│   │   │   │   ├── ActionService.ts   # NEW: Action business rules
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── repositories/
-│   │   │   │   ├── IActionRepository.ts # NEW: Action data access contract
-│   │   │   │   └── index.ts           # NEW
+│   │   ├── screens/
+│   │   │   ├── ActionScreen.tsx       # MOVED from screens/actions/ActionScreen.tsx
 │   │   │   └── index.ts               # NEW
-│   │   ├── data/                      # NEW: Data access layer
-│   │   │   ├── repositories/
-│   │   │   │   ├── ActionRepository.ts # NEW: SQLite action operations
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── api/
-│   │   │   │   ├── actionApi.ts       # MOVED + ENHANCED from api/actionService.ts
-│   │   │   │   └── index.ts           # NEW
+│   │   ├── components/
+│   │   │   ├── ActionCard.tsx         # MOVED from components/entries/actions/ActionCard.tsx
+│   │   │   ├── ActionForm.tsx         # MOVED + ENHANCED from components/entries/actions/
 │   │   │   └── index.ts               # NEW
-│   │   ├── presentation/              # UI layer
-│   │   │   ├── screens/
-│   │   │   │   ├── ActionScreen.tsx   # MOVED from screens/actions/ActionScreen.tsx
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── components/
-│   │   │   │   ├── ActionCard.tsx     # MOVED from components/entries/actions/ActionCard.tsx
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── hooks/
-│   │   │   │   ├── useActions.ts      # MOVED from hooks/useActions.ts
-│   │   │   │   └── index.ts           # NEW
+│   │   ├── hooks/
+│   │   │   ├── useActions.ts          # MOVED from hooks/useActions.ts
+│   │   │   ├── useActionService.ts    # MOVED + ENHANCED from api/actionService.ts
 │   │   │   └── index.ts               # NEW
-│   │   ├── state/                     # State management layer
+│   │   ├── store/
 │   │   │   ├── actionSlice.ts         # MOVED from store/actions/actionSlice.ts
 │   │   │   ├── actionSelectors.ts     # MOVED from store/actions/actionSelectors.ts
 │   │   │   ├── useActionActions.ts    # MOVED from store/actions/useActionActions.ts
 │   │   │   └── index.ts               # NEW
-│   │   ├── types/
-│   │   │   ├── Action.ts              # MOVED from types/action.ts
-│   │   │   └── index.ts               # NEW
 │   │   └── index.ts                   # NEW
-│   ├── loops/                         # COMPLETE NEW IMPLEMENTATION
-│   │   ├── domain/                    # NEW: Business logic layer
-│   │   │   ├── entities/
-│   │   │   │   ├── Loop.ts            # NEW: Loop entity with business rules
-│   │   │   │   ├── Activity.ts        # NEW: Activity entity with validation
-│   │   │   │   ├── Template.ts        # NEW: Template entity with reuse logic
-│   │   │   │   ├── Execution.ts       # NEW: Execution state entity
-│   │   │   │   ├── Timer.ts           # NEW: Timer entity with background support
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── services/
-│   │   │   │   ├── LoopService.ts     # NEW: Loop business rules and validation
-│   │   │   │   ├── ExecutionEngine.ts # NEW: Background execution engine
-│   │   │   │   ├── TimerService.ts    # NEW: Background-persistent timer service
-│   │   │   │   ├── TemplateService.ts # NEW: Template management service
-│   │   │   │   ├── RecoveryService.ts # NEW: App restart recovery service
-│   │   │   │   ├── BackgroundService.ts # NEW: Background task coordination
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── events/
-│   │   │   │   ├── LoopEvents.ts      # NEW: Loop lifecycle events
-│   │   │   │   ├── ExecutionEvents.ts # NEW: Execution state events
-│   │   │   │   ├── TimerEvents.ts     # NEW: Timer events
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── repositories/
-│   │   │   │   ├── ILoopRepository.ts # NEW: Loop data access contract
-│   │   │   │   ├── IActivityRepository.ts # NEW: Activity data access contract
-│   │   │   │   ├── ITemplateRepository.ts # NEW: Template data access contract
-│   │   │   │   ├── IExecutionRepository.ts # NEW: Execution data access contract
-│   │   │   │   └── index.ts           # NEW
+│   ├── notes/                         # Notes feature (similar structure)
+│   │   ├── screens/
+│   │   │   ├── NoteScreen.tsx         # MOVED from screens/notes/NoteScreen.tsx
 │   │   │   └── index.ts               # NEW
-│   │   ├── data/                      # NEW: Data access layer
-│   │   │   ├── repositories/
-│   │   │   │   ├── LoopRepository.ts  # NEW: SQLite loop operations
-│   │   │   │   ├── ActivityRepository.ts # NEW: SQLite activity operations
-│   │   │   │   ├── TemplateRepository.ts # NEW: SQLite template operations
-│   │   │   │   ├── ExecutionRepository.ts # NEW: Execution state persistence
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── storage/
-│   │   │   │   ├── LoopStorage.ts     # NEW: AsyncStorage for loops
-│   │   │   │   ├── ExecutionStorage.ts # NEW: Persistent execution state
-│   │   │   │   ├── BackgroundStorage.ts # NEW: Background state management
-│   │   │   │   ├── CacheStorage.ts    # NEW: Performance caching
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── api/
-│   │   │   │   ├── loopApi.ts         # NEW: External loop API calls (if needed)
-│   │   │   │   ├── templateApi.ts     # NEW: Template sharing API (future)
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── database/
-│   │   │   │   ├── schemas/
-│   │   │   │   │   ├── loopSchema.ts  # NEW: Loop table schema
-│   │   │   │   │   ├── activitySchema.ts # NEW: Activity table schema
-│   │   │   │   │   ├── templateSchema.ts # NEW: Template table schema
-│   │   │   │   │   ├── executionSchema.ts # NEW: Execution table schema
-│   │   │   │   │   └── index.ts       # NEW
-│   │   │   │   ├── migrations/
-│   │   │   │   │   ├── 001_create_loops.ts # NEW: Initial loop tables
-│   │   │   │   │   ├── 002_create_activities.ts # NEW: Activity tables
-│   │   │   │   │   ├── 003_create_templates.ts # NEW: Template tables
-│   │   │   │   │   ├── 004_create_execution.ts # NEW: Execution tables
-│   │   │   │   │   ├── 005_add_background_support.ts # NEW: Background execution support
-│   │   │   │   │   └── index.ts       # NEW
-│   │   │   │   └── index.ts           # NEW
+│   │   ├── components/
+│   │   │   ├── NoteCard.tsx           # MOVED from components/entries/notes/
+│   │   │   ├── NoteForm.tsx           # MOVED + ENHANCED
 │   │   │   └── index.ts               # NEW
-│   │   ├── presentation/              # NEW: UI layer
-│   │   │   ├── screens/
-│   │   │   │   ├── LoopListScreen.tsx # NEW: List and manage loops
-│   │   │   │   ├── LoopDetailScreen.tsx # NEW: View loop details
-│   │   │   │   ├── LoopBuilderScreen.tsx # NEW: Create and edit loops
-│   │   │   │   ├── ExecutionScreen.tsx # NEW: Execute loops with background support
-│   │   │   │   ├── TemplateLibraryScreen.tsx # NEW: Manage activity templates
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── components/
-│   │   │   │   ├── cards/
-│   │   │   │   │   ├── LoopCard.tsx   # NEW: Loop display card (uses shared EntryCard)
-│   │   │   │   │   ├── ActivityCard.tsx # NEW: Activity display card
-│   │   │   │   │   ├── TemplateCard.tsx # NEW: Template display card
-│   │   │   │   │   ├── ExecutionCard.tsx # NEW: Execution status card
-│   │   │   │   │   └── index.ts       # NEW
-│   │   │   │   ├── builders/
-│   │   │   │   │   ├── LoopBuilder.tsx # NEW: Drag & drop loop builder
-│   │   │   │   │   ├── ActivityBuilder.tsx # NEW: Activity configuration
-│   │   │   │   │   ├── TemplateSelector.tsx # NEW: Template selection
-│   │   │   │   │   ├── QuickActions.tsx # NEW: Quick loop actions
-│   │   │   │   │   ├── DragDropList.tsx # NEW: Reorderable activity list
-│   │   │   │   │   └── index.ts       # NEW
-│   │   │   │   ├── execution/
-│   │   │   │   │   ├── ExecutionController.tsx # NEW: Execution controls
-│   │   │   │   │   ├── ActivityRunner.tsx # NEW: Current activity display
-│   │   │   │   │   ├── ProgressTracker.tsx # NEW: Progress visualization (uses shared ProgressBar)
-│   │   │   │   │   ├── TimerDisplay.tsx # NEW: Background-aware timer (uses shared Timer)
-│   │   │   │   │   ├── BackgroundIndicator.tsx # NEW: Background execution status
-│   │   │   │   │   ├── ExecutionHistory.tsx # NEW: Execution history display
-│   │   │   │   │   └── index.ts       # NEW
-│   │   │   │   ├── forms/
-│   │   │   │   │   ├── LoopForm.tsx   # NEW: Loop creation/edit form (uses shared form components)
-│   │   │   │   │   ├── ActivityForm.tsx # NEW: Activity configuration form
-│   │   │   │   │   ├── TemplateForm.tsx # NEW: Template creation form
-│   │   │   │   │   ├── ExecutionSettings.tsx # NEW: Execution preferences
-│   │   │   │   │   └── index.ts       # NEW
-│   │   │   │   ├── shared/
-│   │   │   │   │   ├── LoopIcon.tsx   # NEW: Loop iconography (uses shared Icon)
-│   │   │   │   │   ├── ActivityIcon.tsx # NEW: Activity iconography
-│   │   │   │   │   └── index.ts       # NEW
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── hooks/
-│   │   │   │   ├── useLoops.ts        # NEW: Loop CRUD operations
-│   │   │   │   ├── useLoopExecution.ts # NEW: Execution management
-│   │   │   │   ├── useActivityTemplates.ts # NEW: Template operations
-│   │   │   │   ├── useBackgroundExecution.ts # NEW: Background execution hooks
-│   │   │   │   ├── useLoopTimer.ts    # NEW: Timer management hooks
-│   │   │   │   ├── useLoopBuilder.ts  # NEW: Loop builder state
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── navigation/
-│   │   │   │   ├── LoopNavigator.tsx  # NEW: Loop stack navigator
-│   │   │   │   ├── ExecutionNavigator.tsx # NEW: Execution flow navigator
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── styles/
-│   │   │   │   ├── loopStyles.ts      # NEW: Loop component styles (THEME-BASED ONLY)
-│   │   │   │   ├── executionStyles.ts # NEW: Execution component styles (THEME-BASED ONLY)
-│   │   │   │   ├── builderStyles.ts   # NEW: Builder component styles (THEME-BASED ONLY)
-│   │   │   │   └── index.ts           # NEW
+│   │   ├── hooks/
+│   │   │   ├── useNotes.ts            # MOVED from hooks/useNotes.ts
+│   │   │   ├── useNoteService.ts      # MOVED + ENHANCED from api/noteService.ts
 │   │   │   └── index.ts               # NEW
-│   │   ├── state/                     # NEW: State management layer
-│   │   │   ├── slices/
-│   │   │   │   ├── loopSlice.ts       # NEW: Loop data state
-│   │   │   │   ├── executionSlice.ts  # NEW: Execution state
-│   │   │   │   ├── templateSlice.ts   # NEW: Template state
-│   │   │   │   ├── builderSlice.ts    # NEW: Loop builder state
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── selectors/
-│   │   │   │   ├── loopSelectors.ts   # NEW: Loop data selectors
-│   │   │   │   ├── executionSelectors.ts # NEW: Execution selectors
-│   │   │   │   ├── templateSelectors.ts # NEW: Template selectors
-│   │   │   │   ├── builderSelectors.ts # NEW: Builder selectors
-│   │   │   │   └── index.ts           # NEW
-│   │   │   ├── middleware/
-│   │   │   │   ├── executionMiddleware.ts # NEW: Background execution middleware
-│   │   │   │   ├── persistenceMiddleware.ts # NEW: State persistence middleware
-│   │   │   │   └── index.ts           # NEW
+│   │   ├── store/
+│   │   │   ├── noteSlice.ts           # MOVED from store/notes/
 │   │   │   └── index.ts               # NEW
-│   │   ├── types/
-│   │   │   ├── Loop.ts                # NEW: Loop type definitions
-│   │   │   ├── Activity.ts            # NEW: Activity type definitions
-│   │   │   ├── Template.ts            # NEW: Template type definitions
-│   │   │   ├── Execution.ts           # NEW: Execution type definitions
-│   │   │   ├── Builder.ts             # NEW: Builder type definitions
-│   │   │   ├── Events.ts              # NEW: Event type definitions
-│   │   │   └── index.ts               # NEW
-│   │   ├── utils/
-│   │   │   ├── loopValidation.ts      # NEW: Loop validation utilities
-│   │   │   ├── executionUtils.ts      # NEW: Execution helper functions
-│   │   │   ├── templateUtils.ts       # NEW: Template helper functions
-│   │   │   ├── timerUtils.ts          # NEW: Timer utility functions
-│   │   │   └── index.ts               # NEW
-│   │   ├── constants/
-│   │   │   ├── loopConstants.ts       # NEW: Loop-related constants
-│   │   │   ├── executionConstants.ts  # NEW: Execution constants
-│   │   │   ├── templateConstants.ts   # NEW: Template constants
-│   │   │   └── index.ts               # NEW
-│   │   └── index.ts                   # NEW: Main feature export
-│   ├── notes/                         # Notes feature (similar structure to actions)
-│   │   ├── domain/                    # NEW: Business logic layer
-│   │   ├── data/                      # NEW: Data access layer
-│   │   ├── presentation/              # UI layer (MOVED + ENHANCED)
-│   │   ├── state/                     # State management (MOVED)
-│   │   ├── types/                     # Types (MOVED)
 │   │   └── index.ts                   # NEW
 │   ├── paths/                         # Paths feature (similar structure)
-│   │   ├── domain/                    # NEW: Business logic layer
-│   │   ├── data/                      # NEW: Data access layer
-│   │   ├── presentation/              # UI layer (MOVED + ENHANCED)
-│   │   ├── state/                     # State management (MOVED)
-│   │   ├── types/                     # Types (MOVED)
+│   │   ├── screens/
+│   │   │   ├── PathScreen.tsx         # MOVED from screens/paths/
+│   │   │   └── index.ts               # NEW
+│   │   ├── components/
+│   │   │   ├── PathCard.tsx           # MOVED from components/entries/paths/
+│   │   │   ├── ChapterCard.tsx        # MOVED + ENHANCED
+│   │   │   └── index.ts               # NEW
+│   │   ├── hooks/
+│   │   │   ├── usePaths.ts            # MOVED from hooks/usePaths.ts
+│   │   │   ├── usePathService.ts      # MOVED + ENHANCED from api/pathService.ts
+│   │   │   └── index.ts               # NEW
+│   │   ├── store/
+│   │   │   ├── pathSlice.ts           # MOVED from store/paths/
+│   │   │   └── index.ts               # NEW
 │   │   └── index.ts                   # NEW
 │   ├── sagas/                         # Sagas feature (similar structure)
-│   │   ├── domain/                    # NEW: Business logic layer
-│   │   ├── data/                      # NEW: Data access layer
-│   │   ├── presentation/              # UI layer (MOVED + ENHANCED)
-│   │   ├── state/                     # State management (MOVED)
-│   │   ├── types/                     # Types (MOVED)
+│   │   ├── screens/
+│   │   │   ├── SagaScreen.tsx         # MOVED from screens/sagas/
+│   │   │   └── index.ts               # NEW
+│   │   ├── components/
+│   │   │   ├── SagaCard.tsx           # MOVED from components/entries/sagas/
+│   │   │   └── index.ts               # NEW
+│   │   ├── hooks/
+│   │   │   ├── useSagas.ts            # MOVED from hooks/useSagas.ts
+│   │   │   ├── useSagaService.ts      # MOVED + ENHANCED from api/sagaService.ts
+│   │   │   └── index.ts               # NEW
+│   │   ├── store/
+│   │   │   ├── sagaSlice.ts           # MOVED from store/sagas/
+│   │   │   └── index.ts               # NEW
 │   │   └── index.ts                   # NEW
-│   └── sparks/                        # Sparks feature (similar structure)
-│       ├── domain/                    # NEW: Business logic layer
-│       ├── data/                      # NEW: Data access layer
-│       ├── presentation/              # UI layer (MOVED + ENHANCED)
-│       ├── state/                     # State management (MOVED)
-│       ├── types/                     # Types (MOVED)
-│       └── index.ts                   # NEW
+│   ├── sparks/                        # Sparks feature (similar structure)
+│   │   ├── screens/
+│   │   │   ├── SparkScreen.tsx        # MOVED from screens/sparks/
+│   │   │   └── index.ts               # NEW
+│   │   ├── components/
+│   │   │   ├── SparkCard.tsx          # MOVED from components/entries/sparks/
+│   │   │   └── index.ts               # NEW
+│   │   ├── hooks/
+│   │   │   ├── useSparks.ts           # MOVED from hooks/useSparks.ts
+│   │   │   ├── useSparkService.ts     # MOVED + ENHANCED from api/sparkService.ts
+│   │   │   └── index.ts               # NEW
+│   │   ├── store/
+│   │   │   ├── sparkSlice.ts          # MOVED from store/sparks/
+│   │   │   └── index.ts               # NEW
+│   │   └── index.ts                   # NEW
+│   └── loops/                         # COMPLETE NEW IMPLEMENTATION
+│       ├── screens/
+│       │   ├── LoopListScreen.tsx     # NEW: List and manage loops
+│       │   ├── LoopDetailScreen.tsx   # NEW: View loop details
+│       │   ├── LoopBuilderScreen.tsx  # NEW: Create and edit loops
+│       │   ├── ExecutionScreen.tsx    # NEW: Execute loops with background support
+│       │   ├── TemplateLibraryScreen.tsx # NEW: Manage activity templates
+│       │   └── index.ts               # NEW
+│       ├── components/
+│       │   ├── LoopCard.tsx           # NEW: Loop display card (uses shared EntryCard)
+│       │   ├── ActivityCard.tsx       # NEW: Activity display card
+│       │   ├── TemplateCard.tsx       # NEW: Template display card
+│       │   ├── ExecutionCard.tsx      # NEW: Execution status card
+│       │   ├── LoopBuilder.tsx        # NEW: Drag & drop loop builder
+│       │   ├── ActivityBuilder.tsx    # NEW: Activity configuration
+│       │   ├── TemplateSelector.tsx   # NEW: Template selection
+│       │   ├── QuickActions.tsx       # NEW: Quick loop actions
+│       │   ├── DragDropList.tsx       # NEW: Reorderable activity list
+│       │   ├── ExecutionController.tsx # NEW: Execution controls
+│       │   ├── ActivityRunner.tsx     # NEW: Current activity display
+│       │   ├── ProgressTracker.tsx    # NEW: Progress visualization (uses shared ProgressBar)
+│       │   ├── TimerDisplay.tsx       # NEW: Background-aware timer (uses shared Timer)
+│       │   ├── BackgroundIndicator.tsx # NEW: Background execution status
+│       │   ├── ExecutionHistory.tsx   # NEW: Execution history display
+│       │   ├── LoopForm.tsx           # NEW: Loop creation/edit form (uses shared form components)
+│       │   ├── ActivityForm.tsx       # NEW: Activity configuration form
+│       │   ├── TemplateForm.tsx       # NEW: Template creation form
+│       │   ├── ExecutionSettings.tsx  # NEW: Execution preferences
+│       │   ├── LoopIcon.tsx           # NEW: Loop iconography (uses shared Icon)
+│       │   ├── ActivityIcon.tsx       # NEW: Activity iconography
+│       │   └── index.ts               # NEW
+│       ├── hooks/
+│       │   ├── useLoops.ts            # NEW: Loop CRUD operations
+│       │   ├── useLoopExecution.ts    # NEW: Execution management
+│       │   ├── useActivityTemplates.ts # NEW: Template operations
+│       │   ├── useBackgroundExecution.ts # NEW: Background execution hooks
+│       │   ├── useLoopTimer.ts        # NEW: Timer management hooks
+│       │   ├── useLoopBuilder.ts      # NEW: Loop builder state
+│       │   └── index.ts               # NEW
+│       ├── services/                  # ONLY loops has this folder - for background execution
+│       │   ├── ExecutionEngine.ts     # NEW: Background execution engine
+│       │   ├── TimerService.ts        # NEW: Background-persistent timer service
+│       │   ├── TemplateService.ts     # NEW: Template management service
+│       │   ├── RecoveryService.ts     # NEW: App restart recovery service
+│       │   ├── BackgroundService.ts   # NEW: Background task coordination
+│       │   ├── BackgroundTasks.ts     # NEW: iOS/Android background processing
+│       │   ├── AppStateManager.ts     # NEW: App lifecycle management
+│       │   ├── NotificationManager.ts # NEW: Future notification support
+│       │   ├── ExecutionStorage.ts    # NEW: Persistent execution state
+│       │   ├── BackgroundStorage.ts   # NEW: Background state management
+│       │   └── index.ts               # NEW
+│       ├── store/
+│       │   ├── loopSlice.ts           # NEW: Loop data state
+│       │   ├── executionSlice.ts      # NEW: Execution state
+│       │   ├── templateSlice.ts       # NEW: Template state
+│       │   ├── builderSlice.ts        # NEW: Loop builder state
+│       │   ├── loopSelectors.ts       # NEW: Loop data selectors
+│       │   ├── executionSelectors.ts  # NEW: Execution selectors
+│       │   ├── templateSelectors.ts   # NEW: Template selectors
+│       │   ├── builderSelectors.ts    # NEW: Builder selectors
+│       │   ├── executionMiddleware.ts # NEW: Background execution middleware
+│       │   ├── persistenceMiddleware.ts # NEW: State persistence middleware
+│       │   └── index.ts               # NEW
+│       └── index.ts                   # NEW: Main feature export
+
 └── app/                               # App-level concerns
     ├── navigation/
     │   ├── AppNavigator.tsx           # MOVED from navigation/AppNavigator.tsx
@@ -527,36 +416,26 @@ src/
 
 ## Implementation Phases
 
-### Phase 1: Foundation Setup (Days 1-4)
+### Phase 1: Foundation Setup (Days 1-3)
 **Status**: Not started
 **Goal**: Create shared infrastructure and app-level structure for ALL entry types
 
 #### Tasks:
 1. **Create shared folder structure**
-   - [ ] Create `src/shared/` directory
-   - [ ] **MOVE** common components to `src/shared/components/` and **ENHANCE** with theme usage
+   - [ ] **MOVE** all common components to `src/shared/components/` and **ENHANCE** with theme usage
    - [ ] **MOVE** common hooks to `src/shared/hooks/`
    - [ ] **MOVE** common services to `src/shared/services/`
-   - [ ] **MOVE** common types to `src/shared/types/`
+   - [ ] **MOVE** all types to `src/shared/types/`
    - [ ] **MOVE** common utils to `src/shared/utils/`
    - [ ] **MOVE** constants to `src/shared/constants/`
 
 2. **Create app-level structure**
-   - [ ] Create `src/app/` directory
    - [ ] **MOVE** navigation to `src/app/navigation/`
    - [ ] **MOVE** store setup to `src/app/store/`
    - [ ] **MOVE** theme to `src/app/theme/`
    - [ ] **MOVE** contexts to `src/app/contexts/`
 
-3. **Create feature folder structure for ALL entry types**
-   - [ ] Create `src/features/actions/` directory structure
-   - [ ] Create `src/features/notes/` directory structure
-   - [ ] Create `src/features/paths/` directory structure
-   - [ ] Create `src/features/sagas/` directory structure
-   - [ ] Create `src/features/sparks/` directory structure
-   - [ ] Create `src/features/loops/` directory structure (empty for now)
-
-4. **Update imports across codebase**
+3. **Update imports across codebase**
    - [ ] Update all import statements to use new shared structure
    - [ ] Ensure all existing functionality still works
    - [ ] Test app thoroughly after restructuring
@@ -573,73 +452,118 @@ src/
 - [ ] **ALL colors use theme system - NO hardcoded colors**
 - [ ] Shared components are properly consolidated
 
-### Phase 2: All Entry Types Domain Layer (Days 5-8)
+### Phase 2: Move All Entry Types (Days 4-6)
 **Status**: Not started
-**Goal**: Implement domain layer for ALL entry types (except loops - that's Phase 3)
+**Goal**: Move all existing entry types to feature folders (except loops - that's Phase 3)
 
 #### Tasks:
-1. **Actions Domain Layer**
-   - [ ] **CREATE** `Action.ts` entity with business rules
-   - [ ] **CREATE** `ActionService.ts` with business logic
-   - [ ] **CREATE** `IActionRepository.ts` interface
+1. **Move Actions Feature**
+   - [ ] **MOVE** screens to `src/features/actions/screens/`
+   - [ ] **MOVE** components to `src/features/actions/components/`
+   - [ ] **MOVE** hooks to `src/features/actions/hooks/`
+   - [ ] **MOVE** store to `src/features/actions/store/`
+   - [ ] **ENHANCE** with shared component usage and theme compliance
 
-2. **Notes Domain Layer**
-   - [ ] **CREATE** `Note.ts` entity with business rules
-   - [ ] **CREATE** `NoteService.ts` with business logic
-   - [ ] **CREATE** `INoteRepository.ts` interface
+2. **Move Notes Feature**
+   - [ ] **MOVE** screens to `src/features/notes/screens/`
+   - [ ] **MOVE** components to `src/features/notes/components/`
+   - [ ] **MOVE** hooks to `src/features/notes/hooks/`
+   - [ ] **MOVE** store to `src/features/notes/store/`
+   - [ ] **ENHANCE** with shared component usage and theme compliance
 
-3. **Paths Domain Layer**
-   - [ ] **CREATE** `Path.ts` entity with business rules
-   - [ ] **CREATE** `Chapter.ts` entity
-   - [ ] **CREATE** `PathService.ts` with business logic
-   - [ ] **CREATE** `IPathRepository.ts` interface
+3. **Move Paths Feature**
+   - [ ] **MOVE** screens to `src/features/paths/screens/`
+   - [ ] **MOVE** components to `src/features/paths/components/`
+   - [ ] **MOVE** hooks to `src/features/paths/hooks/`
+   - [ ] **MOVE** store to `src/features/paths/store/`
+   - [ ] **ENHANCE** with shared component usage and theme compliance
 
-4. **Sagas Domain Layer**
-   - [ ] **CREATE** `Saga.ts` entity with business rules
-   - [ ] **CREATE** `SagaService.ts` with business logic
-   - [ ] **CREATE** `ISagaRepository.ts` interface
+4. **Move Sagas Feature**
+   - [ ] **MOVE** screens to `src/features/sagas/screens/`
+   - [ ] **MOVE** components to `src/features/sagas/components/`
+   - [ ] **MOVE** hooks to `src/features/sagas/hooks/`
+   - [ ] **MOVE** store to `src/features/sagas/store/`
+   - [ ] **ENHANCE** with shared component usage and theme compliance
 
-5. **Sparks Domain Layer**
-   - [ ] **CREATE** `Spark.ts` entity with business rules
-   - [ ] **CREATE** `SparkService.ts` with business logic
-   - [ ] **CREATE** `ISparkRepository.ts` interface
+5. **Move Sparks Feature**
+   - [ ] **MOVE** screens to `src/features/sparks/screens/`
+   - [ ] **MOVE** components to `src/features/sparks/components/`
+   - [ ] **MOVE** hooks to `src/features/sparks/hooks/`
+   - [ ] **MOVE** store to `src/features/sparks/store/`
+   - [ ] **ENHANCE** with shared component usage and theme compliance
 
 #### Success Criteria:
-- [ ] All entry types have clean domain entities
-- [ ] Business rules are properly encapsulated
-- [ ] Repository interfaces define clear contracts
-- [ ] Domain logic is independent of external concerns
+- [ ] All entry types work in their new feature folders
+- [ ] All entry types use shared components where appropriate
+- [ ] All entry types follow theme system consistently
+- [ ] Navigation between features works correctly
 
-### Phase 3: Loop Domain Layer (Days 9-11)
+### Phase 3: Create New Loop Implementation (Days 7-12)
 **Status**: Not started
-**Goal**: Implement core business logic and entities for loops (COMPLETE NEW IMPLEMENTATION)
+**Goal**: Implement complete new loop feature with background execution (COMPLETE NEW IMPLEMENTATION)
 
 #### Tasks:
-1. **Create domain entities**
-   - [ ] **CREATE** `Loop.ts` entity with business rules
-   - [ ] **CREATE** `Activity.ts` entity with validation
-   - [ ] **CREATE** `Template.ts` entity with reuse logic
-   - [ ] **CREATE** `Execution.ts` entity with state management
-   - [ ] **CREATE** `Timer.ts` entity with background support
+1. **Create Loop Screens (Days 7-8)**
+   - [ ] **CREATE** `LoopListScreen.tsx` - List and manage loops
+   - [ ] **CREATE** `LoopDetailScreen.tsx` - View loop details
+   - [ ] **CREATE** `LoopBuilderScreen.tsx` - Create and edit loops
+   - [ ] **CREATE** `ExecutionScreen.tsx` - Execute loops with background support
+   - [ ] **CREATE** `TemplateLibraryScreen.tsx` - Manage activity templates
 
-2. **Create domain services**
-   - [ ] **CREATE** `LoopService.ts` with business rules
-   - [ ] **CREATE** `ExecutionEngine.ts` with background execution
-   - [ ] **CREATE** `TimerService.ts` with background persistence
-   - [ ] **CREATE** `TemplateService.ts` with template management
-   - [ ] **CREATE** `RecoveryService.ts` with app restart recovery
-   - [ ] **CREATE** `BackgroundService.ts` with background coordination
+2. **Create Loop Components (Days 8-9)**
+   - [ ] **CREATE** `LoopCard.tsx` - Loop display card (uses shared EntryCard)
+   - [ ] **CREATE** `ActivityCard.tsx` - Activity display card
+   - [ ] **CREATE** `TemplateCard.tsx` - Template display card
+   - [ ] **CREATE** `ExecutionCard.tsx` - Execution status card
+   - [ ] **CREATE** `LoopBuilder.tsx` - Drag & drop loop builder
+   - [ ] **CREATE** `ActivityBuilder.tsx` - Activity configuration
+   - [ ] **CREATE** `TemplateSelector.tsx` - Template selection
+   - [ ] **CREATE** `QuickActions.tsx` - Quick loop actions
+   - [ ] **CREATE** `DragDropList.tsx` - Reorderable activity list
+   - [ ] **CREATE** `ExecutionController.tsx` - Execution controls
+   - [ ] **CREATE** `ActivityRunner.tsx` - Current activity display
+   - [ ] **CREATE** `ProgressTracker.tsx` - Progress visualization (uses shared ProgressBar)
+   - [ ] **CREATE** `TimerDisplay.tsx` - Background-aware timer (uses shared Timer)
+   - [ ] **CREATE** `BackgroundIndicator.tsx` - Background execution status
+   - [ ] **CREATE** `ExecutionHistory.tsx` - Execution history display
+   - [ ] **CREATE** `LoopForm.tsx` - Loop creation/edit form (uses shared form components)
+   - [ ] **CREATE** `ActivityForm.tsx` - Activity configuration form
+   - [ ] **CREATE** `TemplateForm.tsx` - Template creation form
+   - [ ] **CREATE** `ExecutionSettings.tsx` - Execution preferences
+   - [ ] **CREATE** `LoopIcon.tsx` - Loop iconography (uses shared Icon)
+   - [ ] **CREATE** `ActivityIcon.tsx` - Activity iconography
 
-3. **Create event system**
-   - [ ] **CREATE** `LoopEvents.ts` for loop lifecycle events
-   - [ ] **CREATE** `ExecutionEvents.ts` for execution state events
-   - [ ] **CREATE** `TimerEvents.ts` for timer events
+3. **Create Background Services (Days 10-11)**
+   - [ ] **CREATE** `ExecutionEngine.ts` - Core background execution engine
+   - [ ] **CREATE** `TimerService.ts` - Background-persistent timer service
+   - [ ] **CREATE** `TemplateService.ts` - Template management service
+   - [ ] **CREATE** `RecoveryService.ts` - App restart recovery service
+   - [ ] **CREATE** `BackgroundService.ts` - Background task coordination
+   - [ ] **CREATE** `BackgroundTasks.ts` - iOS/Android background processing
+   - [ ] **CREATE** `AppStateManager.ts` - App lifecycle management
+   - [ ] **CREATE** `NotificationManager.ts` - Future notification support
+   - [ ] **CREATE** `ExecutionStorage.ts` - Persistent execution state
+   - [ ] **CREATE** `BackgroundStorage.ts` - Background state management
 
-4. **Define repository interfaces**
-   - [ ] **CREATE** `ILoopRepository.ts` interface
-   - [ ] **CREATE** `IActivityRepository.ts` interface
-   - [ ] **CREATE** `ITemplateRepository.ts` interface
-   - [ ] **CREATE** `IExecutionRepository.ts` interface
+4. **Create Loop Hooks (Day 11)**
+   - [ ] **CREATE** `useLoops.ts` - Loop CRUD operations
+   - [ ] **CREATE** `useLoopExecution.ts` - Execution management
+   - [ ] **CREATE** `useActivityTemplates.ts` - Template operations
+   - [ ] **CREATE** `useBackgroundExecution.ts` - Background execution hooks
+   - [ ] **CREATE** `useLoopTimer.ts` - Timer management hooks
+   - [ ] **CREATE** `useLoopBuilder.ts` - Loop builder state
+
+5. **Create Loop State Management (Day 12)**
+   - [ ] **CREATE** `loopSlice.ts` - Loop data state
+   - [ ] **CREATE** `executionSlice.ts` - Execution state
+   - [ ] **CREATE** `templateSlice.ts` - Template state
+   - [ ] **CREATE** `builderSlice.ts` - Loop builder state
+   - [ ] **CREATE** `loopSelectors.ts` - Loop data selectors
+   - [ ] **CREATE** `executionSelectors.ts` - Execution selectors
+   - [ ] **CREATE** `templateSelectors.ts` - Template selectors
+   - [ ] **CREATE** `builderSelectors.ts` - Builder selectors
+   - [ ] **CREATE** `executionMiddleware.ts` - Background execution middleware
+   - [ ] **CREATE** `persistenceMiddleware.ts` - State persistence middleware
 
 #### Key Implementation Details:
 
@@ -870,6 +794,37 @@ export class NotificationManager {
 }
 ```
 
+### Phase 4: Integration and Testing (Days 13-15)
+**Status**: Not started
+**Goal**: Integrate all features and test the complete system
+
+#### Tasks:
+1. **Feature Integration (Day 13)**
+   - [ ] Update navigation to include all features
+   - [ ] Integrate all Redux stores into centralized store
+   - [ ] Test cross-feature functionality
+   - [ ] Ensure shared components work across all features
+
+2. **Background Execution Testing (Day 14)**
+   - [ ] Test loop execution across app navigation
+   - [ ] Test loop execution during app backgrounding
+   - [ ] Test loop execution recovery after app closure
+   - [ ] Test timer accuracy and persistence
+
+3. **Final Testing and Optimization (Day 15)**
+   - [ ] Performance testing across all features
+   - [ ] Memory leak testing
+   - [ ] Error handling testing
+   - [ ] Theme consistency validation
+   - [ ] Shared component usage validation
+
+#### Success Criteria:
+- [ ] All features work correctly in new structure
+- [ ] Background execution works reliably for loops
+- [ ] No performance regressions
+- [ ] All components use theme system
+- [ ] Shared components reduce code duplication
+
 ---
 
 ## Quality Assurance Checklist
@@ -884,12 +839,11 @@ export class NotificationManager {
 - [ ] **Shared components are used where appropriate**
 
 ### Architecture Quality
-- [ ] Domain layer is independent of external concerns
-- [ ] Data layer implements repository pattern correctly
-- [ ] Presentation layer is decoupled from business logic
+- [ ] Feature folders are easy to navigate
+- [ ] Shared components eliminate duplication
+- [ ] Background execution is reliable (loops only)
 - [ ] State management follows Redux best practices
-- [ ] Dependencies flow in correct direction (inward)
-- [ ] **ALL entry types follow same architectural patterns**
+- [ ] **ALL entry types follow same simple patterns**
 
 ### Performance Quality
 - [ ] Components render efficiently
@@ -921,23 +875,23 @@ export class NotificationManager {
 ### Technical Metrics
 - **Code Reduction**: Reduce overall codebase complexity by 40%
 - **Performance**: 50% faster rendering across all entry types
-- **Memory**: 30% reduction in memory usage
-- **Bundle Size**: No increase in overall app bundle size despite new features
-- **Shared Components**: 80% reduction in duplicate component code
-- **Theme Compliance**: 100% of components use theme system (zero hardcoded colors)
+- [ ] Memory: 30% reduction in memory usage
+- [ ] Bundle Size: No increase in overall app bundle size despite new features
+- [ ] Shared Components: 80% reduction in duplicate component code
+- [ ] Theme Compliance: 100% of components use theme system (zero hardcoded colors)
 
 ### User Experience Metrics
-- **Background Execution**: 99.9% reliability across app lifecycle (loops only)
-- **UI Responsiveness**: <100ms response time for all interactions
-- **Error Rate**: <0.1% error rate in production
-- **Theme Consistency**: 100% visual consistency across all features
+- [ ] Background Execution: 99.9% reliability across app lifecycle (loops only)
+- [ ] UI Responsiveness: <100ms response time for all interactions
+- [ ] Error Rate: <0.1% error rate in production
+- [ ] Theme Consistency: 100% visual consistency across all features
 
 ### Development Metrics
-- **Maintainability**: 80% reduction in time to implement new features
-- [ ] Testability**: 100% unit test coverage for domain layers
-- [ ] Debuggability**: 90% reduction in time to debug issues
-- [ ] Onboarding**: New developers productive with any entry type in <1 day
-- [ ] Cross-Feature Development**: Easy to add features that work across entry types
+- [ ] Maintainability: 80% reduction in time to implement new features
+- [ ] Testability: 100% unit test coverage for background services
+- [ ] Debuggability: 90% reduction in time to debug issues
+- [ ] Onboarding: New developers productive with any entry type in <1 day
+- [ ] Cross-Feature Development: Easy to add features that work across entry types
 
 ---
 
@@ -945,81 +899,60 @@ export class NotificationManager {
 
 ### Technical Risks
 1. **Background Execution Complexity (Loops Only)**
-   - **Risk**: Background execution may not work reliably
-   - **Mitigation**: Extensive testing across all app states, fallback mechanisms
+   - [ ] Risk: Background execution may not work reliably
+   - [ ] Mitigation: Extensive testing across all app states, fallback mechanisms
 
 2. **State Synchronization Issues**
-   - **Risk**: UI state may get out of sync across features
-   - **Mitigation**: Event-driven architecture, state validation, recovery mechanisms
+   - [ ] Risk: UI state may get out of sync across features
+   - [ ] Mitigation: Event-driven architecture, state validation, recovery mechanisms
 
 3. **Performance Degradation**
-   - **Risk**: Restructuring may impact app performance
-   - **Mitigation**: Performance monitoring, optimization, shared component efficiency
+   - [ ] Risk: Restructuring may impact app performance
+   - [ ] Mitigation: Performance monitoring, optimization, shared component efficiency
 
 4. **Theme Migration Issues**
-   - **Risk**: Converting hardcoded colors may introduce visual bugs
-   - **Mitigation**: Systematic color audit, visual regression testing, gradual migration
+   - [ ] Risk: Converting hardcoded colors may introduce visual bugs
+   - [ ] Mitigation: Systematic color audit, visual regression testing, gradual migration
 
 ### Business Risks
 1. **Development Timeline**
-   - **Risk**: Restructuring all entry types may take longer than planned
-   - **Mitigation**: Incremental delivery, parallel development, regular checkpoints
+   - [ ] Risk: Restructuring all entry types may take longer than planned
+   - [ ] Mitigation: Incremental delivery, parallel development, regular checkpoints
 
 2. **Feature Regression**
-   - **Risk**: Moving code may break existing functionality
-   - **Mitigation**: Comprehensive testing, gradual migration, rollback plans
+   - [ ] Risk: Moving code may break existing functionality
+   - [ ] Mitigation: Comprehensive testing, gradual migration, rollback plans
 
 3. **User Experience Disruption**
-   - **Risk**: Users may notice changes in familiar interfaces
-   - **Mitigation**: Maintain UI consistency, improve UX during restructuring
+   - [ ] Risk: Users may notice changes in familiar interfaces
+   - [ ] Mitigation: Maintain UI consistency, improve UX during restructuring
 
 ---
 
 ## Implementation Status Tracking
 
-### Phase 1: Foundation Setup (Days 1-4)
-- [ ] **Day 1**: Create shared and app folder structures
-- [ ] **Day 2**: Move common components and enhance with theme usage
-- [ ] **Day 3**: Move navigation, theme, contexts, and constants
-- [ ] **Day 4**: Create feature folder structures and update imports
+### Phase 1: Foundation Setup (Days 1-3)
+- [ ] **Day 1**: Move shared components and enhance with theme usage
+- [ ] **Day 2**: Move app-level concerns (navigation, theme, contexts, store)
+- [ ] **Day 3**: Update imports and test functionality
 
-### Phase 2: All Entry Types Domain Layer (Days 5-8)
-- [ ] **Day 5**: Actions and Notes domain layers
-- [ ] **Day 6**: Paths and Sagas domain layers
-- [ ] **Day 7**: Sparks domain layer
-- [ ] **Day 8**: Testing and validation of all domain layers
+### Phase 2: Move All Entry Types (Days 4-6)
+- [ ] **Day 4**: Move Actions and Notes features
+- [ ] **Day 5**: Move Paths and Sagas features
+- [ ] **Day 6**: Move Sparks feature and enhance all with shared components
 
-### Phase 3: Loop Domain Layer (Days 9-11)
-- [ ] **Day 9**: Loop entities and basic services
-- [ ] **Day 10**: ExecutionEngine and TimerService
-- [ ] **Day 11**: Event system and repository interfaces
+### Phase 3: Create New Loop Implementation (Days 7-12)
+- [ ] **Day 7**: Create loop screens
+- [ ] **Day 8**: Create loop components (part 1)
+- [ ] **Day 9**: Create loop components (part 2)
+- [ ] **Day 10**: Create background services (part 1)
+- [ ] **Day 11**: Create background services (part 2) and hooks
+- [ ] **Day 12**: Create loop state management
 
-### Phase 4: Data Layer Implementation (Days 12-15)
-- [ ] **Day 12**: Repository implementations for all entry types
-- [ ] **Day 13**: Database schemas and migrations
-- [ ] **Day 14**: Storage implementations (loops) and API enhancements
-- [ ] **Day 15**: Testing and validation of data layer
-
-### Phase 5: State Management Layer (Days 16-18)
-- [ ] **Day 16**: Move existing Redux slices to features
-- [ ] **Day 17**: Create new loop Redux slices and middleware
-- [ ] **Day 18**: Create centralized store and test integration
-
-### Phase 6: Presentation Layer (Days 19-23)
-- [ ] **Day 19**: Move existing screens and components to features
-- [ ] **Day 20**: Enhance moved components with theme usage and shared components
-- [ ] **Day 21**: Create loop presentation layer (screens)
-- [ ] **Day 22**: Create loop presentation layer (components and hooks)
-- [ ] **Day 23**: Create loop navigation and styles
-
-### Phase 7: Integration and Testing (Days 24-26)
-- [ ] **Day 24**: Feature integration and navigation setup
-- [ ] **Day 25**: Background execution testing and cross-feature testing
-- [ ] **Day 26**: Performance optimization and error handling
-
-### Phase 8: Final Polish (Days 27-28)
-- [ ] **Day 27**: Final testing and optimization
-- [ ] **Day 28**: Code cleanup and documentation
+### Phase 4: Integration and Testing (Days 13-15)
+- [ ] **Day 13**: Feature integration and navigation setup
+- [ ] **Day 14**: Background execution testing
+- [ ] **Day 15**: Final testing and optimization
 
 ---
 
@@ -1035,12 +968,12 @@ export class NotificationManager {
 8. **Documentation**: Maintain implementation documentation
 9. **Performance Monitoring**: Track performance improvements
 
-This plan provides a comprehensive roadmap for restructuring the entire codebase with feature-based clean architecture, implementing robust background execution for loops, ensuring complete theme consistency, and maximizing code reuse through shared components. The new architecture will serve as a foundation for future development and make the codebase much easier to understand and maintain across all entry types.
+This simplified plan provides a comprehensive roadmap for restructuring the entire codebase with easy-to-understand architecture, implementing robust background execution for loops, ensuring complete theme consistency, and maximizing code reuse through shared components. The new architecture will be much easier to navigate and understand while maintaining all the power and flexibility needed for future development.
 
 **Key Success Factors:**
+- **Simple Structure**: Easy to find what you need
 - **NO hardcoded colors** - everything uses theme system
 - **Maximum shared component usage** - reduce duplicate code
-- **Clean architecture** - proper separation of concerns
 - **Background execution** - robust loop execution capabilities
-- **Consistent patterns** - all entry types follow same structure
+- **Consistent patterns** - all entry types follow same simple structure
 </rewritten_file> 

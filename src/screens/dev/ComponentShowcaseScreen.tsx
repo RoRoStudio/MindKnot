@@ -11,34 +11,35 @@ import {
     Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTheme } from '../../app/contexts/ThemeContext';
 import {
     Typography, Icon, IconName, Button, Card, ColorPicker,
     BottomSheet, FormModal, FormSheet, IconPicker
-} from '../../components/common';
-import { LabelRow } from '../../components/shared';
-import { NoteCard, SparkCard, ActionCard, PathCard, LoopCard } from '../../components/entries';
+} from '../../shared/components';
+import { LabelRow } from '../../shared/components';
+import { NoteCard, SparkCard, ActionCard, PathCard } from '../../shared/components';
+// LoopCard will be implemented in Phase 3
 import { useForm, Controller } from 'react-hook-form';
-import { BottomSheetConfigProvider } from '../../contexts/BottomSheetConfig';
-import { cleanupTestCategories } from '../../api/categoryService';
-import { refreshAllCategoryInstances } from '../../hooks/useCategories';
-import CategoryManager from '../../components/shared/CategoryManager';
+import { BottomSheetConfigProvider } from '../../app/contexts/BottomSheetConfig';
+import { cleanupTestCategories } from '../../shared/services/categoryService';
+import { refreshAllCategoryInstances } from '../../shared/hooks/useCategories';
+import CategoryManager from '../../shared/components/CategoryManager';
 
 // Form components
-import FormInput from '../../components/form/FormInput';
-import FormSwitch from '../../components/form/FormSwitch';
-import FormCheckbox from '../../components/form/FormCheckbox';
-import FormTextarea from '../../components/form/FormTextarea';
-import FormRichTextarea from '../../components/form/FormRichTextarea';
-import FormSelect from '../../components/form/FormSelect';
-import FormRadioGroup from '../../components/form/FormRadioGroup';
-import FormDatePicker from '../../components/form/FormDatePicker';
-import FormErrorMessage from '../../components/form/FormErrorMessage';
-import FormLabelInput from '../../components/form/FormLabelInput';
-import FormMoodSelector from '../../components/form/FormMoodSelector';
-import FormCategorySelector from '../../components/form/FormCategorySelector';
-import FormArrayField from '../../components/form/FormArrayField';
-import Form from '../../components/form/Form';
+import FormInput from '../../shared/components/FormInput';
+import FormSwitch from '../../shared/components/FormSwitch';
+import FormCheckbox from '../../shared/components/FormCheckbox';
+import FormTextarea from '../../shared/components/FormTextarea';
+import FormRichTextarea from '../../shared/components/FormRichTextarea';
+import FormSelect from '../../shared/components/FormSelect';
+import FormRadioGroup from '../../shared/components/FormRadioGroup';
+import FormDatePicker from '../../shared/components/FormDatePicker';
+import FormErrorMessage from '../../shared/components/FormErrorMessage';
+import FormLabelInput from '../../shared/components/FormLabelInput';
+import FormMoodSelector from '../../shared/components/FormMoodSelector';
+import FormCategorySelector from '../../shared/components/FormCategorySelector';
+import FormArrayField from '../../shared/components/FormArrayField';
+import Form from '../../shared/components/Form';
 
 // Mock data for component showcase
 const mockData = {
@@ -773,7 +774,8 @@ export default function ComponentShowcaseScreen() {
                     <SparkCard spark={mockData.spark as any} onPress={() => { }} />
                     <ActionCard action={mockData.action as any} onPress={() => { }} />
                     <PathCard path={mockData.path as any} onPress={() => { }} />
-                    <LoopCard loop={mockData.loop as any} onPress={() => { }} />
+                    {/* TODO: Re-implement LoopCard in Phase 3 */}
+                    {/* <LoopCard loop={mockData.loop as any} onPress={() => { }} /> */}
                 </ShowcaseSection>
 
                 <ShowcaseSection title="Database Utilities">

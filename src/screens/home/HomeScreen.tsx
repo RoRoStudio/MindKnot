@@ -18,23 +18,26 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../types/navigation-types';
-import { useTheme } from '../../contexts/ThemeContext';
-import { Typography, Icon, IconName } from '../../components/common';
-import { NoteCard, SparkCard, ActionCard, PathCard, LoopCard } from '../../components/entries';
-import { useNotes } from '../../hooks/useNotes';
-import { useSparks } from '../../hooks/useSparks';
-import { useActions } from '../../hooks/useActions';
-import { usePaths } from '../../hooks/usePaths';
-import { useLoops } from '../../hooks/useLoops';
-import { useBottomSheet } from '../../contexts/BottomSheetContext';
-import { Note } from '../../types/note';
-import { Spark } from '../../types/spark';
-import { Action } from '../../types/action';
-import { Path } from '../../types/path';
-import { Loop } from '../../types/loop';
-import { ENTRY_TYPES } from '../../constants/entryTypes';
-import { EntryType } from '../../constants/entryTypes';
+import { RootStackParamList } from '../../shared/types/navigation-types';
+import { useTheme } from '../../app/contexts/ThemeContext';
+import { Typography, Icon, IconName } from '../../shared/components';
+import { NoteCard, SparkCard, ActionCard, PathCard } from '../../shared/components';
+// LoopCard will be implemented in Phase 3
+import { useNotes } from '../../features/notes/hooks/useNotes';
+import { useSparks } from '../../features/sparks/hooks/useSparks';
+import { useActions } from '../../features/actions/hooks/useActions';
+import { usePaths } from '../../features/paths/hooks/usePaths';
+// useLoops will be implemented in Phase 3
+// import { useLoops } from '../../features/loops/hooks/useLoops';
+import { useBottomSheet } from '../../app/contexts/BottomSheetContext';
+import { Note } from '../../shared/types/note';
+import { Spark } from '../../shared/types/spark';
+import { Action } from '../../shared/types/action';
+import { Path } from '../../shared/types/path';
+// Loop type will be implemented in Phase 3
+// import { Loop } from '../../shared/types/loop';
+import { ENTRY_TYPES } from '../../shared/constants/entryTypes';
+import { EntryType } from '../../shared/constants/entryTypes';
 
 const { width } = Dimensions.get('window');
 
@@ -54,7 +57,8 @@ export default function HomeScreen() {
     const { sparks, loadSparks } = useSparks();
     const { actions, loadActions } = useActions();
     const { paths, loadPaths } = usePaths();
-    const { loops, loadLoops } = useLoops();
+    // TODO: Re-implement in Phase 3
+    // const { loops, loadLoops } = useLoops();
     const { showNoteForm, showSparkForm, showActionForm, showPathForm } = useBottomSheet();
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -78,13 +82,14 @@ export default function HomeScreen() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                await Promise.all([loadNotes(), loadSparks(), loadActions(), loadPaths(), loadLoops()]);
+                // TODO: Re-implement loadLoops in Phase 3
+                await Promise.all([loadNotes(), loadSparks(), loadActions(), loadPaths()]);
             } catch (err) {
                 console.error('Failed to load data:', err);
             }
         };
         loadData();
-    }, [loadNotes, loadSparks, loadActions, loadPaths, loadLoops]);
+    }, [loadNotes, loadSparks, loadActions, loadPaths]);
 
     const formatRelativeDate = (dateString: string): string => {
         const date = new Date(dateString);
@@ -111,7 +116,8 @@ export default function HomeScreen() {
                 navigation.navigate('PathScreen', { mode: 'view', id });
                 break;
             case 'loop':
-                navigation.navigate('LoopScreen', { mode: 'view', id });
+                // TODO: Re-implement LoopScreen navigation in Phase 3
+                // navigation.navigate('LoopScreen', { mode: 'view', id });
                 break;
             default:
                 console.warn(`Unknown entry type: ${type}`);
@@ -159,15 +165,17 @@ export default function HomeScreen() {
         }))
         : [];
 
-    const loopEntries = Array.isArray(loops)
-        ? loops.map((l: Loop) => ({
-            id: l.id,
-            type: 'loop',
-            title: l.title,
-            date: formatRelativeDate(l.createdAt),
-            ...iconMap.loop
-        }))
-        : [];
+    // TODO: Re-implement loop entries in Phase 3
+    // const loopEntries = Array.isArray(loops)
+    //     ? loops.map((l: Loop) => ({
+    //         id: l.id,
+    //         type: 'loop',
+    //         title: l.title,
+    //         date: formatRelativeDate(l.createdAt),
+    //         ...iconMap.loop
+    //     }))
+    //     : [];
+    const loopEntries: any[] = [];
 
     const recentEntries = [
         ...noteEntries,

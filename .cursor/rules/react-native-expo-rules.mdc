@@ -16,20 +16,6 @@ const reactNativeExpoBestPractices = [
   "Utilize Expo's push notification system",
 ];
 
-// Folder structure
-
-const folderStructure = `
-assets/
-src/
-  components/
-  screens/
-  navigation/
-  hooks/
-  utils/
-App.js
-app.json
-`;
-
 // Additional instructions
 
 const additionalInstructions = `

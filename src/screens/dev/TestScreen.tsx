@@ -4,7 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 import { AntDesign } from '@expo/vector-icons'; // For chevrons and flag icons
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Icon } from '../../components/common';
+import { Icon } from '../../shared/components';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CENTER_X = SCREEN_WIDTH / 2;

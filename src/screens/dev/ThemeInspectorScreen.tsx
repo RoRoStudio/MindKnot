@@ -1,9 +1,9 @@
 // src/screens/ThemeInspectorScreen.tsx
 import React from 'react';
 import { ScrollView, View, StyleSheet, TouchableOpacity } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useStyles } from '../../hooks/useStyles';
-import { Typography, Card } from '../../components/common';
+import { useTheme } from '../../app/contexts/ThemeContext';
+import { useStyles } from '../../shared/hooks/useStyles';
+import { Typography, Card } from '../../shared/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ThemeInspectorScreen() {

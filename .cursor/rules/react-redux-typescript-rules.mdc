@@ -22,20 +22,6 @@ const reduxBestPractices = [
   "Use selectors for accessing state in components",
 ];
 
-// Folder structure
-
-const folderStructure = `
-src/
-  components/
-  features/
-  store/
-    slices/
-    hooks.ts
-    store.ts
-  types/
-  utils/
-`;
-
 // Additional instructions
 
 const additionalInstructions = `

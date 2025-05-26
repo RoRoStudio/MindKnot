@@ -7,41 +7,44 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { Provider } from 'react-redux';
-import { store } from './src/store';
-import { ThemeProvider } from './src/contexts/ThemeContext';
-import AppNavigator from './src/navigation/AppNavigator';
-import { ExpandableLoopHeader } from './src/components/shared/ExpandableLoopHeader';
-import { LoopExecutionScreen } from './src/screens/loops/LoopExecutionScreen';
-import { useExpandableLoopHeader } from './src/hooks/useExpandableLoopHeader';
-import { initDatabase } from './src/api/database';
+import { store } from './src/app/store';
+import { ThemeProvider } from './src/app/contexts/ThemeContext';
+import AppNavigator from './src/app/navigation/AppNavigator';
+import { ExpandableLoopHeader } from './src/shared/components/ExpandableLoopHeader';
+// TODO: Re-enable when loops are implemented
+// import { LoopExecutionScreen } from './src/features/loops/screens/LoopExecutionScreen';
+// import { useExpandableLoopHeader } from './src/shared/hooks/useExpandableLoopHeader';
+import { initDatabase } from './src/shared/services/database';
 import { useFonts, KantumruyPro_300Light, KantumruyPro_400Regular, KantumruyPro_500Medium, KantumruyPro_600SemiBold, KantumruyPro_700Bold } from '@expo-google-fonts/kantumruy-pro';
 import * as SplashScreen from 'expo-splash-screen';
-import { lightTheme } from './src/theme/light';
+import { lightTheme } from './src/app/theme/light';
 
 // Main App Content Component (needs to be inside Provider to use hooks)
 const AppContent: React.FC = () => {
-    const {
-        showExecutionScreen,
-        hasActiveLoop,
-        openExecution,
-        closeExecution,
-    } = useExpandableLoopHeader();
+    // TODO: Re-enable when loops are implemented
+    // const {
+    //     showExecutionScreen,
+    //     hasActiveLoop,
+    //     openExecution,
+    //     closeExecution,
+    // } = useExpandableLoopHeader();
 
     return (
         <>
             <AppNavigator />
 
+            {/* TODO: Re-enable when loops are implemented */}
             {/* Expandable Loop Header - shows when there's an active loop */}
-            <ExpandableLoopHeader
+            {/* <ExpandableLoopHeader
                 visible={hasActiveLoop}
                 onOpenExecution={openExecution}
-            />
+            /> */}
 
             {/* Loop Execution Screen - modal overlay */}
-            <LoopExecutionScreen
+            {/* <LoopExecutionScreen
                 visible={showExecutionScreen}
                 onClose={closeExecution}
-            />
+            /> */}
         </>
     );
 };

@@ -1,20 +1,22 @@
 // src/screens/momentum/MomentumScreen.tsx
 import React, { useEffect, useState } from 'react';
 import { View, SafeAreaView, ScrollView } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useStyles } from '../../hooks/useStyles';
-import { Typography, Card, Icon } from '../../components/common';
-import { useNotes } from '../../hooks/useNotes';
-import { useSparks } from '../../hooks/useSparks';
-import { useActions } from '../../hooks/useActions';
-import { usePaths } from '../../hooks/usePaths';
-import { useLoops } from '../../hooks/useLoops';
-import { ActionCard } from '../../components/entries';
-import { Note } from '../../types/note';
-import { Spark } from '../../types/spark';
-import { Action } from '../../types/action';
-import { Path } from '../../types/path';
-import { Loop } from '../../types/loop';
+import { useTheme } from '../../app/contexts/ThemeContext';
+import { useStyles } from '../../shared/hooks/useStyles';
+import { Typography, Card, Icon } from '../../shared/components';
+import { useNotes } from '../../features/notes/hooks/useNotes';
+import { useSparks } from '../../features/sparks/hooks/useSparks';
+import { useActions } from '../../features/actions/hooks/useActions';
+import { usePaths } from '../../features/paths/hooks/usePaths';
+// TODO: Re-implement useLoops in Phase 3
+// import { useLoops } from '../../features/loops/hooks/useLoops';
+import { ActionCard } from '../../features/actions/components/ActionCard';
+import { Note } from '../../shared/types/note';
+import { Spark } from '../../shared/types/spark';
+import { Action } from '../../shared/types/action';
+import { Path } from '../../shared/types/path';
+// TODO: Re-implement Loop type in Phase 3
+// import { Loop } from '../../shared/types/loop';
 
 export default function MomentumScreen() {
     const { theme } = useTheme();
@@ -22,7 +24,8 @@ export default function MomentumScreen() {
     const { sparks, loadSparks } = useSparks();
     const { actions, loadActions, toggleActionDone } = useActions();
     const { paths, loadPaths } = usePaths();
-    const { loops, loadLoops } = useLoops();
+    // TODO: Re-implement in Phase 3
+    // const { loops, loadLoops } = useLoops();
 
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
@@ -56,7 +59,8 @@ export default function MomentumScreen() {
         const loadData = async () => {
             setLoading(true);
             try {
-                await Promise.all([loadNotes(), loadSparks(), loadActions(), loadPaths(), loadLoops()]);
+                // TODO: Re-implement loadLoops in Phase 3
+                await Promise.all([loadNotes(), loadSparks(), loadActions(), loadPaths()]);
             } catch (error) {
                 console.error('Error loading data:', error);
             } finally {
@@ -76,7 +80,8 @@ export default function MomentumScreen() {
         const notesArray = Array.isArray(notes) ? notes : [];
         const sparksArray = Array.isArray(sparks) ? sparks : [];
         const pathsArray = Array.isArray(paths) ? paths : [];
-        const loopsArray = Array.isArray(loops) ? loops : [];
+        // TODO: Re-implement loops in Phase 3
+        const loopsArray: any[] = [];
 
         const completedActions = actionsArray.filter((a: Action) => a.done).length;
         const recentNotes = notesArray.filter((n: Note) => new Date(n.createdAt) >= oneWeekAgo).length;
@@ -101,7 +106,7 @@ export default function MomentumScreen() {
             activeLoops,
             entriesThisWeek
         });
-    }, [notes, sparks, actions, paths, loops]);
+    }, [notes, sparks, actions, paths]);
 
     const generateMockStreak = () => {
         const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -171,12 +176,12 @@ export default function MomentumScreen() {
                 {/* Upcoming Actions */}
                 <View style={styles.section}>
                     <Typography variant="h3" style={styles.sectionTitle}>Upcoming Actions</Typography>
-                    {actions.filter(a => !a.done && a.dueDate).length > 0 ? (
+                    {actions.filter((a: Action) => !a.done && a.dueDate).length > 0 ? (
                         actions
-                            .filter(a => !a.done && a.dueDate)
-                            .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
+                            .filter((a: Action) => !a.done && a.dueDate)
+                            .sort((a: Action, b: Action) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
                             .slice(0, 3)
-                            .map(action => (
+                            .map((action: Action) => (
                                 <ActionCard key={action.id} action={action} onToggleDone={toggleActionDone} />
                             ))
                     ) : (

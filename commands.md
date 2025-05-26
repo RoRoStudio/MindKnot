@@ -32,3 +32,5 @@ npx tsc --noEmit
 then use this to make it executable:
 chmod +x ~/emulator.sh
 
+# update  component_library.md
+npm run docs:update
