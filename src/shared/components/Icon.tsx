@@ -83,6 +83,7 @@ import LogOut from '../../assets/icons/lucide/log-out.svg';
 import CirclePlay from '../../assets/icons/lucide/circle-play.svg';
 import CirclePause from '../../assets/icons/lucide/circle-pause.svg';
 import SkipForward from '../../assets/icons/lucide/skip-forward.svg';
+// Using existing icons as alternatives for missing ones
 
 /**
  * Map of icon names to their SVG components
@@ -163,6 +164,12 @@ const iconMap = {
     'circle-pause': CirclePause,
     'skip-forward': SkipForward,
     'refresh': Undo,
+    activity: Zap, // Using zap as activity icon
+    repeat: Undo, // Using undo as repeat icon
+    'play-circle': CirclePlay,
+    play: CirclePlay, // Using circle-play as play icon
+    pause: CirclePause, // Using circle-pause as pause icon
+    edit: Pencil, // Using pencil as edit icon
 };
 
 /**

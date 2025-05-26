@@ -6,7 +6,7 @@ import {
     TextInput,
 } from 'react-native';
 import { useTheme } from '../../app/contexts/ThemeContext';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Icon, IconName } from './Icon';
 
 /**
@@ -56,7 +56,7 @@ export const IconPicker = React.memo<IconPickerProps>(({
     const { theme } = useTheme();
     const [searchTerm, setSearchTerm] = useState('');
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginVertical: theme.spacing.m,
         },

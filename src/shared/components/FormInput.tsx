@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import {
     View,
     TextInput,
-    StyleSheet,
     TextInputProps,
     TouchableOpacity,
 } from 'react-native';
@@ -17,8 +16,7 @@ import {
 import { Typography } from './Typography';
 import { Icon } from './Icon';
 import FormErrorMessage from './FormErrorMessage';
-import { useStyles } from '../hooks/useStyles';
-import { useTheme } from '../../app/contexts/ThemeContext';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
 interface FormInputProps<T extends FieldValues> extends Omit<TextInputProps, 'onChange' | 'onBlur' | 'value'> {
     name: Path<T>;
@@ -61,11 +59,10 @@ export default function FormInput<T extends FieldValues>({
     isTitle = false,
     ...inputProps
 }: FormInputProps<T>) {
-    const { theme } = useTheme();
     const [isFocused, setIsFocused] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
             width: '100%',
@@ -77,7 +74,7 @@ export default function FormInput<T extends FieldValues>({
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: isTitle ? 'transparent' : theme.colors.surfaceVariant,
-            borderRadius: 16,
+            borderRadius: theme.shape.radius.m,
             paddingHorizontal: theme.spacing.m,
             paddingVertical: theme.spacing.xs,
             minHeight: 48,
@@ -108,7 +105,7 @@ export default function FormInput<T extends FieldValues>({
             padding: theme.spacing.s,
             fontSize: isTitle ? theme.typography.fontSize.xl : theme.typography.fontSize.m,
             color: theme.colors.textPrimary,
-            fontWeight: isTitle ? 'bold' : 'normal',
+            fontWeight: isTitle ? theme.typography.fontWeight.bold : theme.typography.fontWeight.regular,
             minHeight: isTitle ? 40 : 24, // Ensure minimum height
         },
         leadingText: {
@@ -122,12 +119,12 @@ export default function FormInput<T extends FieldValues>({
             paddingRight: theme.spacing.xs,
         },
         charCount: {
-            fontSize: 12,
+            fontSize: theme.typography.fontSize.xs,
             color: theme.colors.textSecondary,
             marginLeft: theme.spacing.xs,
         },
         helperText: {
-            marginTop: 4,
+            marginTop: theme.spacing.xxs,
             paddingHorizontal: theme.spacing.xs,
         },
     }));
@@ -152,7 +149,7 @@ export default function FormInput<T extends FieldValues>({
                     name={showPassword ? 'eye-off' : 'eye'}
                     width={20}
                     height={20}
-                    color={theme.colors.textSecondary}
+                    color={styles.leadingText.color}
                 />
             </TouchableOpacity>
         );
@@ -198,16 +195,9 @@ export default function FormInput<T extends FieldValues>({
                             onFocus={handleFocus}
                             value={value === null || value === undefined ? '' : String(value)}
                             secureTextEntry={secureTextEntry && !showPassword}
-                            placeholderTextColor={theme.colors.textSecondary}
-                            selectionColor={theme.colors.primary}
+                            maxLength={maxLength}
                             {...inputProps}
                         />
-
-                        {showCharCount && maxLength && (
-                            <Typography style={styles.charCount}>
-                                {value ? value.toString().length : 0}/{maxLength}
-                            </Typography>
-                        )}
 
                         {secureTextEntry && renderPasswordIcon()}
 
@@ -219,22 +209,24 @@ export default function FormInput<T extends FieldValues>({
                             <View style={styles.rightIconContainer}>
                                 <Icon
                                     name="circle-alert"
-                                    width={18}
-                                    height={18}
-                                    color={theme.colors.error}
+                                    width={20}
+                                    height={20}
+                                    color={styles.inputContainerError.backgroundColor}
                                 />
                             </View>
                         )}
+
+                        {showCharCount && maxLength && (
+                            <Typography style={styles.charCount}>
+                                {(value?.length || 0)}/{maxLength}
+                            </Typography>
+                        )}
                     </View>
 
-                    <FormErrorMessage message={error?.message} visible={!!error} />
+                    {error && <FormErrorMessage message={error.message} />}
 
-                    {!error && helperText && (
-                        <Typography
-                            variant="caption"
-                            color="secondary"
-                            style={styles.helperText}
-                        >
+                    {helperText && !error && (
+                        <Typography variant="caption" style={styles.helperText}>
                             {helperText}
                         </Typography>
                     )}
@@ -244,17 +236,10 @@ export default function FormInput<T extends FieldValues>({
     );
 }
 
+// Label component for external use
 FormInput.Label = function Label({ label, style }: LabelProps) {
-    const styles = useStyles((theme) => ({
-        label: {
-            color: theme.colors.textPrimary,
-            fontSize: theme.typography.fontSize.m,
-            marginBottom: theme.spacing.xs,
-        }
-    }));
-
     return (
-        <Typography style={[styles.label, style]}>
+        <Typography variant="body1" style={style}>
             {label}
         </Typography>
     );

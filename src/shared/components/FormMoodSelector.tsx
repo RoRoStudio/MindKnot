@@ -8,7 +8,7 @@ import {
     Text,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './';
 import FormErrorMessage from './FormErrorMessage';
 
@@ -38,7 +38,7 @@ export default function FormMoodSelector<T extends FieldValues>({
     helperText,
     showLabels = true,
 }: FormMoodSelectorProps<T>) {
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
         },

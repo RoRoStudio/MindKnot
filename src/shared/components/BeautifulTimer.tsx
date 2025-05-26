@@ -236,7 +236,7 @@ export const BeautifulTimer: React.FC<BeautifulTimerProps> = ({
 
 const createStyles = (theme: any) => StyleSheet.create({
     container: {
-        borderRadius: 16,
+        borderRadius: theme.shape.radius.xl,
         padding: 20,
         marginVertical: 16,
         borderWidth: 1,
@@ -249,13 +249,13 @@ const createStyles = (theme: any) => StyleSheet.create({
     },
     progressContainer: {
         height: 4,
-        borderRadius: 2,
+        borderRadius: theme.shape.radius.xs,
         marginBottom: 16,
         overflow: 'hidden',
     },
     progressBar: {
         height: '100%',
-        borderRadius: 2,
+        borderRadius: theme.shape.radius.xs,
     },
     timerContent: {
         alignItems: 'center',
@@ -282,7 +282,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     statusIndicator: {
         width: 8,
         height: 8,
-        borderRadius: 4,
+        borderRadius: theme.shape.radius.s,
         marginRight: 8,
     },
     statusText: {
@@ -301,7 +301,7 @@ const createStyles = (theme: any) => StyleSheet.create({
         justifyContent: 'center',
         paddingVertical: 12,
         paddingHorizontal: 16,
-        borderRadius: 12,
+        borderRadius: theme.shape.radius.l,
         gap: 6,
     },
     primaryButton: {
@@ -321,7 +321,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     iconContainer: {
         width: 48,
         height: 48,
-        borderRadius: 24,
+        borderRadius: theme.shape.radius.xs4,
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 12,

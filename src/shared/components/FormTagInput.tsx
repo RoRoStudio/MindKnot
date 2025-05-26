@@ -7,7 +7,7 @@ import {
     Path,
     RegisterOptions,
 } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
 import FormErrorMessage from './FormErrorMessage';
@@ -36,7 +36,7 @@ const FormTagInput = <T extends FieldValues>({
     const [tagText, setTagText] = useState('');
     const [isFocused, setIsFocused] = useState(false);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
             width: '100%',
@@ -49,7 +49,7 @@ const FormTagInput = <T extends FieldValues>({
             flexWrap: 'wrap',
             alignItems: 'center',
             backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: 16,
+            borderRadius: theme.shape.radius.xl,
             padding: theme.spacing.s,
             minHeight: 48,
             shadowColor: theme.colors.shadow,
@@ -77,7 +77,7 @@ const FormTagInput = <T extends FieldValues>({
         tagContainer: {
             flexDirection: 'row',
             backgroundColor: theme.colors.primary + '20',
-            borderRadius: 8,
+            borderRadius: theme.shape.radius.m,
             padding: theme.spacing.xs,
             marginRight: theme.spacing.xs,
             marginBottom: theme.spacing.xs,

@@ -19,7 +19,7 @@ import Animated, {
     useAnimatedGestureHandler,
     runOnJS,
 } from 'react-native-reanimated';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../../app/contexts/ThemeContext';
 
 // Import bottom sheet context provider
@@ -53,7 +53,7 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress,
     const scale = useSharedValue(1);
     const { theme } = useTheme();
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         fabContainer: {
             position: 'absolute',
             width: FAB_SIZE,

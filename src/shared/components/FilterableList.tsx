@@ -15,7 +15,7 @@ import {
     StatusBar,
     ActivityIndicator
 } from 'react-native';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Icon, IconName, Typography } from './';
 import { useBottomSheet } from '../../app/contexts/BottomSheetContext';
 import { useTheme } from '../../app/contexts/ThemeContext';
@@ -196,7 +196,7 @@ export function FilterableList<T>({
     const windowHeight = Dimensions.get('window').height;
     const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,
@@ -208,7 +208,7 @@ export function FilterableList<T>({
             flex: 1,
         },
         gridContainer: {
-            padding: 12,
+            padding: theme.spacing.s,
             paddingBottom: 80, // Add extra padding at bottom for fab button
         },
         emptyContainer: {
@@ -230,10 +230,10 @@ export function FilterableList<T>({
             position: 'absolute',
             bottom: theme.spacing.m,
             right: theme.spacing.m,
-            borderRadius: 28,
+            borderRadius: theme.shape.radius.s,
             paddingVertical: 14,
             paddingHorizontal: 20,
-            backgroundColor: '#202030', // Dark blue/black from screenshot
+            backgroundColor: theme.colors.primary, // Dark blue/black from screenshot
             shadowColor: theme.colors.shadow,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
@@ -250,9 +250,9 @@ export function FilterableList<T>({
             position: 'absolute',
             bottom: theme.spacing.m,
             left: theme.spacing.m,
-            borderRadius: 24,
-            padding: 12,
-            backgroundColor: '#F5F5F7', // Light gray from screenshot
+            borderRadius: theme.shape.radius.xs,
+            padding: theme.spacing.s,
+            backgroundColor: theme.colors.surfaceVariant, // Light gray from screenshot
             shadowColor: theme.colors.shadow,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.2,
@@ -271,7 +271,7 @@ export function FilterableList<T>({
         },
         gridItem: {
             flex: 1,
-            margin: 4,
+            margin: theme.spacing.xs,
             maxWidth: '48%', // Ensure two columns fit side by side
         },
         loadingContainer: {
@@ -400,7 +400,7 @@ export function FilterableList<T>({
         }
         return {
             contentContainerStyle: {
-                padding: 16,
+                padding: theme.spacing.m,
                 paddingBottom: 80, // Add extra padding at bottom for fab button
             },
         };

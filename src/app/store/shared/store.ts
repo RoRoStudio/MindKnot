@@ -7,8 +7,11 @@ import noteReducer from '../../../features/notes/store/noteSlice';
 import pathReducer from '../../../features/paths/store/pathSlice';
 import sagaReducer from '../../../features/sagas/store/sagaSlice';
 import sparkReducer from '../../../features/sparks/store/sparkSlice';
-// TODO: Add loop reducer when implemented
-// import loopReducer from '../../../features/loops/store/loopSlice';
+// Loop reducers
+import loopReducer from '../../../features/loops/store/loopSlice';
+import executionReducer from '../../../features/loops/store/executionSlice';
+import templateReducer from '../../../features/loops/store/templateSlice';
+import builderReducer from '../../../features/loops/store/builderSlice';
 
 export const store = configureStore({
     reducer: {
@@ -17,8 +20,11 @@ export const store = configureStore({
         path: pathReducer,
         saga: sagaReducer,
         spark: sparkReducer,
-        // TODO: Add loop reducer when implemented
-        // loop: loopReducer,
+        // Loop feature reducers
+        loops: loopReducer,
+        execution: executionReducer,
+        templates: templateReducer,
+        builder: builderReducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

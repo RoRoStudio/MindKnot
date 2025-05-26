@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, ScrollView, Dimensions, StyleProp, ViewStyle } from 'react-native';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../../app/contexts/ThemeContext';
 
 /**
@@ -102,7 +102,7 @@ const ColorPicker = React.memo<ColorPickerProps>(({
     const totalRows = Math.ceil(PRESET_COLORS.length / colorsPerRow);
     const minGridHeight = Math.min(totalRows * (colorItemSize + 8), 200); // Limit max height
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             width: '100%',
             height: minGridHeight,
@@ -126,7 +126,7 @@ const ColorPicker = React.memo<ColorPickerProps>(({
             width: colorItemSize,
             height: colorItemSize,
             borderRadius: colorItemSize / 2,
-            margin: 4,
+            margin: theme.spacing.xs,
             justifyContent: 'center',
             alignItems: 'center',
             shadowColor: '#000',
@@ -138,7 +138,7 @@ const ColorPicker = React.memo<ColorPickerProps>(({
         selectedIndicator: {
             width: '35%',
             height: '35%',
-            borderRadius: 999,
+            borderRadius: theme.shape.radius.pill,
             backgroundColor: theme.colors.background,
             borderWidth: 1,
             borderColor: theme.isDark ? '#fff' : '#000',

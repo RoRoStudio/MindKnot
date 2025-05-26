@@ -6,7 +6,7 @@ import {
     StyleSheet,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
 import { useTheme } from '../../app/contexts/ThemeContext';
 import FormErrorMessage from './FormErrorMessage';
@@ -30,7 +30,7 @@ export default function FormSwitch<T extends FieldValues>({
 }: FormSwitchProps<T>) {
     const { theme } = useTheme();
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
         },

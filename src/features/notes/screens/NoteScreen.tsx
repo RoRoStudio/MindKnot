@@ -14,8 +14,7 @@ import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../shared/types/navigation-types';
-import { useTheme } from '../../../app/contexts/ThemeContext';
-import { useStyles } from '../../../shared/hooks/useStyles';
+import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import { Typography } from '../../../shared/components';
 import {
     Form,
@@ -53,14 +52,13 @@ interface NoteFormValues {
 export default function NoteScreen() {
     const route = useRoute<NoteScreenRouteProp>();
     const navigation = useNavigation<NavigationProp>();
-    const { theme } = useTheme();
     const { loadNotes } = useNotes();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [noteId, setNoteId] = useState<string | undefined>(undefined);
     const [lastEdited, setLastEdited] = useState<Date | null>(null);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,
@@ -73,11 +71,11 @@ export default function NoteScreen() {
             marginRight: theme.spacing.m,
             marginBottom: theme.spacing.xs,
             color: theme.colors.textSecondary,
-            fontSize: 12,
+            fontSize: theme.typography.fontSize.xs,
         },
         titleInput: {
-            fontSize: 26,
-            fontWeight: 'bold',
+            fontSize: theme.typography.fontSize.xxl,
+            fontWeight: theme.typography.fontWeight.bold,
             paddingHorizontal: theme.spacing.m,
             paddingTop: theme.spacing.s,
             paddingBottom: theme.spacing.m,
@@ -282,7 +280,7 @@ export default function NoteScreen() {
                     entryType="Note"
                 />
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={theme.colors.primary} />
+                    <ActivityIndicator size="large" color={styles.container.backgroundColor} />
                 </View>
             </SafeAreaView>
         );

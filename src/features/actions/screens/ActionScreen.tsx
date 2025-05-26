@@ -6,7 +6,6 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    StyleSheet,
     Text,
     StatusBar,
     Alert
@@ -14,6 +13,7 @@ import {
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useForm, Controller } from 'react-hook-form';
+import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import { useTheme } from '../../../app/contexts/ThemeContext';
 import { Icon, ConfirmationModal } from '../../../shared/components';
 import { createAction, updateAction, getActionById } from '../hooks/useActionService';
@@ -699,7 +699,7 @@ export default function ActionScreen() {
         }
     }, [targetDate, actionId, mode]);
 
-    const styles = StyleSheet.create({
+    const styles = useThemedStyles((theme) => ({
         safeArea: {
             flex: 1,
             backgroundColor: theme.colors.background,
@@ -712,22 +712,22 @@ export default function ActionScreen() {
             flex: 1,
         },
         titleInput: {
-            fontSize: 32,
-            fontWeight: '300',
+            fontSize: theme.typography.fontSize.xxxl,
+            fontWeight: theme.typography.fontWeight.regular,
             color: theme.colors.textPrimary,
-            padding: 16,
-            paddingTop: 16,
-            paddingBottom: 16,
+            padding: theme.spacing.m,
+            paddingTop: theme.spacing.m,
+            paddingBottom: theme.spacing.m,
             fontFamily: 'KantumruyPro-Bold',
         },
         divider: {
             height: 1,
             backgroundColor: theme.colors.divider,
-            marginHorizontal: 16,
+            marginHorizontal: theme.spacing.m,
         },
         sectionContainer: {
-            paddingVertical: 16,
-            paddingHorizontal: 16,
+            paddingVertical: theme.spacing.m,
+            paddingHorizontal: theme.spacing.m,
         },
         sectionRow: {
             flexDirection: 'row',
@@ -735,8 +735,8 @@ export default function ActionScreen() {
             justifyContent: 'space-between',
         },
         sectionLabel: {
-            fontSize: 16,
-            fontWeight: '500',
+            fontSize: theme.typography.fontSize.m,
+            fontWeight: theme.typography.fontWeight.medium,
             color: theme.colors.textPrimary,
             fontFamily: 'KantumruyPro-Medium',
         },
@@ -751,21 +751,21 @@ export default function ActionScreen() {
             alignItems: 'center',
         },
         targetDateValue: {
-            fontSize: 16,
+            fontSize: theme.typography.fontSize.m,
             color: theme.colors.textSecondary,
             fontFamily: 'KantumruyPro-Regular',
-            marginRight: 8,
+            marginRight: theme.spacing.s,
         },
         targetDatePlaceholder: {
-            fontSize: 16,
+            fontSize: theme.typography.fontSize.m,
             color: theme.colors.textSecondary,
             fontFamily: 'KantumruyPro-Regular',
         },
         clearButton: {
-            padding: 4,
+            padding: theme.spacing.xs,
         },
         chevronRight: {
-            marginLeft: 4,
+            marginLeft: theme.spacing.xs,
         },
         prioritySection: {
             flexDirection: 'row',
@@ -780,12 +780,12 @@ export default function ActionScreen() {
             flex: 2,
         },
         priorityButton: {
-            paddingVertical: 8,
-            paddingHorizontal: 12,
+            paddingVertical: theme.spacing.s,
+            paddingHorizontal: theme.spacing.s,
             alignItems: 'center',
             justifyContent: 'center',
-            marginHorizontal: 4,
-            borderRadius: 50,
+            marginHorizontal: theme.spacing.xs,
+            borderRadius: theme.shape.radius.pill,
             borderWidth: 1,
         },
         priorityButtonFirst: {
@@ -807,20 +807,20 @@ export default function ActionScreen() {
             borderColor: priority === 'high' ? theme.colors.error : theme.colors.border,
         },
         lowButtonText: {
-            fontSize: 14,
-            fontWeight: '500',
+            fontSize: theme.typography.fontSize.s,
+            fontWeight: theme.typography.fontWeight.medium,
             color: theme.colors.textPrimary,
             fontFamily: 'KantumruyPro-Medium',
         },
         mediumButtonText: {
-            fontSize: 14,
-            fontWeight: '500',
+            fontSize: theme.typography.fontSize.s,
+            fontWeight: theme.typography.fontWeight.medium,
             color: theme.colors.textPrimary,
             fontFamily: 'KantumruyPro-Medium',
         },
         highButtonText: {
-            fontSize: 14,
-            fontWeight: '500',
+            fontSize: theme.typography.fontSize.s,
+            fontWeight: theme.typography.fontWeight.medium,
             color: priority === 'high' ? theme.colors.onPrimary : theme.colors.textPrimary,
             fontFamily: 'KantumruyPro-Medium',
         },
@@ -828,25 +828,25 @@ export default function ActionScreen() {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: 16,
+            marginBottom: theme.spacing.m,
         },
         subTasksContainer: {
-            marginTop: 8,
+            marginTop: theme.spacing.s,
         },
         subTaskRow: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 16,
+            marginBottom: theme.spacing.m,
         },
         checkBox: {
             width: 24,
             height: 24,
-            borderRadius: 4,
+            borderRadius: theme.shape.radius.xs,
             borderWidth: 1,
             borderColor: theme.colors.border,
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: 12,
+            marginRight: theme.spacing.s,
         },
         checkBoxChecked: {
             backgroundColor: theme.colors.primary,
@@ -854,7 +854,7 @@ export default function ActionScreen() {
         },
         subTaskInput: {
             flex: 1,
-            fontSize: 16,
+            fontSize: theme.typography.fontSize.m,
             color: theme.colors.textPrimary,
             padding: 0,
         },
@@ -864,41 +864,41 @@ export default function ActionScreen() {
         },
         subTaskTextContainer: {
             flex: 1,
-            paddingVertical: 8,
+            paddingVertical: theme.spacing.s,
         },
         subTaskText: {
-            fontSize: 16,
+            fontSize: theme.typography.fontSize.m,
             color: theme.colors.textPrimary,
         },
         newSubTaskRow: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginTop: 8,
+            marginTop: theme.spacing.s,
         },
         newSubTaskIcon: {
-            marginRight: 12,
+            marginRight: theme.spacing.s,
         },
         newSubTaskText: {
-            fontSize: 16,
+            fontSize: theme.typography.fontSize.m,
             color: theme.colors.textSecondary,
             fontFamily: 'KantumruyPro-Regular',
         },
         bottomContainer: {
-            padding: 16,
-            paddingBottom: 32,
+            padding: theme.spacing.m,
+            paddingBottom: theme.spacing.xl,
             borderTopWidth: 1,
             borderTopColor: theme.colors.divider,
         },
         createButton: {
             backgroundColor: theme.colors.primary,
-            borderRadius: 32,
-            paddingVertical: 16,
+            borderRadius: theme.shape.radius.pill,
+            paddingVertical: theme.spacing.m,
             alignItems: 'center',
         },
         createButtonText: {
             color: theme.colors.onPrimary,
-            fontSize: 16,
-            fontWeight: '600',
+            fontSize: theme.typography.fontSize.m,
+            fontWeight: theme.typography.fontWeight.semibold,
             fontFamily: 'KantumruyPro-SemiBold',
         },
         hiddenDatePicker: {
@@ -907,11 +907,11 @@ export default function ActionScreen() {
             opacity: 0,
             position: 'absolute',
         },
-    });
+    }));
 
     return (
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+            <StatusBar barStyle="dark-content" backgroundColor={styles.safeArea.backgroundColor} />
             <View style={styles.container}>
                 <EntryDetailHeader
                     onBackPress={handleBackPress}
@@ -957,7 +957,7 @@ export default function ActionScreen() {
                                                 style={styles.clearButton}
                                                 onPress={handleClearTargetDate}
                                             >
-                                                <Icon name="x" width={16} height={16} color={theme.colors.textSecondary} />
+                                                <Icon name="x" size={16} color={styles.targetDateValue.color} />
                                             </TouchableOpacity>
                                         </>
                                     ) : (
@@ -965,9 +965,8 @@ export default function ActionScreen() {
                                             <Text style={styles.targetDatePlaceholder}>Set target date</Text>
                                             <Icon
                                                 name="chevron-right"
-                                                width={16}
-                                                height={16}
-                                                color={theme.colors.textSecondary}
+                                                size={16}
+                                                color={styles.targetDatePlaceholder.color}
                                                 style={styles.chevronRight}
                                             />
                                         </>
@@ -1043,7 +1042,7 @@ export default function ActionScreen() {
                                             onPress={() => handleToggleSubTaskCompletion(index)}
                                         >
                                             {subTask.completed && (
-                                                <Icon name="check" width={16} height={16} color={theme.colors.onPrimary} />
+                                                <Icon name="check" size={16} color={styles.createButtonText.color} />
                                             )}
                                         </TouchableOpacity>
 
@@ -1082,9 +1081,8 @@ export default function ActionScreen() {
                                 >
                                     <Icon
                                         name="plus"
-                                        width={20}
-                                        height={20}
-                                        color={theme.colors.textSecondary}
+                                        size={20}
+                                        color={styles.newSubTaskText.color}
                                         style={styles.newSubTaskIcon}
                                     />
                                     <Text style={styles.newSubTaskText}>Add sub-actions</Text>

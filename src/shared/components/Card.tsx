@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, ViewProps, TouchableOpacity } from 'react-native';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
-import { useTheme } from '../../app/contexts/ThemeContext';
 
 /**
  * Props for the Card component
@@ -49,9 +48,7 @@ export const Card = React.memo<CardProps>(function Card({
     style,
     ...props
 }) {
-    const { theme } = useTheme();
-
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             backgroundColor: theme.components.card.background,
             borderRadius: theme.components.card.radius,

@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
 import FormErrorMessage from './FormErrorMessage';
@@ -30,7 +30,7 @@ export default function FormCheckbox<T extends FieldValues>({
 }: FormCheckboxProps<T>) {
     const { theme } = useTheme();
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
         },
@@ -38,7 +38,7 @@ export default function FormCheckbox<T extends FieldValues>({
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: 12,
+            borderRadius: theme.shape.radius.l,
             paddingVertical: theme.spacing.s,
             paddingHorizontal: theme.spacing.m,
             // Add subtle shadow
@@ -51,7 +51,7 @@ export default function FormCheckbox<T extends FieldValues>({
         checkbox: {
             width: 22,
             height: 22,
-            borderRadius: 4,
+            borderRadius: theme.shape.radius.s,
             borderWidth: 2,
             borderColor: theme.colors.border,
             backgroundColor: theme.colors.surface,

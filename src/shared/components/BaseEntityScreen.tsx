@@ -2,7 +2,7 @@ import React from 'react';
 import { View, SafeAreaView } from 'react-native';
 import { Icon, IconName } from './Icon';
 import { useTheme } from '../../app/contexts/ThemeContext';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { FilterableList } from './FilterableList';
 import type { FilterableListProps } from './FilterableList';
 
@@ -158,7 +158,7 @@ export function BaseEntityScreen<T extends BaseEntity>({
 }: BaseEntityScreenProps<T>) {
     const { theme } = useTheme();
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,

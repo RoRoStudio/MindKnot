@@ -13,7 +13,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useForm, Control, FieldValues } from 'react-hook-form';
 import { useTheme } from '../../../app/contexts/ThemeContext';
-import { useStyles } from '../../../shared/hooks/useStyles';
+import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import { Typography, Icon } from '../../../shared/components';
 import { EntryDetailHeader } from '../../../shared/components';
 import { Form, FormInput, FormRichTextarea, FormTagInput, FormCategorySelector } from '../../../shared/components';
@@ -52,7 +52,7 @@ export default function SparkScreen() {
     const [mode, setMode] = useState<SparkScreenMode>('create');
     const [sparkId, setSparkId] = useState<string | undefined>(undefined);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,

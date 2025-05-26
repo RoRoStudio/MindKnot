@@ -1,0 +1,15 @@
+# MindKnot Development Rules
+
+## 🎯 Core Principle
+**ALWAYS reference @MindKnot-Design-System notepad for complete design guidelines**
+
+## Quick Essentials
+1. **Components First**: Check `/src/shared/components/` before creating new UI
+2. **Theme Tokens Only**: `import { useThemedStyles } from '../hooks/useThemedStyles'`
+3. **No Hardcoding**: Never hardcode colors, spacing, or typography
+
+## Reference Notepads
+- `@MindKnot-Design-System` - Complete design system and component library
+- `@MindKnot-Component-Patterns` - Component creation templates and patterns
+
+*For detailed guidelines, examples, and current component library, always reference the notepads above.* 

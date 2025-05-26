@@ -22,20 +22,18 @@ import { RootStackParamList } from '../../shared/types/navigation-types';
 import { useTheme } from '../../app/contexts/ThemeContext';
 import { Typography, Icon, IconName } from '../../shared/components';
 import { NoteCard, SparkCard, ActionCard, PathCard } from '../../shared/components';
-// LoopCard will be implemented in Phase 3
+import { LoopCard } from '../../features/loops/components';
 import { useNotes } from '../../features/notes/hooks/useNotes';
 import { useSparks } from '../../features/sparks/hooks/useSparks';
 import { useActions } from '../../features/actions/hooks/useActions';
 import { usePaths } from '../../features/paths/hooks/usePaths';
-// useLoops will be implemented in Phase 3
-// import { useLoops } from '../../features/loops/hooks/useLoops';
+import { useLoopsStore } from '../../features/loops/hooks';
 import { useBottomSheet } from '../../app/contexts/BottomSheetContext';
 import { Note } from '../../shared/types/note';
 import { Spark } from '../../shared/types/spark';
 import { Action } from '../../shared/types/action';
 import { Path } from '../../shared/types/path';
-// Loop type will be implemented in Phase 3
-// import { Loop } from '../../shared/types/loop';
+import { Loop } from '../../shared/types/loop';
 import { ENTRY_TYPES } from '../../shared/constants/entryTypes';
 import { EntryType } from '../../shared/constants/entryTypes';
 
@@ -57,8 +55,7 @@ export default function HomeScreen() {
     const { sparks, loadSparks } = useSparks();
     const { actions, loadActions } = useActions();
     const { paths, loadPaths } = usePaths();
-    // TODO: Re-implement in Phase 3
-    // const { loops, loadLoops } = useLoops();
+    const { loops, fetchLoops } = useLoopsStore();
     const { showNoteForm, showSparkForm, showActionForm, showPathForm } = useBottomSheet();
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -82,14 +79,13 @@ export default function HomeScreen() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                // TODO: Re-implement loadLoops in Phase 3
-                await Promise.all([loadNotes(), loadSparks(), loadActions(), loadPaths()]);
+                await Promise.all([loadNotes(), loadSparks(), loadActions(), loadPaths(), fetchLoops()]);
             } catch (err) {
                 console.error('Failed to load data:', err);
             }
         };
         loadData();
-    }, [loadNotes, loadSparks, loadActions, loadPaths]);
+    }, [loadNotes, loadSparks, loadActions, loadPaths, fetchLoops]);
 
     const formatRelativeDate = (dateString: string): string => {
         const date = new Date(dateString);
@@ -116,8 +112,7 @@ export default function HomeScreen() {
                 navigation.navigate('PathScreen', { mode: 'view', id });
                 break;
             case 'loop':
-                // TODO: Re-implement LoopScreen navigation in Phase 3
-                // navigation.navigate('LoopScreen', { mode: 'view', id });
+                navigation.navigate('LoopDetailScreen', { id });
                 break;
             default:
                 console.warn(`Unknown entry type: ${type}`);
@@ -165,17 +160,15 @@ export default function HomeScreen() {
         }))
         : [];
 
-    // TODO: Re-implement loop entries in Phase 3
-    // const loopEntries = Array.isArray(loops)
-    //     ? loops.map((l: Loop) => ({
-    //         id: l.id,
-    //         type: 'loop',
-    //         title: l.title,
-    //         date: formatRelativeDate(l.createdAt),
-    //         ...iconMap.loop
-    //     }))
-    //     : [];
-    const loopEntries: any[] = [];
+    const loopEntries = Array.isArray(loops)
+        ? loops.map((l: Loop) => ({
+            id: l.id,
+            type: 'loop',
+            title: l.title,
+            date: formatRelativeDate(l.createdAt),
+            ...iconMap.loop
+        }))
+        : [];
 
     const recentEntries = [
         ...noteEntries,
@@ -192,8 +185,9 @@ export default function HomeScreen() {
         { id: '2', title: 'Add Spark', icon: 'lightbulb', color: theme.colors.secondary, onPress: () => showSparkForm() },
         { id: '3', title: 'Create Action', icon: 'check', color: theme.colors.success, onPress: () => showActionForm() },
         { id: '4', title: 'Start Path', icon: 'compass', color: theme.colors.textSecondary, onPress: () => showPathForm() },
-        { id: '5', title: 'UI Showcase', icon: 'layout-grid', color: theme.colors.primaryLight, onPress: () => navigation.navigate('ComponentShowcase') },
-        { id: '6', title: 'Path Timeline', icon: 'git-branch', color: theme.colors.secondaryLight, onPress: () => navigation.navigate('TestScreen') },
+        { id: '5', title: 'Create Loop', icon: 'infinity', color: ENTRY_TYPES[EntryType.LOOP].color, onPress: () => navigation.navigate('LoopBuilderScreen', { mode: 'create' }) },
+        { id: '6', title: 'UI Showcase', icon: 'layout-grid', color: theme.colors.primaryLight, onPress: () => navigation.navigate('ComponentShowcase') },
+        { id: '7', title: 'Path Timeline', icon: 'git-branch', color: theme.colors.secondaryLight, onPress: () => navigation.navigate('TestScreen') },
     ];
 
 

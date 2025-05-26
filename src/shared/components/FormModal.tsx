@@ -12,7 +12,7 @@ import {
 import { Typography } from './Typography';
 import { Button } from './Button';
 import { useTheme } from '../../app/contexts/ThemeContext';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
 /**
  * Props for the FormModal component
@@ -78,7 +78,7 @@ export const FormModal = React.memo<FormModalProps>(({
 }) => {
     const { theme } = useTheme();
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         modalOverlay: {
             flex: 1,
             backgroundColor: theme.colors.overlay,

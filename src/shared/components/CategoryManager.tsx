@@ -8,7 +8,7 @@ import {
     RefreshControl,
     Modal,
 } from 'react-native';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography, Button, Card, Icon, ConfirmationModal } from './';
 import { useTheme } from '../../app/contexts/ThemeContext';
 import ColorPicker from './ColorPicker';
@@ -61,7 +61,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryUpdated }) 
     });
     const [showCleanupConfirmation, setShowCleanupConfirmation] = useState(false);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
         },
@@ -102,7 +102,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryUpdated }) 
         colorIndicator: {
             width: 24,
             height: 24,
-            borderRadius: 12,
+            borderRadius: theme.shape.radius.l,
             marginRight: theme.spacing.m,
             borderWidth: 1,
             borderColor: theme.colors.border,
@@ -127,7 +127,7 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({ onCategoryUpdated }) 
         actionButton: {
             width: 36,
             height: 36,
-            borderRadius: 18,
+            borderRadius: theme.shape.radius.xl,
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: theme.colors.surface,

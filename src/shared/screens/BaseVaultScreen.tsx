@@ -14,7 +14,7 @@ import {
     Platform,
     StatusBar
 } from 'react-native';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useVaultFilters } from '../../app/contexts/VaultFiltersContext';
 import { VaultEmptyState } from './VaultEmptyState';
 import { Icon, IconName } from '../components';
@@ -71,7 +71,7 @@ export function BaseVaultScreen<T>({
     // Handle open action menus
     const [activeActionMenuId, setActiveActionMenuId] = useState<string | null>(null);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,
@@ -89,7 +89,7 @@ export function BaseVaultScreen<T>({
             right: 16,
             width: 50,
             height: 50,
-            borderRadius: 25,
+            borderRadius: theme.shape.radius.pill,
             backgroundColor: theme.colors.primary,
             justifyContent: 'center',
             alignItems: 'center',

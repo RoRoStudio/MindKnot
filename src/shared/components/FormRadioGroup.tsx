@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
 import FormErrorMessage from './FormErrorMessage';
 import { useTheme } from '../../app/contexts/ThemeContext';
@@ -38,7 +38,7 @@ export default function FormRadioGroup<T extends FieldValues>({
 }: FormRadioGroupProps<T>) {
     const { theme } = useTheme();
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
         },
@@ -56,7 +56,7 @@ export default function FormRadioGroup<T extends FieldValues>({
             marginRight: row ? theme.spacing.m : 0,
             paddingVertical: theme.spacing.xs,
             paddingHorizontal: theme.spacing.s,
-            borderRadius: 12,
+            borderRadius: theme.shape.radius.l,
             backgroundColor: theme.colors.surfaceVariant,
             // Add subtle shadow
             shadowColor: theme.colors.shadow,
@@ -76,7 +76,7 @@ export default function FormRadioGroup<T extends FieldValues>({
         radio: {
             width: 20,
             height: 20,
-            borderRadius: 10,
+            borderRadius: theme.shape.radius.m,
             borderWidth: 2,
             borderColor: theme.colors.border,
             justifyContent: 'center',
@@ -90,7 +90,7 @@ export default function FormRadioGroup<T extends FieldValues>({
         radioInner: {
             width: 10,
             height: 10,
-            borderRadius: 5,
+            borderRadius: theme.shape.radius.s,
             backgroundColor: theme.colors.primary,
         },
         optionLabel: {

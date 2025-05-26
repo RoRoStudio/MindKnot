@@ -14,7 +14,7 @@ import { useTheme } from '../../app/contexts/ThemeContext';
 import { Icon, IconName } from './';
 import Svg, { Path } from 'react-native-svg';
 import { DiamondFab } from './DiamondFab';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
 const { width } = Dimensions.get('window');
 const BAR_HEIGHT = 64;
@@ -26,7 +26,7 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
     const bottomInset = Math.max(insets.bottom, 0);
     const { theme } = useTheme();
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             width: '100%',
             position: 'absolute',

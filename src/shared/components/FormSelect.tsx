@@ -14,7 +14,7 @@ import {
     Path,
     RegisterOptions,
 } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
 import { Icon, IconName } from './Icon';
 import FormErrorMessage from './FormErrorMessage';
@@ -57,7 +57,7 @@ export default function FormSelect<T extends FieldValues>({
     const animation = useRef(new Animated.Value(0)).current;
     const windowHeight = Dimensions.get('window').height;
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
             width: '100%',
@@ -69,7 +69,7 @@ export default function FormSelect<T extends FieldValues>({
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: 16,
+            borderRadius: theme.shape.radius.xl,
             paddingVertical: theme.spacing.s,
             paddingHorizontal: theme.spacing.m,
             minHeight: 48,

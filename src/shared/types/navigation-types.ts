@@ -32,4 +32,15 @@ export type RootStackParamList = {
         mode: 'create' | 'edit' | 'view',
         id?: string
     };
+    LoopListScreen: undefined;
+    LoopDetailScreen: {
+        id: string
+    };
+    LoopBuilderScreen: {
+        mode: 'create' | 'edit',
+        id?: string
+    };
+    LoopExecutionScreen: {
+        id: string
+    };
 };

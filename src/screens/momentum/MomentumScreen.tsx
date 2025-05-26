@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, SafeAreaView, ScrollView } from 'react-native';
 import { useTheme } from '../../app/contexts/ThemeContext';
-import { useStyles } from '../../shared/hooks/useStyles';
+import { useThemedStyles } from '../../shared/hooks/useThemedStyles';
 import { Typography, Card, Icon } from '../../shared/components';
 import { useNotes } from '../../features/notes/hooks/useNotes';
 import { useSparks } from '../../features/sparks/hooks/useSparks';
@@ -38,7 +38,7 @@ export default function MomentumScreen() {
         entriesThisWeek: 0,
     });
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: { flex: 1, backgroundColor: theme.colors.background },
         header: { padding: theme.spacing.m, borderBottomWidth: 1, borderBottomColor: theme.colors.divider },
         title: { marginBottom: theme.spacing.s },

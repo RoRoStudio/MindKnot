@@ -1,7 +1,7 @@
 // src/screens/vault/VaultEmptyState.tsx
 import React from 'react';
 import { View, Animated } from 'react-native';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography, Button, Icon, IconName } from '../components';
 import { useTheme } from '../../app/contexts/ThemeContext';
 import { useRef, useEffect } from 'react';
@@ -40,7 +40,7 @@ export const VaultEmptyState: React.FC<VaultEmptyStateProps> = ({
     }, []);
 
     const { theme } = useTheme();
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             justifyContent: 'center',

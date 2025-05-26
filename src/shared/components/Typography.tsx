@@ -5,7 +5,6 @@
 import React from 'react';
 import { Text, TextProps, StyleSheet } from 'react-native';
 import { useThemedStyles } from '../hooks/useThemedStyles';
-import { useTextPresets } from '../hooks/useThemedStyles';
 
 /**
  * Available typography variants
@@ -117,92 +116,10 @@ export const Typography: React.FC<TypographyProps> = ({
     children,
     ...props
 }) => {
-    // Use themed presets when available
-    const presets = useTextPresets();
-
-    const styles = useThemedStyles((theme, constants) => {
-        // Use theme presets if available, otherwise use custom variant styles
+    const styles = useThemedStyles((theme) => {
+        // Use theme presets directly
         const mappedPresetName = getMappedPresetName(variant);
-        const variantStyles = presets && mappedPresetName in presets ?
-            presets[mappedPresetName as keyof typeof presets] :
-            {
-                h1: {
-                    fontSize: theme.typography.fontSize.xxxl,
-                    fontWeight: theme.typography.fontWeight.bold,
-                    letterSpacing: theme.typography.letterSpacing.tight,
-                    lineHeight: theme.typography.lineHeight.tight * theme.typography.fontSize.xxxl,
-                },
-                h2: {
-                    fontSize: theme.typography.fontSize.xxl,
-                    fontWeight: theme.typography.fontWeight.bold,
-                    letterSpacing: theme.typography.letterSpacing.tight,
-                    lineHeight: theme.typography.lineHeight.tight * theme.typography.fontSize.xxl,
-                },
-                h3: {
-                    fontSize: theme.typography.fontSize.xl,
-                    fontWeight: theme.typography.fontWeight.bold,
-                    letterSpacing: theme.typography.letterSpacing.tight,
-                    lineHeight: theme.typography.lineHeight.tight * theme.typography.fontSize.xl,
-                },
-                h4: {
-                    fontSize: theme.typography.fontSize.l,
-                    fontWeight: theme.typography.fontWeight.medium,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.l,
-                },
-                h5: {
-                    fontSize: theme.typography.fontSize.m,
-                    fontWeight: theme.typography.fontWeight.medium,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.m,
-                },
-                h6: {
-                    fontSize: theme.typography.fontSize.s,
-                    fontWeight: theme.typography.fontWeight.medium,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.s,
-                },
-                subtitle1: {
-                    fontSize: theme.typography.fontSize.m,
-                    fontWeight: theme.typography.fontWeight.medium,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.m,
-                },
-                subtitle2: {
-                    fontSize: theme.typography.fontSize.s,
-                    fontWeight: theme.typography.fontWeight.medium,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.s,
-                },
-                body1: {
-                    fontSize: theme.typography.fontSize.m,
-                    fontWeight: theme.typography.fontWeight.regular,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.m,
-                },
-                body2: {
-                    fontSize: theme.typography.fontSize.s,
-                    fontWeight: theme.typography.fontWeight.regular,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.s,
-                },
-                caption: {
-                    fontSize: theme.typography.fontSize.xs,
-                    fontWeight: theme.typography.fontWeight.regular,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.xs,
-                },
-                button: {
-                    fontSize: theme.typography.fontSize.m,
-                    fontWeight: theme.typography.fontWeight.medium,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.m,
-                    textTransform: 'uppercase' as const,
-                },
-                overline: {
-                    fontSize: theme.typography.fontSize.xs,
-                    fontWeight: theme.typography.fontWeight.regular,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.xs,
-                    textTransform: 'uppercase' as const,
-                    letterSpacing: theme.typography.letterSpacing.wide,
-                },
-                label: {
-                    fontSize: theme.typography.fontSize.s,
-                    fontWeight: theme.typography.fontWeight.medium,
-                    lineHeight: theme.typography.lineHeight.normal * theme.typography.fontSize.s,
-                },
-            }[variant];
+        const variantStyles = theme.typography.preset[mappedPresetName as keyof typeof theme.typography.preset];
 
         // Define color styles
         let colorStyle = {};

@@ -81,7 +81,7 @@ export const LoopExecutionHeader: React.FC<LoopExecutionHeaderProps> = ({
         actionButton: {
             width: 32,
             height: 32,
-            borderRadius: 16,
+            borderRadius: theme.shape.radius.xl,
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
             alignItems: 'center',
             justifyContent: 'center',
@@ -89,14 +89,14 @@ export const LoopExecutionHeader: React.FC<LoopExecutionHeaderProps> = ({
         progressBar: {
             height: 3,
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            borderRadius: 1.5,
+            borderRadius: theme.shape.radius.xs,
             marginTop: 8,
             overflow: 'hidden',
         },
         progressFill: {
             height: 3,
             backgroundColor: theme.colors.background,
-            borderRadius: 1.5,
+            borderRadius: theme.shape.radius.xs,
         },
     });
 

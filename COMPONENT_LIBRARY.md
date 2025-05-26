@@ -1,6 +1,6 @@
 # MindKnot Component Library Documentation
 
-*Auto-generated on 2025-05-26T19:28:33.365Z*
+*Auto-generated on 2025-05-26T20:50:57.585Z*
 
 This document provides comprehensive documentation of all shared components in the MindKnot app. Always reference this when implementing UI to ensure consistency.
 

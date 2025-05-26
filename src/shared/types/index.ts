@@ -7,5 +7,4 @@ export * from './note';
 export * from './path';
 export * from './saga';
 export * from './spark';
-// Loop types will be implemented in Phase 3
-// export * from './loop';
+export * from './loop';

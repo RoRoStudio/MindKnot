@@ -5,9 +5,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import TabNavigator from './TabNavigator';
 import { BottomSheetProvider, useBottomSheet } from '../contexts/BottomSheetContext';
-// TODO: Re-enable when loops are implemented
-// import { LoopExecutionHeader } from '../../shared/components/LoopExecutionHeader';
-// import { useLoopActions } from '../store/shared/hooks';
+import { useExecution } from '../../features/loops/hooks';
+import { ExecutionHeader } from '../../features/loops/components';
 
 // Saga and theme screens
 import SagaDetailScreen from '../../features/sagas/screens/SagaDetailScreen';
@@ -20,9 +19,11 @@ import NoteScreen from '../../features/notes/screens/NoteScreen';
 import SparkScreen from '../../features/sparks/screens/SparkScreen';
 import ActionScreen from '../../features/actions/screens/ActionScreen';
 import PathScreen from '../../features/paths/screens/PathScreen';
-// Loop screens will be implemented in Phase 3
-// import LoopScreen from '../../features/loops/screens/LoopScreen';
-// import { LoopExecutionScreen } from '../../features/loops/screens/LoopExecutionScreen';
+// Loop screens
+import LoopListScreen from '../../features/loops/screens/LoopListScreen';
+import LoopDetailScreen from '../../features/loops/screens/LoopDetailScreen';
+import LoopBuilderScreen from '../../features/loops/screens/LoopBuilderScreen';
+import LoopExecutionScreen from '../../features/loops/screens/LoopExecutionScreen';
 import { RootStackParamList } from '../../shared/types/navigation-types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -45,72 +46,48 @@ const NavigationConnector: React.FC = () => {
 
 // App-wide wrapper that includes the loop execution header
 const AppWithLoopHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // TODO: Re-implement loop actions in Phase 3
-    // const {
-    //     activeExecution,
-    //     currentActivityWithTemplate,
-    //     currentActivityProgress,
-    //     pauseLoopExecution,
-    //     advanceActivity,
-    //     activityTemplates,
-    //     loadActiveExecution
-    // } = useLoopActions();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const {
+        currentExecution,
+        isExecuting,
+        pauseExecution,
+        resumeExecution,
+        skipActivity,
+    } = useExecution();
 
     const [showExecutionScreen, setShowExecutionScreen] = useState(false);
 
-    // TODO: Re-implement in Phase 3
-    // Load active execution on app start
-    // useEffect(() => {
-    //     loadActiveExecution();
-    // }, [loadActiveExecution]);
-
-    // TODO: Re-implement in Phase 3
-    // const handleResume = async () => {
-    //     if (activeExecution) {
-    //         await pauseLoopExecution({ loopId: activeExecution.loop.id, isPaused: false });
-    //     }
-    // };
-
-    // const handlePause = async () => {
-    //     if (activeExecution) {
-    //         await pauseLoopExecution({ loopId: activeExecution.loop.id, isPaused: true });
-    //     }
-    // };
-
-    // const handleSkip = async () => {
-    //     if (activeExecution && currentActivityWithTemplate) {
-    //         await advanceActivity({
-    //             loopId: activeExecution.loop.id,
-    //             result: {
-    //                 activityId: currentActivityWithTemplate.activity.id,
-    //                 completed: false,
-    //                 skipped: true,
-    //                 timeSpentSeconds: 0,
-    //                 completedSubActions: [],
-    //             }
-    //         });
-    //     }
-    // };
-
-    const handleOpenExecution = () => {
-        setShowExecutionScreen(true);
+    const handleResume = async () => {
+        if (currentExecution) {
+            await resumeExecution();
+        }
     };
 
-    // TODO: Re-implement in Phase 3
-    // const getCurrentActivityName = () => {
-    //     if (!currentActivityWithTemplate) return 'Loading...';
+    const handlePause = async () => {
+        if (currentExecution) {
+            await pauseExecution();
+        }
+    };
 
-    //     const { activity, template } = currentActivityWithTemplate;
+    const handleSkip = async () => {
+        if (currentExecution) {
+            await skipActivity();
+        }
+    };
 
-    //     // Handle both LoopActivityInstance and legacy LoopActivity types
-    //     if ('overriddenTitle' in activity) {
-    //         // LoopActivityInstance (new structure)
-    //         return activity.overriddenTitle || template?.title || 'Current Activity';
-    //     } else {
-    //         // LoopActivity (legacy structure)
-    //         return template?.title || 'Current Activity';
-    //     }
-    // };
+    const handleOpenExecution = () => {
+        if (currentExecution) {
+            // Navigate to the execution screen instead of showing modal
+            navigation.navigate('LoopExecutionScreen', { id: currentExecution.loopId });
+        }
+    };
+
+    const getCurrentActivityName = () => {
+        if (!currentExecution || !currentExecution.activities.length) return 'Loading...';
+
+        const currentActivity = currentExecution.activities[currentExecution.currentActivityIndex];
+        return currentActivity?.title || 'Current Activity';
+    };
 
     const styles = StyleSheet.create({
         container: {
@@ -120,34 +97,20 @@ const AppWithLoopHeader: React.FC<{ children: React.ReactNode }> = ({ children }
 
     return (
         <View style={styles.container}>
-            {/* TODO: Re-implement loop execution header in Phase 3 */}
             {/* App-wide loop execution header */}
-            {/* {activeExecution && currentActivityProgress && (
-                <LoopExecutionHeader
-                    loop={activeExecution.loop}
-                    executionState={activeExecution.executionState}
+            {currentExecution && isExecuting && (
+                <ExecutionHeader
+                    execution={currentExecution}
                     currentActivityName={getCurrentActivityName()}
-                    currentIndex={currentActivityProgress.currentIndex}
-                    totalActivities={currentActivityProgress.totalActivities}
                     onResume={handleResume}
                     onPause={handlePause}
                     onSkip={handleSkip}
                     onOpenExecution={handleOpenExecution}
-                    isPaused={activeExecution.executionState.isPaused}
                 />
-            )} */}
+            )}
 
             {/* Main app content */}
             {children}
-
-            {/* TODO: Re-implement loop execution modal in Phase 3 */}
-            {/* Loop execution modal */}
-            {/* {activeExecution && (
-                <LoopExecutionScreen
-                    visible={showExecutionScreen}
-                    onClose={() => setShowExecutionScreen(false)}
-                />
-            )} */}
         </View>
     );
 };
@@ -172,8 +135,12 @@ function MainNavigator() {
                 <Stack.Screen name="SparkScreen" component={SparkScreen} />
                 <Stack.Screen name="ActionScreen" component={ActionScreen} />
                 <Stack.Screen name="PathScreen" component={PathScreen} />
-                {/* TODO: Re-implement LoopScreen in Phase 3 */}
-                {/* <Stack.Screen name="LoopScreen" component={LoopScreen} /> */}
+
+                {/* Loop screens */}
+                <Stack.Screen name="LoopListScreen" component={LoopListScreen} />
+                <Stack.Screen name="LoopDetailScreen" component={LoopDetailScreen} />
+                <Stack.Screen name="LoopBuilderScreen" component={LoopBuilderScreen} />
+                <Stack.Screen name="LoopExecutionScreen" component={LoopExecutionScreen} />
             </Stack.Navigator>
         </AppWithLoopHeader>
     );

@@ -137,144 +137,24 @@ const Button: React.FC<ButtonProps> = ({
         }
     };
 
-    // Get base styles for the button based on variant and size
-    const getButtonStyles = (): StyleProp<ViewStyle> => {
-        const baseStyle: ViewStyle = {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 8,
-            alignSelf: fullWidth ? 'stretch' : 'flex-start',
-        };
-
-        // Size-based padding
-        const sizePadding = {
-            xs: { paddingVertical: 8, paddingHorizontal: 12 },
-            small: { paddingVertical: 10, paddingHorizontal: 16 },
-            medium: { paddingVertical: 16, paddingHorizontal: 20 },
-            large: { paddingVertical: 18, paddingHorizontal: 24 },
-            xl: { paddingVertical: 20, paddingHorizontal: 32 },
-        };
-
-        // Variant-specific styling
-        let variantStyle: ViewStyle = {};
-        switch (variant) {
-            case 'primary':
-                variantStyle = {
-                    backgroundColor: theme.colors.primary,
-                    borderWidth: 0,
-                };
-                break;
-            case 'secondary':
-                variantStyle = {
-                    backgroundColor: theme.colors.surfaceVariant,
-                    borderWidth: 0,
-                };
-                break;
-            case 'outline':
-                variantStyle = {
-                    backgroundColor: 'transparent',
-                    borderWidth: 1,
-                    borderColor: theme.colors.border,
-                };
-                break;
-            case 'text':
-                variantStyle = {
-                    backgroundColor: 'transparent',
-                    borderWidth: 0,
-                    paddingVertical: 0,
-                    paddingHorizontal: 0,
-                };
-                break;
-            case 'danger':
-                variantStyle = {
-                    backgroundColor: theme.colors.error,
-                    borderWidth: 0,
-                };
-                break;
-            default:
-                break;
-        }
-
-        // Disabled styling
-        const disabledStyle: ViewStyle = disabled ? {
-            opacity: 0.5,
-        } : {};
-
-        return [baseStyle, sizePadding[size], variantStyle, disabledStyle];
-    };
-
-    // Get text styles for the label based on variant
-    const getTextStyles = (): StyleProp<TextStyle> => {
-        const baseStyle: TextStyle = {
-            textAlign: 'center',
-            fontSize: 16,
-            fontWeight: '600',
-        };
-
-        // Size-based fonts
-        const sizeStyle = {
-            xs: { fontSize: 12 },
-            small: { fontSize: 14 },
-            medium: { fontSize: 16 },
-            large: { fontSize: 18 },
-            xl: { fontSize: 20 },
-        };
-
-        // Variant-specific text styling
-        let variantStyle: TextStyle = {};
-        switch (variant) {
-            case 'primary':
-                variantStyle = {
-                    color: theme.colors.onPrimary,
-                };
-                break;
-            case 'secondary':
-                variantStyle = {
-                    color: theme.colors.primary,
-                };
-                break;
-            case 'outline':
-                variantStyle = {
-                    color: theme.colors.primary,
-                };
-                break;
-            case 'text':
-                variantStyle = {
-                    color: theme.colors.primary,
-                };
-                break;
-            case 'danger':
-                variantStyle = {
-                    color: theme.colors.onPrimary,
-                };
-                break;
-            default:
-                break;
-        }
-
-        return [baseStyle, sizeStyle[size], variantStyle];
-    };
-
-    const styles = useThemedStyles((theme, constants) => ({
+    const styles = useThemedStyles((theme) => ({
         button: {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
             paddingVertical:
-                size === 'small' || size === 'xs' ? theme.spacing.s :
-                    size === 'medium' ? theme.spacing.m :
-                        theme.spacing.l,
+                size === 'xs' ? theme.spacing.xs :
+                    size === 'small' ? theme.spacing.s :
+                        size === 'medium' ? theme.spacing.m :
+                            size === 'large' ? theme.spacing.l :
+                                theme.spacing.xl, // xl
             paddingHorizontal:
-                size === 'small' || size === 'xs' ? theme.spacing.m :
-                    size === 'medium' ? theme.spacing.l :
-                        theme.spacing.xl,
-            borderRadius:
-                variant === 'primary' || variant === 'danger'
-                    ? theme.components.button.primary.radius
-                    : variant === 'secondary' || variant === 'outline'
-                        ? theme.components.button.secondary.radius
-                        : 0,
+                size === 'xs' ? theme.spacing.s :
+                    size === 'small' ? theme.spacing.m :
+                        size === 'medium' ? theme.spacing.l :
+                            size === 'large' ? theme.spacing.xl :
+                                theme.spacing.xxl, // xl
+            borderRadius: theme.shape.radius.m,
             borderWidth: (variant === 'secondary' || variant === 'outline') ? 1 : 0,
             backgroundColor:
                 variant === 'primary'
@@ -290,14 +170,14 @@ const Button: React.FC<ButtonProps> = ({
                     : variant === 'outline'
                         ? theme.components.button.primary.background
                         : 'transparent',
-            opacity: disabled ? 0.5 : 1,
+            opacity: disabled ? theme.opacity.medium : theme.opacity.full,
             width: fullWidth ? '100%' : 'auto',
             minHeight:
                 size === 'xs' ? 32 :
-                    size === 'small' ? constants.COMPONENT_SIZES.BUTTON.HEIGHT.SMALL :
-                        size === 'medium' ? constants.COMPONENT_SIZES.BUTTON.HEIGHT.MEDIUM :
-                            size === 'large' ? constants.COMPONENT_SIZES.BUTTON.HEIGHT.LARGE :
-                                70, // xl
+                    size === 'small' ? 40 :
+                        size === 'medium' ? 48 :
+                            size === 'large' ? 56 :
+                                64, // xl
         },
         label: {
             color:
@@ -329,17 +209,14 @@ const Button: React.FC<ButtonProps> = ({
     }));
 
     const getIconColor = () => {
-        if (variant === 'primary') {
-            return styles.label.color;
-        } else if (variant === 'secondary') {
-            return styles.label.color;
-        } else {
-            return styles.label.color;
-        }
+        return styles.label.color;
     };
 
     const getIconSize = () => {
-        return size === 'small' ? 16 : size === 'medium' ? 18 : 24;
+        return size === 'xs' ? 14 :
+            size === 'small' ? 16 :
+                size === 'medium' ? 18 :
+                    size === 'large' ? 20 : 24; // xl
     };
 
     return (
@@ -358,7 +235,7 @@ const Button: React.FC<ButtonProps> = ({
             {isLoading && (
                 <View style={[styles.loaderContainer, iconStyle]}>
                     <ActivityIndicator
-                        size={size === 'small' ? 'small' : 'small'}
+                        size={size === 'small' || size === 'xs' ? 'small' : 'small'}
                         color={styles.label.color.toString()}
                     />
                 </View>

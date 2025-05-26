@@ -46,6 +46,7 @@ export { default as ColorPicker } from './ColorPicker';
 export { default as CategoryPill } from './CategoryPill';
 export { IconPicker } from './IconPicker';
 export { default as DottedPillButton } from './DottedPillButton';
+export { ProgressBar } from './ProgressBar';
 
 // List Components
 export { FilterableList } from './FilterableList';

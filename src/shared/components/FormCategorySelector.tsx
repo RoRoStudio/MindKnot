@@ -10,7 +10,7 @@ import {
     Modal,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, useForm } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography, Button, Icon, ConfirmationModal } from './';
 import { useTheme } from '../../app/contexts/ThemeContext';
 import FormErrorMessage from './FormErrorMessage';
@@ -387,7 +387,7 @@ const FormCategorySelector = <T extends FieldValues>({
         }
     };
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: 16,
         },
@@ -411,7 +411,7 @@ const FormCategorySelector = <T extends FieldValues>({
         },
         categoryPillContainer: {
             marginRight: 8,
-            borderRadius: 100,
+            borderRadius: theme.shape.radius.m,
             borderWidth: 2,
             borderColor: 'transparent',
             position: 'relative',
@@ -432,7 +432,7 @@ const FormCategorySelector = <T extends FieldValues>({
         actionButton: {
             width: 20,
             height: 20,
-            borderRadius: 10,
+            borderRadius: theme.shape.radius.m,
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: theme.colors.background,
@@ -450,7 +450,7 @@ const FormCategorySelector = <T extends FieldValues>({
         addCategoryButton: {
             paddingHorizontal: 16,
             paddingVertical: 8,
-            borderRadius: 100,
+            borderRadius: theme.shape.radius.m,
             borderWidth: 1,
             borderStyle: 'dashed' as const,
             borderColor: theme.colors.border,
@@ -487,7 +487,7 @@ const FormCategorySelector = <T extends FieldValues>({
             height: 40,
             borderWidth: 1,
             borderColor: theme.colors.border,
-            borderRadius: 8,
+            borderRadius: theme.shape.radius.m,
             paddingHorizontal: 8,
         },
         colorPicker: {

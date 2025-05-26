@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../app/contexts/ThemeContext';
 import { Typography, Icon, IconName } from './';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
 /**
  * Props for the EntryDetailHeader component
@@ -96,7 +96,7 @@ export const EntryDetailHeader: React.FC<EntryDetailHeaderProps> = ({
     const { theme } = useTheme();
     const [showActionsMenu, setShowActionsMenu] = useState(false);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         header: {
             flexDirection: 'row',
             alignItems: 'center',

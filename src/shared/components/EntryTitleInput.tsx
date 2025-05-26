@@ -46,10 +46,10 @@ export default function EntryTitleInput<
 
     const styles = StyleSheet.create({
         titleInput: {
-            fontSize: 32,
+            fontSize: theme.typography.fontSize.xxxl,
             fontWeight: '300',
             color: theme.colors.textPrimary,
-            padding: 16,
+            padding: theme.spacing.m,
             paddingTop: 16,
             paddingBottom: 16,
             fontFamily: 'KantumruyPro-Bold',

@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { View, TextInput, TextInputProps } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
 import FormErrorMessage from './FormErrorMessage';
 import { useTheme } from '../../app/contexts/ThemeContext';
@@ -40,7 +40,7 @@ export default function FormTextarea<T extends FieldValues>({
 
     const inputRef = useRef<TextInput>(null);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
             width: '100%',
@@ -50,7 +50,7 @@ export default function FormTextarea<T extends FieldValues>({
         },
         inputContainer: {
             backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: 16,
+            borderRadius: theme.shape.radius.xl,
             paddingHorizontal: theme.spacing.s,
             paddingVertical: theme.spacing.xs,
             minHeight: numberOfLines * 24, // Approximate line height

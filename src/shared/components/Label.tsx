@@ -84,16 +84,18 @@ export const Label: React.FC<LabelProps> = ({
         container: {
             flexDirection: 'row',
             alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: theme.colors.surfaceVariant,
+            backgroundColor: selected ? theme.colors.primary : theme.colors.surfaceVariant,
             paddingHorizontal: 10,
             paddingVertical: 4,
-            borderRadius: 9999,
+            borderRadius: theme.shape.radius.pill,
+            borderWidth: selected ? 1 : 0,
+            borderColor: selected ? theme.colors.primary : 'transparent',
+            minHeight: 24,
         },
         text: {
             color: theme.colors.textSecondary,
-            fontSize: 12,
-            fontWeight: '500',
+            fontSize: theme.typography.fontSize.xs,
+            fontWeight: theme.typography.fontWeight.medium,
         },
         removeIcon: {
             marginLeft: 4,

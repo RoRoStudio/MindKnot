@@ -6,7 +6,7 @@ import { Typography, Icon } from '../../../shared/components';
 import { RootStackParamList } from '../../../shared/types/navigation-types';
 import { Saga } from '../../../shared/types/saga';
 import { getSagaById } from '../hooks/useSagaService';
-import { useStyles } from '../../../shared/hooks/useStyles';
+import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 
 type SagaDetailScreenRouteProp = RouteProp<RootStackParamList, 'SagaDetail'>;
 
@@ -17,7 +17,7 @@ const SagaDetailScreen = () => {
     const [loading, setLoading] = useState(true);
     const theme = useTheme();
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,

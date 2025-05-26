@@ -311,7 +311,7 @@ export const BottomSheet = React.memo<BottomSheetProps>(({
             width: 40,
             height: 5,
             backgroundColor: theme.colors.textPrimary + '50',
-            borderRadius: 10,
+            borderRadius: theme.shape.radius.m,
         },
         scrollView: {
             width: '100%',

@@ -9,7 +9,7 @@ import {
     Path,
     RegisterOptions,
 } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
 import FormErrorMessage from './FormErrorMessage';
@@ -63,7 +63,7 @@ const FormDatePicker = forwardRef<FormDatePickerRef, FormDatePickerProps<any>>((
         }
     }));
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
             width: '100%',
@@ -75,7 +75,7 @@ const FormDatePicker = forwardRef<FormDatePickerRef, FormDatePickerProps<any>>((
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: 16,
+            borderRadius: theme.shape.radius.xl,
             paddingVertical: theme.spacing.s,
             paddingHorizontal: theme.spacing.m,
             minHeight: 48,

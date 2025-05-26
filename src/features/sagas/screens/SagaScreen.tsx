@@ -11,7 +11,7 @@ import Animated, {
     Easing,
 } from 'react-native-reanimated';
 import { useTheme } from '../../../app/contexts/ThemeContext';
-import { useStyles } from '../../../shared/hooks/useStyles';
+import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import { Typography, Icon, IconName } from '../../../shared/components';
 import { SagaCreationSheet } from '../components/SagaCreationSheet';
 import AnimatedBookSaga from '../components/AnimatedBookSaga';
@@ -32,7 +32,7 @@ export default function SagaScreen() {
     const [overlay, setOverlay] = useState<React.ReactNode>(null);
     const { setSelectedSaga } = useSagas();
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,

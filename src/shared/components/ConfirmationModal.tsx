@@ -102,7 +102,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             width: width * 0.85,
             maxWidth: 400,
             backgroundColor: theme.colors.surface,
-            borderRadius: 16,
+            borderRadius: theme.shape.radius.xl,
             paddingTop: 24,
             paddingHorizontal: 24,
             paddingBottom: 20,
@@ -122,7 +122,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         iconContainer: {
             width: 72,
             height: 72,
-            borderRadius: 36,
+            borderRadius: theme.shape.radius.xxl,
             justifyContent: 'center',
             alignItems: 'center',
             marginBottom: 16,

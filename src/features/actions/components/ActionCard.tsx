@@ -1,10 +1,10 @@
 // src/components/entries/actions/ActionCard.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text, TextInput } from 'react-native';
+import { View, TouchableOpacity, Text, TextInput } from 'react-native';
 import { Action } from '../../../shared/types/action';
 import { Category } from '../../../shared/types/category';
 import { ENTRY_TYPES, EntryType } from '../../../shared/constants/entryTypes';
-import { useTheme } from '../../../app/contexts/ThemeContext';
+import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import { Icon } from '../../../shared/components';
 import { EntryCard } from '../../../shared/components';
 import { updateAction, getActionById } from '../hooks/useActionService';
@@ -30,7 +30,6 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     onArchive,
     onHide
 }) => {
-    const { theme } = useTheme();
     const [expanded, setExpanded] = useState(false);
     const [newSubAction, setNewSubAction] = useState('');
     const [subTasks, setSubTasks] = useState(action.subTasks || []);
@@ -43,39 +42,39 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     const hasSubActions = subTasks && subTasks.length > 0;
     const inputRef = useRef<TextInput>(null);
 
-    // Create styles inside component to access theme
-    const styles = StyleSheet.create({
+    // Create styles using useThemedStyles hook
+    const styles = useThemedStyles((theme) => ({
         subActionsContainer: {
-            gap: 12,
+            gap: theme.spacing.s,
         },
         subActionsHeading: {
-            fontSize: 14,
-            fontWeight: '500',
+            fontSize: theme.typography.fontSize.s,
+            fontWeight: theme.typography.fontWeight.medium,
             color: theme.colors.textSecondary,
-            marginBottom: 4,
+            marginBottom: theme.spacing.xs,
         },
         subActionRow: {
             flexDirection: 'row',
             alignItems: 'center',
         },
         subActionCheckboxContainer: {
-            marginRight: 12,
+            marginRight: theme.spacing.s,
         },
         subActionCheckbox: {
             width: 20,
             height: 20,
             borderWidth: 1,
             borderColor: theme.colors.border,
-            borderRadius: 4,
+            borderRadius: theme.shape.radius.xs,
             justifyContent: 'center',
             alignItems: 'center',
         },
         subActionTextContainer: {
             flex: 1,
-            paddingVertical: 4,
+            paddingVertical: theme.spacing.xs,
         },
         subActionText: {
-            fontSize: 14,
+            fontSize: theme.typography.fontSize.s,
             color: theme.colors.textPrimary,
         },
         subActionTextCompleted: {
@@ -84,52 +83,52 @@ export const ActionCard: React.FC<ActionCardProps> = ({
         },
         subActionInput: {
             flex: 1,
-            fontSize: 14,
+            fontSize: theme.typography.fontSize.s,
             color: theme.colors.textPrimary,
             padding: 0,
-            paddingVertical: 4,
+            paddingVertical: theme.spacing.xs,
         },
         addSubActionContainer: {
-            marginTop: 8,
+            marginTop: theme.spacing.s,
         },
         addSubActionInputContainer: {
-            marginBottom: 8,
+            marginBottom: theme.spacing.s,
         },
         addSubActionInput: {
-            fontSize: 14,
+            fontSize: theme.typography.fontSize.s,
             color: theme.colors.textPrimary,
             padding: 0,
-            paddingVertical: 4,
+            paddingVertical: theme.spacing.xs,
         },
         addSubActionButton: {
             flexDirection: 'row',
             alignItems: 'center',
         },
         addSubActionText: {
-            fontSize: 14,
-            fontWeight: '500',
+            fontSize: theme.typography.fontSize.s,
+            fontWeight: theme.typography.fontWeight.medium,
             color: theme.colors.textSecondary,
-            marginLeft: 8,
+            marginLeft: theme.spacing.s,
         },
         checkboxContainer: {
-            marginTop: 4,
-            marginRight: 12,
+            marginTop: theme.spacing.xs,
+            marginRight: theme.spacing.s,
             flexShrink: 0,
             // Increase touch area for better usability
-            padding: 8,
-            margin: -8, // Negative margin to offset the padding
+            padding: theme.spacing.s,
+            margin: -theme.spacing.s, // Negative margin to offset the padding
         },
         checkbox: {
             width: 20,
             height: 20,
-            borderRadius: 4,
+            borderRadius: theme.shape.radius.xs,
             borderWidth: 1.5,
             borderColor: theme.colors.border,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: theme.colors.background,
         },
-    });
+    }));
 
     // Fetch category info when action.categoryId changes
     useEffect(() => {
@@ -394,7 +393,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     };
 
     // Fix the plus-circle icon
-    const plusCircleIcon = <Icon name="circle-plus" width={20} height={20} color={theme.colors.textSecondary} />;
+    const plusCircleIcon = <Icon name="circle-plus" size={20} color={styles.addSubActionText.color} />;
 
     // Render the expanded content with sub-actions
     const renderExpandedContent = () => (
@@ -417,7 +416,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                             }
                         ]}>
                             {subTask.completed && (
-                                <Icon name="check" width={14} height={14} color={theme.colors.onPrimary} />
+                                <Icon name="check" size={14} color={styles.checkbox.backgroundColor} />
                             )}
                         </View>
                     </TouchableOpacity>
@@ -458,7 +457,7 @@ export const ActionCard: React.FC<ActionCardProps> = ({
                     <TextInput
                         style={styles.addSubActionInput}
                         placeholder="Add a sub-action..."
-                        placeholderTextColor={theme.colors.textSecondary}
+                        placeholderTextColor={styles.addSubActionText.color}
                         value={newSubAction}
                         onChangeText={setNewSubAction}
                         onSubmitEditing={addNewSubAction}

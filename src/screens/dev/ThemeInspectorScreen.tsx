@@ -2,14 +2,14 @@
 import React from 'react';
 import { ScrollView, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../app/contexts/ThemeContext';
-import { useStyles } from '../../shared/hooks/useStyles';
+import { useThemedStyles } from '../../shared/hooks/useThemedStyles';
 import { Typography, Card } from '../../shared/components';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ThemeInspectorScreen() {
     const { theme, toggleTheme, isDark } = useTheme();
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,

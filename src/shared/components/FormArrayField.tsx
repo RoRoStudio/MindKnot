@@ -5,7 +5,7 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { Control, FieldValues, useFieldArray, FieldArrayPath, DeepPartial } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography, Icon, Button } from './';
 import FormErrorMessage from './FormErrorMessage';
 import { generateSimpleId } from '../utils/uuidUtil';
@@ -45,7 +45,7 @@ export default function FormArrayField<TFieldValues extends FieldValues = FieldV
         keyName,
     });
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             marginBottom: theme.spacing.m,
         },

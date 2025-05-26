@@ -1,10 +1,10 @@
 // src/components/entries/paths/PathCard.tsx
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import { Path } from '../../../shared/types/path';
 import { EntryCard } from '../../../shared/components';
 import { ENTRY_TYPES, EntryType } from '../../../shared/constants/entryTypes';
-import { useTheme } from '../../../app/contexts/ThemeContext';
+import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import { Typography, Icon } from '../../../shared/components';
 
 interface PathCardProps {
@@ -20,7 +20,6 @@ export const PathCard: React.FC<PathCardProps> = ({
     onEntryUpdated,
     onToggleActionDone
 }) => {
-    const { theme } = useTheme();
     const [expanded, setExpanded] = useState(false);
 
     // Create a subtitle with milestone count and dates
@@ -42,47 +41,47 @@ export const PathCard: React.FC<PathCardProps> = ({
         setExpanded(!expanded);
     };
 
-    const styles = StyleSheet.create({
+    const styles = useThemedStyles((theme) => ({
         milestone: {
-            marginBottom: 16,
+            marginBottom: theme.spacing.m,
         },
         milestoneHeader: {
             flexDirection: 'row',
             alignItems: 'center',
-            marginBottom: 8,
-            paddingVertical: 8,
-            paddingHorizontal: 12,
+            marginBottom: theme.spacing.s,
+            paddingVertical: theme.spacing.s,
+            paddingHorizontal: theme.spacing.s,
             backgroundColor: theme.colors.surfaceVariant,
             borderRadius: theme.shape.radius.s,
         },
         milestoneTitle: {
             flex: 1,
-            fontSize: 16,
-            fontWeight: 'bold',
+            fontSize: theme.typography.fontSize.m,
+            fontWeight: theme.typography.fontWeight.bold,
             color: theme.colors.textPrimary,
         },
         milestoneDate: {
-            fontSize: 12,
+            fontSize: theme.typography.fontSize.xs,
             color: theme.colors.textSecondary,
         },
         action: {
             flexDirection: 'row',
             alignItems: 'center',
-            padding: 8,
-            marginVertical: 4,
-            marginLeft: 16,
+            padding: theme.spacing.s,
+            marginVertical: theme.spacing.xs,
+            marginLeft: theme.spacing.m,
             backgroundColor: theme.colors.surface,
             borderRadius: theme.shape.radius.s,
             borderWidth: 1,
             borderColor: theme.colors.border,
         },
         actionCheckbox: {
-            marginRight: 10,
-            padding: 5,
+            marginRight: theme.spacing.s,
+            padding: theme.spacing.xs,
         },
         actionText: {
             flex: 1,
-            fontSize: 14,
+            fontSize: theme.typography.fontSize.s,
             color: theme.colors.textPrimary,
         },
         actionTextDone: {
@@ -90,14 +89,14 @@ export const PathCard: React.FC<PathCardProps> = ({
             color: theme.colors.textSecondary,
         },
         actionMilestone: {
-            fontSize: 12,
+            fontSize: theme.typography.fontSize.xs,
             color: theme.colors.textSecondary,
-            marginLeft: 8,
+            marginLeft: theme.spacing.s,
         },
         pathContent: {
-            marginTop: 10,
+            marginTop: theme.spacing.s,
         },
-    });
+    }));
 
     const renderAction = (action: any) => {
         return (
@@ -112,9 +111,8 @@ export const PathCard: React.FC<PathCardProps> = ({
                 >
                     <Icon
                         name={action.done ? "square-check" : "square"}
-                        width={18}
-                        height={18}
-                        color={action.done ? theme.colors.success : theme.colors.textSecondary}
+                        size={18}
+                        color={action.done ? styles.actionText.color : styles.actionTextDone.color}
                     />
                 </TouchableOpacity>
                 <Typography

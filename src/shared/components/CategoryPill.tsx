@@ -83,25 +83,25 @@ export const CategoryPill: React.FC<CategoryPillProps> = ({
                 return {
                     paddingVertical: 2,
                     paddingHorizontal: 8,
-                    fontSize: 11,
+                    fontSize: theme.typography.fontSize.xs,
                     dotSize: 5,
-                    dotMargin: 4,
+                    dotMargin: theme.spacing.xs,
                 };
             case 'large':
                 return {
                     paddingVertical: 6,
                     paddingHorizontal: 16,
-                    fontSize: 14,
+                    fontSize: theme.typography.fontSize.s,
                     dotSize: 8,
-                    dotMargin: 8,
+                    dotMargin: theme.spacing.s,
                 };
             default: // medium
                 return {
                     paddingVertical: 4,
                     paddingHorizontal: 12,
-                    fontSize: 12,
+                    fontSize: theme.typography.fontSize.xs,
                     dotSize: 6,
-                    dotMargin: 6,
+                    dotMargin: theme.spacing.xs,
                 };
         }
     };
@@ -115,7 +115,7 @@ export const CategoryPill: React.FC<CategoryPillProps> = ({
             alignSelf: 'flex-start',
             paddingVertical: sizeStyles.paddingVertical,
             paddingHorizontal: sizeStyles.paddingHorizontal,
-            borderRadius: 100, // Fully rounded
+            borderRadius: theme.shape.radius.pill, // Fully rounded
             borderWidth: 1,
             borderColor: selected ? theme.colors.border : color,
             backgroundColor: selected ? theme.colors.surface : getBackgroundColor(color),

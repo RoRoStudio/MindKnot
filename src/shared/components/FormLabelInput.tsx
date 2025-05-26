@@ -7,7 +7,7 @@ import {
     Platform,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../../app/contexts/ThemeContext';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
@@ -79,7 +79,7 @@ export default function FormLabelInput<T extends FieldValues>({
         setSuggestions(filtered.slice(0, MAX_SUGGESTIONS));
     }, [labelInput, usedLabels]);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             width: '100%',
             display: 'flex',

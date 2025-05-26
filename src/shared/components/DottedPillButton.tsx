@@ -1,7 +1,7 @@
 // src/components/atoms/DottedPillButton.tsx
 import React from 'react';
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
-import { useTheme } from '../../app/contexts/ThemeContext';
+import { TouchableOpacity, Text, View } from 'react-native';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Icon, IconName } from './Icon';
 
 interface DottedPillButtonProps {
@@ -43,53 +43,49 @@ const DottedPillButton: React.FC<DottedPillButtonProps> = ({
     onPress,
     disabled = false
 }) => {
-    const { theme } = useTheme();
-
-    // Create styles with tight constraints
-    const styles = StyleSheet.create({
+    const styles = useThemedStyles((theme) => ({
         iconOnlyButton: {
             width: 24,
             height: 24,
-            borderRadius: 12,
+            borderRadius: theme.shape.radius.pill,
             borderWidth: 1,
             borderStyle: 'dashed',
-            borderColor: theme.colors.border || '#ccc',
+            borderColor: theme.colors.border,
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: 4,
-            marginBottom: 4
+            marginRight: theme.spacing.xxs,
+            marginBottom: theme.spacing.xxs,
+            opacity: disabled ? theme.opacity.medium : theme.opacity.full,
         },
         labelButton: {
-            // Use a fixed minimum width with auto sizing
             minWidth: 32,
             height: 24,
-            borderRadius: 12,
+            borderRadius: theme.shape.radius.pill,
             borderWidth: 1,
             borderStyle: 'dashed',
-            borderColor: theme.colors.border || '#ccc',
+            borderColor: theme.colors.border,
             flexDirection: 'row',
             alignItems: 'center',
-            // No excessive padding - just enough for content
-            paddingLeft: 8,
-            paddingRight: 8,
-            marginRight: 4,
-            marginBottom: 4,
-            // Critical: Use content sizing, not flex
-            alignSelf: 'flex-start'
+            paddingLeft: theme.spacing.xs,
+            paddingRight: theme.spacing.xs,
+            marginRight: theme.spacing.xxs,
+            marginBottom: theme.spacing.xxs,
+            alignSelf: 'flex-start',
+            opacity: disabled ? theme.opacity.medium : theme.opacity.full,
         },
         icon: {
             width: 14,
             height: 14,
-            marginRight: 6
+            marginRight: theme.spacing.xs,
         },
         text: {
-            fontSize: 12,
-            color: theme.colors.textPrimary || '#666',
+            fontSize: theme.typography.fontSize.xs,
+            color: theme.colors.textPrimary,
             lineHeight: 14,
             paddingTop: 1,
             includeFontPadding: false,
         }
-    });
+    }));
 
     if (iconOnly) {
         return (
@@ -102,7 +98,7 @@ const DottedPillButton: React.FC<DottedPillButtonProps> = ({
                     name={iconName}
                     width={14}
                     height={14}
-                    color={theme.colors.textPrimary || '#666'}
+                    color={styles.text.color}
                 />
             </TouchableOpacity>
         );
@@ -118,7 +114,7 @@ const DottedPillButton: React.FC<DottedPillButtonProps> = ({
                 name={iconName}
                 width={14}
                 height={14}
-                color={theme.colors.textPrimary || '#666'}
+                color={styles.text.color}
                 style={styles.icon}
             />
 

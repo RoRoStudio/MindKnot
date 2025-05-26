@@ -2,7 +2,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useForm, FormProvider, UseFormProps, UseFormReturn, FieldValues } from 'react-hook-form';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
 interface FormProps<TFieldValues extends FieldValues = FieldValues> {
     defaultValues?: UseFormProps<TFieldValues>['defaultValues'];
@@ -19,7 +19,7 @@ export default function Form<TFieldValues extends FieldValues = FieldValues>({
     mode = 'onChange',
     style,
 }: FormProps<TFieldValues>) {
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             width: '100%',
             flex: 1,

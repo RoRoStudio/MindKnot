@@ -1,7 +1,7 @@
 // src/components/form/FormErrorMessage.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography, Icon } from './';
 
 interface FormErrorMessageProps {
@@ -10,7 +10,7 @@ interface FormErrorMessageProps {
 }
 
 export default function FormErrorMessage({ message, visible = true }: FormErrorMessageProps) {
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             flexDirection: 'row',
             alignItems: 'center',

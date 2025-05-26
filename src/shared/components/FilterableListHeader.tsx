@@ -1,6 +1,6 @@
 import React, { useCallback, memo, useState } from 'react';
 import { View, TextInput, ScrollView, TouchableOpacity, Animated, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { useTheme } from '../../app/contexts/ThemeContext';
 import { Icon, IconName, Typography, Label, CategoryPill } from './';
 
@@ -120,7 +120,7 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
     const hasFilters = searchTerm || selectedTags.length > 0 || categoryId;
     const filterCount = (searchTerm ? 1 : 0) + selectedTags.length + (categoryId ? 1 : 0);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             backgroundColor: theme.colors.background,
             borderBottomWidth: 1,
@@ -134,7 +134,7 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
         searchAndFilterContainer: {
             flexDirection: 'row',
             backgroundColor: theme.colors.surfaceVariant,
-            borderRadius: 8,
+            borderRadius: theme.shape.radius.m,
             height: 40,
             overflow: 'hidden',
         },
@@ -166,7 +166,7 @@ export const FilterableListHeader = memo<FilterableListHeaderProps>(({
             backgroundColor: theme.colors.primary,
             width: 16,
             height: 16,
-            borderRadius: 8,
+            borderRadius: theme.shape.radius.m,
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1,

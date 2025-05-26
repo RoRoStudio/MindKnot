@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
-import { useStyles } from '../hooks/useStyles';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography, Label, Icon } from './';
 import { useCategories } from '../hooks/useCategories';
 import { Category } from '../types/category';
@@ -86,7 +86,7 @@ export const EntryMetadataBar: React.FC<EntryMetadataBarProps> = ({
         fetchCategory();
     }, [categoryId, getCategory]);
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         container: {
             backgroundColor: theme.colors.background,
             padding: theme.spacing.m,
@@ -110,7 +110,7 @@ export const EntryMetadataBar: React.FC<EntryMetadataBarProps> = ({
             alignItems: 'center',
             paddingVertical: 4,
             paddingHorizontal: 10,
-            borderRadius: 100,
+            borderRadius: theme.shape.radius.pill,
             backgroundColor: category ? `${category.color}20` : 'transparent',
             borderWidth: 1,
             borderColor: category ? category.color : theme.colors.border,
@@ -121,7 +121,7 @@ export const EntryMetadataBar: React.FC<EntryMetadataBarProps> = ({
         categoryDot: {
             width: 8,
             height: 8,
-            borderRadius: 4,
+            borderRadius: theme.shape.radius.s,
             backgroundColor: category ? category.color : theme.colors.textSecondary,
             marginRight: theme.spacing.xs,
         },

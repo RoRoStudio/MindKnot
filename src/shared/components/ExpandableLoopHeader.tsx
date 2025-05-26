@@ -108,7 +108,7 @@ const SubActionItem: React.FC<SubActionItemProps> = ({ subAction, onToggle, them
         <View style={{
             width: 20,
             height: 20,
-            borderRadius: 10,
+            borderRadius: theme.shape.radius.m,
             borderWidth: 2,
             borderColor: subAction.done ? theme.colors.success : theme.colors.border,
             backgroundColor: subAction.done ? theme.colors.success : 'transparent',

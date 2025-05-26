@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { BottomSheet, Typography, Button, IconName, IconPicker } from '../../../shared/components';
 import { useTheme } from '../../../app/contexts/ThemeContext';
-import { useStyles } from '../../../shared/hooks/useStyles';
+import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import FormInput from '../../../shared/components/FormInput';
 import Form from '../../../shared/components/Form';
 import { useForm, Controller } from 'react-hook-form';
@@ -107,7 +107,7 @@ const SagaCreationSheet: React.FC<SagaCreationSheetProps> = ({
         Keyboard.dismiss();
     };
 
-    const styles = useStyles((theme) => ({
+    const styles = useThemedStyles((theme) => ({
         overlay: {
             flex: 1,
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
