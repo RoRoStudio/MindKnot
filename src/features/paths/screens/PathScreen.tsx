@@ -30,7 +30,7 @@ import {
     getPathActions
 } from '../hooks/usePathService';
 import { createAction } from '../../actions/hooks/useActionService';
-import { RootStackParamList } from '../../../shared/types/navigation-types';
+import { RootStackParamList } from '../../../shared/types/navigation';
 import { usePaths } from '../hooks/usePaths';
 import { Path, Milestone } from '../../../shared/types/path';
 import { Action } from '../../../shared/types/action';

@@ -15,6 +15,7 @@ import { Icon, IconName } from './';
 import Svg, { Path } from 'react-native-svg';
 import { DiamondFab } from './DiamondFab';
 import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useBottomSheet } from '../../app/contexts/BottomSheetContext';
 
 const { width } = Dimensions.get('window');
 const BAR_HEIGHT = 64;
@@ -25,6 +26,14 @@ export function CustomBottomNavBar({ state, descriptors, navigation }: BottomTab
     const insets = useSafeAreaInsets();
     const bottomInset = Math.max(insets.bottom, 0);
     const { theme } = useTheme();
+    const { setNavigationCallback } = useBottomSheet();
+
+    // Set navigation callback for BottomSheetContext
+    React.useEffect(() => {
+        setNavigationCallback((screen, params) => {
+            navigation.navigate(screen as any, params);
+        });
+    }, [navigation, setNavigationCallback]);
 
     const styles = useThemedStyles((theme) => ({
         container: {

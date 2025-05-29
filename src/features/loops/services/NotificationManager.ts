@@ -15,6 +15,8 @@ Notifications.setNotificationHandler({
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
     }),
 });
 
@@ -360,9 +362,7 @@ export class NotificationManager {
                     categoryIdentifier: 'loop-execution',
                     sound: this.config.playSound ? 'default' : undefined,
                 },
-                trigger: {
-                    date: triggerAt,
-                },
+                trigger: triggerAt as any,
             });
 
             // Store scheduled notification

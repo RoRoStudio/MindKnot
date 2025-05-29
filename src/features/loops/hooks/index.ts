@@ -1,28 +1,37 @@
 /**
- * Loop Hooks
- * 
- * Exports all loop-related hooks for easy importing
+ * Loop Hooks Index
+ * Centralized exports for all loop-related hooks
  */
 
-// Loop hooks exports
 export { useLoops } from './useLoops';
+export { useActivityTemplates } from './useActivityTemplates';
+export { useLoopExecution } from './useLoopExecution';
+export { useBackgroundExecution } from './useBackgroundExecution';
+export { useLoopNotifications } from './useLoopNotifications';
+export { useLoopScheduling } from './useLoopScheduling';
 
-// Export hook return types
-export type { UseLoopsReturn } from './useLoops';
+// Re-export types for convenience
+export type {
+    UseLoopsReturn,
+} from './useLoops';
 
-// Redux store hooks
-export {
-    useLoops as useLoopsStore,
-    useExecution,
-    useTemplates,
-    useLoopBuilder,
-    useLoopStore,
-    useLoopById,
-    useTemplateById,
-    useExecutionHistoryForLoop,
-    useIsLoopExecuting,
-} from './useLoopStore';
+export type {
+    UseActivityTemplatesReturn,
+} from './useActivityTemplates';
 
-// Note: Additional hooks will be added as they are implemented:
-// - useLoopExecution
-// - useLoopFilters 
+export type {
+    UseLoopExecutionReturn,
+} from './useLoopExecution';
+
+export type {
+    UseBackgroundExecutionReturn,
+} from './useBackgroundExecution';
+
+export type {
+    UseLoopNotificationsReturn,
+} from './useLoopNotifications';
+
+export type {
+    UseLoopSchedulingReturn,
+    ScheduledLoop,
+} from './useLoopScheduling'; 

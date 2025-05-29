@@ -30,6 +30,7 @@ import EyeOff from '../../assets/icons/lucide/eye-off.svg';
 import ChevronDown from '../../assets/icons/lucide/chevron-down.svg';
 import ChevronUp from '../../assets/icons/lucide/chevron-up.svg';
 import CircleAlert from '../../assets/icons/lucide/circle-alert.svg';
+import Circle from '../../assets/icons/lucide/circle.svg';
 import X from '../../assets/icons/lucide/x.svg';
 import Calendar from '../../assets/icons/lucide/calendar.svg';
 import Clock from '../../assets/icons/lucide/clock.svg';
@@ -83,6 +84,7 @@ import LogOut from '../../assets/icons/lucide/log-out.svg';
 import CirclePlay from '../../assets/icons/lucide/circle-play.svg';
 import CirclePause from '../../assets/icons/lucide/circle-pause.svg';
 import SkipForward from '../../assets/icons/lucide/skip-forward.svg';
+import Percent from '../../assets/icons/lucide/percent.svg';
 // Using existing icons as alternatives for missing ones
 
 /**
@@ -117,6 +119,7 @@ const iconMap = {
     'chevron-left': ChevronLeft,
     'chevron-right': ChevronRight,
     'circle-alert': CircleAlert,
+    circle: Circle,
     x: X,
     calendar: Calendar,
     clock: Clock,
@@ -170,6 +173,16 @@ const iconMap = {
     play: CirclePlay, // Using circle-play as play icon
     pause: CirclePause, // Using circle-pause as pause icon
     edit: Pencil, // Using pencil as edit icon
+    loader: Clock, // Using clock as loader icon
+    'bar-chart': LayoutGrid, // Using layout-grid as bar-chart icon
+    'trending-up': ArrowRight, // Using arrow-right as trending-up icon
+    'trending-down': ArrowLeft, // Using arrow-left as trending-down icon
+    folder: Archive, // Using archive as folder icon
+    'refresh-cw': Undo, // Using undo as refresh-cw icon
+    menu: EllipsisVertical, // Using ellipsis-vertical as menu icon
+    'skip-back': ArrowLeft, // Using arrow-left as skip-back icon
+    'check-circle': CircleCheck, // Using circle-check as check-circle icon
+    percent: Percent, // Using percent as percent icon
 };
 
 /**

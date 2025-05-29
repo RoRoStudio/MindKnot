@@ -13,7 +13,7 @@ import { Control, FieldValues, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../../shared/types/navigation-types';
+import { RootStackParamList } from '../../../shared/types/navigation';
 import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import { Typography } from '../../../shared/components';
 import {

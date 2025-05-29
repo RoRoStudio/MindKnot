@@ -34,7 +34,7 @@ import FormRichTextarea from '../../shared/components/FormRichTextarea';
 import FormSelect from '../../shared/components/FormSelect';
 import FormRadioGroup from '../../shared/components/FormRadioGroup';
 import FormDatePicker from '../../shared/components/FormDatePicker';
-import FormErrorMessage from '../../shared/components/FormErrorMessage';
+import { FormErrorMessage } from '../../shared/components/FormErrorMessage';
 import FormLabelInput from '../../shared/components/FormLabelInput';
 import FormMoodSelector from '../../shared/components/FormMoodSelector';
 import FormCategorySelector from '../../shared/components/FormCategorySelector';

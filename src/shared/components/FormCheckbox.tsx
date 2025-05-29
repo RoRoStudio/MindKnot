@@ -5,7 +5,7 @@ import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-h
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
-import FormErrorMessage from './FormErrorMessage';
+import { FormErrorMessage } from './FormErrorMessage';
 import { useTheme } from '../../app/contexts/ThemeContext';
 
 /**

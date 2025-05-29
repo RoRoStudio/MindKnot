@@ -13,8 +13,9 @@ import {
     Button,
     Card,
     Icon,
-    Badge
+    CategoryPill
 } from '../../../shared/components';
+import { IconName } from '../../../shared/components/Icon';
 import { Activity, ActivityType } from '../../../shared/types/loop';
 import { formatDuration } from '../../../shared/utils/dateUtils';
 
@@ -116,24 +117,32 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         },
     }));
 
-    const getActivityTypeIcon = (type: ActivityType): string => {
+    const getActivityTypeIcon = (type: ActivityType): IconName => {
         switch (type) {
             case 'timer':
                 return 'clock';
             case 'task':
-                return 'check-square';
+                return 'square-check';
             case 'break':
-                return 'coffee';
+                return 'circle-pause';
             case 'reflection':
                 return 'book-open';
             case 'movement':
                 return 'activity';
             case 'breathing':
-                return 'wind';
+                return 'circle-play';
+            case 'focus':
+                return 'zap';
+            case 'exercise':
+                return 'activity';
+            case 'meditation':
+                return 'circle-play';
+            case 'reading':
+                return 'book-open';
             case 'custom':
                 return 'settings';
             default:
-                return 'circle';
+                return 'circle-check';
         }
     };
 
@@ -250,12 +259,18 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             <View style={styles.cardContent}>
                 <View style={styles.header}>
                     {typeof index === 'number' && (
-                        <Badge
-                            variant="secondary"
-                            label={`${index + 1}`}
-                            style={styles.indexBadge}
-                            size="small"
-                        />
+                        <View style={[styles.indexBadge, {
+                            backgroundColor: '#E5E7EB',
+                            borderRadius: 12,
+                            paddingHorizontal: 8,
+                            paddingVertical: 4,
+                            minWidth: 24,
+                            alignItems: 'center',
+                        }]}>
+                            <Typography variant="caption" style={{ fontSize: 12, fontWeight: '600' }}>
+                                {index + 1}
+                            </Typography>
+                        </View>
                     )}
 
                     {renderTypeIcon()}

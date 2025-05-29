@@ -4,7 +4,7 @@ import { View, TextInput, TextInputProps } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
-import FormErrorMessage from './FormErrorMessage';
+import { FormErrorMessage } from './FormErrorMessage';
 import { useTheme } from '../../app/contexts/ThemeContext';
 
 interface FormTextareaProps<T extends FieldValues> {

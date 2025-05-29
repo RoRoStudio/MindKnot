@@ -21,7 +21,9 @@ export const darkTheme: ThemeType = {
         primary: tokens.color.brand.primary[400],        // Lighter navy for dark mode primary actions
         primaryLight: tokens.color.brand.primary[300],   // Even lighter for hover states
         primaryDark: tokens.color.brand.primary[500],    // Slightly darker for contrast
+        primaryContainer: tokens.color.brand.primary[800], // Dark navy container background
         onPrimary: tokens.color.neutral[900],            // Dark text/icons on light brand backgrounds
+        onPrimaryContainer: tokens.color.neutral[100],  // Light text on dark navy container
 
         secondary: tokens.color.brand.secondary[500],    // Lighter elegant gold for dark mode
         secondaryLight: tokens.color.brand.secondary[400], // Lighter gold elements

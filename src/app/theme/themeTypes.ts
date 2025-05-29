@@ -82,7 +82,9 @@ export interface ColorPalette {
     primary: string;        // Maps to brand.primary.900 - main brand color for navigation
     primaryLight: string;   // Maps to brand.primary.700 - lighter brand elements
     primaryDark: string;    // Maps to brand.primary.950 - darker brand elements
+    primaryContainer: string; // Maps to brand.primary.100 - light container background
     onPrimary: string;      // Maps to neutral.25 - text/icons on brand backgrounds
+    onPrimaryContainer: string; // Maps to brand.primary.900 - text on light container
 
     secondary: string;      // Maps to brand.secondary.600 - secondary brand actions
     secondaryLight: string; // Maps to brand.secondary.500 - lighter secondary elements

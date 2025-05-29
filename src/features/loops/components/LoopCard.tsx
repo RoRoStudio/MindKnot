@@ -1,317 +1,173 @@
 /**
  * LoopCard Component
+ * Uses EntryCard.tsx as foundation with loop-specific features
  * 
- * Displays a loop in a card format with actions.
- * Used in loop lists and selection interfaces.
+ * Features:
+ * - Loop title and description
+ * - Activity count and duration estimate
+ * - Category pill
+ * - Tags display
+ * - Last executed date
+ * - Active session indicator
+ * - Scheduled indicator
+ * - Quick execution controls
  */
 
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
 import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
-import {
-    Typography,
-    Button,
-    Card,
-    Icon,
-    Badge
-} from '../../../shared/components';
-import { Loop } from '../../../shared/types/loop';
-import { formatDuration, formatRelativeTime } from '../../../shared/utils/dateUtils';
+import { EntryCard } from '../../../shared/components';
+import { Loop, ActivityTemplate } from '../../../shared/types/loop';
+import { ENTRY_TYPES, EntryType } from '../../../shared/constants/entryTypes';
 
 export interface LoopCardProps {
-    /** The loop to display */
+    /** Loop data */
     loop: Loop;
-    /** Called when the card is pressed */
+
+    /** Activity templates for reference */
+    templates: ActivityTemplate[];
+
+    /** Whether to display in grid view */
+    isGridView?: boolean;
+
+    /** Whether the loop has an active session */
+    hasActiveSession?: boolean;
+
+    /** Whether the loop is scheduled */
+    isScheduled?: boolean;
+
+    /** Last execution date */
+    lastExecuted?: Date;
+
+    /** Callback when card is pressed */
     onPress?: () => void;
-    /** Called when edit button is pressed */
+
+    /** Callback when execute button is pressed */
+    onExecute?: () => void;
+
+    /** Callback when edit button is pressed */
     onEdit?: () => void;
-    /** Called when delete button is pressed */
+
+    /** Callback when duplicate button is pressed */
+    onDuplicate?: () => void;
+
+    /** Callback when delete button is pressed */
     onDelete?: () => void;
-    /** Called when start button is pressed */
-    onStart?: () => void;
-    /** Whether to show the execution button */
-    showExecutionButton?: boolean;
-    /** Whether the card is in selection mode */
-    isSelected?: boolean;
-    /** Custom style for the card */
-    style?: any;
 }
 
+/**
+ * LoopCard component for displaying loop information using EntryCard foundation
+ */
 export const LoopCard: React.FC<LoopCardProps> = ({
     loop,
+    templates,
+    isGridView = false,
+    hasActiveSession = false,
+    isScheduled = false,
+    lastExecuted,
     onPress,
+    onExecute,
     onEdit,
+    onDuplicate,
     onDelete,
-    onStart,
-    showExecutionButton = true,
-    isSelected = false,
-    style,
 }) => {
     const styles = useThemedStyles((theme) => ({
-        card: {
+        container: {
             marginBottom: theme.spacing.m,
-            borderWidth: isSelected ? 2 : 0,
-            borderColor: isSelected ? theme.colors.primary : 'transparent',
-        },
-        cardContent: {
-            padding: theme.spacing.m,
-        },
-        header: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: theme.spacing.s,
-        },
-        titleContainer: {
-            flex: 1,
-            marginRight: theme.spacing.m,
-        },
-        title: {
-            marginBottom: theme.spacing.xs,
-        },
-        description: {
-            marginBottom: theme.spacing.s,
-        },
-        metadata: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            marginBottom: theme.spacing.m,
-        },
-        metadataItem: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginRight: theme.spacing.m,
-            marginBottom: theme.spacing.xs,
-        },
-        metadataIcon: {
-            marginRight: theme.spacing.xs,
-        },
-        metadataText: {
-            fontSize: theme.typography.fontSize.s,
-            color: theme.colors.textSecondary,
-        },
-        tagsContainer: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            marginBottom: theme.spacing.m,
-        },
-        tag: {
-            marginRight: theme.spacing.s,
-            marginBottom: theme.spacing.xs,
-        },
-        actions: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-        },
-        primaryActions: {
-            flexDirection: 'row',
-            gap: theme.spacing.s,
-        },
-        secondaryActions: {
-            flexDirection: 'row',
-            gap: theme.spacing.xs,
-        },
-        actionButton: {
-            minWidth: 80,
-        },
-        iconButton: {
-            width: 40,
-            height: 40,
-            borderRadius: theme.shape.radius.s,
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        statusBadge: {
-            position: 'absolute',
-            top: theme.spacing.s,
-            right: theme.spacing.s,
         },
     }));
 
-    const getStatusBadge = () => {
-        if (loop.executionCount === 0) {
-            return <Badge variant="info" label="New" style={styles.statusBadge} />;
+    // Calculate total estimated duration
+    const estimatedDuration = React.useMemo(() => {
+        return loop.activities.reduce((total, activity) => {
+            return total + (activity.duration || 0);
+        }, 0);
+    }, [loop.activities]);
+
+    // Get activity emojis for preview
+    const activityEmojis = React.useMemo(() => {
+        return loop.activities.slice(0, 5).map(activity => {
+            const template = templates.find(t => t.id === activity.templateId);
+            return template?.emoji || '⚡';
+        });
+    }, [loop.activities, templates]);
+
+    // Format duration
+    const formatDuration = (minutes: number): string => {
+        if (minutes < 60) {
+            return `${minutes}m`;
         }
-
-        if (loop.lastExecutedAt) {
-            const daysSinceExecution = Math.floor(
-                (Date.now() - new Date(loop.lastExecutedAt).getTime()) / (1000 * 60 * 60 * 24)
-            );
-
-            if (daysSinceExecution === 0) {
-                return <Badge variant="success" label="Today" style={styles.statusBadge} />;
-            } else if (daysSinceExecution <= 7) {
-                return <Badge variant="warning" label="Recent" style={styles.statusBadge} />;
-            }
-        }
-
-        return null;
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
     };
 
-    const renderMetadata = () => (
-        <View style={styles.metadata}>
-            <View style={styles.metadataItem}>
-                <Icon
-                    name="clock"
-                    size={14}
-                    color={styles.metadataText.color}
-                    style={styles.metadataIcon}
-                />
-                <Typography style={styles.metadataText}>
-                    {formatDuration(loop.estimatedDuration)}
-                </Typography>
-            </View>
+    // Format last executed date
+    const formatLastExecuted = (date: Date): string => {
+        const now = new Date();
+        const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
-            <View style={styles.metadataItem}>
-                <Icon
-                    name="activity"
-                    size={14}
-                    color={styles.metadataText.color}
-                    style={styles.metadataIcon}
-                />
-                <Typography style={styles.metadataText}>
-                    {loop.activities.length} activities
-                </Typography>
-            </View>
-
-            {loop.isRepeating && (
-                <View style={styles.metadataItem}>
-                    <Icon
-                        name="repeat"
-                        size={14}
-                        color={styles.metadataText.color}
-                        style={styles.metadataIcon}
-                    />
-                    <Typography style={styles.metadataText}>
-                        {loop.repeatCycles ? `${loop.repeatCycles} cycles` : 'Infinite'}
-                    </Typography>
-                </View>
-            )}
-
-            <View style={styles.metadataItem}>
-                <Icon
-                    name="play-circle"
-                    size={14}
-                    color={styles.metadataText.color}
-                    style={styles.metadataIcon}
-                />
-                <Typography style={styles.metadataText}>
-                    {loop.executionCount} runs
-                </Typography>
-            </View>
-
-            {loop.lastExecutedAt && (
-                <View style={styles.metadataItem}>
-                    <Icon
-                        name="calendar"
-                        size={14}
-                        color={styles.metadataText.color}
-                        style={styles.metadataIcon}
-                    />
-                    <Typography style={styles.metadataText}>
-                        {formatRelativeTime(loop.lastExecutedAt)}
-                    </Typography>
-                </View>
-            )}
-        </View>
-    );
-
-    const renderTags = () => {
-        if (loop.tags.length === 0) return null;
-
-        return (
-            <View style={styles.tagsContainer}>
-                {loop.tags.slice(0, 3).map((tag, index) => (
-                    <Badge
-                        key={index}
-                        variant="secondary"
-                        label={tag}
-                        style={styles.tag}
-                        size="small"
-                    />
-                ))}
-                {loop.tags.length > 3 && (
-                    <Badge
-                        variant="secondary"
-                        label={`+${loop.tags.length - 3}`}
-                        style={styles.tag}
-                        size="small"
-                    />
-                )}
-            </View>
-        );
+        if (diffInDays === 0) return 'Today';
+        if (diffInDays === 1) return 'Yesterday';
+        if (diffInDays < 7) return `${diffInDays} days ago`;
+        if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+        return date.toLocaleDateString();
     };
 
-    const renderActions = () => (
-        <View style={styles.actions}>
-            <View style={styles.primaryActions}>
-                {showExecutionButton && onStart && (
-                    <Button
-                        variant="primary"
-                        label="Start"
-                        leftIcon="play"
-                        onPress={onStart}
-                        style={styles.actionButton}
-                        size="small"
-                    />
-                )}
-            </View>
+    // Build subtitle with activity count and duration
+    const subtitle = React.useMemo(() => {
+        const parts = [`${loop.activities.length} activities`];
+        if (estimatedDuration > 0) {
+            parts.push(formatDuration(estimatedDuration));
+        }
+        if (hasActiveSession) {
+            parts.push('ACTIVE SESSION');
+        }
+        if (isScheduled) {
+            parts.push('SCHEDULED');
+        }
+        return parts.join(' • ');
+    }, [loop.activities.length, estimatedDuration, hasActiveSession, isScheduled]);
 
-            <View style={styles.secondaryActions}>
-                {onEdit && (
-                    <TouchableOpacity
-                        style={[styles.iconButton, { backgroundColor: styles.card.backgroundColor }]}
-                        onPress={onEdit}
-                    >
-                        <Icon name="edit" size={18} color={styles.metadataText.color} />
-                    </TouchableOpacity>
-                )}
+    // Build description with activity preview
+    const enhancedDescription = React.useMemo(() => {
+        let desc = loop.description || '';
 
-                {onDelete && (
-                    <TouchableOpacity
-                        style={[styles.iconButton, { backgroundColor: styles.card.backgroundColor }]}
-                        onPress={onDelete}
-                    >
-                        <Icon name="trash-2" size={18} color={styles.metadataText.color} />
-                    </TouchableOpacity>
-                )}
-            </View>
-        </View>
-    );
+        if (activityEmojis.length > 0) {
+            const emojiPreview = activityEmojis.join(' ') +
+                (loop.activities.length > 5 ? ` +${loop.activities.length - 5}` : '');
+            desc += desc ? `\n\n${emojiPreview}` : emojiPreview;
+        }
+
+        if (lastExecuted) {
+            desc += desc ? `\n\nLast executed ${formatLastExecuted(lastExecuted)}` :
+                `Last executed ${formatLastExecuted(lastExecuted)}`;
+        }
+
+        return desc;
+    }, [loop.description, activityEmojis, loop.activities.length, lastExecuted]);
 
     return (
-        <Card
-            style={[styles.card, style]}
-            onPress={onPress}
-        >
-            {getStatusBadge()}
-
-            <View style={styles.cardContent}>
-                <View style={styles.header}>
-                    <View style={styles.titleContainer}>
-                        <Typography variant="h4" style={styles.title}>
-                            {loop.title}
-                        </Typography>
-
-                        {loop.description && (
-                            <Typography
-                                variant="body2"
-                                color="secondary"
-                                style={styles.description}
-                                numberOfLines={2}
-                            >
-                                {loop.description}
-                            </Typography>
-                        )}
-                    </View>
-                </View>
-
-                {renderMetadata()}
-                {renderTags()}
-                {renderActions()}
-            </View>
-        </Card>
+        <View style={styles.container}>
+            <EntryCard
+                id={loop.id}
+                title={loop.title}
+                description={enhancedDescription}
+                iconName={ENTRY_TYPES[EntryType.LOOP].icon}
+                borderColor={ENTRY_TYPES[EntryType.LOOP].color}
+                createdAt={loop.createdAt.toISOString()}
+                tags={loop.tags}
+                categoryId={loop.categoryId}
+                onPress={onPress}
+                entryType="loop"
+                subtitle={subtitle}
+                showCreatedDate={false}
+                // Pass through callbacks
+                onDuplicate={onDuplicate ? () => onDuplicate() : undefined}
+                onDelete={onDelete ? () => onDelete() : undefined}
+                // Custom navigation handling
+                navigationScreen={undefined} // We handle navigation via onPress
+            />
+        </View>
     );
 }; 

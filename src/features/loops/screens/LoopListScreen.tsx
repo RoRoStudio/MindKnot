@@ -1,271 +1,279 @@
 /**
- * LoopListScreen
+ * LoopListScreen - Loop Management Screen
+ * Following BaseEntityScreen pattern with EntryDetailHeader and EntryMetadataBar
  * 
- * Main screen for displaying and managing loops.
- * Provides filtering, search, and creation capabilities.
+ * Features:
+ * - Search, filter, sort functionality
+ * - Grid/list view toggle
+ * - Active session indicator
+ * - Basic loop management (create, edit, delete)
+ * - Quick execution start
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Alert } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTheme } from '../../../app/contexts/ThemeContext';
 import {
-    FilterableList,
-    Typography,
-    Button,
-    Card
+    BaseEntityScreen,
+    EntryDetailHeader,
+    EntryMetadataBar,
 } from '../../../shared/components';
-import { Loop, LoopFilters } from '../../../shared/types/loop';
+import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import { LoopCard } from '../components/LoopCard';
-import { LoopFiltersModal } from '../components/LoopFiltersModal';
 import { useLoops } from '../hooks/useLoops';
-import { ExecutionEngine } from '../services/ExecutionEngine';
+import { useActivityTemplates } from '../hooks/useActivityTemplates';
+import { RootStackParamList } from '../../../shared/types/navigation';
+import { Loop } from '../../../shared/types/loop';
+import { logLoop, logNavigation } from '../../../shared/utils/debugLogger';
 
-export interface LoopListScreenProps {
-    navigation: any;
-}
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export const LoopListScreen: React.FC<LoopListScreenProps> = ({ navigation }) => {
+export default function LoopListScreen() {
+    const navigation = useNavigation<NavigationProp>();
+    const { theme } = useTheme();
+    const { loops, isLoading, loadLoops, deleteLoop } = useLoops();
+    const { templates } = useActivityTemplates();
+
+    // Filter and search state
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'alphabetical'>('newest');
-    const [showFilters, setShowFilters] = useState(false);
-    const [currentExecution, setCurrentExecution] = useState<any>(null);
-
-    const {
-        loops,
-        isLoading,
-        error,
-        loadLoops,
-        deleteLoop,
-        allTags,
-    } = useLoops();
+    const [categoryId, setCategoryId] = useState<string | null>(null);
+    const [isGridView, setIsGridView] = useState(false);
 
     const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,
         },
-        emptyContainer: {
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: theme.spacing.xl,
-        },
-        emptyText: {
-            textAlign: 'center',
-            marginTop: theme.spacing.m,
-            marginBottom: theme.spacing.xl,
-        },
-        executionBanner: {
-            margin: theme.spacing.m,
-            padding: theme.spacing.m,
-            backgroundColor: theme.colors.primary,
-            borderRadius: theme.shape.radius.m,
-        },
-        executionText: {
-            color: theme.colors.onPrimary,
-            textAlign: 'center',
-        },
-        createButton: {
-            margin: theme.spacing.m,
-        },
     }));
 
-    // Load loops on screen focus
+    // Load loops when screen focuses
     useFocusEffect(
         useCallback(() => {
+            logLoop('Screen focused, loading loops');
             loadLoops();
-            checkCurrentExecution();
-        }, [])
+        }, [loadLoops])
     );
 
-    // Check for current execution
-    const checkCurrentExecution = useCallback(async () => {
-        try {
-            const executionEngine = ExecutionEngine.getInstance();
-            const execution = executionEngine.getCurrentExecution();
-            setCurrentExecution(execution);
-        } catch (error) {
-            console.error('Failed to check current execution:', error);
-        }
-    }, []);
+    // Debug: Log loops when they change
+    useEffect(() => {
+        logLoop(`Loops loaded: ${loops.length} loops available`, undefined,
+            loops.map(l => ({ id: l.id, title: l.title })));
+    }, [loops]);
 
-    // Filter loops based on search and filters
+    // Get all unique tags from loops
+    const allTags = React.useMemo(() => {
+        const tagSet = new Set<string>();
+        loops.forEach(loop => {
+            loop.tags.forEach(tag => tagSet.add(tag));
+        });
+        logLoop(`Found ${tagSet.size} unique tags`, undefined, Array.from(tagSet));
+        return Array.from(tagSet).sort();
+    }, [loops]);
+
+    // Filter and sort loops
     const filteredLoops = React.useMemo(() => {
-        let filtered = [...loops];
+        logLoop('Filtering loops', undefined, {
+            searchTerm,
+            selectedTags,
+            categoryId,
+            sortOrder
+        });
 
-        // Apply search filter
-        if (searchTerm) {
-            const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(loop =>
-                loop.title.toLowerCase().includes(searchLower) ||
-                loop.tags.some(tag => tag.toLowerCase().includes(searchLower))
-            );
-        }
+        let filtered = loops.filter(loop => {
+            // Search filter
+            if (searchTerm) {
+                const searchLower = searchTerm.toLowerCase();
+                const matchesSearch = loop.title.toLowerCase().includes(searchLower) ||
+                    (loop.description?.toLowerCase().includes(searchLower) || false);
+                if (!matchesSearch) return false;
+            }
 
-        // Apply tag filter
-        if (selectedTags.length > 0) {
-            filtered = filtered.filter(loop =>
-                selectedTags.every(tag => loop.tags.includes(tag))
-            );
-        }
+            // Category filter
+            if (categoryId && loop.categoryId !== categoryId) {
+                return false;
+            }
 
-        // Apply sorting
+            // Tags filter
+            if (selectedTags.length > 0) {
+                const hasSelectedTag = selectedTags.some(tag => loop.tags.includes(tag));
+                if (!hasSelectedTag) return false;
+            }
+
+            return true;
+        });
+
+        // Sort filtered loops
         filtered.sort((a, b) => {
             switch (sortOrder) {
-                case 'newest':
-                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                case 'oldest':
-                    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
                 case 'alphabetical':
                     return a.title.localeCompare(b.title);
+                case 'oldest':
+                    return a.createdAt.getTime() - b.createdAt.getTime();
+                case 'newest':
                 default:
-                    return 0;
+                    return b.createdAt.getTime() - a.createdAt.getTime();
             }
         });
 
+        logLoop(`Filtered to ${filtered.length} loops`);
         return filtered;
-    }, [loops, searchTerm, selectedTags, sortOrder]);
+    }, [loops, searchTerm, selectedTags, categoryId, sortOrder]);
 
-    const handleCreateLoop = useCallback(() => {
-        navigation.navigate('LoopBuilder');
-    }, [navigation]);
+    // Navigation handlers
+    const handleCreateLoop = () => {
+        logNavigation('LoopBuilderScreen', { mode: 'create' });
+        navigation.navigate('LoopBuilderScreen', {
+            mode: 'create'
+        });
+    };
 
-    const handleLoopPress = useCallback((loop: Loop) => {
-        navigation.navigate('LoopDetail', { loopId: loop.id });
-    }, [navigation]);
+    const handleViewLoop = (loop: Loop) => {
+        logLoop('Navigating to loop details', loop.id, { title: loop.title });
+        logNavigation('LoopDetailsScreen', { loopId: loop.id });
 
-    const handleEditLoop = useCallback((loop: Loop) => {
-        navigation.navigate('LoopBuilder', { loopId: loop.id });
-    }, [navigation]);
+        navigation.navigate('LoopDetailsScreen', {
+            loopId: loop.id
+        });
+    };
 
-    const handleDeleteLoop = useCallback(async (loop: Loop) => {
+    const handleEditLoop = (loop: Loop) => {
+        logLoop('Navigating to edit loop', loop.id, { title: loop.title });
+        logNavigation('LoopBuilderScreen', { mode: 'edit', id: loop.id });
+
+        navigation.navigate('LoopBuilderScreen', {
+            mode: 'edit',
+            id: loop.id
+        });
+    };
+
+    const handleExecuteLoop = (loop: Loop) => {
+        logLoop('Navigating to execute loop', loop.id, { title: loop.title });
+        logNavigation('LoopExecutionScreen', { loopId: loop.id });
+
+        navigation.navigate('LoopExecutionScreen', {
+            loopId: loop.id
+        });
+    };
+
+    const handleDuplicateLoop = async (loop: Loop) => {
+        logLoop('Attempting to duplicate loop', loop.id, { title: loop.title });
+        try {
+            // TODO: Implement duplicate functionality
+            Alert.alert('Feature Coming Soon', 'Loop duplication will be available in a future update.');
+        } catch (error) {
+            logLoop('Error duplicating loop', loop.id, error);
+            Alert.alert('Error', 'Failed to duplicate loop');
+        }
+    };
+
+    const handleDeleteLoop = (loop: Loop) => {
+        logLoop('Requesting loop deletion', loop.id, { title: loop.title });
+
         Alert.alert(
             'Delete Loop',
             `Are you sure you want to delete "${loop.title}"? This action cannot be undone.`,
             [
-                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
                 {
                     text: 'Delete',
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await deleteLoop(loop.id);
+                            logLoop('Deleting loop', loop.id);
+                            const success = await deleteLoop(loop.id);
+                            if (success) {
+                                logLoop('Loop deleted successfully', loop.id);
+                                await loadLoops(); // Refresh the list
+                            } else {
+                                logLoop('Failed to delete loop', loop.id);
+                                Alert.alert('Error', 'Failed to delete loop');
+                            }
                         } catch (error) {
-                            Alert.alert('Error', 'Failed to delete loop. Please try again.');
+                            logLoop('Error deleting loop', loop.id, error);
+                            Alert.alert('Error', 'An error occurred while deleting the loop');
                         }
                     },
                 },
             ]
         );
-    }, [deleteLoop]);
+    };
 
-    const handleStartLoop = useCallback(async (loop: Loop) => {
-        try {
-            const executionEngine = ExecutionEngine.getInstance();
-            await executionEngine.startLoop(loop);
-            navigation.navigate('LoopExecution', { loopId: loop.id });
-        } catch (error) {
-            console.error('Failed to start loop:', error);
-            Alert.alert('Error', 'Failed to start loop. Please try again.');
-        }
-    }, [navigation]);
-
-    const handleResumeExecution = useCallback(() => {
-        if (currentExecution) {
-            navigation.navigate('LoopExecution', { loopId: currentExecution.loopId });
-        }
-    }, [currentExecution, navigation]);
-
-    const handleToggleTag = useCallback((tag: string) => {
-        setSelectedTags(prev =>
-            prev.includes(tag)
-                ? prev.filter(t => t !== tag)
-                : [...prev, tag]
-        );
-    }, []);
-
-    const renderLoopItem = useCallback(({ item }: { item: Loop }) => (
-        <LoopCard
-            loop={item}
-            onPress={() => handleLoopPress(item)}
-            onEdit={() => handleEditLoop(item)}
-            onDelete={() => handleDeleteLoop(item)}
-            onStart={() => handleStartLoop(item)}
-            showExecutionButton={!currentExecution}
-        />
-    ), [handleLoopPress, handleEditLoop, handleDeleteLoop, handleStartLoop, currentExecution]);
-
-    const renderEmptyState = () => (
-        <View style={styles.emptyContainer}>
-            <Typography variant="h2" color="secondary" style={styles.emptyText}>
-                No loops yet
-            </Typography>
-            <Typography variant="body1" color="secondary" style={styles.emptyText}>
-                Create your first loop to get started with structured activities and routines.
-            </Typography>
-            <Button
-                variant="primary"
-                label="Create Your First Loop"
-                leftIcon="plus"
-                onPress={handleCreateLoop}
-                style={styles.createButton}
-            />
-        </View>
-    );
-
-    const renderCurrentExecution = () => {
-        if (!currentExecution) return null;
+    // Render loop item
+    const renderLoopItem = ({ item }: { item: Loop }) => {
+        logLoop('Rendering loop item', item.id, { title: item.title });
 
         return (
-            <Card style={styles.executionBanner} onPress={handleResumeExecution}>
-                <Typography variant="body1" style={styles.executionText}>
-                    Loop in progress - Tap to resume
-                </Typography>
-            </Card>
+            <LoopCard
+                loop={item}
+                templates={templates}
+                isGridView={isGridView}
+                onPress={() => handleViewLoop(item)}
+                onEdit={() => handleEditLoop(item)}
+                onExecute={() => handleExecuteLoop(item)}
+                onDuplicate={() => handleDuplicateLoop(item)}
+                onDelete={() => handleDeleteLoop(item)}
+            />
         );
     };
 
     return (
-        <View style={styles.container}>
-            {renderCurrentExecution()}
+        <SafeAreaView style={styles.container}>
+            {/* Header */}
+            <EntryDetailHeader
+                entryType="Loops"
+                onBackPress={() => navigation.goBack()}
+                isSaved={true}
+            />
 
-            <FilterableList
-                data={filteredLoops}
+            {/* Metadata Bar for filtering */}
+            <EntryMetadataBar
+                categoryId={categoryId}
+                onCategoryChange={setCategoryId}
+                labels={selectedTags}
+                onLabelsChange={setSelectedTags}
+                isEditing={true}
+            />
+
+            {/* Main Content */}
+            <BaseEntityScreen
+                data={filteredLoops.map(loop => ({
+                    ...loop,
+                    createdAt: loop.createdAt.getTime(),
+                    updatedAt: loop.updatedAt.getTime(),
+                }))}
                 loadData={loadLoops}
-                renderItem={renderLoopItem}
+                renderItem={({ item }: { item: any }) => renderLoopItem({ item: item as Loop })}
+                onCreateEntity={handleCreateLoop}
+                createButtonLabel="Create Loop"
                 emptyIcon="repeat"
-                emptyText="No loops found"
+                emptyText="No loops yet. Create your first loop to get started!"
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
                 allTags={allTags}
                 selectedTags={selectedTags}
-                onToggleTag={handleToggleTag}
+                onToggleTag={(tag: string) => {
+                    setSelectedTags(prev =>
+                        prev.includes(tag)
+                            ? prev.filter(t => t !== tag)
+                            : [...prev, tag]
+                    );
+                }}
+                sortOrder={sortOrder}
+                onSortChange={setSortOrder}
+                categoryId={categoryId}
+                onCategoryChange={setCategoryId}
+                isGridView={isGridView}
+                onToggleView={() => setIsGridView(prev => !prev)}
                 isLoading={isLoading}
-                ListEmptyComponent={filteredLoops.length === 0 && loops.length === 0 ? renderEmptyState : undefined}
             />
-
-            <LoopFiltersModal
-                visible={showFilters}
-                onClose={() => setShowFilters(false)}
-                filters={{
-                    query: searchTerm,
-                    tags: selectedTags,
-                    sortBy: sortOrder === 'alphabetical' ? 'title' : 'createdAt',
-                    sortDirection: sortOrder === 'oldest' ? 'asc' : 'desc',
-                }}
-                onFiltersChange={(filters) => {
-                    setSearchTerm(filters.query || '');
-                    setSelectedTags(filters.tags || []);
-                    if (filters.sortBy === 'name') {
-                        setSortOrder('alphabetical');
-                    } else {
-                        setSortOrder(filters.sortDirection === 'asc' ? 'oldest' : 'newest');
-                    }
-                }}
-                allTags={allTags}
-            />
-        </View>
+        </SafeAreaView>
     );
-}; 
+} 

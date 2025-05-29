@@ -15,6 +15,10 @@ export type ActivityType =
     | 'reflection'      // Reflection or journaling prompt
     | 'movement'        // Physical movement activity
     | 'breathing'       // Breathing exercise
+    | 'focus'           // Focus work session
+    | 'exercise'        // Exercise activity
+    | 'meditation'      // Meditation activity
+    | 'reading'         // Reading activity
     | 'custom';         // Custom user-defined activity
 
 /**
@@ -35,7 +39,11 @@ export type LoopExecutionStatus =
     | 'running'         // Currently executing
     | 'paused'          // Temporarily paused
     | 'completed'       // Successfully completed
-    | 'stopped';        // Manually stopped
+    | 'stopped'         // Manually stopped
+    | 'cancelled'       // Cancelled by user
+    | 'skipped';        // Activity was skipped
+
+export type ExecutionStatus = LoopExecutionStatus;
 
 /**
  * Background execution state
@@ -63,7 +71,7 @@ export interface Activity {
     type: ActivityType;
 
     /** Duration in seconds (for timed activities) */
-    duration?: number;
+    duration: number;
 
     /** Whether this activity can be skipped */
     skippable: boolean;
@@ -96,60 +104,91 @@ export interface Activity {
     startedAt?: string;
 
     /** Time when activity was completed (ISO string) */
-    completedAt?: string;
+    completedAt?: string | Date;
 
     /** Actual duration taken (may differ from planned duration) */
     actualDuration?: number;
+
+    /** Whether this activity is optional */
+    isOptional?: boolean;
+
+    /** Tags for categorization */
+    tags?: string[];
 }
 
 /**
- * Activity template for reuse across loops
+ * Activity Template - Reusable building blocks for activities
+ * Spec-compliant template system with emoji-based categories
  */
 export interface ActivityTemplate {
-    /** Unique identifier for the template */
+    /** Unique identifier */
     id: string;
 
-    /** Template name */
-    name: string;
+    /** Template title (required) */
+    title: string;
 
-    /** Template description */
+    /** Emoji for the template (required - no icons, only emojis) */
+    emoji: string;
+
+    /** Optional description */
     description?: string;
 
-    /** Type of activity */
-    type: ActivityType;
+    /** Optional linked target for navigation */
+    linkedTarget?: 'notes' | 'sparks' | 'actions' | 'paths';
 
-    /** Default duration in seconds */
-    defaultDuration?: number;
-
-    /** Default instructions */
-    defaultInstructions?: string;
-
-    /** Default icon */
-    defaultIcon?: string;
-
-    /** Default color */
-    defaultColor?: string;
-
-    /** Whether activities from this template are skippable by default */
-    defaultSkippable: boolean;
-
-    /** Whether to notify on start by default */
-    defaultNotifyOnStart: boolean;
-
-    /** Whether to notify on complete by default */
-    defaultNotifyOnComplete: boolean;
-
-    /** Category for organization */
-    category?: string;
-
-    /** Whether this is a built-in template */
-    isBuiltIn: boolean;
+    /** Category for grouping in tabs */
+    category: string;
 
     /** Creation timestamp */
-    createdAt: string;
+    createdAt: Date;
 
-    /** Last modified timestamp */
-    updatedAt: string;
+    /** Last updated timestamp */
+    updatedAt: Date;
+}
+
+/**
+ * Activity Instance - Customized activities based on templates
+ * Per specification with quantity, duration, sub-items, and linked targets
+ */
+export interface ActivityInstance {
+    /** Unique identifier */
+    id: string;
+
+    /** Reference to the template */
+    templateId: string;
+
+    /** Optional title override */
+    title?: string;
+
+    /** Optional quantity with number and unit */
+    quantity?: {
+        number: number;
+        unit: string; // "pages", "sets", "reps", etc.
+    };
+
+    /** Optional duration in minutes only */
+    duration?: number;
+
+    /** Optional sub-items with labels and completion status */
+    subItems?: {
+        label: string;
+        completed: boolean;
+    }[];
+
+    /** Optional linked target override */
+    linkedTarget?: 'notes' | 'sparks' | 'actions' | 'paths';
+
+    /** Order in the loop */
+    order: number;
+
+    /** Execution status */
+    status?: 'pending' | 'active' | 'completed' | 'skipped';
+
+    /** Start time for execution */
+    startedAt?: string;
+
+    /** Completion time */
+    completedAt?: string;
 }
 
 /**
@@ -162,6 +201,9 @@ export interface ExecutionState {
     /** ID of the loop being executed */
     loopId: string;
 
+    /** Reference to the loop being executed */
+    loop: Loop;
+
     /** Current execution status */
     status: LoopExecutionStatus;
 
@@ -171,14 +213,29 @@ export interface ExecutionState {
     /** Current cycle number (for repeating loops) */
     currentCycle: number;
 
+    /** Current iteration within the loop */
+    currentIteration: number;
+
     /** Activities with their current states */
     activities: Activity[];
+
+    /** Completed activities in this execution */
+    completedActivities: Activity[];
 
     /** When execution started */
     startedAt: string;
 
+    /** Start time as timestamp */
+    startTime: number;
+
+    /** Whether execution is currently paused */
+    isPaused: boolean;
+
     /** When execution was paused (if applicable) */
     pausedAt?: string;
+
+    /** Total time spent paused */
+    pausedDuration: number;
 
     /** When execution completed */
     completedAt?: string;
@@ -188,6 +245,9 @@ export interface ExecutionState {
 
     /** Time remaining for current activity in seconds */
     currentActivityTimeRemaining?: number;
+
+    /** Progress of current activity (0-1) */
+    activityProgress: number;
 
     /** Background execution state */
     backgroundState: BackgroundState;
@@ -221,16 +281,40 @@ export interface ExecutionHistory {
     /** ID of the loop that was executed */
     loopId: string;
 
+    /** Title of the loop that was executed */
+    loopTitle: string;
+
     /** When execution started */
     startedAt: string;
+
+    /** Start time as Date object */
+    startTime: Date;
 
     /** When execution completed */
     completedAt?: string;
 
+    /** End time as Date object */
+    endTime?: Date;
+
+    /** Number of times execution was paused */
+    pausedCount?: number;
+
+    /** Number of activities skipped */
+    skippedActivities?: number;
+
+    /** When execution ended */
+    endedAt?: string;
+
     /** Final status */
+    status: LoopExecutionStatus;
+
+    /** Final status (alias for compatibility) */
     finalStatus: LoopExecutionStatus;
 
     /** Total duration in seconds */
+    duration: number;
+
+    /** Total duration in seconds (alias for compatibility) */
     totalDuration: number;
 
     /** Number of cycles completed */
@@ -250,77 +334,222 @@ export interface ExecutionHistory {
 
     /** User notes about the execution */
     notes?: string;
+
+    /** Total number of activities in the loop */
+    totalActivities?: number;
+
+    /** Number of iterations completed */
+    iterationsCompleted?: number;
 }
 
 /**
- * Main Loop interface extending BaseEntry
+ * Enhanced Loop interface with robust features
+ * Core structure + background execution, notifications, and scheduling
  */
-export interface Loop extends BaseEntry {
-    /** Loop-specific type identifier */
-    type: 'loop';
+export interface Loop {
+    /** Unique identifier */
+    id: string;
 
-    /** Activities in this loop */
-    activities: Activity[];
+    /** Loop title (required) */
+    title: string;
 
-    /** Whether the loop should repeat */
-    isRepeating: boolean;
+    /** Optional description */
+    description?: string;
 
-    /** Number of cycles to repeat (0 = infinite) */
-    repeatCycles: number;
+    /** Ordered list of activity instances */
+    activities: ActivityInstance[];
 
-    /** Break duration between cycles in seconds */
-    cycleBreaKDuration: number;
+    /** Creation timestamp */
+    createdAt: Date;
 
-    /** Whether to continue execution in background */
-    allowBackgroundExecution: boolean;
+    /** Last updated timestamp */
+    updatedAt: Date;
 
-    /** Whether to show notifications during execution */
-    enableNotifications: boolean;
-
-    /** Whether to play audio cues */
-    enableAudio: boolean;
-
-    /** Total estimated duration in seconds */
-    estimatedDuration: number;
-
-    /** Current execution state (if running) */
-    currentExecution?: ExecutionState;
-
-    /** Execution history */
-    executionHistory: ExecutionHistory[];
-
-    /** Template this loop was created from (if any) */
-    templateId?: string;
-
-    /** Whether this loop is a template itself */
-    isTemplate: boolean;
-
-    /** Template category (if this is a template) */
-    templateCategory?: string;
-
-    /** Number of times this loop has been executed */
-    executionCount: number;
-
-    /** Average completion rate (0-1) */
-    averageCompletionRate: number;
-
-    /** Last execution date */
-    lastExecutedAt?: string;
-
-    /** User's favorite status */
-    isFavorite: boolean;
-
-    /** Difficulty level (1-5) */
-    difficulty: number;
-
-    /** Tags for organization and search */
+    /** Tags for organization */
     tags: string[];
+
+    /** Optional category ID */
+    categoryId?: string;
+
+    /** Allow background execution */
+    backgroundExecution: boolean;
+
+    /** Notification preferences */
+    notifications: NotificationSettings;
+
+    /** Optional scheduling settings */
+    scheduling?: ScheduleSettings;
+}
+
+/**
+ * Notification Settings - Comprehensive notification preferences
+ */
+export interface NotificationSettings {
+    /** Whether notifications are enabled */
+    enabled: boolean;
+
+    /** Activity reminder notifications */
+    activityReminders: boolean;
+
+    /** Session progress notifications */
+    sessionProgress: boolean;
+
+    /** Completion celebration notifications */
+    completionCelebration: boolean;
+
+    /** Sound enabled for notifications */
+    soundEnabled: boolean;
+
+    /** Vibration enabled for notifications */
+    vibrationEnabled: boolean;
+
+    /** Persistent overlay during execution */
+    persistentOverlay: boolean;
+}
+
+/**
+ * Schedule Settings - Flexible scheduling system
+ */
+export interface ScheduleSettings {
+    /** Whether scheduling is enabled */
+    enabled: boolean;
+
+    /** Frequency of scheduling */
+    frequency: 'daily' | 'weekly' | 'custom';
+
+    /** Time in HH:mm format */
+    time: string;
+
+    /** Days of week (0-6, Sunday-Saturday) */
+    days: number[];
+
+    /** Reminder minutes before scheduled time */
+    reminderMinutes: number;
+
+    /** Whether to auto-start when scheduled */
+    autoStart: boolean;
+}
+
+/**
+ * Execution Session - Robust session tracking with background task IDs
+ */
+export interface ExecutionSession {
+    /** Unique session identifier */
+    id: string;
+
+    /** Loop being executed */
+    loopId: string;
+
+    /** Session start time */
+    startTime: Date;
+
+    /** Session end time */
+    endTime?: Date;
+
+    /** Current activity index */
+    currentActivityIndex: number;
+
+    /** Session status */
+    status: 'running' | 'paused' | 'completed' | 'cancelled';
+
+    /** Progress for each activity */
+    activityProgress: ActivityProgress[];
+
+    /** Total session duration in seconds */
+    totalDuration: number;
+
+    /** Total paused duration in seconds */
+    pausedDuration: number;
+
+    /** Background task ID for OS background execution */
+    backgroundTaskId?: string;
+
+    /** Persistent notification ID */
+    persistentNotificationId?: string;
+}
+
+/**
+ * Activity Progress tracking
+ */
+export interface ActivityProgress {
+    /** Activity instance ID */
+    activityId: string;
+
+    /** Activity execution status */
+    status: 'pending' | 'in_progress' | 'completed' | 'skipped';
+
+    /** Progress percentage (0-1) */
+    progress?: number;
+
+    /** Whether activity is completed */
+    completed?: boolean;
+
+    /** Whether activity was skipped */
+    skipped?: boolean;
+
+    /** Start time */
+    startTime?: Date;
+
+    /** Start time (alias for compatibility) */
+    startedAt?: Date;
+
+    /** Completion time */
+    endTime?: Date;
+
+    /** Completion time (alias for compatibility) */
+    completedAt?: Date;
+
+    /** Completed sub-item indices */
+    completedSubItems?: number[];
+
+    /** Sub-items completion status (legacy) */
+    subItemsProgress?: boolean[];
 }
 
 /**
  * Loop builder state for creating/editing loops
  */
 export interface LoopBuilderState {
+    /** Loop title */
+    title: string;
+
+    /** Loop description */
+    description: string;
+
+    /** Loop tags */
+    tags: string[];
+
+    /** Loop activities */
+    activities: Activity[];
+
+    /** Whether the loop repeats */
+    isRepeating: boolean;
+
+    /** Number of repeat cycles */
+    repeatCycles: number | null;
+
+    /** Whether background execution is allowed */
+    allowBackgroundExecution: boolean;
+
+    /** Whether notifications are enabled */
+    enableNotifications: boolean;
+
+    /** Estimated duration */
+    estimatedDuration: number;
+
+    /** Settings object for compatibility */
+    settings: {
+        isRepeating: boolean;
+        repeatCycles: number | null;
+        backgroundExecution: boolean;
+        notifications: {
+            enabled: boolean;
+            activityStart: boolean;
+            activityComplete: boolean;
+            loopComplete: boolean;
+        };
+    };
+
     /** Loop being built/edited */
     loop: Partial<Loop>;
 
@@ -430,19 +659,4 @@ export interface ExecutionPreferences {
     voiceGuidanceEnabled: boolean;
 }
 
-// Export all types
-export type {
-    ActivityType,
-    ActivityStatus,
-    LoopExecutionStatus,
-    BackgroundState,
-    Activity,
-    ActivityTemplate,
-    ExecutionState,
-    ExecutionHistory,
-    Loop,
-    LoopBuilderState,
-    LoopFilters,
-    BackgroundTaskConfig,
-    ExecutionPreferences,
-}; 
+// All types are already exported above 

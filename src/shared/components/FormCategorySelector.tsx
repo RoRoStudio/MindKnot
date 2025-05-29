@@ -13,7 +13,7 @@ import { Control, Controller, FieldValues, Path, useForm } from 'react-hook-form
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography, Button, Icon, ConfirmationModal } from './';
 import { useTheme } from '../../app/contexts/ThemeContext';
-import FormErrorMessage from './FormErrorMessage';
+import { FormErrorMessage } from './FormErrorMessage';
 import { useCategories } from '../hooks/useCategories';
 import { Category } from '../types/category';
 import CategoryPill from './CategoryPill';

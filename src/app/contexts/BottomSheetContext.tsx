@@ -1,6 +1,6 @@
 // src/contexts/BottomSheetContext.tsx
 import React, { createContext, useContext, ReactNode } from 'react';
-import { RootStackParamList } from '../../shared/types/navigation-types';
+import { RootStackParamList } from '../../shared/types/navigation';
 
 interface BottomSheetContextType {
     showNoteForm: (onSuccess?: () => void) => void;
@@ -9,7 +9,7 @@ interface BottomSheetContextType {
     showLoopForm: (onSuccess?: () => void) => void;
     showPathForm: (onSuccess?: () => void) => void;
     hideAllSheets: () => void;
-    
+
     // Add navigation callback handler
     setNavigationCallback: (callback: (screen: keyof RootStackParamList, params: any) => void) => void;
 }
@@ -31,7 +31,7 @@ interface BottomSheetProviderProps {
 export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ children }) => {
     // Instead of direct navigation, we'll use a callback that can be set by navigation-aware components
     let navigateCallback: ((screen: keyof RootStackParamList, params: any) => void) | null = null;
-    
+
     const setNavigationCallback = (callback: (screen: keyof RootStackParamList, params: any) => void) => {
         navigateCallback = callback;
     };
@@ -50,8 +50,8 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
     };
 
     const showActionForm = (
-        parentId?: string, 
-        parentType?: 'path' | 'milestone' | 'loop-item', 
+        parentId?: string,
+        parentType?: 'path' | 'milestone' | 'loop-item',
         onSuccess?: () => void
     ) => {
         if (navigateCallback) {
@@ -65,7 +65,7 @@ export const BottomSheetProvider: React.FC<BottomSheetProviderProps> = ({ childr
 
     const showLoopForm = (onSuccess?: () => void) => {
         if (navigateCallback) {
-            navigateCallback('LoopScreen', { mode: 'create' });
+            navigateCallback('LoopBuilderScreen', { mode: 'create' });
         }
     };
 

@@ -9,6 +9,7 @@ import { View, Text, ActivityIndicator } from 'react-native';
 import { Provider } from 'react-redux';
 import { store } from './src/app/store';
 import { ThemeProvider } from './src/app/contexts/ThemeContext';
+import { BottomSheetProvider } from './src/app/contexts/BottomSheetContext';
 import AppNavigator from './src/app/navigation/AppNavigator';
 import { ExpandableLoopHeader } from './src/shared/components/ExpandableLoopHeader';
 // TODO: Re-enable when loops are implemented
@@ -129,11 +130,13 @@ export default function App() {
             <GestureHandlerRootView style={{ flex: 1 }}>
                 <SafeAreaProvider>
                     <ThemeProvider>
-                        <ActionSheetProvider>
-                            <NavigationContainer>
-                                <AppContent />
-                            </NavigationContainer>
-                        </ActionSheetProvider>
+                        <BottomSheetProvider>
+                            <ActionSheetProvider>
+                                <NavigationContainer>
+                                    <AppContent />
+                                </NavigationContainer>
+                            </ActionSheetProvider>
+                        </BottomSheetProvider>
                     </ThemeProvider>
                 </SafeAreaProvider>
             </GestureHandlerRootView>

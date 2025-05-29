@@ -15,7 +15,7 @@ import {
 } from 'react-hook-form';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
-import FormErrorMessage from './FormErrorMessage';
+import { FormErrorMessage } from './FormErrorMessage';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 
 interface FormInputProps<T extends FieldValues> extends Omit<TextInputProps, 'onChange' | 'onBlur' | 'value'> {

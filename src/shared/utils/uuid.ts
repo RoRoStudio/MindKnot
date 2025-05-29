@@ -1,28 +1,32 @@
-import * as Crypto from 'expo-crypto';
+/**
+ * UUID Generation Utility
+ * Simple UUID v4 generation for creating unique identifiers
+ */
 
 /**
- * Generate a UUID for use as a primary key in the database
- * Using a synchronous implementation to make database operations simpler
+ * Generate a UUID v4 string
+ * Simple implementation for React Native compatibility
  */
 export const generateUUID = (): string => {
-    try {
-        // Use the Crypto.randomUUID method
-        return Crypto.randomUUID();
-    } catch (error) {
-        console.warn('Error generating UUID with Crypto, using fallback method', error);
-        return generateRFC4122UUID();
-    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 };
 
 /**
- * Generate a simple UUID v4 (random) following RFC4122
- * This is a simplified version that's good enough for our purposes
- * In a production app, consider using a more robust library like 'uuid'
+ * Generate a short ID (8 characters)
+ * Useful for shorter identifiers
  */
-const generateRFC4122UUID = (): string => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = (Math.random() * 16) | 0;
-        const v = c === 'x' ? r : (r & 0x3) | 0x8;
-        return v.toString(16);
-    });
+export const generateShortId = (): string => {
+    return Math.random().toString(36).substring(2, 10);
+};
+
+/**
+ * Generate a timestamp-based ID
+ * Useful for ordered identifiers
+ */
+export const generateTimestampId = (): string => {
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 }; 

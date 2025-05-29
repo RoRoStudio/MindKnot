@@ -10,7 +10,7 @@ import {
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './';
-import FormErrorMessage from './FormErrorMessage';
+import { FormErrorMessage } from './FormErrorMessage';
 
 // Define mood emoji
 const MOOD_OPTIONS = [

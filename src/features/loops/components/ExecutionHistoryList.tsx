@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, FlatList } from 'react-native';
 import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
-import { Typography, Card, Icon, Badge } from '../../../shared/components';
+import { Typography, Card, Icon } from '../../../shared/components';
 import { StyleProps } from '../../../shared/components/shared-props';
 import { ExecutionHistory } from '../../../shared/types/loop';
 
@@ -178,7 +178,7 @@ export const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
     const getStatusColor = (status: ExecutionHistory['status']): string => {
         switch (status) {
             case 'completed':
-                return styles.container.backgroundColor || '#4CAF50'; // Success green
+                return '#4CAF50'; // Success green
             case 'paused':
                 return '#FF9800'; // Warning orange
             case 'stopped':
@@ -206,8 +206,8 @@ export const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
     };
 
     const getCompletionPercentage = (item: ExecutionHistory): number => {
-        if (item.totalActivities === 0) return 0;
-        return Math.round((item.completedActivities / item.totalActivities) * 100);
+        if (!item.totalActivities || item.totalActivities === 0) return 0;
+        return Math.round((item.activitiesCompleted / item.totalActivities) * 100);
     };
 
     const renderHistoryItem = ({ item }: { item: ExecutionHistory }) => (
@@ -215,7 +215,6 @@ export const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
             <Card
                 style={styles.historyCard}
                 onPress={onItemPress ? () => onItemPress(item) : undefined}
-                pressable={!!onItemPress}
             >
                 {/* Header */}
                 <View style={styles.historyHeader}>
@@ -223,7 +222,7 @@ export const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                         {item.loopTitle}
                     </Typography>
                     <Typography style={styles.historyDate}>
-                        {formatDate(item.startedAt)}
+                        {formatDate(new Date(item.startedAt))}
                     </Typography>
                 </View>
 
@@ -249,17 +248,26 @@ export const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                             style={styles.metaIcon}
                         />
                         <Typography style={styles.metaText}>
-                            {item.completedActivities}/{item.totalActivities} activities
+                            {item.activitiesCompleted}/{item.totalActivities || 0} activities
                         </Typography>
                     </View>
 
-                    <Badge
-                        label={item.status}
-                        variant="outline"
-                        color={getStatusColor(item.status)}
-                        leftIcon={getStatusIcon(item.status)}
-                        style={styles.statusBadge}
-                    />
+                    <View style={[styles.statusBadge, {
+                        backgroundColor: getStatusColor(item.status) + '20',
+                        borderColor: getStatusColor(item.status),
+                        borderWidth: 1,
+                        borderRadius: 12,
+                        paddingHorizontal: 8,
+                        paddingVertical: 4,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4
+                    }]}>
+                        <Icon name={getStatusIcon(item.status) as any} size={12} color={getStatusColor(item.status)} />
+                        <Typography style={{ fontSize: 10, color: getStatusColor(item.status), fontWeight: '500' }}>
+                            {item.status}
+                        </Typography>
+                    </View>
                 </View>
 
                 {/* Detailed Information */}
@@ -303,7 +311,7 @@ export const ExecutionHistoryList: React.FC<ExecutionHistoryListProps> = ({
                             <View style={styles.detailRow}>
                                 <Typography style={styles.detailLabel}>Ended:</Typography>
                                 <Typography style={styles.detailValue}>
-                                    {formatDate(item.endedAt)}
+                                    {formatDate(new Date(item.endedAt))}
                                 </Typography>
                             </View>
                         )}

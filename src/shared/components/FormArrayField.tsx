@@ -7,7 +7,7 @@ import {
 import { Control, FieldValues, useFieldArray, FieldArrayPath, DeepPartial } from 'react-hook-form';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography, Icon, Button } from './';
-import FormErrorMessage from './FormErrorMessage';
+import { FormErrorMessage } from './FormErrorMessage';
 import { generateSimpleId } from '../utils/uuidUtil';
 
 interface FormArrayFieldProps<TFieldValues extends FieldValues = FieldValues> {

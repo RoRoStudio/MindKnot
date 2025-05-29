@@ -21,7 +21,9 @@ export const lightTheme: ThemeType = {
         primary: tokens.color.brand.primary[900],        // Deep sophisticated navy for navigation and primary actions
         primaryLight: tokens.color.brand.primary[700],   // Lighter navy for hover/active states
         primaryDark: tokens.color.brand.primary[950],    // Darkest navy for high contrast
+        primaryContainer: tokens.color.brand.primary[100], // Light navy container background
         onPrimary: tokens.color.neutral[25],             // Light text/icons on navy backgrounds
+        onPrimaryContainer: tokens.color.brand.primary[900], // Dark text on light navy container
 
         secondary: tokens.color.brand.secondary[600],    // Sophisticated gold for secondary actions and accents
         secondaryLight: tokens.color.brand.secondary[500], // Lighter elegant gold

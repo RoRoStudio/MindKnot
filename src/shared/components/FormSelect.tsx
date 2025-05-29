@@ -17,7 +17,7 @@ import {
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
 import { Icon, IconName } from './Icon';
-import FormErrorMessage from './FormErrorMessage';
+import { FormErrorMessage } from './FormErrorMessage';
 import { useTheme } from '../../app/contexts/ThemeContext';
 
 interface Option {

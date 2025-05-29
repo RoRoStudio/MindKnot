@@ -17,7 +17,7 @@ import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import { useTheme } from '../../../app/contexts/ThemeContext';
 import { Icon, ConfirmationModal } from '../../../shared/components';
 import { createAction, updateAction, getActionById } from '../hooks/useActionService';
-import { RootStackParamList } from '../../../shared/types/navigation-types';
+import { RootStackParamList } from '../../../shared/types/navigation';
 import { useActions } from '../hooks/useActions';
 import { EntryDetailHeader, EntryMetadataBar, EntryTitleInput } from '../../../shared/components';
 import { FormDatePicker, FormDatePickerRef } from '../../../shared/components';

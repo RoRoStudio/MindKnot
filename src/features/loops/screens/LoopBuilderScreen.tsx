@@ -1,523 +1,763 @@
 /**
- * LoopBuilderScreen
+ * LoopBuilderScreen - Simple 3-Step Loop Builder
+ * Following PathScreen.tsx patterns exactly with EntryDetailHeader and EntryMetadataBar
  * 
- * Comprehensive interface for creating and editing loops.
- * Provides activity management, settings configuration, and validation.
+ * Step 1: Basic Info (Simple Form)
+ * Step 2: Template Selection + Activity Customization  
+ * Step 3: Settings & Finalize (Enhanced)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
+import React, { useState, useEffect } from 'react';
+import {
+    View,
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform,
+    Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useForm } from 'react-hook-form';
+import { useTheme } from '../../../app/contexts/ThemeContext';
 import {
     Typography,
     Button,
-    TextInput,
-    Card,
-    Switch,
-    Icon
+    FormInput,
+    FormTextarea,
+    FormSwitch,
+    BottomSheet,
+    EntryDetailHeader,
+    EntryMetadataBar,
+    EntryTitleInput,
 } from '../../../shared/components';
-import { Loop, Activity, ActivityType, BuilderState } from '../../../shared/types/loop';
-import { ActivityBuilder } from '../components/ActivityBuilder';
-import { ActivityList } from '../components/ActivityList';
-import { LoopSettings } from '../components/LoopSettings';
-import { LoopPreview } from '../components/LoopPreview';
+import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
+import { ActivityTemplateSelector } from '../components/ActivityTemplateSelector';
+import { ActivityInstanceEditor } from '../components/ActivityInstanceEditor';
+import { LoopSettingsForm } from '../components/LoopSettingsForm';
+import { LoopPreviewCard } from '../components/LoopPreviewCard';
+import { useActivityTemplates } from '../hooks/useActivityTemplates';
 import { useLoops } from '../hooks/useLoops';
-import { useLoopBuilder } from '../hooks/useLoopBuilder';
+import { RootStackParamList } from '../../../shared/types/navigation';
+import { Loop, ActivityInstance, ActivityTemplate, NotificationSettings, ScheduleSettings } from '../../../shared/types/loop';
+import { generateUUID } from '../../../shared/utils/uuid';
 
-export interface LoopBuilderScreenProps {
-    navigation: any;
-    route: {
-        params?: {
-            loopId?: string;
+type LoopBuilderMode = 'create' | 'edit' | 'view';
+
+type LoopBuilderRouteProp = RouteProp<
+    {
+        LoopBuilderScreen: {
+            mode: LoopBuilderMode;
+            id?: string;
         };
-    };
+    },
+    'LoopBuilderScreen'
+>;
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+interface LoopFormValues {
+    title: string;
+    description: string;
+    tags: string[];
+    categoryId: string | undefined;
+    backgroundExecution: boolean;
 }
 
-export const LoopBuilderScreen: React.FC<LoopBuilderScreenProps> = ({
-    navigation,
-    route
-}) => {
-    const loopId = route.params?.loopId;
-    const isEditing = !!loopId;
+type BuilderStep = 1 | 2 | 3;
 
-    const [activeTab, setActiveTab] = useState<'details' | 'activities' | 'settings' | 'preview'>('details');
-    const [showActivityBuilder, setShowActivityBuilder] = useState(false);
-    const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
+export default function LoopBuilderScreen() {
+    const route = useRoute<LoopBuilderRouteProp>();
+    const navigation = useNavigation<NavigationProp>();
+    const { theme } = useTheme();
+    const { createLoop, updateLoop, getLoopById, loadLoops } = useLoops();
+    const { templates, categories, getTemplatesByCategory } = useActivityTemplates();
 
-    const { getLoop, createLoop, updateLoop } = useLoops();
+    // State management
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [mode, setMode] = useState<LoopBuilderMode>('create');
+    const [loopId, setLoopId] = useState<string | undefined>(undefined);
+    const [currentStep, setCurrentStep] = useState<BuilderStep>(1);
 
-    const {
-        builderState,
-        updateTitle,
-        updateDescription,
-        updateTags,
-        addActivity,
-        updateActivity,
-        removeActivity,
-        reorderActivities,
-        updateSettings,
-        validateLoop,
-        resetBuilder,
-        loadLoop,
-        getEstimatedDuration,
-    } = useLoopBuilder();
+    // Activity management
+    const [activities, setActivities] = useState<ActivityInstance[]>([]);
+    const [selectedTemplate, setSelectedTemplate] = useState<ActivityTemplate | null>(null);
+    const [editingActivity, setEditingActivity] = useState<ActivityInstance | null>(null);
+    const [showActivityEditor, setShowActivityEditor] = useState(false);
+
+    // Settings
+    const [backgroundExecution, setBackgroundExecution] = useState(true);
+    const [notifications, setNotifications] = useState<NotificationSettings>({
+        enabled: true,
+        activityReminders: true,
+        sessionProgress: true,
+        completionCelebration: true,
+        soundEnabled: true,
+        vibrationEnabled: true,
+        persistentOverlay: true,
+    });
+    const [scheduling, setScheduling] = useState<ScheduleSettings | undefined>(undefined);
+
+    // Bottom sheets
+    const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+    const [showSchedulingSettings, setShowSchedulingSettings] = useState(false);
+
+    // Form setup
+    const { control, handleSubmit, reset, getValues, setValue, watch } = useForm<LoopFormValues>({
+        defaultValues: {
+            title: '',
+            description: '',
+            tags: [],
+            categoryId: undefined,
+            backgroundExecution: true,
+        },
+        mode: 'onChange'
+    });
+
+    const categoryId = watch('categoryId');
+    const labels = watch('tags');
 
     const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,
         },
-        header: {
-            padding: theme.spacing.m,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.colors.border,
-        },
-        headerTitle: {
-            marginBottom: theme.spacing.s,
-        },
-        tabContainer: {
-            flexDirection: 'row',
-            backgroundColor: theme.colors.surface,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.colors.border,
-        },
-        tab: {
-            flex: 1,
-            paddingVertical: theme.spacing.m,
-            paddingHorizontal: theme.spacing.s,
-            alignItems: 'center',
-        },
-        activeTab: {
-            backgroundColor: theme.colors.primary,
-        },
-        tabText: {
-            fontSize: theme.typography.fontSize.s,
-        },
-        activeTabText: {
-            color: theme.colors.onPrimary,
-            fontWeight: 'bold',
-        },
         content: {
             flex: 1,
         },
         scrollContent: {
             padding: theme.spacing.m,
+            paddingBottom: theme.spacing.xl,
         },
-        section: {
-            marginBottom: theme.spacing.l,
+        stepIndicator: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingVertical: theme.spacing.m,
+            paddingHorizontal: theme.spacing.m,
+            backgroundColor: theme.colors.surface,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.border,
+        },
+        stepDot: {
+            width: 32,
+            height: 32,
+            borderRadius: 16,
+            backgroundColor: theme.colors.border,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginHorizontal: theme.spacing.xs,
+        },
+        stepDotActive: {
+            backgroundColor: theme.colors.primary,
+        },
+        stepDotCompleted: {
+            backgroundColor: theme.colors.success,
+        },
+        stepLine: {
+            flex: 1,
+            height: 2,
+            backgroundColor: theme.colors.border,
+            marginHorizontal: theme.spacing.xs,
+        },
+        stepLineCompleted: {
+            backgroundColor: theme.colors.success,
+        },
+        stepText: {
+            fontSize: theme.typography.fontSize.xs,
+            color: theme.colors.textSecondary,
+            fontWeight: theme.typography.fontWeight.medium,
+        },
+        stepTextActive: {
+            color: theme.colors.onPrimary,
         },
         sectionTitle: {
             marginBottom: theme.spacing.m,
+            marginTop: theme.spacing.l,
         },
-        inputGroup: {
-            marginBottom: theme.spacing.m,
+        activityList: {
+            marginTop: theme.spacing.m,
         },
-        label: {
-            marginBottom: theme.spacing.s,
-        },
-        textInput: {
-            marginBottom: theme.spacing.m,
-        },
-        tagsContainer: {
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            marginTop: theme.spacing.s,
-        },
-        tag: {
-            backgroundColor: theme.colors.surfaceVariant,
-            paddingHorizontal: theme.spacing.s,
-            paddingVertical: theme.spacing.xs,
-            borderRadius: theme.shape.radius.s,
-            marginRight: theme.spacing.s,
-            marginBottom: theme.spacing.s,
+        activityItem: {
             flexDirection: 'row',
             alignItems: 'center',
-        },
-        tagText: {
-            fontSize: theme.typography.fontSize.s,
-            marginRight: theme.spacing.xs,
-        },
-        removeTagButton: {
-            padding: theme.spacing.xs,
-        },
-        addActivityButton: {
-            marginBottom: theme.spacing.m,
-        },
-        emptyActivities: {
-            textAlign: 'center',
-            color: theme.colors.textSecondary,
-            fontStyle: 'italic',
-            padding: theme.spacing.l,
-        },
-        validationError: {
-            backgroundColor: theme.colors.errorContainer,
             padding: theme.spacing.m,
+            backgroundColor: theme.colors.surface,
             borderRadius: theme.shape.radius.m,
-            marginBottom: theme.spacing.m,
+            marginBottom: theme.spacing.s,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
         },
-        validationErrorText: {
-            color: theme.colors.onErrorContainer,
+        activityEmoji: {
+            fontSize: 24,
+            marginRight: theme.spacing.m,
         },
-        actionButtons: {
+        activityContent: {
+            flex: 1,
+        },
+        activityTitle: {
+            fontSize: theme.typography.fontSize.m,
+            fontWeight: theme.typography.fontWeight.medium,
+            color: theme.colors.textPrimary,
+        },
+        activityMeta: {
+            fontSize: theme.typography.fontSize.s,
+            color: theme.colors.textSecondary,
+            marginTop: theme.spacing.xs,
+        },
+        navigationButtons: {
             flexDirection: 'row',
-            gap: theme.spacing.m,
             padding: theme.spacing.m,
+            gap: theme.spacing.m,
+            backgroundColor: theme.colors.surface,
             borderTopWidth: 1,
             borderTopColor: theme.colors.border,
         },
-        actionButton: {
+        navButton: {
+            flex: 1,
+        },
+        emptyState: {
+            alignItems: 'center',
+            padding: theme.spacing.xl,
+        },
+        emptyText: {
+            fontSize: theme.typography.fontSize.m,
+            color: theme.colors.textSecondary,
+            textAlign: 'center',
+            marginTop: theme.spacing.m,
+        },
+        settingsButtons: {
+            flexDirection: 'row',
+            gap: theme.spacing.m,
+        },
+        settingButton: {
             flex: 1,
         },
     }));
 
-    // Load existing loop data if editing
-    useFocusEffect(
-        useCallback(() => {
-            if (isEditing && loopId) {
-                loadExistingLoop();
-            } else {
-                resetBuilder();
-            }
-        }, [isEditing, loopId])
-    );
+    // Initialize from route params
+    useEffect(() => {
+        if (route.params) {
+            const { mode: routeMode, id } = route.params;
+            setMode(routeMode);
+            setLoopId(id);
 
-    const loadExistingLoop = useCallback(async () => {
+            if ((routeMode === 'edit' || routeMode === 'view') && id) {
+                loadLoopData(id);
+            }
+        }
+    }, [route.params]);
+
+    // Load loop data for edit or view mode
+    const loadLoopData = async (id: string) => {
         try {
-            const loop = await getLoop(loopId!);
+            setIsLoading(true);
+            const loop = await getLoopById(id);
+
             if (loop) {
-                loadLoop(loop);
+                reset({
+                    title: loop.title,
+                    description: loop.description || '',
+                    tags: loop.tags || [],
+                    categoryId: loop.categoryId,
+                });
+
+                setActivities(loop.activities || []);
+                setBackgroundExecution(loop.backgroundExecution);
+                setNotifications(loop.notifications);
+                setScheduling(loop.scheduling);
             } else {
                 Alert.alert('Error', 'Loop not found');
                 navigation.goBack();
             }
         } catch (error) {
-            console.error('Failed to load loop:', error);
-            Alert.alert('Error', 'Failed to load loop data');
+            console.error('Error loading loop:', error);
+            Alert.alert('Error', 'Failed to load loop');
             navigation.goBack();
+        } finally {
+            setIsLoading(false);
         }
-    }, [loopId, getLoop, loadLoop, navigation]);
+    };
 
-    const handleSave = useCallback(async () => {
+    // Handle metadata changes (auto-save in edit mode)
+    const handleCategoryChange = async (newCategoryId: string | null) => {
+        setValue('categoryId', newCategoryId || undefined);
+        if (loopId && mode === 'edit') {
+            await autoSave({ categoryId: newCategoryId || undefined });
+        }
+    };
+
+    const handleLabelsChange = async (newLabels: string[]) => {
+        setValue('tags', newLabels);
+        if (loopId && mode === 'edit') {
+            await autoSave({ tags: newLabels });
+        }
+    };
+
+    const handleTitleChange = async (value: string) => {
+        setValue('title', value);
+        if (loopId && mode === 'edit') {
+            await autoSave({ title: value });
+        }
+    };
+
+    const autoSave = async (updates: Partial<LoopFormValues>) => {
+        if (!loopId) return;
+
         try {
-            setIsSaving(true);
+            const currentValues = getValues();
+            const loopData = {
+                ...currentValues,
+                ...updates,
+                activities,
+                backgroundExecution,
+                notifications,
+                scheduling,
+            };
+            await updateLoop(loopId, loopData);
+        } catch (error) {
+            console.error('Auto-save failed:', error);
+        }
+    };
 
-            // Validate the loop
-            const validation = validateLoop();
-            if (!validation.isValid) {
-                Alert.alert('Validation Error', validation.errors.join('\n'));
-                return;
-            }
+    // Step navigation
+    const nextStep = () => {
+        if (currentStep < 3) {
+            setCurrentStep((prev) => (prev + 1) as BuilderStep);
+        }
+    };
 
-            // Create loop object
-            const loopData: Partial<Loop> = {
-                title: builderState.title,
-                description: builderState.description,
-                activities: builderState.activities,
-                tags: builderState.tags,
-                isRepeating: builderState.settings.isRepeating,
-                repeatCycles: builderState.settings.repeatCycles,
-                estimatedDuration: getEstimatedDuration(),
-                backgroundExecution: builderState.settings.backgroundExecution,
-                notifications: builderState.settings.notifications,
+    const previousStep = () => {
+        if (currentStep > 1) {
+            setCurrentStep((prev) => (prev - 1) as BuilderStep);
+        }
+    };
+
+    // Activity management
+    const handleTemplateSelect = (template: ActivityTemplate) => {
+        setSelectedTemplate(template);
+
+        // Create new activity instance from template with guaranteed unique ID
+        const newActivity: ActivityInstance = {
+            id: generateUUID(),
+            templateId: template.id,
+            title: undefined, // Use template title by default
+            quantity: undefined,
+            duration: undefined,
+            subItems: undefined,
+            linkedTarget: template.linkedTarget,
+            order: activities.length,
+            status: 'pending',
+        };
+
+        setEditingActivity(newActivity);
+        setShowActivityEditor(true);
+    };
+
+    const handleActivitySave = (activity: ActivityInstance) => {
+        if (editingActivity && activities.find(a => a.id === editingActivity.id)) {
+            // Update existing activity
+            setActivities(prev => prev.map(a => a.id === activity.id ? activity : a));
+        } else {
+            // Add new activity, ensure no duplicates by ID
+            setActivities(prev => {
+                const existingActivity = prev.find(a => a.id === activity.id);
+                if (existingActivity) {
+                    // Update existing instead of adding duplicate
+                    return prev.map(a => a.id === activity.id ? activity : a);
+                } else {
+                    // Add new activity
+                    return [...prev, activity];
+                }
+            });
+        }
+
+        setShowActivityEditor(false);
+        setEditingActivity(null);
+        setSelectedTemplate(null);
+    };
+
+    const handleActivityEdit = (activity: ActivityInstance) => {
+        const template = templates.find(t => t.id === activity.templateId);
+        if (template) {
+            setSelectedTemplate(template);
+            setEditingActivity(activity);
+            setShowActivityEditor(true);
+        }
+    };
+
+    const handleActivityRemove = (activityId: string) => {
+        setActivities(prev => prev.filter(a => a.id !== activityId));
+    };
+
+    const handleActivityReorder = (fromIndex: number, toIndex: number) => {
+        setActivities(prev => {
+            const newActivities = [...prev];
+            const [removed] = newActivities.splice(fromIndex, 1);
+            newActivities.splice(toIndex, 0, removed);
+
+            // Update order values
+            return newActivities.map((activity, index) => ({
+                ...activity,
+                order: index,
+            }));
+        });
+    };
+
+    // Form submission
+    const onSubmit = async (data: LoopFormValues) => {
+        if (isSubmitting) return;
+
+        try {
+            setIsSubmitting(true);
+
+            const loopData: Omit<Loop, 'id' | 'createdAt' | 'updatedAt'> = {
+                title: data.title,
+                description: data.description,
+                activities,
+                tags: data.tags,
+                categoryId: data.categoryId,
+                backgroundExecution: data.backgroundExecution,
+                notifications,
+                scheduling,
             };
 
-            if (isEditing && loopId) {
-                await updateLoop(loopId, loopData);
-                Alert.alert('Success', 'Loop updated successfully');
+            let success;
+            if (mode === 'edit' && loopId) {
+                success = await updateLoop(loopId, loopData);
             } else {
-                await createLoop(loopData as Omit<Loop, 'id' | 'createdAt' | 'updatedAt' | 'executionCount' | 'lastExecutedAt'>);
-                Alert.alert('Success', 'Loop created successfully');
+                const newLoop = await createLoop(loopData);
+                success = !!newLoop;
+                if (success && newLoop) {
+                    setLoopId(newLoop.id);
+                    setMode('view');
+                }
             }
 
-            navigation.goBack();
+            if (success) {
+                await loadLoops(); // Refresh loops list
+                Alert.alert('Success', 'Loop saved successfully!');
+                navigation.goBack();
+            } else {
+                Alert.alert('Error', 'Failed to save the loop. Please try again.');
+            }
         } catch (error) {
-            console.error('Failed to save loop:', error);
-            Alert.alert('Error', 'Failed to save loop. Please try again.');
+            console.error('Error saving loop:', error);
+            Alert.alert('Error', 'An unexpected error occurred.');
         } finally {
-            setIsSaving(false);
+            setIsSubmitting(false);
         }
-    }, [builderState, validateLoop, getEstimatedDuration, isEditing, loopId, updateLoop, createLoop, navigation]);
+    };
 
-    const handleCancel = useCallback(() => {
-        if (hasUnsavedChanges()) {
-            Alert.alert(
-                'Unsaved Changes',
-                'You have unsaved changes. Are you sure you want to leave?',
-                [
-                    { text: 'Stay', style: 'cancel' },
-                    { text: 'Leave', style: 'destructive', onPress: () => navigation.goBack() },
-                ]
-            );
-        } else {
-            navigation.goBack();
+    // Validation
+    const canProceedToNextStep = () => {
+        const values = getValues();
+
+        switch (currentStep) {
+            case 1:
+                return values.title.trim().length > 0;
+            case 2:
+                return activities.length > 0;
+            case 3:
+                return true;
+            default:
+                return false;
         }
-    }, [navigation]);
+    };
 
-    const hasUnsavedChanges = useCallback((): boolean => {
-        // Check if there are any changes from the initial state
-        return builderState.title.trim() !== '' ||
-            builderState.description.trim() !== '' ||
-            builderState.activities.length > 0 ||
-            builderState.tags.length > 0;
-    }, [builderState]);
+    const canSaveLoop = () => {
+        const values = getValues();
+        return values.title.trim().length > 0 && activities.length > 0;
+    };
 
-    const handleAddActivity = useCallback(() => {
-        setEditingActivity(null);
-        setShowActivityBuilder(true);
-    }, []);
+    // Render step indicator
+    const renderStepIndicator = () => (
+        <View style={styles.stepIndicator}>
+            {[1, 2, 3].map((step, index) => (
+                <React.Fragment key={step}>
+                    <View style={[
+                        styles.stepDot,
+                        currentStep === step && styles.stepDotActive,
+                        currentStep > step && styles.stepDotCompleted,
+                    ]}>
+                        <Typography style={[
+                            styles.stepText,
+                            currentStep === step && styles.stepTextActive,
+                        ]}>
+                            {step}
+                        </Typography>
+                    </View>
+                    {index < 2 && (
+                        <View style={[
+                            styles.stepLine,
+                            currentStep > step && styles.stepLineCompleted,
+                        ]} />
+                    )}
+                </React.Fragment>
+            ))}
+        </View>
+    );
 
-    const handleEditActivity = useCallback((activity: Activity) => {
-        setEditingActivity(activity);
-        setShowActivityBuilder(true);
-    }, []);
-
-    const handleActivitySave = useCallback((activity: Activity) => {
-        if (editingActivity) {
-            updateActivity(editingActivity.id, activity);
-        } else {
-            addActivity(activity);
-        }
-        setShowActivityBuilder(false);
-        setEditingActivity(null);
-    }, [editingActivity, updateActivity, addActivity]);
-
-    const handleActivityCancel = useCallback(() => {
-        setShowActivityBuilder(false);
-        setEditingActivity(null);
-    }, []);
-
-    const handleRemoveActivity = useCallback((activityId: string) => {
-        Alert.alert(
-            'Remove Activity',
-            'Are you sure you want to remove this activity?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Remove', style: 'destructive', onPress: () => removeActivity(activityId) },
-            ]
-        );
-    }, [removeActivity]);
-
-    const handleAddTag = useCallback((tag: string) => {
-        if (tag.trim() && !builderState.tags.includes(tag.trim())) {
-            updateTags([...builderState.tags, tag.trim()]);
-        }
-    }, [builderState.tags, updateTags]);
-
-    const handleRemoveTag = useCallback((tagToRemove: string) => {
-        updateTags(builderState.tags.filter(tag => tag !== tagToRemove));
-    }, [builderState.tags, updateTags]);
-
-    const renderTabContent = () => {
-        switch (activeTab) {
-            case 'details':
-                return renderDetailsTab();
-            case 'activities':
-                return renderActivitiesTab();
-            case 'settings':
-                return renderSettingsTab();
-            case 'preview':
-                return renderPreviewTab();
+    // Render step content
+    const renderStepContent = () => {
+        switch (currentStep) {
+            case 1:
+                return renderStep1();
+            case 2:
+                return renderStep2();
+            case 3:
+                return renderStep3();
             default:
                 return null;
         }
     };
 
-    const renderDetailsTab = () => (
-        <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-            <View style={styles.section}>
-                <Typography variant="h3" style={styles.sectionTitle}>
-                    Basic Information
-                </Typography>
+    // Step 1: Basic Info
+    const renderStep1 = () => (
+        <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <Typography variant="h3" style={styles.sectionTitle}>
+                Basic Information
+            </Typography>
 
-                <View style={styles.inputGroup}>
-                    <Typography variant="body2" style={styles.label}>
-                        Title *
-                    </Typography>
-                    <TextInput
-                        value={builderState.title}
-                        onChangeText={updateTitle}
-                        placeholder="Enter loop title"
-                        style={styles.textInput}
-                    />
-                </View>
+            <EntryTitleInput
+                control={control}
+                name="title"
+                placeholder="Enter loop title"
+                onChangeText={handleTitleChange}
+            />
 
-                <View style={styles.inputGroup}>
-                    <Typography variant="body2" style={styles.label}>
-                        Description
-                    </Typography>
-                    <TextInput
-                        value={builderState.description}
-                        onChangeText={updateDescription}
-                        placeholder="Enter loop description"
-                        multiline
-                        numberOfLines={3}
-                        style={styles.textInput}
-                    />
-                </View>
-
-                <View style={styles.inputGroup}>
-                    <Typography variant="body2" style={styles.label}>
-                        Tags
-                    </Typography>
-                    <TextInput
-                        placeholder="Add a tag and press enter"
-                        onSubmitEditing={(event) => {
-                            handleAddTag(event.nativeEvent.text);
-                            event.target.clear();
-                        }}
-                        style={styles.textInput}
-                    />
-
-                    {builderState.tags.length > 0 && (
-                        <View style={styles.tagsContainer}>
-                            {builderState.tags.map((tag, index) => (
-                                <View key={index} style={styles.tag}>
-                                    <Typography style={styles.tagText}>{tag}</Typography>
-                                    <Button
-                                        variant="ghost"
-                                        leftIcon="x"
-                                        onPress={() => handleRemoveTag(tag)}
-                                        style={styles.removeTagButton}
-                                    />
-                                </View>
-                            ))}
-                        </View>
-                    )}
-                </View>
-            </View>
+            <FormTextarea
+                name="description"
+                control={control}
+                label="Description"
+                placeholder="Describe what this loop is for"
+                numberOfLines={3}
+            />
         </ScrollView>
     );
 
-    const renderActivitiesTab = () => (
-        <View style={styles.content}>
-            <View style={styles.scrollContent}>
-                <Button
-                    variant="primary"
-                    label="Add Activity"
-                    leftIcon="plus"
-                    onPress={handleAddActivity}
-                    style={styles.addActivityButton}
-                />
+    // Step 2: Template Selection + Activity Customization
+    const renderStep2 = () => (
+        <View>
+            <Typography variant="h3" style={styles.sectionTitle}>
+                Add Activities
+            </Typography>
 
-                {builderState.activities.length > 0 ? (
-                    <ActivityList
-                        activities={builderState.activities}
-                        onEdit={handleEditActivity}
-                        onRemove={handleRemoveActivity}
-                        onReorder={reorderActivities}
-                        showReorderControls={true}
-                    />
-                ) : (
-                    <Typography variant="body2" style={styles.emptyActivities}>
-                        No activities added yet. Add your first activity to get started.
+            <ActivityTemplateSelector
+                selectedTemplateIds={activities.map(a => a.templateId)}
+                onTemplateToggle={(templateId) => {
+                    const template = templates.find(t => t.id === templateId);
+                    if (template) {
+                        handleTemplateSelect(template);
+                    }
+                }}
+                multiSelect={false}
+            />
+
+            {activities.length > 0 && (
+                <View style={styles.activityList}>
+                    <Typography variant="h4" style={styles.sectionTitle}>
+                        Selected Activities ({activities.length})
                     </Typography>
-                )}
-            </View>
 
-            {showActivityBuilder && (
-                <ActivityBuilder
-                    activity={editingActivity}
-                    onSave={handleActivitySave}
-                    onCancel={handleActivityCancel}
-                />
+                    {activities.map((activity, index) => {
+                        const template = templates.find(t => t.id === activity.templateId);
+                        return (
+                            <View key={`${activity.id}-${index}`} style={styles.activityItem}>
+                                <Typography style={styles.activityEmoji}>
+                                    {template?.emoji || '⚡'}
+                                </Typography>
+                                <View style={styles.activityContent}>
+                                    <Typography style={styles.activityTitle}>
+                                        {activity.title || template?.title || 'Untitled Activity'}
+                                    </Typography>
+                                    <Typography style={styles.activityMeta}>
+                                        {activity.duration ? `${activity.duration} min` : 'No duration set'}
+                                        {activity.quantity && ` • ${activity.quantity.number} ${activity.quantity.unit}`}
+                                    </Typography>
+                                </View>
+                                <Button
+                                    variant="text"
+                                    label="Edit"
+                                    size="small"
+                                    onPress={() => handleActivityEdit(activity)}
+                                />
+                            </View>
+                        );
+                    })}
+                </View>
+            )}
+
+            {activities.length === 0 && (
+                <View style={styles.emptyState}>
+                    <Typography style={styles.emptyText}>
+                        Select activity templates above to build your loop
+                    </Typography>
+                </View>
             )}
         </View>
     );
 
-    const renderSettingsTab = () => (
-        <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-            <LoopSettings
-                settings={builderState.settings}
-                onSettingsChange={updateSettings}
+    // Step 3: Settings & Preview
+    const renderStep3 = () => (
+        <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <Typography variant="h3" style={styles.sectionTitle}>
+                Settings & Review
+            </Typography>
+
+            {/* Loop Preview */}
+            <LoopPreviewCard
+                title={watch('title') || 'Untitled Loop'}
+                description={watch('description')}
+                activities={activities}
+                templates={templates}
             />
-        </ScrollView>
-    );
 
-    const renderPreviewTab = () => (
-        <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-            <LoopPreview
-                builderState={builderState}
-                estimatedDuration={getEstimatedDuration()}
+            {/* Background Execution */}
+            <Typography variant="h4" style={styles.sectionTitle}>
+                Execution Settings
+            </Typography>
+
+            <FormSwitch
+                name="backgroundExecution"
+                control={control}
+                label="Background Execution"
+                helperText="Allow this loop to run in the background"
             />
-        </ScrollView>
-    );
 
-    const renderValidationErrors = () => {
-        const validation = validateLoop();
-        if (validation.isValid) return null;
+            {/* Quick Settings Buttons */}
+            <Typography variant="h4" style={styles.sectionTitle}>
+                Additional Settings
+            </Typography>
 
-        return (
-            <View style={styles.validationError}>
-                <Typography variant="body2" style={styles.validationErrorText}>
-                    Please fix the following issues:
-                </Typography>
-                {validation.errors.map((error, index) => (
-                    <Typography key={index} variant="body2" style={styles.validationErrorText}>
-                        • {error}
-                    </Typography>
-                ))}
+            <View style={styles.settingsButtons}>
+                <Button
+                    variant="outline"
+                    label="Notification Settings"
+                    onPress={() => setShowNotificationSettings(true)}
+                    fullWidth
+                    style={styles.settingButton}
+                />
+
+                <Button
+                    variant="outline"
+                    label="Scheduling Settings"
+                    onPress={() => setShowSchedulingSettings(true)}
+                    fullWidth
+                    style={styles.settingButton}
+                />
             </View>
-        );
-    };
+        </ScrollView>
+    );
 
     return (
-        <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <Typography variant="h2" style={styles.headerTitle}>
-                    {isEditing ? 'Edit Loop' : 'Create Loop'}
-                </Typography>
-            </View>
+        <SafeAreaView style={styles.container}>
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={100}
+            >
+                <EntryDetailHeader
+                    entryType={mode === 'create' ? 'New Loop' : mode === 'edit' ? 'Edit Loop' : 'Loop'}
+                    onBackPress={() => navigation.goBack()}
+                />
 
-            {/* Tabs */}
-            <View style={styles.tabContainer}>
-                {[
-                    { key: 'details', label: 'Details' },
-                    { key: 'activities', label: 'Activities' },
-                    { key: 'settings', label: 'Settings' },
-                    { key: 'preview', label: 'Preview' },
-                ].map((tab) => (
-                    <Button
-                        key={tab.key}
-                        variant="ghost"
-                        label={tab.label}
-                        onPress={() => setActiveTab(tab.key as any)}
-                        style={[
-                            styles.tab,
-                            activeTab === tab.key && styles.activeTab,
-                        ]}
-                        textStyle={[
-                            styles.tabText,
-                            activeTab === tab.key && styles.activeTabText,
-                        ]}
+                <EntryMetadataBar
+                    categoryId={categoryId || null}
+                    labels={labels}
+                    onCategoryChange={handleCategoryChange}
+                    onLabelsChange={handleLabelsChange}
+                />
+
+                {/* Step Indicator */}
+                {renderStepIndicator()}
+
+                {/* Dynamic Content Based on Step */}
+                <View style={styles.content}>
+                    {renderStepContent()}
+                </View>
+
+                {/* Navigation */}
+                <View style={styles.navigationButtons}>
+                    {currentStep > 1 && (
+                        <Button
+                            variant="secondary"
+                            label="Previous"
+                            onPress={previousStep}
+                            style={styles.navButton}
+                        />
+                    )}
+
+                    {currentStep < 3 ? (
+                        <Button
+                            variant="primary"
+                            label="Next"
+                            onPress={nextStep}
+                            disabled={!canProceedToNextStep()}
+                            style={styles.navButton}
+                        />
+                    ) : (
+                        <Button
+                            variant="primary"
+                            label={mode === 'edit' ? 'Update Loop' : 'Create Loop'}
+                            onPress={handleSubmit(onSubmit)}
+                            disabled={!canSaveLoop() || isSubmitting}
+                            isLoading={isSubmitting}
+                            style={styles.navButton}
+                        />
+                    )}
+                </View>
+
+                {/* Activity Editor Bottom Sheet */}
+                <BottomSheet
+                    visible={showActivityEditor}
+                    onClose={() => {
+                        setShowActivityEditor(false);
+                        setEditingActivity(null);
+                        setSelectedTemplate(null);
+                    }}
+                >
+                    {editingActivity && selectedTemplate && (
+                        <ActivityInstanceEditor
+                            activityInstance={editingActivity}
+                            template={selectedTemplate}
+                            onUpdate={handleActivitySave}
+                            onDone={() => {
+                                setShowActivityEditor(false);
+                                setEditingActivity(null);
+                                setSelectedTemplate(null);
+                            }}
+                        />
+                    )}
+                </BottomSheet>
+
+                {/* Notification Settings Bottom Sheet */}
+                <BottomSheet
+                    visible={showNotificationSettings}
+                    onClose={() => setShowNotificationSettings(false)}
+                >
+                    <LoopSettingsForm
+                        type="notifications"
+                        settings={notifications}
+                        onSave={(settings) => setNotifications(settings as NotificationSettings)}
+                        onCancel={() => setShowNotificationSettings(false)}
                     />
-                ))}
-            </View>
+                </BottomSheet>
 
-            {/* Validation Errors */}
-            {renderValidationErrors()}
-
-            {/* Tab Content */}
-            {renderTabContent()}
-
-            {/* Action Buttons */}
-            <View style={styles.actionButtons}>
-                <Button
-                    variant="secondary"
-                    label="Cancel"
-                    onPress={handleCancel}
-                    style={styles.actionButton}
-                />
-                <Button
-                    variant="primary"
-                    label={isEditing ? 'Update Loop' : 'Create Loop'}
-                    onPress={handleSave}
-                    loading={isSaving}
-                    style={styles.actionButton}
-                />
-            </View>
-        </View>
+                {/* Scheduling Settings Bottom Sheet */}
+                <BottomSheet
+                    visible={showSchedulingSettings}
+                    onClose={() => setShowSchedulingSettings(false)}
+                >
+                    <LoopSettingsForm
+                        type="scheduling"
+                        settings={scheduling}
+                        onSave={(settings) => setScheduling(settings as ScheduleSettings)}
+                        onCancel={() => setShowSchedulingSettings(false)}
+                    />
+                </BottomSheet>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
-}; 
+} 

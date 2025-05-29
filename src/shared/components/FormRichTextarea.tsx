@@ -14,7 +14,7 @@ import {
     RegisterOptions,
 } from 'react-hook-form';
 import { Typography } from './Typography';
-import FormErrorMessage from './FormErrorMessage';
+import { FormErrorMessage } from './FormErrorMessage';
 import { useTheme } from '../../app/contexts/ThemeContext';
 import {
     RichText,

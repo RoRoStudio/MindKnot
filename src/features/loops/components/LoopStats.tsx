@@ -2,6 +2,7 @@ import React from 'react';
 import { View, ScrollView } from 'react-native';
 import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
 import { Typography, Card, Icon } from '../../../shared/components';
+import { IconName } from '../../../shared/components/Icon';
 import { StyleProps } from '../../../shared/components/shared-props';
 import { Loop, ExecutionHistory } from '../../../shared/types/loop';
 
@@ -163,6 +164,10 @@ export const LoopStats: React.FC<LoopStatsProps> = ({
         trendNeutral: {
             color: theme.colors.textSecondary,
         },
+        progressContainer: {
+            flex: 1,
+            marginLeft: theme.spacing.m,
+        },
     }));
 
     const calculateStats = (): LoopStatsData => {
@@ -183,7 +188,7 @@ export const LoopStats: React.FC<LoopStatsProps> = ({
                     cutoffDate.setFullYear(now.getFullYear() - 1);
                     break;
             }
-            filteredHistory = executionHistory.filter(h => h.startedAt >= cutoffDate);
+            filteredHistory = executionHistory.filter(h => new Date(h.startedAt) >= cutoffDate);
         }
 
         const totalExecutions = filteredHistory.length;
@@ -193,7 +198,7 @@ export const LoopStats: React.FC<LoopStatsProps> = ({
         const completionRate = totalExecutions > 0 ? (completedExecutions / totalExecutions) * 100 : 0;
 
         // Calculate streak
-        const sortedHistory = [...filteredHistory].sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+        const sortedHistory = [...filteredHistory].sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
         let streakDays = 0;
         let currentDate = new Date();
         currentDate.setHours(0, 0, 0, 0);
@@ -213,7 +218,7 @@ export const LoopStats: React.FC<LoopStatsProps> = ({
         // Find favorite time of day
         const hourCounts: Record<number, number> = {};
         filteredHistory.forEach(h => {
-            const hour = h.startedAt.getHours();
+            const hour = new Date(h.startedAt).getHours();
             hourCounts[hour] = (hourCounts[hour] || 0) + 1;
         });
 
@@ -226,7 +231,7 @@ export const LoopStats: React.FC<LoopStatsProps> = ({
 
         // Calculate average activities completed
         const averageActivitiesCompleted = totalExecutions > 0
-            ? filteredHistory.reduce((sum, h) => sum + h.completedActivities, 0) / totalExecutions
+            ? filteredHistory.reduce((sum, h) => sum + h.activitiesCompleted, 0) / totalExecutions
             : 0;
 
         return {
@@ -236,7 +241,7 @@ export const LoopStats: React.FC<LoopStatsProps> = ({
             averageExecutionTime,
             completionRate,
             streakDays,
-            lastExecuted: sortedHistory[0]?.startedAt,
+            lastExecuted: sortedHistory[0] ? new Date(sortedHistory[0].startedAt) : undefined,
             favoriteTimeOfDay,
             averageActivitiesCompleted,
         };
@@ -301,7 +306,7 @@ export const LoopStats: React.FC<LoopStatsProps> = ({
     }
 
     const renderStatCard = (
-        icon: string,
+        icon: IconName,
         value: string | number,
         label: string,
         trend?: { direction: 'up' | 'down' | 'neutral'; value: string }
@@ -389,7 +394,7 @@ export const LoopStats: React.FC<LoopStatsProps> = ({
 
                             <View style={styles.detailRow}>
                                 <Typography style={styles.detailLabel}>Success Rate</Typography>
-                                <View style={{ flex: 1, marginLeft: theme.spacing.m }}>
+                                <View style={styles.progressContainer}>
                                     <Typography style={[styles.detailValue, { textAlign: 'right' }]}>
                                         {Math.round(stats.completionRate)}%
                                     </Typography>

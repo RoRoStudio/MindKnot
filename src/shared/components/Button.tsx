@@ -22,7 +22,7 @@ import { useTheme } from '../../app/contexts/ThemeContext';
 /**
  * Button style variants
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger' | 'outline';
+export type ButtonVariant = 'primary' | 'secondary' | 'text' | 'danger' | 'outline' | 'ghost';
 
 /**
  * Button size variants

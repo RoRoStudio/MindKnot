@@ -1,40 +1,36 @@
 /**
- * Loop Components
- * 
- * Exports all loop-related components for easy importing
+ * Loop Components Index
+ * Centralized exports for all loop-related components
  */
 
-// Core Components
-export { LoopCard } from './LoopCard';
-export { ActivityList } from './ActivityList';
-export { ActivityCard } from './ActivityCard';
+export { ActivityTemplateSelector } from './ActivityTemplateSelector';
+export { ActivityInstanceEditor } from './ActivityInstanceEditor';
+export { LoopPreviewCard } from './LoopPreviewCard';
+export { LoopSettingsForm } from './LoopSettingsForm';
+export { LoopNotificationOverlay } from './LoopNotificationOverlay';
+export { LoopSessionWidget } from './LoopSessionWidget';
 
-// Execution Components
-export { ExecutionTimer } from './ExecutionTimer';
-export { ExecutionProgress } from './ExecutionProgress';
-export { ExecutionControls } from './ExecutionControls';
-export { ExecutionHeader } from './ExecutionHeader';
+// Re-export types for convenience
+export type {
+    ActivityTemplateSelectorProps,
+} from './ActivityTemplateSelector';
 
-// Builder Components
-export { ActivityBuilder } from './ActivityBuilder';
-export { LoopSettings } from './LoopSettings';
-export { LoopPreview } from './LoopPreview';
+export type {
+    ActivityInstanceEditorProps,
+} from './ActivityInstanceEditor';
 
-// Utility Components
-export { LoopFiltersModal } from './LoopFiltersModal';
-export { ExecutionHistoryList } from './ExecutionHistoryList';
-export { LoopStats } from './LoopStats';
+export type {
+    LoopPreviewCardProps,
+} from './LoopPreviewCard';
 
-// Export component prop types
-export type { LoopCardProps } from './LoopCard';
-export type { ActivityListProps } from './ActivityList';
-export type { ActivityCardProps } from './ActivityCard';
-export type { ExecutionTimerProps } from './ExecutionTimer';
-export type { ExecutionProgressProps } from './ExecutionProgress';
-export type { ExecutionControlsProps } from './ExecutionControls';
-export type { ActivityBuilderProps } from './ActivityBuilder';
-export type { LoopSettingsProps } from './LoopSettings';
-export type { LoopPreviewProps } from './LoopPreview';
-export type { LoopFiltersModalProps, LoopFilters } from './LoopFiltersModal';
-export type { ExecutionHistoryListProps } from './ExecutionHistoryList';
-export type { LoopStatsProps, LoopStatsData } from './LoopStats'; 
+export type {
+    LoopSettingsFormProps,
+} from './LoopSettingsForm';
+
+export type {
+    LoopNotificationOverlayProps,
+} from './LoopNotificationOverlay';
+
+export type {
+    LoopSessionWidgetProps,
+} from './LoopSessionWidget'; 

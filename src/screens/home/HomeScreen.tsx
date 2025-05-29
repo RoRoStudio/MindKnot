@@ -18,16 +18,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../shared/types/navigation-types';
+import { RootStackParamList } from '../../shared/types/navigation';
 import { useTheme } from '../../app/contexts/ThemeContext';
 import { Typography, Icon, IconName } from '../../shared/components';
 import { NoteCard, SparkCard, ActionCard, PathCard } from '../../shared/components';
-import { LoopCard } from '../../features/loops/components';
 import { useNotes } from '../../features/notes/hooks/useNotes';
 import { useSparks } from '../../features/sparks/hooks/useSparks';
 import { useActions } from '../../features/actions/hooks/useActions';
 import { usePaths } from '../../features/paths/hooks/usePaths';
-import { useLoopsStore } from '../../features/loops/hooks';
+import { useLoops } from '../../features/loops/hooks/useLoops';
 import { useBottomSheet } from '../../app/contexts/BottomSheetContext';
 import { Note } from '../../shared/types/note';
 import { Spark } from '../../shared/types/spark';
@@ -55,7 +54,7 @@ export default function HomeScreen() {
     const { sparks, loadSparks } = useSparks();
     const { actions, loadActions } = useActions();
     const { paths, loadPaths } = usePaths();
-    const { loops, fetchLoops } = useLoopsStore();
+    const { loops, loadLoops } = useLoops();
     const { showNoteForm, showSparkForm, showActionForm, showPathForm } = useBottomSheet();
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -79,13 +78,13 @@ export default function HomeScreen() {
     useEffect(() => {
         const loadData = async () => {
             try {
-                await Promise.all([loadNotes(), loadSparks(), loadActions(), loadPaths(), fetchLoops()]);
+                await Promise.all([loadNotes(), loadSparks(), loadActions(), loadPaths(), loadLoops()]);
             } catch (err) {
                 console.error('Failed to load data:', err);
             }
         };
         loadData();
-    }, [loadNotes, loadSparks, loadActions, loadPaths, fetchLoops]);
+    }, [loadNotes, loadSparks, loadActions, loadPaths, loadLoops]);
 
     const formatRelativeDate = (dateString: string): string => {
         const date = new Date(dateString);
@@ -112,7 +111,7 @@ export default function HomeScreen() {
                 navigation.navigate('PathScreen', { mode: 'view', id });
                 break;
             case 'loop':
-                navigation.navigate('LoopDetailScreen', { id });
+                navigation.navigate('LoopBuilderScreen', { mode: 'view', id });
                 break;
             default:
                 console.warn(`Unknown entry type: ${type}`);
@@ -165,7 +164,7 @@ export default function HomeScreen() {
             id: l.id,
             type: 'loop',
             title: l.title,
-            date: formatRelativeDate(l.createdAt),
+            date: formatRelativeDate(l.createdAt.toISOString()),
             ...iconMap.loop
         }))
         : [];
@@ -186,7 +185,7 @@ export default function HomeScreen() {
         { id: '3', title: 'Create Action', icon: 'check', color: theme.colors.success, onPress: () => showActionForm() },
         { id: '4', title: 'Start Path', icon: 'compass', color: theme.colors.textSecondary, onPress: () => showPathForm() },
         { id: '5', title: 'Create Loop', icon: 'infinity', color: ENTRY_TYPES[EntryType.LOOP].color, onPress: () => navigation.navigate('LoopBuilderScreen', { mode: 'create' }) },
-        { id: '6', title: 'UI Showcase', icon: 'layout-grid', color: theme.colors.primaryLight, onPress: () => navigation.navigate('ComponentShowcase') },
+        { id: '6', title: 'UI Showcase', icon: 'layout-grid', color: theme.colors.primaryLight, onPress: () => navigation.navigate('ComponentShowcaseScreen') },
         { id: '7', title: 'Path Timeline', icon: 'git-branch', color: theme.colors.secondaryLight, onPress: () => navigation.navigate('TestScreen') },
     ];
 

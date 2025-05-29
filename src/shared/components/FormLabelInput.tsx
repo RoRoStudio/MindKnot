@@ -12,7 +12,7 @@ import { useTheme } from '../../app/contexts/ThemeContext';
 import { Typography } from './Typography';
 import { Icon } from './Icon';
 import { Label } from './Label';
-import FormErrorMessage from './FormErrorMessage';
+import { FormErrorMessage } from './FormErrorMessage';
 
 // Maximum label length for mobile UI
 const MAX_LABEL_LENGTH = 20;

@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { useTheme } from '../../../app/contexts/ThemeContext';
 import { Typography, Icon } from '../../../shared/components';
-import { RootStackParamList } from '../../../shared/types/navigation-types';
+import { RootStackParamList } from '../../../shared/types/navigation';
 import { Saga } from '../../../shared/types/saga';
 import { getSagaById } from '../hooks/useSagaService';
 import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';

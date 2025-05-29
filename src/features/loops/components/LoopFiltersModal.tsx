@@ -12,18 +12,7 @@ import {
     Icon
 } from '../../../shared/components';
 import { StyleProps } from '../../../shared/components/shared-props';
-
-export interface LoopFilters {
-    searchQuery?: string;
-    category?: string;
-    tags?: string[];
-    minDuration?: number;
-    maxDuration?: number;
-    hasActivities?: boolean;
-    isRepeatable?: boolean;
-    sortBy?: 'title' | 'createdAt' | 'duration' | 'lastUsed';
-    sortOrder?: 'asc' | 'desc';
-}
+import { LoopFilters } from '../../../shared/types/loop';
 
 export interface LoopFiltersModalProps extends StyleProps {
     /**
@@ -215,10 +204,11 @@ export const LoopFiltersModal: React.FC<LoopFiltersModalProps> = ({
     ];
 
     const sortByOptions = [
-        { label: 'Title', value: 'title' },
+        { label: 'Name', value: 'name' },
         { label: 'Created Date', value: 'createdAt' },
-        { label: 'Duration', value: 'duration' },
-        { label: 'Last Used', value: 'lastUsed' },
+        { label: 'Last Executed', value: 'lastExecutedAt' },
+        { label: 'Execution Count', value: 'executionCount' },
+        { label: 'Difficulty', value: 'difficulty' },
     ];
 
     const sortOrderOptions = [
@@ -241,13 +231,12 @@ export const LoopFiltersModal: React.FC<LoopFiltersModalProps> = ({
 
     const getActiveFilterCount = (): number => {
         let count = 0;
-        if (filters.searchQuery) count++;
+        if (filters.query) count++;
         if (filters.category) count++;
         if (filters.tags && filters.tags.length > 0) count++;
-        if (filters.minDuration !== undefined) count++;
-        if (filters.maxDuration !== undefined) count++;
-        if (filters.hasActivities !== undefined) count++;
-        if (filters.isRepeatable !== undefined) count++;
+        if (filters.durationRange) count++;
+        if (filters.isTemplate !== undefined) count++;
+        if (filters.isFavorite !== undefined) count++;
         return count;
     };
 
@@ -255,7 +244,7 @@ export const LoopFiltersModal: React.FC<LoopFiltersModalProps> = ({
         const filtersToApply: LoopFilters = {
             ...data,
             tags: selectedTags.length > 0 ? selectedTags : undefined,
-            searchQuery: data.searchQuery?.trim() || undefined,
+            query: data.query?.trim() || undefined,
             category: data.category || undefined,
         };
 
@@ -265,15 +254,14 @@ export const LoopFiltersModal: React.FC<LoopFiltersModalProps> = ({
 
     const handleReset = () => {
         reset({
-            searchQuery: '',
+            query: '',
             category: '',
             tags: [],
-            minDuration: undefined,
-            maxDuration: undefined,
-            hasActivities: undefined,
-            isRepeatable: undefined,
+            durationRange: undefined,
+            isTemplate: undefined,
+            isFavorite: undefined,
             sortBy: 'createdAt',
-            sortOrder: 'desc',
+            sortDirection: 'desc',
         });
         setSelectedTags([]);
         onResetFilters();
@@ -321,7 +309,7 @@ export const LoopFiltersModal: React.FC<LoopFiltersModalProps> = ({
                             </Typography>
 
                             <FormInput
-                                name="searchQuery"
+                                name="query"
                                 control={control}
                                 label="Search Query"
                                 placeholder="Search loops by title or description"
@@ -345,7 +333,7 @@ export const LoopFiltersModal: React.FC<LoopFiltersModalProps> = ({
 
                             {availableTags.length > 0 && (
                                 <>
-                                    <Typography variant="body2" style={{ marginTop: theme.spacing.m, marginBottom: theme.spacing.s }}>
+                                    <Typography variant="body2" style={styles.sectionTitle}>
                                         Tags
                                     </Typography>
                                     <View style={styles.tagContainer}>
@@ -380,7 +368,7 @@ export const LoopFiltersModal: React.FC<LoopFiltersModalProps> = ({
                             <View style={styles.durationContainer}>
                                 <View style={styles.durationInput}>
                                     <FormInput
-                                        name="minDuration"
+                                        name="durationRange.min"
                                         control={control}
                                         label="Min Duration (seconds)"
                                         placeholder="0"
@@ -392,7 +380,7 @@ export const LoopFiltersModal: React.FC<LoopFiltersModalProps> = ({
 
                                 <View style={styles.durationInput}>
                                     <FormInput
-                                        name="maxDuration"
+                                        name="durationRange.max"
                                         control={control}
                                         label="Max Duration (seconds)"
                                         placeholder="3600"
@@ -409,17 +397,17 @@ export const LoopFiltersModal: React.FC<LoopFiltersModalProps> = ({
                             </Typography>
 
                             <FormSwitch
-                                name="hasActivities"
+                                name="isTemplate"
                                 control={control}
-                                label="Has Activities"
-                                helperText="Only show loops with activities"
+                                label="Templates Only"
+                                helperText="Only show loop templates"
                             />
 
                             <FormSwitch
-                                name="isRepeatable"
+                                name="isFavorite"
                                 control={control}
-                                label="Repeatable"
-                                helperText="Only show repeatable loops"
+                                label="Favorites Only"
+                                helperText="Only show favorite loops"
                             />
                         </Card>
 
@@ -441,7 +429,7 @@ export const LoopFiltersModal: React.FC<LoopFiltersModalProps> = ({
 
                                 <View style={styles.formColumn}>
                                     <FormSelect
-                                        name="sortOrder"
+                                        name="sortDirection"
                                         control={control}
                                         label="Order"
                                         options={sortOrderOptions}

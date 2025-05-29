@@ -2,14 +2,15 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useThemedStyles } from '../hooks/useThemedStyles';
-import { Typography, Icon } from './';
+import { Typography } from './Typography';
+import { Icon } from './Icon';
 
 interface FormErrorMessageProps {
     message?: string;
     visible?: boolean;
 }
 
-export default function FormErrorMessage({ message, visible = true }: FormErrorMessageProps) {
+export function FormErrorMessage({ message, visible = true }: FormErrorMessageProps) {
     const styles = useThemedStyles((theme) => ({
         container: {
             flexDirection: 'row',

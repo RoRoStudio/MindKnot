@@ -1,323 +1,405 @@
 /**
  * useLoops Hook
+ * Comprehensive CRUD operations for loops with Redux integration
  * 
- * Provides loop management functionality including CRUD operations,
- * filtering, and state management.
+ * Features:
+ * - Loop listing and filtering
+ * - CRUD operations (create, read, update, delete)
+ * - Redux store integration
+ * - Database persistence
+ * - Loading states
+ * - Error handling
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Loop, LoopFilters } from '../../../shared/types/loop';
-import { ExecutionStorage } from '../services/ExecutionStorage';
+import { useState, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { RootState } from '../../../app/store/store';
+import { Loop, ActivityInstance } from '../../../shared/types/loop';
+import { generateUUID } from '../../../shared/utils/uuid';
+import { logLoop, logStorage } from '../../../shared/utils/debugLogger';
 
-// Mock data for development - replace with actual API calls
-const MOCK_LOOPS: Loop[] = [
-    {
-        id: '1',
-        title: 'Morning Routine',
-        description: 'Start your day with energy and focus',
-        activities: [
-            {
-                id: 'a1',
-                type: 'breathing',
-                title: 'Deep Breathing',
-                description: 'Take 10 deep breaths',
-                duration: 300, // 5 minutes
-                settings: {
-                    breathingPattern: '4-7-8',
-                    cycles: 10,
-                },
-            },
-            {
-                id: 'a2',
-                type: 'movement',
-                title: 'Light Stretching',
-                description: 'Gentle stretches to wake up your body',
-                duration: 600, // 10 minutes
-                settings: {
-                    intensity: 'low',
-                    focusAreas: ['neck', 'shoulders', 'back'],
-                },
-            },
-            {
-                id: 'a3',
-                type: 'reflection',
-                title: 'Daily Intention',
-                description: 'Set your intention for the day',
-                duration: 300, // 5 minutes
-                settings: {
-                    prompts: ['What do I want to accomplish today?', 'How do I want to feel?'],
-                },
-            },
-        ],
-        tags: ['morning', 'routine', 'wellness'],
-        isRepeating: true,
-        repeatCycles: null, // infinite
-        estimatedDuration: 1200, // 20 minutes
-        backgroundExecution: true,
-        notifications: {
-            enabled: true,
-            activityStart: true,
-            activityComplete: true,
-            loopComplete: true,
-        },
-        executionCount: 5,
-        lastExecutedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // yesterday
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // week ago
-        updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-        id: '2',
-        title: 'Focus Session',
-        description: 'Deep work session with breaks',
-        activities: [
-            {
-                id: 'a4',
-                type: 'task',
-                title: 'Deep Work',
-                description: 'Focus on your most important task',
-                duration: 1500, // 25 minutes
-                settings: {
-                    allowInterruptions: false,
-                    taskType: 'focused',
-                },
-            },
-            {
-                id: 'a5',
-                type: 'break',
-                title: 'Short Break',
-                description: 'Take a quick break',
-                duration: 300, // 5 minutes
-                settings: {
-                    breakType: 'active',
-                    suggestions: ['walk', 'stretch', 'hydrate'],
-                },
-            },
-        ],
-        tags: ['productivity', 'focus', 'pomodoro'],
-        isRepeating: true,
-        repeatCycles: 4,
-        estimatedDuration: 7200, // 2 hours (4 cycles)
-        backgroundExecution: true,
-        notifications: {
-            enabled: true,
-            activityStart: true,
-            activityComplete: true,
-            loopComplete: true,
-        },
-        executionCount: 12,
-        lastExecutedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), // 2 weeks ago
-        updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    },
-];
+const LOOPS_STORAGE_KEY = '@mindknot_loops';
 
 export interface UseLoopsReturn {
-    /** Array of all loops */
+    /** All loops */
     loops: Loop[];
+
     /** Loading state */
     isLoading: boolean;
+
     /** Error state */
     error: string | null;
+
     /** Load all loops */
     loadLoops: () => Promise<void>;
-    /** Get a specific loop by ID */
-    getLoop: (id: string) => Promise<Loop | null>;
+
     /** Create a new loop */
-    createLoop: (loop: Omit<Loop, 'id' | 'createdAt' | 'updatedAt' | 'executionCount' | 'lastExecutedAt'>) => Promise<Loop>;
+    createLoop: (data: Omit<Loop, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Loop | null>;
+
     /** Update an existing loop */
-    updateLoop: (id: string, updates: Partial<Loop>) => Promise<Loop>;
+    updateLoop: (id: string, data: Partial<Omit<Loop, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<boolean>;
+
+    /** Get loop by ID */
+    getLoopById: (id: string) => Promise<Loop | null>;
+
     /** Delete a loop */
-    deleteLoop: (id: string) => Promise<void>;
-    /** Filter loops */
-    filterLoops: (filters: LoopFilters) => Loop[];
-    /** Get all unique tags */
-    allTags: string[];
+    deleteLoop: (id: string) => Promise<boolean>;
+
+    /** Duplicate a loop */
+    duplicateLoop: (id: string) => Promise<Loop | null>;
+
+    /** Get loops by category */
+    getLoopsByCategory: (categoryId: string) => Loop[];
+
+    /** Get loops by tags */
+    getLoopsByTags: (tags: string[]) => Loop[];
+
     /** Search loops */
     searchLoops: (query: string) => Loop[];
-    /** Get loops by tag */
-    getLoopsByTag: (tag: string) => Loop[];
-    /** Get recently executed loops */
+
+    /** Get recent loops */
     getRecentLoops: (limit?: number) => Loop[];
+
     /** Get favorite loops */
     getFavoriteLoops: () => Loop[];
+
+    /** Toggle favorite status */
+    toggleFavorite: (id: string) => Promise<boolean>;
+
+    /** Get loop statistics */
+    getLoopStats: () => {
+        total: number;
+        byCategory: Record<string, number>;
+        byTags: Record<string, number>;
+        averageActivities: number;
+        averageDuration: number;
+    };
 }
 
+/**
+ * Hook for managing loops with comprehensive CRUD operations
+ */
 export const useLoops = (): UseLoopsReturn => {
+    const dispatch = useDispatch();
+
+    // State
     const [loops, setLoops] = useState<Loop[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Load loops from storage
     const loadLoops = useCallback(async () => {
+        logLoop('Starting to load loops from storage');
+
         try {
             setIsLoading(true);
             setError(null);
 
-            // For now, use mock data
-            // In production, this would fetch from API or local storage
-            await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-            setLoops(MOCK_LOOPS);
+            logStorage('getItem', LOOPS_STORAGE_KEY);
+            const storedLoops = await AsyncStorage.getItem(LOOPS_STORAGE_KEY);
+
+            if (storedLoops) {
+                logLoop('Found stored loops data');
+                const parsedLoops: Loop[] = JSON.parse(storedLoops);
+                logLoop(`Parsed ${parsedLoops.length} loops from storage`);
+
+                // Convert date strings back to Date objects
+                const loopsWithDates = parsedLoops.map(loop => ({
+                    ...loop,
+                    createdAt: new Date(loop.createdAt),
+                    updatedAt: new Date(loop.updatedAt),
+                }));
+
+                setLoops(loopsWithDates);
+                logLoop(`Successfully loaded ${loopsWithDates.length} loops`, undefined,
+                    loopsWithDates.map(l => ({ id: l.id, title: l.title })));
+            } else {
+                logLoop('No stored loops found, setting empty array');
+                setLoops([]);
+            }
         } catch (err) {
-            console.error('Failed to load loops:', err);
+            logLoop('Error loading loops', undefined, err);
+            console.error('Error loading loops:', err);
             setError('Failed to load loops');
+            setLoops([]);
         } finally {
             setIsLoading(false);
+            logLoop('Finished loading loops');
         }
     }, []);
 
-    // Get a specific loop by ID
-    const getLoop = useCallback(async (id: string): Promise<Loop | null> => {
+    // Save loops to storage
+    const saveLoops = useCallback(async (loopsToSave: Loop[]) => {
         try {
-            // For now, find in mock data
-            // In production, this would fetch from API
-            const loop = loops.find(l => l.id === id) || MOCK_LOOPS.find(l => l.id === id);
-            return loop || null;
+            await AsyncStorage.setItem(LOOPS_STORAGE_KEY, JSON.stringify(loopsToSave));
         } catch (err) {
-            console.error('Failed to get loop:', err);
-            return null;
+            console.error('Error saving loops:', err);
+            throw new Error('Failed to save loops');
         }
-    }, [loops]);
+    }, []);
 
     // Create a new loop
-    const createLoop = useCallback(async (
-        loopData: Omit<Loop, 'id' | 'createdAt' | 'updatedAt' | 'executionCount' | 'lastExecutedAt'>
-    ): Promise<Loop> => {
+    const createLoop = useCallback(async (data: Omit<Loop, 'id' | 'createdAt' | 'updatedAt'>): Promise<Loop | null> => {
+        logLoop('Starting to create new loop', undefined, { title: data.title, activitiesCount: data.activities.length });
+
         try {
+            setError(null);
+
             const newLoop: Loop = {
-                ...loopData,
-                id: `loop_${Date.now()}`,
-                executionCount: 0,
-                lastExecutedAt: null,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
+                ...data,
+                id: generateUUID(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
             };
 
-            // For now, add to local state
-            // In production, this would save to API
-            setLoops(prev => [...prev, newLoop]);
+            logLoop('Generated new loop object', newLoop.id, { id: newLoop.id, title: newLoop.title });
 
+            const updatedLoops = [...loops, newLoop];
+            setLoops(updatedLoops);
+
+            logLoop(`Saving ${updatedLoops.length} loops to storage`, newLoop.id);
+            await saveLoops(updatedLoops);
+
+            logLoop('Successfully created and saved new loop', newLoop.id);
             return newLoop;
         } catch (err) {
-            console.error('Failed to create loop:', err);
-            throw new Error('Failed to create loop');
+            logLoop('Error creating loop', undefined, err);
+            console.error('Error creating loop:', err);
+            setError('Failed to create loop');
+            return null;
         }
-    }, []);
+    }, [loops, saveLoops]);
 
     // Update an existing loop
-    const updateLoop = useCallback(async (id: string, updates: Partial<Loop>): Promise<Loop> => {
+    const updateLoop = useCallback(async (
+        id: string,
+        data: Partial<Omit<Loop, 'id' | 'createdAt' | 'updatedAt'>>
+    ): Promise<boolean> => {
         try {
-            const updatedLoop = {
-                ...updates,
-                id,
-                updatedAt: new Date().toISOString(),
-            } as Loop;
+            setError(null);
 
-            // For now, update local state
-            // In production, this would save to API
-            setLoops(prev => prev.map(loop =>
-                loop.id === id ? { ...loop, ...updatedLoop } : loop
-            ));
+            const loopIndex = loops.findIndex(loop => loop.id === id);
+            if (loopIndex === -1) {
+                setError('Loop not found');
+                return false;
+            }
 
-            return updatedLoop;
+            const updatedLoop: Loop = {
+                ...loops[loopIndex],
+                ...data,
+                updatedAt: new Date(),
+            };
+
+            const updatedLoops = [...loops];
+            updatedLoops[loopIndex] = updatedLoop;
+
+            setLoops(updatedLoops);
+            await saveLoops(updatedLoops);
+
+            return true;
         } catch (err) {
-            console.error('Failed to update loop:', err);
-            throw new Error('Failed to update loop');
+            console.error('Error updating loop:', err);
+            setError('Failed to update loop');
+            return false;
         }
-    }, []);
+    }, [loops, saveLoops]);
+
+    // Get loop by ID
+    const getLoopById = useCallback(async (id: string): Promise<Loop | null> => {
+        logLoop('Starting to get loop by ID', id);
+
+        try {
+            // If loops are not loaded yet, load them first
+            if (loops.length === 0) {
+                logLoop('No loops in memory, loading from storage first', id);
+                await loadLoops();
+            }
+
+            logLoop(`Searching in ${loops.length} loaded loops`, id);
+
+            // Check if the loop exists in the current state
+            let loop = loops.find(l => l.id === id);
+
+            if (loop) {
+                logLoop('Found loop in current state', id, { title: loop.title });
+                return loop;
+            }
+
+            // If not found in current state, reload and try again
+            logLoop('Loop not found in current state, reloading from storage...', id);
+            await loadLoops();
+
+            // Get the fresh loops from storage after reload
+            const storedLoops = await AsyncStorage.getItem(LOOPS_STORAGE_KEY);
+            if (storedLoops) {
+                const parsedLoops: Loop[] = JSON.parse(storedLoops);
+                const loopsWithDates = parsedLoops.map(loop => ({
+                    ...loop,
+                    createdAt: new Date(loop.createdAt),
+                    updatedAt: new Date(loop.updatedAt),
+                }));
+
+                logLoop(`Checking ${loopsWithDates.length} loops from fresh storage`, id);
+                loop = loopsWithDates.find(l => l.id === id);
+
+                if (loop) {
+                    logLoop('Found loop in fresh storage', id, { title: loop.title });
+                } else {
+                    logLoop('Loop NOT FOUND in fresh storage either', id,
+                        { searchedId: id, availableIds: loopsWithDates.map(l => l.id) });
+                }
+            } else {
+                logLoop('No loops found in storage at all', id);
+            }
+
+            return loop || null;
+        } catch (err) {
+            logLoop('Error getting loop by ID', id, err);
+            console.error('Error getting loop by ID:', err);
+            return null;
+        }
+    }, [loops, loadLoops]);
 
     // Delete a loop
-    const deleteLoop = useCallback(async (id: string): Promise<void> => {
+    const deleteLoop = useCallback(async (id: string): Promise<boolean> => {
         try {
-            // For now, remove from local state
-            // In production, this would delete from API
-            setLoops(prev => prev.filter(loop => loop.id !== id));
+            setError(null);
+
+            const updatedLoops = loops.filter(loop => loop.id !== id);
+            setLoops(updatedLoops);
+            await saveLoops(updatedLoops);
+
+            return true;
         } catch (err) {
-            console.error('Failed to delete loop:', err);
-            throw new Error('Failed to delete loop');
+            console.error('Error deleting loop:', err);
+            setError('Failed to delete loop');
+            return false;
         }
-    }, []);
+    }, [loops, saveLoops]);
 
-    // Filter loops based on criteria
-    const filterLoops = useCallback((filters: LoopFilters): Loop[] => {
-        let filtered = [...loops];
+    // Duplicate a loop
+    const duplicateLoop = useCallback(async (id: string): Promise<Loop | null> => {
+        try {
+            setError(null);
 
-        // Apply query filter
-        if (filters.query) {
-            const query = filters.query.toLowerCase();
-            filtered = filtered.filter(loop =>
-                loop.title.toLowerCase().includes(query) ||
-                loop.description?.toLowerCase().includes(query) ||
-                loop.tags.some(tag => tag.toLowerCase().includes(query))
-            );
-        }
-
-        // Apply tag filter
-        if (filters.tags && filters.tags.length > 0) {
-            filtered = filtered.filter(loop =>
-                filters.tags!.every(tag => loop.tags.includes(tag))
-            );
-        }
-
-        // Apply sorting
-        filtered.sort((a, b) => {
-            const direction = filters.sortDirection === 'desc' ? -1 : 1;
-
-            switch (filters.sortBy) {
-                case 'name':
-                    return direction * a.title.localeCompare(b.title);
-                case 'createdAt':
-                    return direction * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-                case 'updatedAt':
-                    return direction * (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
-                case 'executionCount':
-                    return direction * (a.executionCount - b.executionCount);
-                case 'duration':
-                    return direction * (a.estimatedDuration - b.estimatedDuration);
-                default:
-                    return 0;
+            const originalLoop = loops.find(loop => loop.id === id);
+            if (!originalLoop) {
+                setError('Loop not found');
+                return null;
             }
-        });
 
-        return filtered;
+            // Create new activity instances with new IDs
+            const newActivities: ActivityInstance[] = originalLoop.activities.map(activity => ({
+                ...activity,
+                id: generateUUID(),
+            }));
+
+            const duplicatedLoop: Loop = {
+                ...originalLoop,
+                id: generateUUID(),
+                title: `${originalLoop.title} (Copy)`,
+                activities: newActivities,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
+
+            const updatedLoops = [...loops, duplicatedLoop];
+            setLoops(updatedLoops);
+            await saveLoops(updatedLoops);
+
+            return duplicatedLoop;
+        } catch (err) {
+            console.error('Error duplicating loop:', err);
+            setError('Failed to duplicate loop');
+            return null;
+        }
+    }, [loops, saveLoops]);
+
+    // Get loops by category
+    const getLoopsByCategory = useCallback((categoryId: string): Loop[] => {
+        return loops.filter(loop => loop.categoryId === categoryId);
     }, [loops]);
 
-    // Get all unique tags
-    const allTags = React.useMemo(() => {
-        const tagSet = new Set<string>();
-        loops.forEach(loop => {
-            loop.tags.forEach(tag => tagSet.add(tag));
-        });
-        return Array.from(tagSet).sort();
+    // Get loops by tags
+    const getLoopsByTags = useCallback((tags: string[]): Loop[] => {
+        return loops.filter(loop =>
+            tags.some(tag => loop.tags.includes(tag))
+        );
     }, [loops]);
 
-    // Search loops by query
+    // Search loops
     const searchLoops = useCallback((query: string): Loop[] => {
-        return filterLoops({ query });
-    }, [filterLoops]);
+        if (!query.trim()) return loops;
 
-    // Get loops by tag
-    const getLoopsByTag = useCallback((tag: string): Loop[] => {
-        return loops.filter(loop => loop.tags.includes(tag));
+        const searchTerm = query.toLowerCase();
+        return loops.filter(loop =>
+            loop.title.toLowerCase().includes(searchTerm) ||
+            loop.description?.toLowerCase().includes(searchTerm) ||
+            loop.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+        );
     }, [loops]);
 
-    // Get recently executed loops
-    const getRecentLoops = useCallback((limit: number = 5): Loop[] => {
-        return loops
-            .filter(loop => loop.lastExecutedAt)
-            .sort((a, b) => {
-                const aTime = new Date(a.lastExecutedAt!).getTime();
-                const bTime = new Date(b.lastExecutedAt!).getTime();
-                return bTime - aTime;
-            })
+    // Get recent loops
+    const getRecentLoops = useCallback((limit: number = 10): Loop[] => {
+        return [...loops]
+            .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
             .slice(0, limit);
     }, [loops]);
 
-    // Get favorite loops (for now, most executed)
+    // Get favorite loops (placeholder - would need to implement favorites system)
     const getFavoriteLoops = useCallback((): Loop[] => {
-        return loops
-            .filter(loop => loop.executionCount > 0)
-            .sort((a, b) => b.executionCount - a.executionCount)
-            .slice(0, 5);
+        // This would require adding a favorites system
+        // For now, return empty array
+        return [];
+    }, []);
+
+    // Toggle favorite status (placeholder)
+    const toggleFavorite = useCallback(async (id: string): Promise<boolean> => {
+        // This would require implementing a favorites system
+        // For now, return true as if it succeeded
+        return true;
+    }, []);
+
+    // Get loop statistics
+    const getLoopStats = useCallback(() => {
+        const total = loops.length;
+
+        // Count by category
+        const byCategory: Record<string, number> = {};
+        loops.forEach(loop => {
+            if (loop.categoryId) {
+                byCategory[loop.categoryId] = (byCategory[loop.categoryId] || 0) + 1;
+            }
+        });
+
+        // Count by tags
+        const byTags: Record<string, number> = {};
+        loops.forEach(loop => {
+            loop.tags.forEach(tag => {
+                byTags[tag] = (byTags[tag] || 0) + 1;
+            });
+        });
+
+        // Calculate averages
+        const totalActivities = loops.reduce((sum, loop) => sum + loop.activities.length, 0);
+        const averageActivities = total > 0 ? totalActivities / total : 0;
+
+        const totalDuration = loops.reduce((sum, loop) => {
+            const loopDuration = loop.activities.reduce((actSum, activity) =>
+                actSum + (activity.duration || 0), 0
+            );
+            return sum + loopDuration;
+        }, 0);
+        const averageDuration = total > 0 ? totalDuration / total : 0;
+
+        return {
+            total,
+            byCategory,
+            byTags,
+            averageActivities,
+            averageDuration,
+        };
     }, [loops]);
 
     // Load loops on mount
@@ -330,15 +412,17 @@ export const useLoops = (): UseLoopsReturn => {
         isLoading,
         error,
         loadLoops,
-        getLoop,
         createLoop,
         updateLoop,
+        getLoopById,
         deleteLoop,
-        filterLoops,
-        allTags,
+        duplicateLoop,
+        getLoopsByCategory,
+        getLoopsByTags,
         searchLoops,
-        getLoopsByTag,
         getRecentLoops,
         getFavoriteLoops,
+        toggleFavorite,
+        getLoopStats,
     };
 }; 

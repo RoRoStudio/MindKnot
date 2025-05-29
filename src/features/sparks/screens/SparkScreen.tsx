@@ -18,7 +18,7 @@ import { Typography, Icon } from '../../../shared/components';
 import { EntryDetailHeader } from '../../../shared/components';
 import { Form, FormInput, FormRichTextarea, FormTagInput, FormCategorySelector } from '../../../shared/components';
 import { createSpark, updateSpark, getSparkById } from '../hooks/useSparkService';
-import { RootStackParamList } from '../../../shared/types/navigation-types';
+import { RootStackParamList } from '../../../shared/types/navigation';
 import { useSparks } from '../hooks/useSparks';
 
 type SparkScreenMode = 'create' | 'edit' | 'view';

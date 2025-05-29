@@ -34,13 +34,12 @@ export type RootStackParamList = {
     };
     LoopListScreen: undefined;
     LoopDetailScreen: {
-        id: string
+        loopId: string
     };
     LoopBuilderScreen: {
-        mode: 'create' | 'edit',
-        id?: string
+        loopId?: string
     };
     LoopExecutionScreen: {
-        id: string
+        loopId: string
     };
 };

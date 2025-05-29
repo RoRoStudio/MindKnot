@@ -331,7 +331,7 @@ export const EntryCard: React.FC<EntryCardProps> = ({
         if (onPress) {
             onPress();
         } else if (navigationScreen) {
-            navigation.navigate(navigationScreen, {
+            (navigation as any).navigate(navigationScreen, {
                 mode: 'view',
                 id: id,
                 ...navigationParams

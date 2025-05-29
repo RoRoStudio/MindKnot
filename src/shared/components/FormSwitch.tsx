@@ -9,7 +9,7 @@ import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-h
 import { useThemedStyles } from '../hooks/useThemedStyles';
 import { Typography } from './Typography';
 import { useTheme } from '../../app/contexts/ThemeContext';
-import FormErrorMessage from './FormErrorMessage';
+import { FormErrorMessage } from './FormErrorMessage';
 
 interface FormSwitchProps<T extends FieldValues> {
     name: Path<T>;
