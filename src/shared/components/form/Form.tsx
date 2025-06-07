@@ -2,7 +2,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useForm, FormProvider, UseFormProps, UseFormReturn, FieldValues } from 'react-hook-form';
-import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 interface FormProps<TFieldValues extends FieldValues = FieldValues> {
     defaultValues?: UseFormProps<TFieldValues>['defaultValues'];

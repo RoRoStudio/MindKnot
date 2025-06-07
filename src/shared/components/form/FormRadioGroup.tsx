@@ -2,10 +2,10 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
-import { useThemedStyles } from '../hooks/useThemedStyles';
-import { Typography } from './Typography';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { Typography } from '../Typography';
 import { FormErrorMessage } from './FormErrorMessage';
-import { useTheme } from '../../app/contexts/ThemeContext';
+import { useTheme } from '../../../app/contexts/ThemeContext';
 
 interface Option {
     label: string;

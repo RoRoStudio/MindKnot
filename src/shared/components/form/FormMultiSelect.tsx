@@ -14,13 +14,13 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, FlatList } from 'react-native';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
-import { useThemedStyles } from '../hooks/useThemedStyles';
-import { logForm } from '../utils/debugLogger';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { logForm } from '../../utils/debugLogger';
 import {
     Typography,
     Card,
     Icon,
-} from './index';
+} from '../index';
 
 export interface MultiSelectOption {
     /** Unique identifier for the option */

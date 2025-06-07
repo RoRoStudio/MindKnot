@@ -6,9 +6,9 @@ import {
     StyleSheet,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path, RegisterOptions } from 'react-hook-form';
-import { useThemedStyles } from '../hooks/useThemedStyles';
-import { Typography } from './Typography';
-import { useTheme } from '../../app/contexts/ThemeContext';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { Typography } from '../Typography';
+import { useTheme } from '../../../app/contexts/ThemeContext';
 import { FormErrorMessage } from './FormErrorMessage';
 
 interface FormSwitchProps<T extends FieldValues> {

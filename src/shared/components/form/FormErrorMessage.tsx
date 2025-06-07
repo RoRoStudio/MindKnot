@@ -1,9 +1,9 @@
 // src/components/form/FormErrorMessage.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useThemedStyles } from '../hooks/useThemedStyles';
-import { Typography } from './Typography';
-import { Icon } from './Icon';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { Typography } from '../Typography';
+import { Icon } from '../Icon';
 
 interface FormErrorMessageProps {
     message?: string;

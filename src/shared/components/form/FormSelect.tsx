@@ -14,11 +14,11 @@ import {
     Path,
     RegisterOptions,
 } from 'react-hook-form';
-import { useThemedStyles } from '../hooks/useThemedStyles';
-import { Typography } from './Typography';
-import { Icon, IconName } from './Icon';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { Typography } from '../Typography';
+import { Icon, IconName } from '../Icon';
 import { FormErrorMessage } from './FormErrorMessage';
-import { useTheme } from '../../app/contexts/ThemeContext';
+import { useTheme } from '../../../app/contexts/ThemeContext';
 
 interface Option {
     label: string;

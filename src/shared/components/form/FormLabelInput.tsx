@@ -7,11 +7,11 @@ import {
     Platform,
 } from 'react-native';
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
-import { useThemedStyles } from '../hooks/useThemedStyles';
-import { useTheme } from '../../app/contexts/ThemeContext';
-import { Typography } from './Typography';
-import { Icon } from './Icon';
-import { Label } from './Label';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { useTheme } from '../../../app/contexts/ThemeContext';
+import { Typography } from '../Typography';
+import { Icon } from '../Icon';
+import { Label } from '../Label';
 import { FormErrorMessage } from './FormErrorMessage';
 
 // Maximum label length for mobile UI

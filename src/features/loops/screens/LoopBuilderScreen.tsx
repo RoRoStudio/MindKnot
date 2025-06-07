@@ -1,48 +1,32 @@
 /**
- * LoopBuilderScreen - Simple 3-Step Loop Builder
- * Following PathScreen.tsx patterns exactly with EntryDetailHeader and EntryMetadataBar
- * 
- * Step 1: Basic Info (Simple Form)
- * Step 2: Template Selection + Activity Customization  
- * Step 3: Settings & Finalize (Enhanced)
+ * LoopBuilderScreen - Beautiful multi-step loop builder
+ * Features modern design with proper theme adherence and inline components
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     ScrollView,
+    TouchableOpacity,
+    Alert,
+    TextInput,
+    FlatList,
     KeyboardAvoidingView,
     Platform,
-    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useForm } from 'react-hook-form';
 import { useTheme } from '../../../app/contexts/ThemeContext';
-import {
-    Typography,
-    Button,
-    FormInput,
-    FormTextarea,
-    FormSwitch,
-    BottomSheet,
-    EntryDetailHeader,
-    EntryMetadataBar,
-    EntryTitleInput,
-} from '../../../shared/components';
+import { Typography, Icon, Button } from '../../../shared/components';
 import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
-import { ActivityTemplateSelector } from '../components/ActivityTemplateSelector';
-import { ActivityInstanceEditor } from '../components/ActivityInstanceEditor';
-import { LoopSettingsForm } from '../components/LoopSettingsForm';
-import { LoopPreviewCard } from '../components/LoopPreviewCard';
 import { useActivityTemplates } from '../hooks/useActivityTemplates';
 import { useLoops } from '../hooks/useLoops';
 import { RootStackParamList } from '../../../shared/types/navigation';
-import { Loop, ActivityInstance, ActivityTemplate, NotificationSettings, ScheduleSettings } from '../../../shared/types/loop';
+import { Loop, ActivityInstance, ActivityTemplate, NotificationSettings } from '../../../shared/types/loop';
 import { generateUUID } from '../../../shared/utils/uuid';
 
-type LoopBuilderMode = 'create' | 'edit' | 'view';
+type LoopBuilderMode = 'create' | 'edit';
 
 type LoopBuilderRouteProp = RouteProp<
     {
@@ -55,443 +39,855 @@ type LoopBuilderRouteProp = RouteProp<
 >;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type BuilderStep = 1 | 2 | 3;
 
-interface LoopFormValues {
+interface LoopFormData {
     title: string;
     description: string;
     tags: string[];
-    categoryId: string | undefined;
+    categoryId?: string;
+    activities: ActivityInstance[];
     backgroundExecution: boolean;
+    notifications: NotificationSettings;
 }
-
-type BuilderStep = 1 | 2 | 3;
 
 export default function LoopBuilderScreen() {
     const route = useRoute<LoopBuilderRouteProp>();
     const navigation = useNavigation<NavigationProp>();
     const { theme } = useTheme();
-    const { createLoop, updateLoop, getLoopById, loadLoops } = useLoops();
-    const { templates, categories, getTemplatesByCategory } = useActivityTemplates();
+    const { createLoop, updateLoop, getLoopById } = useLoops();
+    const { templates } = useActivityTemplates();
 
     // State management
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [mode, setMode] = useState<LoopBuilderMode>('create');
-    const [loopId, setLoopId] = useState<string | undefined>(undefined);
     const [currentStep, setCurrentStep] = useState<BuilderStep>(1);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
-    // Activity management
-    const [activities, setActivities] = useState<ActivityInstance[]>([]);
-    const [selectedTemplate, setSelectedTemplate] = useState<ActivityTemplate | null>(null);
+    // Form data
+    const [formData, setFormData] = useState<LoopFormData>({
+        title: '',
+        description: '',
+        tags: [],
+        categoryId: undefined,
+        activities: [],
+        backgroundExecution: true,
+        notifications: {
+            enabled: true,
+            activityReminders: true,
+            sessionProgress: true,
+            completionCelebration: true,
+            soundEnabled: true,
+            vibrationEnabled: true,
+            persistentOverlay: false,
+        },
+    });
+
+    // Activity builder state
+    const [selectedTemplates, setSelectedTemplates] = useState<ActivityTemplate[]>([]);
     const [editingActivity, setEditingActivity] = useState<ActivityInstance | null>(null);
     const [showActivityEditor, setShowActivityEditor] = useState(false);
-
-    // Settings
-    const [backgroundExecution, setBackgroundExecution] = useState(true);
-    const [notifications, setNotifications] = useState<NotificationSettings>({
-        enabled: true,
-        activityReminders: true,
-        sessionProgress: true,
-        completionCelebration: true,
-        soundEnabled: true,
-        vibrationEnabled: true,
-        persistentOverlay: true,
-    });
-    const [scheduling, setScheduling] = useState<ScheduleSettings | undefined>(undefined);
-
-    // Bottom sheets
-    const [showNotificationSettings, setShowNotificationSettings] = useState(false);
-    const [showSchedulingSettings, setShowSchedulingSettings] = useState(false);
-
-    // Form setup
-    const { control, handleSubmit, reset, getValues, setValue, watch } = useForm<LoopFormValues>({
-        defaultValues: {
-            title: '',
-            description: '',
-            tags: [],
-            categoryId: undefined,
-            backgroundExecution: true,
-        },
-        mode: 'onChange'
-    });
-
-    const categoryId = watch('categoryId');
-    const labels = watch('tags');
 
     const styles = useThemedStyles((theme) => ({
         container: {
             flex: 1,
             backgroundColor: theme.colors.background,
         },
-        content: {
+        header: {
+            paddingHorizontal: theme.spacing.m,
+            paddingVertical: theme.spacing.l,
+            backgroundColor: theme.colors.surface,
+            borderBottomLeftRadius: 28,
+            borderBottomRightRadius: 28,
+            ...theme.elevation.m,
+        },
+        headerTop: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: theme.spacing.m,
+        },
+        backButton: {
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: theme.colors.neutral[100],
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        saveButton: {
+            backgroundColor: theme.colors.primary,
+            borderRadius: 22,
+            paddingHorizontal: theme.spacing.m,
+            paddingVertical: theme.spacing.s,
+            minWidth: 80,
+            alignItems: 'center',
+        },
+        saveButtonText: {
+            color: theme.colors.onPrimary,
+            ...theme.typography.preset.button,
+            fontWeight: '600',
+        },
+        headerTitle: {
+            color: theme.colors.textPrimary,
+            ...theme.typography.preset.heading2,
+            textAlign: 'center',
             flex: 1,
+            marginHorizontal: theme.spacing.m,
         },
-        scrollContent: {
-            padding: theme.spacing.m,
-            paddingBottom: theme.spacing.xl,
-        },
+        // Step indicator
         stepIndicator: {
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
-            paddingVertical: theme.spacing.m,
-            paddingHorizontal: theme.spacing.m,
-            backgroundColor: theme.colors.surface,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.colors.border,
+            paddingVertical: theme.spacing.l,
         },
-        stepDot: {
-            width: 32,
-            height: 32,
-            borderRadius: 16,
-            backgroundColor: theme.colors.border,
-            justifyContent: 'center',
+        stepContainer: {
             alignItems: 'center',
-            marginHorizontal: theme.spacing.xs,
+            flex: 1,
         },
-        stepDotActive: {
+        stepCircle: {
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: theme.colors.neutral[200],
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: theme.spacing.s,
+        },
+        stepCircleActive: {
             backgroundColor: theme.colors.primary,
         },
-        stepDotCompleted: {
+        stepCircleCompleted: {
             backgroundColor: theme.colors.success,
         },
-        stepLine: {
-            flex: 1,
-            height: 2,
-            backgroundColor: theme.colors.border,
-            marginHorizontal: theme.spacing.xs,
-        },
-        stepLineCompleted: {
-            backgroundColor: theme.colors.success,
-        },
-        stepText: {
-            fontSize: theme.typography.fontSize.xs,
+        stepLabel: {
             color: theme.colors.textSecondary,
-            fontWeight: theme.typography.fontWeight.medium,
+            ...theme.typography.preset.caption,
+            textAlign: 'center',
         },
-        stepTextActive: {
-            color: theme.colors.onPrimary,
+        stepLabelActive: {
+            color: theme.colors.primary,
+            fontWeight: '600',
         },
-        sectionTitle: {
-            marginBottom: theme.spacing.m,
-            marginTop: theme.spacing.l,
+        stepConnector: {
+            height: 2,
+            backgroundColor: theme.colors.neutral[200],
+            flex: 1,
+            marginHorizontal: theme.spacing.s,
+            marginTop: 20,
         },
-        activityList: {
-            marginTop: theme.spacing.m,
+        stepConnectorCompleted: {
+            backgroundColor: theme.colors.success,
         },
-        activityItem: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: theme.spacing.m,
+        // Content
+        content: {
+            flex: 1,
+        },
+        scrollContent: {
+            padding: theme.spacing.l,
+        },
+        // Form styles
+        inputCard: {
             backgroundColor: theme.colors.surface,
-            borderRadius: theme.shape.radius.m,
-            marginBottom: theme.spacing.s,
+            borderRadius: 28,
+            padding: theme.spacing.l,
+            marginBottom: theme.spacing.l,
+            ...theme.elevation.s,
+        },
+        inputLabel: {
+            color: theme.colors.textPrimary,
+            ...theme.typography.preset.heading5,
+            marginBottom: theme.spacing.m,
+        },
+        textInput: {
+            backgroundColor: theme.colors.neutral[50],
+            borderRadius: 16,
+            paddingHorizontal: theme.spacing.m,
+            paddingVertical: theme.spacing.m,
+            color: theme.colors.textPrimary,
+            ...theme.typography.preset.body1,
             borderWidth: 1,
             borderColor: theme.colors.border,
         },
-        activityEmoji: {
-            fontSize: 24,
+        textArea: {
+            minHeight: 100,
+            textAlignVertical: 'top',
+        },
+        tagContainer: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: theme.spacing.s,
+            marginTop: theme.spacing.m,
+        },
+        tag: {
+            paddingHorizontal: theme.spacing.m,
+            paddingVertical: theme.spacing.s,
+            backgroundColor: theme.colors.secondary,
+            borderRadius: 16,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: theme.spacing.s,
+        },
+        tagText: {
+            color: theme.colors.onSecondary,
+            ...theme.typography.preset.caption,
+        },
+        tagInput: {
+            backgroundColor: theme.colors.neutral[100],
+            borderRadius: 16,
+            paddingHorizontal: theme.spacing.m,
+            paddingVertical: theme.spacing.s,
+            color: theme.colors.textPrimary,
+            ...theme.typography.preset.body2,
+            marginTop: theme.spacing.m,
+        },
+        // Template selection
+        templateGrid: {
+            gap: theme.spacing.m,
+        },
+        templateCard: {
+            backgroundColor: theme.colors.surface,
+            borderRadius: 20,
+            padding: theme.spacing.l,
+            alignItems: 'center',
+            borderWidth: 2,
+            borderColor: 'transparent',
+        },
+        templateCardSelected: {
+            borderColor: theme.colors.primary,
+            backgroundColor: theme.colors.brand.primary[50],
+        },
+        templateIcon: {
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: theme.colors.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: theme.spacing.m,
+        },
+        templateTitle: {
+            color: theme.colors.textPrimary,
+            ...theme.typography.preset.heading6,
+            textAlign: 'center',
+            marginBottom: theme.spacing.s,
+        },
+        templateDescription: {
+            color: theme.colors.textSecondary,
+            ...theme.typography.preset.caption,
+            textAlign: 'center',
+        },
+        // Activity list
+        activityItem: {
+            backgroundColor: theme.colors.surface,
+            borderRadius: 20,
+            padding: theme.spacing.m,
+            marginBottom: theme.spacing.m,
+            flexDirection: 'row',
+            alignItems: 'center',
+            ...theme.elevation.s,
+        },
+        activityIcon: {
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            backgroundColor: theme.colors.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
             marginRight: theme.spacing.m,
         },
-        activityContent: {
+        activityInfo: {
             flex: 1,
         },
         activityTitle: {
-            fontSize: theme.typography.fontSize.m,
-            fontWeight: theme.typography.fontWeight.medium,
             color: theme.colors.textPrimary,
+            ...theme.typography.preset.heading6,
+            marginBottom: theme.spacing.xs,
         },
         activityMeta: {
-            fontSize: theme.typography.fontSize.s,
             color: theme.colors.textSecondary,
+            ...theme.typography.preset.caption,
+        },
+        activityActions: {
+            flexDirection: 'row',
+            gap: theme.spacing.s,
+        },
+        activityActionButton: {
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: theme.colors.neutral[100],
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        // Activity editor
+        editorOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: theme.spacing.l,
+        },
+        editorCard: {
+            backgroundColor: theme.colors.surface,
+            borderRadius: 28,
+            padding: theme.spacing.l,
+            width: '100%',
+            maxHeight: '80%',
+            ...theme.elevation.xl,
+        },
+        editorHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: theme.spacing.l,
+        },
+        editorTitle: {
+            color: theme.colors.textPrimary,
+            ...theme.typography.preset.heading3,
+        },
+        closeButton: {
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: theme.colors.neutral[100],
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        // Settings
+        settingRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingVertical: theme.spacing.m,
+        },
+        settingLabel: {
+            color: theme.colors.textPrimary,
+            ...theme.typography.preset.body1,
+            flex: 1,
+        },
+        settingDescription: {
+            color: theme.colors.textSecondary,
+            ...theme.typography.preset.caption,
             marginTop: theme.spacing.xs,
         },
-        navigationButtons: {
+        switch: {
+            width: 50,
+            height: 30,
+            borderRadius: 15,
+            backgroundColor: theme.colors.neutral[200],
+            justifyContent: 'center',
+            paddingHorizontal: 2,
+        },
+        switchActive: {
+            backgroundColor: theme.colors.primary,
+        },
+        switchThumb: {
+            width: 26,
+            height: 26,
+            borderRadius: 13,
+            backgroundColor: theme.colors.onPrimary,
+            ...theme.elevation.s,
+        },
+        switchThumbActive: {
+            alignSelf: 'flex-end',
+        },
+        // Navigation
+        navigationContainer: {
             flexDirection: 'row',
-            padding: theme.spacing.m,
-            gap: theme.spacing.m,
+            justifyContent: 'space-between',
+            padding: theme.spacing.l,
             backgroundColor: theme.colors.surface,
-            borderTopWidth: 1,
-            borderTopColor: theme.colors.border,
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            ...theme.elevation.m,
         },
         navButton: {
-            flex: 1,
-        },
-        emptyState: {
+            borderRadius: 28,
+            paddingHorizontal: theme.spacing.l,
+            paddingVertical: theme.spacing.m,
+            minWidth: 100,
             alignItems: 'center',
-            padding: theme.spacing.xl,
         },
-        emptyText: {
-            fontSize: theme.typography.fontSize.m,
-            color: theme.colors.textSecondary,
-            textAlign: 'center',
-            marginTop: theme.spacing.m,
+        navButtonPrimary: {
+            backgroundColor: theme.colors.primary,
         },
-        settingsButtons: {
+        navButtonSecondary: {
+            backgroundColor: theme.colors.neutral[100],
+        },
+        navButtonText: {
+            ...theme.typography.preset.button,
+        },
+        navButtonTextPrimary: {
+            color: theme.colors.onPrimary,
+        },
+        navButtonTextSecondary: {
+            color: theme.colors.textPrimary,
+        },
+        // Add activity button
+        addActivityButton: {
+            backgroundColor: theme.colors.primary,
+            borderRadius: 28,
+            paddingVertical: theme.spacing.m,
+            marginTop: theme.spacing.l,
+            alignItems: 'center',
             flexDirection: 'row',
-            gap: theme.spacing.m,
+            justifyContent: 'center',
+            gap: theme.spacing.s,
         },
-        settingButton: {
-            flex: 1,
+        addActivityButtonText: {
+            color: theme.colors.onPrimary,
+            ...theme.typography.preset.button,
+            fontWeight: '600',
         },
     }));
 
-    // Initialize from route params
+    // Load existing loop data for edit mode
     useEffect(() => {
-        if (route.params) {
-            const { mode: routeMode, id } = route.params;
-            setMode(routeMode);
-            setLoopId(id);
-
-            if ((routeMode === 'edit' || routeMode === 'view') && id) {
-                loadLoopData(id);
+        const loadExistingLoop = async () => {
+            if (route.params.mode === 'edit' && route.params.id) {
+                setIsLoading(true);
+                try {
+                    const loop = await getLoopById(route.params.id);
+                    if (loop) {
+                        setFormData({
+                            title: loop.title,
+                            description: loop.description || '',
+                            tags: loop.tags || [],
+                            categoryId: loop.categoryId,
+                            activities: loop.activities,
+                            backgroundExecution: loop.backgroundExecution || true,
+                            notifications: loop.notifications || formData.notifications,
+                        });
+                    }
+                } catch (error) {
+                    Alert.alert('Error', 'Failed to load loop data');
+                    navigation.goBack();
+                } finally {
+                    setIsLoading(false);
+                }
             }
+        };
+
+        loadExistingLoop();
+    }, [route.params.mode, route.params.id, getLoopById, navigation]);
+
+    // Form handlers
+    const updateFormData = useCallback((updates: Partial<LoopFormData>) => {
+        setFormData(prev => ({ ...prev, ...updates }));
+    }, []);
+
+    const addTag = useCallback((tag: string) => {
+        if (tag.trim() && !formData.tags.includes(tag.trim())) {
+            updateFormData({ tags: [...formData.tags, tag.trim()] });
         }
-    }, [route.params]);
+    }, [formData.tags, updateFormData]);
 
-    // Load loop data for edit or view mode
-    const loadLoopData = async (id: string) => {
-        try {
-            setIsLoading(true);
-            const loop = await getLoopById(id);
-
-            if (loop) {
-                reset({
-                    title: loop.title,
-                    description: loop.description || '',
-                    tags: loop.tags || [],
-                    categoryId: loop.categoryId,
-                });
-
-                setActivities(loop.activities || []);
-                setBackgroundExecution(loop.backgroundExecution);
-                setNotifications(loop.notifications);
-                setScheduling(loop.scheduling);
-            } else {
-                Alert.alert('Error', 'Loop not found');
-                navigation.goBack();
-            }
-        } catch (error) {
-            console.error('Error loading loop:', error);
-            Alert.alert('Error', 'Failed to load loop');
-            navigation.goBack();
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Handle metadata changes (auto-save in edit mode)
-    const handleCategoryChange = async (newCategoryId: string | null) => {
-        setValue('categoryId', newCategoryId || undefined);
-        if (loopId && mode === 'edit') {
-            await autoSave({ categoryId: newCategoryId || undefined });
-        }
-    };
-
-    const handleLabelsChange = async (newLabels: string[]) => {
-        setValue('tags', newLabels);
-        if (loopId && mode === 'edit') {
-            await autoSave({ tags: newLabels });
-        }
-    };
-
-    const handleTitleChange = async (value: string) => {
-        setValue('title', value);
-        if (loopId && mode === 'edit') {
-            await autoSave({ title: value });
-        }
-    };
-
-    const autoSave = async (updates: Partial<LoopFormValues>) => {
-        if (!loopId) return;
-
-        try {
-            const currentValues = getValues();
-            const loopData = {
-                ...currentValues,
-                ...updates,
-                activities,
-                backgroundExecution,
-                notifications,
-                scheduling,
-            };
-            await updateLoop(loopId, loopData);
-        } catch (error) {
-            console.error('Auto-save failed:', error);
-        }
-    };
-
-    // Step navigation
-    const nextStep = () => {
-        if (currentStep < 3) {
-            setCurrentStep((prev) => (prev + 1) as BuilderStep);
-        }
-    };
-
-    const previousStep = () => {
-        if (currentStep > 1) {
-            setCurrentStep((prev) => (prev - 1) as BuilderStep);
-        }
-    };
+    const removeTag = useCallback((tagToRemove: string) => {
+        updateFormData({ tags: formData.tags.filter(tag => tag !== tagToRemove) });
+    }, [formData.tags, updateFormData]);
 
     // Activity management
-    const handleTemplateSelect = (template: ActivityTemplate) => {
-        setSelectedTemplate(template);
-
-        // Create new activity instance from template with guaranteed unique ID
+    const addActivityFromTemplate = useCallback((template: ActivityTemplate) => {
         const newActivity: ActivityInstance = {
             id: generateUUID(),
             templateId: template.id,
-            title: undefined, // Use template title by default
-            quantity: undefined,
-            duration: undefined,
-            subItems: undefined,
-            linkedTarget: template.linkedTarget,
-            order: activities.length,
-            status: 'pending',
+            title: template.title,
+            description: template.description,
+            duration: template.defaultDuration || 0,
+            quantity: template.quantity,
+            subItems: template.subItems?.map(item => ({
+                id: generateUUID(),
+                title: item.title,
+                completed: false,
+            })) || [],
         };
 
         setEditingActivity(newActivity);
         setShowActivityEditor(true);
-    };
+    }, []);
 
-    const handleActivitySave = (activity: ActivityInstance) => {
-        if (editingActivity && activities.find(a => a.id === editingActivity.id)) {
-            // Update existing activity
-            setActivities(prev => prev.map(a => a.id === activity.id ? activity : a));
+    const saveActivity = useCallback((activity: ActivityInstance) => {
+        const existingIndex = formData.activities.findIndex(a => a.id === activity.id);
+        let newActivities: ActivityInstance[];
+
+        if (existingIndex >= 0) {
+            newActivities = [...formData.activities];
+            newActivities[existingIndex] = activity;
         } else {
-            // Add new activity, ensure no duplicates by ID
-            setActivities(prev => {
-                const existingActivity = prev.find(a => a.id === activity.id);
-                if (existingActivity) {
-                    // Update existing instead of adding duplicate
-                    return prev.map(a => a.id === activity.id ? activity : a);
-                } else {
-                    // Add new activity
-                    return [...prev, activity];
-                }
-            });
+            newActivities = [...formData.activities, activity];
         }
 
+        updateFormData({ activities: newActivities });
         setShowActivityEditor(false);
         setEditingActivity(null);
-        setSelectedTemplate(null);
-    };
+    }, [formData.activities, updateFormData]);
 
-    const handleActivityEdit = (activity: ActivityInstance) => {
-        const template = templates.find(t => t.id === activity.templateId);
-        if (template) {
-            setSelectedTemplate(template);
-            setEditingActivity(activity);
-            setShowActivityEditor(true);
-        }
-    };
-
-    const handleActivityRemove = (activityId: string) => {
-        setActivities(prev => prev.filter(a => a.id !== activityId));
-    };
-
-    const handleActivityReorder = (fromIndex: number, toIndex: number) => {
-        setActivities(prev => {
-            const newActivities = [...prev];
-            const [removed] = newActivities.splice(fromIndex, 1);
-            newActivities.splice(toIndex, 0, removed);
-
-            // Update order values
-            return newActivities.map((activity, index) => ({
-                ...activity,
-                order: index,
-            }));
+    const removeActivity = useCallback((activityId: string) => {
+        updateFormData({
+            activities: formData.activities.filter(a => a.id !== activityId)
         });
-    };
+    }, [formData.activities, updateFormData]);
 
-    // Form submission
-    const onSubmit = async (data: LoopFormValues) => {
-        if (isSubmitting) return;
+    const editActivity = useCallback((activity: ActivityInstance) => {
+        setEditingActivity(activity);
+        setShowActivityEditor(true);
+    }, []);
 
+    // Navigation
+    const canProceedToNextStep = useCallback(() => {
+        switch (currentStep) {
+            case 1: return formData.title.trim().length > 0;
+            case 2: return formData.activities.length > 0;
+            case 3: return true;
+            default: return false;
+        }
+    }, [currentStep, formData.title, formData.activities.length]);
+
+    const nextStep = useCallback(() => {
+        if (currentStep < 3 && canProceedToNextStep()) {
+            setCurrentStep((prev) => (prev + 1) as BuilderStep);
+        }
+    }, [currentStep, canProceedToNextStep]);
+
+    const previousStep = useCallback(() => {
+        if (currentStep > 1) {
+            setCurrentStep((prev) => (prev - 1) as BuilderStep);
+        }
+    }, [currentStep]);
+
+    // Save loop
+    const saveLoop = useCallback(async () => {
+        if (!formData.title.trim() || formData.activities.length === 0) {
+            Alert.alert('Validation Error', 'Please provide a title and at least one activity.');
+            return;
+        }
+
+        setIsSaving(true);
         try {
-            setIsSubmitting(true);
-
             const loopData: Omit<Loop, 'id' | 'createdAt' | 'updatedAt'> = {
-                title: data.title,
-                description: data.description,
-                activities,
-                tags: data.tags,
-                categoryId: data.categoryId,
-                backgroundExecution: data.backgroundExecution,
-                notifications,
-                scheduling,
+                title: formData.title.trim(),
+                description: formData.description.trim(),
+                tags: formData.tags,
+                categoryId: formData.categoryId,
+                activities: formData.activities,
+                backgroundExecution: formData.backgroundExecution,
+                notifications: formData.notifications,
             };
 
-            let success;
-            if (mode === 'edit' && loopId) {
-                success = await updateLoop(loopId, loopData);
+            if (route.params.mode === 'edit' && route.params.id) {
+                await updateLoop(route.params.id, loopData);
             } else {
-                const newLoop = await createLoop(loopData);
-                success = !!newLoop;
-                if (success && newLoop) {
-                    setLoopId(newLoop.id);
-                    setMode('view');
-                }
+                await createLoop(loopData);
             }
 
-            if (success) {
-                await loadLoops(); // Refresh loops list
-                Alert.alert('Success', 'Loop saved successfully!');
-                navigation.goBack();
-            } else {
-                Alert.alert('Error', 'Failed to save the loop. Please try again.');
-            }
+            navigation.goBack();
         } catch (error) {
-            console.error('Error saving loop:', error);
-            Alert.alert('Error', 'An unexpected error occurred.');
+            Alert.alert('Error', 'Failed to save loop');
         } finally {
-            setIsSubmitting(false);
+            setIsSaving(false);
         }
+    }, [formData, route.params.mode, route.params.id, createLoop, updateLoop, navigation]);
+
+    // Step 1: Basic Information
+    const renderStep1 = () => (
+        <View>
+            <View style={styles.inputCard}>
+                <Typography style={styles.inputLabel}>
+                    Loop Title *
+                </Typography>
+                <TextInput
+                    style={styles.textInput}
+                    value={formData.title}
+                    onChangeText={(text) => updateFormData({ title: text })}
+                    placeholder="Enter loop title..."
+                    placeholderTextColor={theme.colors.textSecondary}
+                />
+            </View>
+
+            <View style={styles.inputCard}>
+                <Typography style={styles.inputLabel}>
+                    Description
+                </Typography>
+                <TextInput
+                    style={[styles.textInput, styles.textArea]}
+                    value={formData.description}
+                    onChangeText={(text) => updateFormData({ description: text })}
+                    placeholder="Describe your loop..."
+                    placeholderTextColor={theme.colors.textSecondary}
+                    multiline
+                    numberOfLines={4}
+                />
+            </View>
+
+            <View style={styles.inputCard}>
+                <Typography style={styles.inputLabel}>
+                    Tags
+                </Typography>
+                {formData.tags.length > 0 && (
+                    <View style={styles.tagContainer}>
+                        {formData.tags.map((tag, index) => (
+                            <View key={index} style={styles.tag}>
+                                <Typography style={styles.tagText}>{tag}</Typography>
+                                <TouchableOpacity onPress={() => removeTag(tag)}>
+                                    <Icon name="x" size={12} color={theme.colors.onSecondary} />
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </View>
+                )}
+                <TextInput
+                    style={styles.tagInput}
+                    placeholder="Add tags..."
+                    placeholderTextColor={theme.colors.textSecondary}
+                    onSubmitEditing={(e) => {
+                        addTag(e.nativeEvent.text);
+                        e.target.clear();
+                    }}
+                    returnKeyType="done"
+                />
+            </View>
+        </View>
+    );
+
+    // Step 2: Activity Selection
+    const renderStep2 = () => (
+        <View>
+            <View style={styles.inputCard}>
+                <Typography style={styles.inputLabel}>
+                    Select Activity Templates
+                </Typography>
+                <FlatList
+                    data={templates}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity
+                            style={styles.templateCard}
+                            onPress={() => addActivityFromTemplate(item)}
+                        >
+                            <View style={styles.templateIcon}>
+                                <Icon name="zap" size={24} color={theme.colors.onPrimary} />
+                            </View>
+                            <Typography style={styles.templateTitle}>
+                                {item.title}
+                            </Typography>
+                            <Typography style={styles.templateDescription}>
+                                {item.description}
+                            </Typography>
+                        </TouchableOpacity>
+                    )}
+                    numColumns={2}
+                    columnWrapperStyle={styles.templateGrid}
+                    key="templates"
+                    scrollEnabled={false}
+                />
+            </View>
+
+            {formData.activities.length > 0 && (
+                <View style={styles.inputCard}>
+                    <Typography style={styles.inputLabel}>
+                        Activities ({formData.activities.length})
+                    </Typography>
+                    {formData.activities.map((activity, index) => (
+                        <View key={activity.id} style={styles.activityItem}>
+                            <View style={styles.activityIcon}>
+                                <Icon name="zap" size={20} color={theme.colors.onPrimary} />
+                            </View>
+                            <View style={styles.activityInfo}>
+                                <Typography style={styles.activityTitle}>
+                                    {activity.title}
+                                </Typography>
+                                <Typography style={styles.activityMeta}>
+                                    {activity.duration ? `${activity.duration} min` : 'No duration'} •
+                                    {activity.subItems?.length || 0} sub-tasks
+                                </Typography>
+                            </View>
+                            <View style={styles.activityActions}>
+                                <TouchableOpacity
+                                    style={styles.activityActionButton}
+                                    onPress={() => editActivity(activity)}
+                                >
+                                    <Icon name="pencil" size={14} color={theme.colors.textSecondary} />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.activityActionButton}
+                                    onPress={() => removeActivity(activity.id)}
+                                >
+                                    <Icon name="trash" size={14} color={theme.colors.error} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ))}
+                </View>
+            )}
+        </View>
+    );
+
+    // Step 3: Settings
+    const renderStep3 = () => (
+        <View>
+            <View style={styles.inputCard}>
+                <Typography style={styles.inputLabel}>
+                    Loop Settings
+                </Typography>
+
+                <View style={styles.settingRow}>
+                    <View style={{ flex: 1 }}>
+                        <Typography style={styles.settingLabel}>
+                            Background Execution
+                        </Typography>
+                        <Typography style={styles.settingDescription}>
+                            Allow loop to continue in background
+                        </Typography>
+                    </View>
+                    <TouchableOpacity
+                        style={[styles.switch, formData.backgroundExecution && styles.switchActive]}
+                        onPress={() => updateFormData({ backgroundExecution: !formData.backgroundExecution })}
+                    >
+                        <View style={[styles.switchThumb, formData.backgroundExecution && styles.switchThumbActive]} />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.settingRow}>
+                    <View style={{ flex: 1 }}>
+                        <Typography style={styles.settingLabel}>
+                            Notifications
+                        </Typography>
+                        <Typography style={styles.settingDescription}>
+                            Get notified about loop progress
+                        </Typography>
+                    </View>
+                    <TouchableOpacity
+                        style={[styles.switch, formData.notifications.enabled && styles.switchActive]}
+                        onPress={() => updateFormData({
+                            notifications: { ...formData.notifications, enabled: !formData.notifications.enabled }
+                        })}
+                    >
+                        <View style={[styles.switchThumb, formData.notifications.enabled && styles.switchThumbActive]} />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            <View style={styles.inputCard}>
+                <Typography style={styles.inputLabel}>
+                    Summary
+                </Typography>
+                <View style={styles.settingRow}>
+                    <Typography style={styles.settingLabel}>Title</Typography>
+                    <Typography style={styles.settingDescription}>{formData.title}</Typography>
+                </View>
+                <View style={styles.settingRow}>
+                    <Typography style={styles.settingLabel}>Activities</Typography>
+                    <Typography style={styles.settingDescription}>{formData.activities.length}</Typography>
+                </View>
+                <View style={styles.settingRow}>
+                    <Typography style={styles.settingLabel}>Total Duration</Typography>
+                    <Typography style={styles.settingDescription}>
+                        {formData.activities.reduce((sum, activity) => sum + (activity.duration || 0), 0)} minutes
+                    </Typography>
+                </View>
+            </View>
+        </View>
+    );
+
+    // Activity Editor Modal
+    const renderActivityEditor = () => {
+        if (!showActivityEditor || !editingActivity) return null;
+
+        return (
+            <View style={styles.editorOverlay}>
+                <TouchableOpacity
+                    style={StyleSheet.absoluteFill}
+                    onPress={() => setShowActivityEditor(false)}
+                />
+                <View style={styles.editorCard}>
+                    <View style={styles.editorHeader}>
+                        <Typography style={styles.editorTitle}>
+                            Edit Activity
+                        </Typography>
+                        <TouchableOpacity
+                            style={styles.closeButton}
+                            onPress={() => setShowActivityEditor(false)}
+                        >
+                            <Icon name="x" size={18} color={theme.colors.textSecondary} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                        <Typography style={styles.inputLabel}>Activity Title</Typography>
+                        <TextInput
+                            style={styles.textInput}
+                            value={editingActivity.title}
+                            onChangeText={(text) => setEditingActivity({ ...editingActivity, title: text })}
+                            placeholder="Activity title..."
+                            placeholderTextColor={theme.colors.textSecondary}
+                        />
+
+                        <Typography style={[styles.inputLabel, { marginTop: theme.spacing.l }]}>
+                            Duration (minutes)
+                        </Typography>
+                        <TextInput
+                            style={styles.textInput}
+                            value={editingActivity.duration?.toString() || ''}
+                            onChangeText={(text) => setEditingActivity({
+                                ...editingActivity,
+                                duration: parseInt(text) || 0
+                            })}
+                            placeholder="0"
+                            placeholderTextColor={theme.colors.textSecondary}
+                            keyboardType="numeric"
+                        />
+
+                        <TouchableOpacity
+                            style={styles.addActivityButton}
+                            onPress={() => saveActivity(editingActivity)}
+                        >
+                            <Typography style={styles.addActivityButtonText}>
+                                Save Activity
+                            </Typography>
+                        </TouchableOpacity>
+                    </ScrollView>
+                </View>
+            </View>
+        );
     };
 
-    // Validation
-    const canProceedToNextStep = () => {
-        const values = getValues();
-
-        switch (currentStep) {
-            case 1:
-                return values.title.trim().length > 0;
-            case 2:
-                return activities.length > 0;
-            case 3:
-                return true;
-            default:
-                return false;
-        }
-    };
-
-    const canSaveLoop = () => {
-        const values = getValues();
-        return values.title.trim().length > 0 && activities.length > 0;
-    };
-
-    // Render step indicator
+    // Step indicator
     const renderStepIndicator = () => (
         <View style={styles.stepIndicator}>
             {[1, 2, 3].map((step, index) => (
                 <React.Fragment key={step}>
-                    <View style={[
-                        styles.stepDot,
-                        currentStep === step && styles.stepDotActive,
-                        currentStep > step && styles.stepDotCompleted,
-                    ]}>
-                        <Typography style={[
-                            styles.stepText,
-                            currentStep === step && styles.stepTextActive,
+                    <View style={styles.stepContainer}>
+                        <View style={[
+                            styles.stepCircle,
+                            currentStep === step && styles.stepCircleActive,
+                            currentStep > step && styles.stepCircleCompleted,
                         ]}>
-                            {step}
+                            {currentStep > step ? (
+                                <Icon name="check" size={20} color={theme.colors.onPrimary} />
+                            ) : (
+                                <Typography style={[
+                                    styles.stepLabel,
+                                    currentStep === step && { color: theme.colors.onPrimary }
+                                ]}>
+                                    {step}
+                                </Typography>
+                            )}
+                        </View>
+                        <Typography style={[
+                            styles.stepLabel,
+                            currentStep === step && styles.stepLabelActive,
+                        ]}>
+                            {step === 1 ? 'Info' : step === 2 ? 'Activities' : 'Settings'}
                         </Typography>
                     </View>
                     {index < 2 && (
                         <View style={[
-                            styles.stepLine,
-                            currentStep > step && styles.stepLineCompleted,
+                            styles.stepConnector,
+                            currentStep > step && styles.stepConnectorCompleted,
                         ]} />
                     )}
                 </React.Fragment>
@@ -499,265 +895,74 @@ export default function LoopBuilderScreen() {
         </View>
     );
 
-    // Render step content
-    const renderStepContent = () => {
-        switch (currentStep) {
-            case 1:
-                return renderStep1();
-            case 2:
-                return renderStep2();
-            case 3:
-                return renderStep3();
-            default:
-                return null;
-        }
-    };
-
-    // Step 1: Basic Info
-    const renderStep1 = () => (
-        <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <Typography variant="h3" style={styles.sectionTitle}>
-                Basic Information
-            </Typography>
-
-            <EntryTitleInput
-                control={control}
-                name="title"
-                placeholder="Enter loop title"
-                onChangeText={handleTitleChange}
-            />
-
-            <FormTextarea
-                name="description"
-                control={control}
-                label="Description"
-                placeholder="Describe what this loop is for"
-                numberOfLines={3}
-            />
-        </ScrollView>
-    );
-
-    // Step 2: Template Selection + Activity Customization
-    const renderStep2 = () => (
-        <View>
-            <Typography variant="h3" style={styles.sectionTitle}>
-                Add Activities
-            </Typography>
-
-            <ActivityTemplateSelector
-                selectedTemplateIds={activities.map(a => a.templateId)}
-                onTemplateToggle={(templateId) => {
-                    const template = templates.find(t => t.id === templateId);
-                    if (template) {
-                        handleTemplateSelect(template);
-                    }
-                }}
-                multiSelect={false}
-            />
-
-            {activities.length > 0 && (
-                <View style={styles.activityList}>
-                    <Typography variant="h4" style={styles.sectionTitle}>
-                        Selected Activities ({activities.length})
-                    </Typography>
-
-                    {activities.map((activity, index) => {
-                        const template = templates.find(t => t.id === activity.templateId);
-                        return (
-                            <View key={`${activity.id}-${index}`} style={styles.activityItem}>
-                                <Typography style={styles.activityEmoji}>
-                                    {template?.emoji || '⚡'}
-                                </Typography>
-                                <View style={styles.activityContent}>
-                                    <Typography style={styles.activityTitle}>
-                                        {activity.title || template?.title || 'Untitled Activity'}
-                                    </Typography>
-                                    <Typography style={styles.activityMeta}>
-                                        {activity.duration ? `${activity.duration} min` : 'No duration set'}
-                                        {activity.quantity && ` • ${activity.quantity.number} ${activity.quantity.unit}`}
-                                    </Typography>
-                                </View>
-                                <Button
-                                    variant="text"
-                                    label="Edit"
-                                    size="small"
-                                    onPress={() => handleActivityEdit(activity)}
-                                />
-                            </View>
-                        );
-                    })}
-                </View>
-            )}
-
-            {activities.length === 0 && (
-                <View style={styles.emptyState}>
-                    <Typography style={styles.emptyText}>
-                        Select activity templates above to build your loop
-                    </Typography>
-                </View>
-            )}
-        </View>
-    );
-
-    // Step 3: Settings & Preview
-    const renderStep3 = () => (
-        <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <Typography variant="h3" style={styles.sectionTitle}>
-                Settings & Review
-            </Typography>
-
-            {/* Loop Preview */}
-            <LoopPreviewCard
-                title={watch('title') || 'Untitled Loop'}
-                description={watch('description')}
-                activities={activities}
-                templates={templates}
-            />
-
-            {/* Background Execution */}
-            <Typography variant="h4" style={styles.sectionTitle}>
-                Execution Settings
-            </Typography>
-
-            <FormSwitch
-                name="backgroundExecution"
-                control={control}
-                label="Background Execution"
-                helperText="Allow this loop to run in the background"
-            />
-
-            {/* Quick Settings Buttons */}
-            <Typography variant="h4" style={styles.sectionTitle}>
-                Additional Settings
-            </Typography>
-
-            <View style={styles.settingsButtons}>
-                <Button
-                    variant="outline"
-                    label="Notification Settings"
-                    onPress={() => setShowNotificationSettings(true)}
-                    fullWidth
-                    style={styles.settingButton}
-                />
-
-                <Button
-                    variant="outline"
-                    label="Scheduling Settings"
-                    onPress={() => setShowSchedulingSettings(true)}
-                    fullWidth
-                    style={styles.settingButton}
-                />
-            </View>
-        </ScrollView>
-    );
-
     return (
         <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView
-                style={styles.container}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={100}
-            >
-                <EntryDetailHeader
-                    entryType={mode === 'create' ? 'New Loop' : mode === 'edit' ? 'Edit Loop' : 'Loop'}
-                    onBackPress={() => navigation.goBack()}
-                />
+            {/* Header */}
+            <View style={styles.header}>
+                <View style={styles.headerTop}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                        <Icon name="arrow-left" size={20} color={theme.colors.textPrimary} />
+                    </TouchableOpacity>
 
-                <EntryMetadataBar
-                    categoryId={categoryId || null}
-                    labels={labels}
-                    onCategoryChange={handleCategoryChange}
-                    onLabelsChange={handleLabelsChange}
-                />
+                    <Typography style={styles.headerTitle}>
+                        {route.params.mode === 'edit' ? 'Edit Loop' : 'Create Loop'}
+                    </Typography>
 
-                {/* Step Indicator */}
-                {renderStepIndicator()}
-
-                {/* Dynamic Content Based on Step */}
-                <View style={styles.content}>
-                    {renderStepContent()}
+                    <TouchableOpacity
+                        style={styles.saveButton}
+                        onPress={saveLoop}
+                        disabled={isSaving}
+                    >
+                        <Typography style={styles.saveButtonText}>
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </Typography>
+                    </TouchableOpacity>
                 </View>
+
+                {renderStepIndicator()}
+            </View>
+
+            {/* Content */}
+            <KeyboardAvoidingView
+                style={styles.content}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+                <ScrollView
+                    style={styles.content}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {currentStep === 1 && renderStep1()}
+                    {currentStep === 2 && renderStep2()}
+                    {currentStep === 3 && renderStep3()}
+                </ScrollView>
 
                 {/* Navigation */}
-                <View style={styles.navigationButtons}>
-                    {currentStep > 1 && (
-                        <Button
-                            variant="secondary"
-                            label="Previous"
-                            onPress={previousStep}
-                            style={styles.navButton}
-                        />
-                    )}
+                <View style={styles.navigationContainer}>
+                    <TouchableOpacity
+                        style={[styles.navButton, styles.navButtonSecondary]}
+                        onPress={previousStep}
+                        disabled={currentStep === 1}
+                    >
+                        <Typography style={[styles.navButtonText, styles.navButtonTextSecondary]}>
+                            Previous
+                        </Typography>
+                    </TouchableOpacity>
 
-                    {currentStep < 3 ? (
-                        <Button
-                            variant="primary"
-                            label="Next"
-                            onPress={nextStep}
-                            disabled={!canProceedToNextStep()}
-                            style={styles.navButton}
-                        />
-                    ) : (
-                        <Button
-                            variant="primary"
-                            label={mode === 'edit' ? 'Update Loop' : 'Create Loop'}
-                            onPress={handleSubmit(onSubmit)}
-                            disabled={!canSaveLoop() || isSubmitting}
-                            isLoading={isSubmitting}
-                            style={styles.navButton}
-                        />
-                    )}
+                    <TouchableOpacity
+                        style={[styles.navButton, styles.navButtonPrimary]}
+                        onPress={currentStep === 3 ? saveLoop : nextStep}
+                        disabled={!canProceedToNextStep() || isSaving}
+                    >
+                        <Typography style={[styles.navButtonText, styles.navButtonTextPrimary]}>
+                            {currentStep === 3 ? (isSaving ? 'Saving...' : 'Finish') : 'Next'}
+                        </Typography>
+                    </TouchableOpacity>
                 </View>
-
-                {/* Activity Editor Bottom Sheet */}
-                <BottomSheet
-                    visible={showActivityEditor}
-                    onClose={() => {
-                        setShowActivityEditor(false);
-                        setEditingActivity(null);
-                        setSelectedTemplate(null);
-                    }}
-                >
-                    {editingActivity && selectedTemplate && (
-                        <ActivityInstanceEditor
-                            activityInstance={editingActivity}
-                            template={selectedTemplate}
-                            onUpdate={handleActivitySave}
-                            onDone={() => {
-                                setShowActivityEditor(false);
-                                setEditingActivity(null);
-                                setSelectedTemplate(null);
-                            }}
-                        />
-                    )}
-                </BottomSheet>
-
-                {/* Notification Settings Bottom Sheet */}
-                <BottomSheet
-                    visible={showNotificationSettings}
-                    onClose={() => setShowNotificationSettings(false)}
-                >
-                    <LoopSettingsForm
-                        type="notifications"
-                        settings={notifications}
-                        onSave={(settings) => setNotifications(settings as NotificationSettings)}
-                        onCancel={() => setShowNotificationSettings(false)}
-                    />
-                </BottomSheet>
-
-                {/* Scheduling Settings Bottom Sheet */}
-                <BottomSheet
-                    visible={showSchedulingSettings}
-                    onClose={() => setShowSchedulingSettings(false)}
-                >
-                    <LoopSettingsForm
-                        type="scheduling"
-                        settings={scheduling}
-                        onSave={(settings) => setScheduling(settings as ScheduleSettings)}
-                        onCancel={() => setShowSchedulingSettings(false)}
-                    />
-                </BottomSheet>
             </KeyboardAvoidingView>
+
+            {/* Activity Editor Modal */}
+            {renderActivityEditor()}
         </SafeAreaView>
     );
 } 

@@ -5,10 +5,10 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { Control, FieldValues, useFieldArray, FieldArrayPath, DeepPartial } from 'react-hook-form';
-import { useThemedStyles } from '../hooks/useThemedStyles';
-import { Typography, Icon, Button } from './';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
+import { Typography, Icon, Button } from '..';
 import { FormErrorMessage } from './FormErrorMessage';
-import { generateSimpleId } from '../utils/uuidUtil';
+import { generateSimpleId } from '../../utils/uuidUtil';
 
 interface FormArrayFieldProps<TFieldValues extends FieldValues = FieldValues> {
     name: string;

@@ -7,11 +7,11 @@ import {
     ViewStyle,
     Dimensions
 } from 'react-native';
-import { BottomSheet } from './BottomSheet';
-import { Typography } from './Typography';
-import { useTheme } from '../../app/contexts/ThemeContext';
-import { useBottomSheetConfig } from '../../app/contexts/BottomSheetConfig';
-import { Button } from './Button';
+import { BottomSheet } from '../BottomSheet';
+import { Typography } from '../Typography';
+import { useTheme } from '../../../app/contexts/ThemeContext';
+import { useBottomSheetConfig } from '../../../app/contexts/BottomSheetConfig';
+import { Button } from '../Button';
 
 /**
  * Props for the FormSheet component

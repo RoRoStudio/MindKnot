@@ -13,10 +13,10 @@ import {
     Path,
     RegisterOptions,
 } from 'react-hook-form';
-import { Typography } from './Typography';
-import { Icon } from './Icon';
+import { Typography } from '../Typography';
+import { Icon } from '../Icon';
 import { FormErrorMessage } from './FormErrorMessage';
-import { useThemedStyles } from '../hooks/useThemedStyles';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 interface FormInputProps<T extends FieldValues> extends Omit<TextInputProps, 'onChange' | 'onBlur' | 'value'> {
     name: Path<T>;

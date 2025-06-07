@@ -1,775 +1,636 @@
 /**
- * LoopExecutionScreen - Step-by-step loop execution
- * 
- * Features:
- * - Step-by-step focused execution
- * - Activity navigation and progress tracking
- * - Timer management for timed activities
- * - Background execution support
- * - Session persistence and recovery
+ * LoopExecutionScreen - Beautiful focused loop execution interface
+ * Features modern, distraction-free design with proper theme adherence
  */
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
+    SafeAreaView,
     ScrollView,
     TouchableOpacity,
     Alert,
-    AppState,
-    AppStateStatus,
-    Image,
+    Animated,
+    Dimensions,
     StatusBar,
 } from 'react-native';
-import { RouteProp, useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../../shared/types/navigation';
-import { useLoopExecution } from '../hooks/useLoopExecution';
-import { useLoops } from '../hooks/useLoops';
-import { useActivityTemplates } from '../hooks/useActivityTemplates';
-import { Typography, Button, Icon, BottomSheet, ConfirmationModal } from '../../../shared/components';
-import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
+
+import { Typography } from '../../../shared/components/Typography';
+import { Icon } from '../../../shared/components/Icon';
+import { BeautifulTimer } from '../../../shared/components/BeautifulTimer';
 import { useTheme } from '../../../app/contexts/ThemeContext';
-import { ExecutionSession, Loop, ActivityTemplate } from '../../../shared/types/loop';
+import { RootState } from '../../../app/store';
+import { updateLoopExecution, completeLoopExecution } from '../store/loopSlice';
+import { ActivityInstance, LoopExecution } from '../types';
+import { RootStackParamList } from '../../../app/navigation/types';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 type LoopExecutionRouteProp = RouteProp<{
     LoopExecutionScreen: {
         loopId: string;
-        sessionId?: string;
+        executionId?: string;
     };
 }, 'LoopExecutionScreen'>;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function LoopExecutionScreen() {
-    const route = useRoute<LoopExecutionRouteProp>();
+    const theme = useTheme();
+    const dispatch = useDispatch();
     const navigation = useNavigation<NavigationProp>();
-    const { theme } = useTheme();
-    const { getLoopById } = useLoops();
-    const { getTemplateById } = useActivityTemplates();
+    const route = useRoute<LoopExecutionRouteProp>();
+    const { loopId, executionId } = route.params;
 
-    const {
-        currentSession,
-        currentLoop,
-        currentActivity,
-        currentActivityIndex,
-        isExecuting,
-        isPaused,
-        progress,
-        timer,
-        startExecution,
-        stopExecution,
-        pauseExecution,
-        resumeExecution,
-        completeActivity,
-        skipActivity,
-        previousActivity,
-        updateSubItemProgress,
-        saveSession,
-        loadActiveSession,
-    } = useLoopExecution();
+    // State
+    const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [showSubItems, setShowSubItems] = useState(false);
+    const [completedSubItems, setCompletedSubItems] = useState<Set<string>>(new Set());
 
-    // Local state
-    const [showMenu, setShowMenu] = useState(false);
-    const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-    const appState = useRef(AppState.currentState);
+    // Animations
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(50)).current;
+    const progressAnim = useRef(new Animated.Value(0)).current;
 
-    // Load loop data and start execution
-    const loadLoopData = useCallback(async () => {
-        try {
-            console.log('Loading loop data for loopId:', route.params.loopId);
-            const loop = await getLoopById(route.params.loopId);
-
-            if (!loop) {
-                console.error('Loop not found:', route.params.loopId);
-                Alert.alert('Error', 'Loop not found');
-                navigation.goBack();
-                return;
-            }
-
-            console.log('Loop loaded successfully:', {
-                id: loop.id,
-                title: loop.title,
-                activitiesCount: loop.activities?.length || 0
-            });
-
-            // Start execution if not already running
-            if (!isExecuting && !currentSession) {
-                console.log('Starting loop execution...');
-                await startExecution(loop);
-            }
-        } catch (error) {
-            console.error('Error loading loop data:', error);
-            Alert.alert('Error', 'Failed to load loop data');
-            navigation.goBack();
-        }
-    }, [route.params.loopId, getLoopById, startExecution, isExecuting, currentSession, navigation]);
-
-    // Initialize screen
-    useEffect(() => {
-        loadLoopData();
-    }, [loadLoopData]);
-
-    // Handle app state changes for background mode
-    useEffect(() => {
-        const handleAppStateChange = (nextAppState: AppStateStatus) => {
-            if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-                console.log('App has come to the foreground');
-                // Auto-save when returning to foreground
-                if (currentSession && isExecuting) {
-                    saveSession();
-                }
-            }
-            appState.current = nextAppState;
-        };
-
-        const subscription = AppState.addEventListener('change', handleAppStateChange);
-        return () => subscription?.remove();
-    }, [currentSession, isExecuting, saveSession]);
-
-    // Save session periodically and on screen blur
-    useFocusEffect(
-        useCallback(() => {
-            const saveInterval = setInterval(() => {
-                if (currentSession && isExecuting) {
-                    saveSession();
-                }
-            }, 30000); // Save every 30 seconds
-
-            return () => {
-                clearInterval(saveInterval);
-                // Save when leaving screen
-                if (currentSession && isExecuting) {
-                    saveSession();
-                }
-            };
-        }, [currentSession, isExecuting, saveSession])
+    // Redux state
+    const loop = useSelector((state: RootState) =>
+        state.loops.loops.find(l => l.id === loopId)
+    );
+    const execution = useSelector((state: RootState) =>
+        executionId ? state.loops.executions.find(e => e.id === executionId) : null
     );
 
-    const handleCompleteActivity = async () => {
-        if (!currentActivity) return;
+    const currentActivity = loop?.activities[currentActivityIndex];
+    const totalActivities = loop?.activities.length || 0;
+    const progress = totalActivities > 0 ? (currentActivityIndex + 1) / totalActivities : 0;
 
-        // Check if all sub-items are completed
-        const allSubItemsCompleted = currentActivity.subItems?.every(item => item.completed) ?? true;
+    useEffect(() => {
+        // Entrance animation
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 800,
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 600,
+                useNativeDriver: true,
+            }),
+            Animated.timing(progressAnim, {
+                toValue: progress,
+                duration: 1000,
+                useNativeDriver: false,
+            }),
+        ]).start();
+    }, []);
 
-        if (!allSubItemsCompleted) {
-            setShowConfirmationModal(true);
-            return;
+    useEffect(() => {
+        // Update progress animation when activity changes
+        Animated.timing(progressAnim, {
+            toValue: progress,
+            duration: 500,
+            useNativeDriver: false,
+        }).start();
+    }, [progress]);
+
+    // Timer effect
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isPlaying) {
+            interval = setInterval(() => {
+                setElapsedTime(prev => prev + 1);
+            }, 1000);
         }
+        return () => clearInterval(interval);
+    }, [isPlaying]);
 
-        await performActivityCompletion();
+    const handlePlayPause = () => {
+        setIsPlaying(!isPlaying);
     };
 
-    const performActivityCompletion = async () => {
-        try {
-            console.log('Completing current activity...');
-            await completeActivity();
-
-            // Check if loop is completed
-            if (progress.completed + 1 >= progress.total) {
-                console.log('Loop completed, navigating to summary...');
-                if (currentSession) {
-                    navigation.replace('LoopSummaryScreen', {
-                        sessionId: currentSession.id,
-                        loopId: route.params.loopId
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Error completing activity:', error);
-            Alert.alert('Error', 'Failed to complete activity');
-        }
-    };
-
-    const handleSkipActivity = async () => {
-        try {
-            console.log('Skipping current activity...');
-            await skipActivity();
-
-            // Check if loop is completed
-            if (progress.completed + 1 >= progress.total) {
-                console.log('Loop completed, navigating to summary...');
-                if (currentSession) {
-                    navigation.replace('LoopSummaryScreen', {
-                        sessionId: currentSession.id,
-                        loopId: route.params.loopId
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Error skipping activity:', error);
-            Alert.alert('Error', 'Failed to skip activity');
-        }
-    };
-
-    const handlePauseResume = async () => {
-        try {
-            if (isPaused) {
-                console.log('Resuming execution...');
-                await resumeExecution();
-            } else {
-                console.log('Pausing execution...');
-                await pauseExecution();
-            }
-        } catch (error) {
-            console.error('Error toggling pause state:', error);
+    const handleNext = () => {
+        if (currentActivityIndex < totalActivities - 1) {
+            setCurrentActivityIndex(prev => prev + 1);
+            setCompletedSubItems(new Set());
+            setShowSubItems(false);
+        } else {
+            handleComplete();
         }
     };
 
-    const handleStopLoop = async () => {
-        try {
-            console.log('Stopping loop execution...');
-            await stopExecution();
-            navigation.goBack();
-        } catch (error) {
-            console.error('Error stopping loop:', error);
-            Alert.alert('Error', 'Failed to stop loop');
+    const handlePrevious = () => {
+        if (currentActivityIndex > 0) {
+            setCurrentActivityIndex(prev => prev - 1);
+            setCompletedSubItems(new Set());
+            setShowSubItems(false);
         }
     };
 
-    const handleActivityPress = async (activityIndex: number) => {
-        // Only allow navigation to completed or current activity
-        if (activityIndex > currentActivityIndex) {
-            return; // Can't navigate to future activities
+    const handleComplete = () => {
+        Alert.alert(
+            'Complete Loop',
+            'Are you sure you want to complete this loop execution?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Complete',
+                    style: 'default',
+                    onPress: () => {
+                        dispatch(completeLoopExecution({
+                            loopId,
+                            executionId: executionId || 'new',
+                            totalTime: elapsedTime,
+                        }));
+                        navigation.goBack();
+                    },
+                },
+            ]
+        );
+    };
+
+    const handleSubItemToggle = (subItemId: string) => {
+        const newCompleted = new Set(completedSubItems);
+        if (newCompleted.has(subItemId)) {
+            newCompleted.delete(subItemId);
+        } else {
+            newCompleted.add(subItemId);
         }
-
-        try {
-            console.log(`Navigating to activity at index: ${activityIndex}`);
-            // Implementation would depend on useLoopExecution hook having a method to jump to specific activity
-            // For now, we'll just log this action
-        } catch (error) {
-            console.error('Error navigating to activity:', error);
-        }
+        setCompletedSubItems(newCompleted);
     };
 
-    const formatTime = (seconds: number) => {
-        const mins = Math.floor(Math.abs(seconds) / 60);
-        const secs = Math.abs(seconds) % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    const formatTime = (seconds: number): string => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const getTimerDisplayText = () => {
-        if (timer.isOvertime) {
-            return formatTime(timer.overtimeElapsed);
-        }
-        return formatTime(timer.timeRemaining);
-    };
-
-    const getActivityStatus = (index: number) => {
-        if (index < currentActivityIndex) return 'completed';
-        if (index === currentActivityIndex) return 'current';
-        return 'pending';
-    };
-
-    const getActivityTemplate = (templateId: string): ActivityTemplate | undefined => {
-        return getTemplateById(templateId);
-    };
-
-    const getActivityColors = (template: ActivityTemplate | undefined, status: string) => {
-        // Different colors for different activities like in HTML
-        const colorSets = [
-            { border: '#6366F1', bg: '#EEF2FF', icon: '#4F46E5' }, // indigo
-            { border: '#14B8A6', bg: '#F0FDFA', icon: '#0F766E' }, // teal
-            { border: '#F97316', bg: '#FFF7ED', icon: '#EA580C' }, // orange
-            { border: '#D1D5DB', bg: '#F9FAFB', icon: '#6B7280' }, // gray
-            { border: '#D1D5DB', bg: '#F9FAFB', icon: '#6B7280' }, // gray
-        ];
-
-        if (status === 'pending') {
-            return { border: '#D1D5DB', bg: '#F9FAFB', icon: '#6B7280' };
-        }
-
-        const activityIndex = currentActivityIndex % colorSets.length;
-        return colorSets[activityIndex];
-    };
-
-    const styles = useThemedStyles((theme) => ({
-        container: {
-            flex: 1,
-            backgroundColor: '#F3F4F6', // bg-gray-100
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        innerContainer: {
-            width: '100%',
-            maxWidth: 448, // max-w-md in pixels
-            minHeight: '100%',
-            backgroundColor: '#FFFFFF', // bg-white
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 25 },
-            shadowOpacity: 0.25,
-            shadowRadius: 25,
-            elevation: 25, // shadow-2xl
-        },
-        header: {
-            padding: 24, // p-6
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            borderBottomWidth: 1,
-            borderBottomColor: '#E5E7EB', // border-gray-200
-        },
-        headerButton: {
-            padding: 4,
-        },
-        headerCenter: {
-            alignItems: 'center',
-            flex: 1,
-            marginHorizontal: 16,
-        },
-        headerTitle: {
-            fontFamily: 'Inter', // inter-font
-            fontSize: 30, // text-3xl
-            fontWeight: '700', // font-bold
-            letterSpacing: -0.025, // tracking-tight
-            color: '#4338CA', // text-indigo-700
-            textAlign: 'center',
-            lineHeight: 36,
-        },
-        headerSubtitle: {
-            fontSize: 12, // text-xs
-            color: '#6B7280', // text-gray-500
-            marginTop: 2,
-            lineHeight: 16,
-        },
-        mainContent: {
-            flex: 1,
-            padding: 24, // p-6
-            alignItems: 'center',
-        },
-        activitiesContainer: {
-            width: '100%',
-            paddingVertical: 12, // py-3
-            marginBottom: 16, // mb-4
-        },
-        activitiesScroll: {
-            gap: 16, // space-x-4
-            paddingHorizontal: 4,
-        },
-        activityCircle: {
-            width: 80, // w-20
-            height: 80, // h-20
-            borderRadius: 40,
-            borderWidth: 4,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.1,
-            shadowRadius: 6,
-            elevation: 4, // shadow-md
-        },
-        timerContainer: {
-            alignItems: 'center',
-            marginBottom: 16,
-        },
-        timerWrapper: {
-            position: 'relative',
-        },
-        timerText: {
-            fontFamily: 'Inter', // inter-font
-            fontSize: 72, // text-7xl - equivalent to 72px
-            fontWeight: '700', // font-bold
-            color: '#4F46E5', // text-indigo-600
-            lineHeight: 80,
-            textAlign: 'center',
-        },
-        overtimeText: {
-            fontSize: 12, // text-xs
-            color: '#EF4444', // text-red-500
-            marginTop: 4,
-            lineHeight: 16,
-        },
-        resetButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginTop: 8,
-            paddingVertical: 4,
-            paddingHorizontal: 8,
-        },
-        resetButtonText: {
-            fontSize: 10, // text-[10px]
-            color: '#6366F1', // text-indigo-500
-            fontWeight: '500',
-            marginLeft: 2,
-            lineHeight: 12,
-        },
-        activityDetailsContainer: {
-            alignItems: 'center',
-            marginTop: 24, // mt-6
-            marginBottom: 24,
-        },
-        activityImage: {
-            width: 96, // w-24
-            height: 96, // h-24
-            borderRadius: 48,
-            borderWidth: 4,
-            borderColor: '#A5B4FC', // border-indigo-300
-            marginBottom: 16,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.25,
-            shadowRadius: 10,
-            elevation: 10, // shadow-lg
-        },
-        activityTitle: {
-            fontFamily: 'Inter', // inter-font
-            fontSize: 36, // text-4xl
-            fontWeight: '700', // font-bold
-            color: '#111827', // text-gray-900
-            lineHeight: 40,
-            textAlign: 'center',
-        },
-        activityDescription: {
-            color: '#4B5563', // text-gray-600
-            marginTop: 4,
-            fontSize: 18, // text-lg
-            lineHeight: 28,
-            textAlign: 'center',
-        },
-        activityMeta: {
-            marginTop: 8,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        activityMetaText: {
-            fontSize: 14, // text-sm
-            color: '#4B5563', // text-gray-600
-            lineHeight: 20,
-        },
-        subActivitiesContainer: {
-            width: '100%',
-            maxWidth: 320, // max-w-xs
-            marginTop: 24, // mt-6
-        },
-        subActivitiesHeader: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 8, // mb-2
-        },
-        subActivitiesTitle: {
-            fontFamily: 'Inter', // inter-font
-            fontSize: 20, // text-xl
-            fontWeight: '600', // font-semibold
-            color: '#374151', // text-gray-700
-            lineHeight: 28,
-        },
-        subActivitiesList: {
-            gap: 12, // space-y-3
-        },
-        subActivityItem: {
-            backgroundColor: '#EEF2FF', // bg-indigo-50
-            padding: 12, // p-3
-            borderRadius: 12, // rounded-xl
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-        },
-        subActivityLeft: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            flex: 1,
-        },
-        subActivityIcon: {
-            marginRight: 12, // mr-3
-        },
-        subActivityText: {
-            color: '#374151', // text-gray-700
-            fontSize: 18, // text-lg
-            lineHeight: 28,
-        },
-        subActivityTextCompleted: {
-            textDecorationLine: 'line-through',
-            opacity: 0.6,
-        },
-        nextActivityContainer: {
-            alignItems: 'center',
-            width: '100%',
-            maxWidth: 320, // max-w-xs
-            paddingTop: 16, // pt-4
-            marginTop: 'auto',
-        },
-        nextActivityLabel: {
-            fontSize: 14, // text-sm
-            color: '#6B7280', // text-gray-500
-            marginBottom: 4,
-            lineHeight: 20,
-        },
-        nextActivityText: {
-            fontSize: 18, // text-lg
-            fontWeight: '500', // font-medium
-            color: '#4F46E5', // text-indigo-600
-            lineHeight: 28,
-            textAlign: 'center',
-        },
-        footer: {
-            padding: 12, // p-3
-            backgroundColor: '#F9FAFB', // bg-gray-50
-            borderTopWidth: 1,
-            borderTopColor: '#E5E7EB', // border-gray-200
-        },
-        footerContent: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8, // space-x-2
-        },
-        footerButton: {
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            paddingVertical: 8, // py-2
-            paddingHorizontal: 12, // px-3
-            borderRadius: 8, // rounded-lg
-        },
-        footerButtonIcon: {
-            marginBottom: 2,
-        },
-        footerButtonText: {
-            fontSize: 12, // text-xs
-            marginTop: 2,
-            lineHeight: 16,
-        },
-        playPauseButton: {
-            backgroundColor: '#4F46E5', // bg-indigo-600
-            width: 56, // w-14
-            height: 56, // h-14
-            borderRadius: 12, // rounded-xl
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.25,
-            shadowRadius: 10,
-            elevation: 10, // shadow-lg
-        },
-        menuItem: {
-            padding: 16,
-            borderBottomWidth: 1,
-            borderBottomColor: '#E5E7EB',
-        },
-    }));
-
-    if (!currentLoop || !currentActivity) {
+    if (!loop || !currentActivity) {
         return (
-            <View style={[styles.container]}>
-                <View style={styles.innerContainer}>
-                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="h3">Loading...</Typography>
-                    </View>
+            <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <View style={styles.errorContainer}>
+                    <Icon name="circle-alert" size={64} color={theme.colors.error} />
+                    <Typography style={[styles.errorTitle, { color: theme.colors.error }]}>
+                        Loop Not Found
+                    </Typography>
                 </View>
-            </View>
+            </SafeAreaView>
         );
     }
 
-    const nextActivity = currentLoop.activities?.[currentActivityIndex + 1];
-    const currentTemplate = getActivityTemplate(currentActivity.templateId);
-    const nextTemplate = nextActivity ? getActivityTemplate(nextActivity.templateId) : undefined;
+    const styles = {
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.background,
+        },
+        header: {
+            paddingHorizontal: 24,
+            paddingTop: 16,
+            paddingBottom: 8,
+        },
+        headerRow: {
+            flexDirection: 'row' as const,
+            alignItems: 'center' as const,
+            justifyContent: 'space-between' as const,
+        },
+        backButton: {
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: theme.colors.surface,
+            alignItems: 'center' as const,
+            justifyContent: 'center' as const,
+            ...theme.elevation.xs,
+        },
+        loopTitle: {
+            fontSize: 18,
+            fontWeight: '600' as const,
+            color: theme.colors.textPrimary,
+            flex: 1,
+            textAlign: 'center' as const,
+            marginHorizontal: 16,
+        },
+        menuButton: {
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: theme.colors.surface,
+            alignItems: 'center' as const,
+            justifyContent: 'center' as const,
+            ...theme.elevation.xs,
+        },
+        progressContainer: {
+            paddingHorizontal: 24,
+            paddingVertical: 16,
+        },
+        progressBar: {
+            height: 8,
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 4,
+            overflow: 'hidden' as const,
+        },
+        progressFill: {
+            height: '100%',
+            backgroundColor: theme.colors.primary,
+            borderRadius: 4,
+        },
+        progressText: {
+            fontSize: 14,
+            color: theme.colors.textSecondary,
+            textAlign: 'center' as const,
+            marginTop: 8,
+        },
+        content: {
+            flex: 1,
+            paddingHorizontal: 24,
+        },
+        activityCard: {
+            backgroundColor: theme.colors.surface,
+            borderRadius: 28,
+            padding: 32,
+            marginBottom: 24,
+            ...theme.elevation.m,
+        },
+        activityHeader: {
+            alignItems: 'center' as const,
+            marginBottom: 24,
+        },
+        activityIcon: {
+            width: 80,
+            height: 80,
+            borderRadius: 40,
+            backgroundColor: theme.colors.primary,
+            alignItems: 'center' as const,
+            justifyContent: 'center' as const,
+            marginBottom: 16,
+            ...theme.elevation.xs,
+        },
+        activityTitle: {
+            fontSize: 24,
+            fontWeight: '700' as const,
+            color: theme.colors.textPrimary,
+            textAlign: 'center' as const,
+            marginBottom: 8,
+        },
+        activityDuration: {
+            fontSize: 16,
+            color: theme.colors.textSecondary,
+            textAlign: 'center' as const,
+        },
+        activityDescription: {
+            fontSize: 16,
+            color: theme.colors.textSecondary,
+            lineHeight: 24,
+            textAlign: 'center' as const,
+            marginBottom: 24,
+        },
+        subItemsSection: {
+            marginTop: 24,
+        },
+        subItemsHeader: {
+            flexDirection: 'row' as const,
+            alignItems: 'center' as const,
+            justifyContent: 'space-between' as const,
+            marginBottom: 16,
+        },
+        subItemsTitle: {
+            fontSize: 18,
+            fontWeight: '600' as const,
+            color: theme.colors.textPrimary,
+        },
+        toggleButton: {
+            flexDirection: 'row' as const,
+            alignItems: 'center' as const,
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            borderRadius: 20,
+            backgroundColor: theme.colors.surfaceVariant,
+        },
+        toggleText: {
+            fontSize: 14,
+            color: theme.colors.textSecondary,
+            marginLeft: 8,
+        },
+        subItemsList: {
+            gap: 12,
+        },
+        subItem: {
+            flexDirection: 'row' as const,
+            alignItems: 'center' as const,
+            padding: 16,
+            backgroundColor: theme.colors.surfaceVariant,
+            borderRadius: 16,
+        },
+        subItemCompleted: {
+            backgroundColor: theme.colors.primaryContainer,
+        },
+        checkbox: {
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            borderWidth: 2,
+            borderColor: theme.colors.outline,
+            alignItems: 'center' as const,
+            justifyContent: 'center' as const,
+            marginRight: 12,
+        },
+        checkboxChecked: {
+            backgroundColor: theme.colors.primary,
+            borderColor: theme.colors.primary,
+        },
+        subItemText: {
+            fontSize: 16,
+            color: theme.colors.textPrimary,
+            flex: 1,
+        },
+        subItemTextCompleted: {
+            color: theme.colors.textSecondary,
+            textDecorationLine: 'line-through' as const,
+        },
+        // Sticky bottom controls
+        stickyBottom: {
+            position: 'absolute' as const,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: theme.colors.surface,
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            paddingTop: 24,
+            paddingBottom: 34, // Account for safe area
+            paddingHorizontal: 24,
+            ...theme.elevation.xl,
+        },
+        timerSection: {
+            alignItems: 'center' as const,
+            marginBottom: 24,
+        },
+        timerDisplay: {
+            fontSize: 48,
+            fontWeight: '300' as const,
+            color: theme.colors.textPrimary,
+            marginBottom: 8,
+        },
+        timerLabel: {
+            fontSize: 14,
+            color: theme.colors.textSecondary,
+            textTransform: 'uppercase' as const,
+            letterSpacing: 1,
+        },
+        controlsRow: {
+            flexDirection: 'row' as const,
+            alignItems: 'center' as const,
+            justifyContent: 'space-between' as const,
+            marginBottom: 16,
+        },
+        controlButton: {
+            width: 56,
+            height: 56,
+            borderRadius: 28,
+            alignItems: 'center' as const,
+            justifyContent: 'center' as const,
+            ...theme.elevation.xs,
+        },
+        previousButton: {
+            backgroundColor: theme.colors.surfaceVariant,
+        },
+        playPauseButton: {
+            width: 72,
+            height: 72,
+            borderRadius: 36,
+            backgroundColor: theme.colors.primary,
+        },
+        nextButton: {
+            backgroundColor: theme.colors.surfaceVariant,
+        },
+        disabledButton: {
+            opacity: 0.3,
+        },
+        completeButton: {
+            backgroundColor: theme.colors.secondary,
+            paddingVertical: 16,
+            paddingHorizontal: 32,
+            borderRadius: 28,
+            alignItems: 'center' as const,
+            ...theme.elevation.m,
+        },
+        completeButtonText: {
+            fontSize: 16,
+            fontWeight: '600' as const,
+            color: theme.colors.onSecondary,
+        },
+        errorContainer: {
+            flex: 1,
+            alignItems: 'center' as const,
+            justifyContent: 'center' as const,
+            padding: 24,
+        },
+        errorTitle: {
+            fontSize: 24,
+            fontWeight: '600' as const,
+            marginTop: 16,
+            textAlign: 'center' as const,
+        },
+    };
 
     return (
-        <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
-            <View style={styles.innerContainer}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
-                        <Icon name="arrow-left" size={24} color="#4F46E5" />
+            {/* Header */}
+            <View style={styles.header}>
+                <View style={styles.headerRow}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                        <Icon name="arrow-left" size={20} color={theme.colors.textPrimary} />
                     </TouchableOpacity>
 
-                    <View style={styles.headerCenter}>
-                        <Typography style={styles.headerTitle}>
-                            {currentLoop.title}
-                        </Typography>
-                        <Typography style={styles.headerSubtitle}>
-                            Activity {currentActivityIndex + 1} of {progress.total}
-                        </Typography>
-                    </View>
+                    <Typography style={styles.loopTitle} numberOfLines={1}>
+                        {loop.title}
+                    </Typography>
 
-                    <TouchableOpacity style={styles.headerButton} onPress={() => setShowMenu(true)}>
-                        <Icon name="ellipsis-vertical" size={24} color="#4F46E5" />
+                    <TouchableOpacity style={styles.menuButton}>
+                        <Icon name="more-horizontal" size={20} color={theme.colors.textPrimary} />
                     </TouchableOpacity>
                 </View>
+            </View>
 
-                {/* Main Content */}
-                <View style={styles.mainContent}>
-                    {/* Activity Indicators */}
-                    <View style={styles.activitiesContainer}>
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.activitiesScroll}
-                        >
-                            {currentLoop.activities?.map((activity, index) => {
-                                const status = getActivityStatus(index);
-                                const template = getActivityTemplate(activity.templateId);
-                                const colors = getActivityColors(template, status);
+            {/* Progress Bar */}
+            <View style={styles.progressContainer}>
+                <View style={styles.progressBar}>
+                    <Animated.View
+                        style={[
+                            styles.progressFill,
+                            {
+                                width: progressAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: ['0%', '100%'],
+                                })
+                            }
+                        ]}
+                    />
+                </View>
+                <Typography style={styles.progressText}>
+                    Activity {currentActivityIndex + 1} of {totalActivities}
+                </Typography>
+            </View>
 
-                                return (
+            {/* Main Content */}
+            <ScrollView
+                style={styles.content}
+                contentContainerStyle={{ paddingBottom: 280 }} // Space for sticky controls
+                showsVerticalScrollIndicator={false}
+            >
+                <Animated.View
+                    style={{
+                        opacity: fadeAnim,
+                        transform: [{ translateY: slideAnim }],
+                    }}
+                >
+                    <View style={styles.activityCard}>
+                        {/* Activity Header */}
+                        <View style={styles.activityHeader}>
+                            <View style={styles.activityIcon}>
+                                <Icon name="zap" size={32} color={theme.colors.onPrimary} />
+                            </View>
+
+                            <Typography style={styles.activityTitle}>
+                                {currentActivity.title}
+                            </Typography>
+
+                            <Typography style={styles.activityDuration}>
+                                {currentActivity.estimatedDuration} minutes
+                            </Typography>
+                        </View>
+
+                        {/* Activity Description */}
+                        {currentActivity.description && (
+                            <Typography style={styles.activityDescription}>
+                                {currentActivity.description}
+                            </Typography>
+                        )}
+
+                        {/* Sub-items */}
+                        {currentActivity.subItems && currentActivity.subItems.length > 0 && (
+                            <View style={styles.subItemsSection}>
+                                <View style={styles.subItemsHeader}>
+                                    <Typography style={styles.subItemsTitle}>
+                                        Sub-tasks ({completedSubItems.size}/{currentActivity.subItems.length})
+                                    </Typography>
                                     <TouchableOpacity
-                                        key={index}
-                                        style={[
-                                            styles.activityCircle,
-                                            {
-                                                borderColor: colors.border,
-                                                backgroundColor: colors.bg,
-                                            }
-                                        ]}
-                                        onPress={() => handleActivityPress(index)}
-                                        disabled={index > currentActivityIndex}
+                                        style={styles.toggleButton}
+                                        onPress={() => setShowSubItems(!showSubItems)}
                                     >
                                         <Icon
-                                            name="zap"
-                                            size={32}
-                                            color={colors.icon}
+                                            name={showSubItems ? "chevron-up" : "chevron-down"}
+                                            size={16}
+                                            color={theme.colors.textSecondary}
                                         />
+                                        <Typography style={styles.toggleText}>
+                                            {showSubItems ? 'Hide' : 'Show'}
+                                        </Typography>
                                     </TouchableOpacity>
-                                );
-                            })}
-                        </ScrollView>
-                    </View>
+                                </View>
 
-                    {/* Timer */}
-                    <View style={styles.timerContainer}>
-                        <View style={styles.timerWrapper}>
-                            <Typography style={styles.timerText}>
-                                {getTimerDisplayText()}
-                            </Typography>
-                        </View>
-                        {timer.isOvertime && (
-                            <Typography style={styles.overtimeText}>
-                                + {formatTime(timer.overtimeElapsed)} OVERTIME
-                            </Typography>
-                        )}
-                        <TouchableOpacity style={styles.resetButton}>
-                            <Icon name="refresh" size={16} color="#6366F1" />
-                            <Typography style={styles.resetButtonText}>Reset timer</Typography>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Activity Details */}
-                    <View style={styles.activityDetailsContainer}>
-                        {/* Placeholder for activity image */}
-                        <View style={[styles.activityImage, { backgroundColor: '#A5B4FC' }]}>
-                            <Icon name="zap" size={48} color="#4F46E5" />
-                        </View>
-
-                        <Typography style={styles.activityTitle}>
-                            {currentActivity.title || currentTemplate?.title || 'Activity'}
-                        </Typography>
-                        <Typography style={styles.activityDescription}>
-                            {currentTemplate?.description || 'Complete this activity'}
-                        </Typography>
-                        {currentActivity.duration && (
-                            <View style={styles.activityMeta}>
-                                <Typography style={styles.activityMetaText}>
-                                    {currentActivity.duration} min
-                                </Typography>
+                                {showSubItems && (
+                                    <View style={styles.subItemsList}>
+                                        {currentActivity.subItems.map((subItem, index) => {
+                                            const isCompleted = completedSubItems.has(subItem.id);
+                                            return (
+                                                <TouchableOpacity
+                                                    key={subItem.id}
+                                                    style={[
+                                                        styles.subItem,
+                                                        isCompleted && styles.subItemCompleted
+                                                    ]}
+                                                    onPress={() => handleSubItemToggle(subItem.id)}
+                                                >
+                                                    <View style={[
+                                                        styles.checkbox,
+                                                        isCompleted && styles.checkboxChecked
+                                                    ]}>
+                                                        {isCompleted && (
+                                                            <Icon name="check" size={14} color={theme.colors.onPrimary} />
+                                                        )}
+                                                    </View>
+                                                    <Typography style={[
+                                                        styles.subItemText,
+                                                        isCompleted && styles.subItemTextCompleted
+                                                    ]}>
+                                                        {subItem.title}
+                                                    </Typography>
+                                                </TouchableOpacity>
+                                            );
+                                        })}
+                                    </View>
+                                )}
                             </View>
                         )}
                     </View>
+                </Animated.View>
+            </ScrollView>
 
-                    {/* Sub-activities */}
-                    {currentActivity.subItems && currentActivity.subItems.length > 0 && (
-                        <View style={styles.subActivitiesContainer}>
-                            <View style={styles.subActivitiesHeader}>
-                                <Typography style={styles.subActivitiesTitle}>Sub-activities</Typography>
-                            </View>
-                            <View style={styles.subActivitiesList}>
-                                {currentActivity.subItems.map((subItem, index) => (
-                                    <TouchableOpacity
-                                        key={index}
-                                        style={styles.subActivityItem}
-                                        onPress={() => updateSubItemProgress(index, !subItem.completed)}
-                                    >
-                                        <View style={styles.subActivityLeft}>
-                                            <View style={styles.subActivityIcon}>
-                                                {subItem.completed ? (
-                                                    <Icon name="check-circle" size={24} color="#14B8A6" />
-                                                ) : (
-                                                    <Icon name="circle" size={24} color="#6366F1" />
-                                                )}
-                                            </View>
-                                            <Typography style={[
-                                                styles.subActivityText,
-                                                subItem.completed && styles.subActivityTextCompleted
-                                            ]}>
-                                                {subItem.label}
-                                            </Typography>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        </View>
-                    )}
-
-                    {/* Next Activity */}
-                    {nextActivity && (
-                        <View style={styles.nextActivityContainer}>
-                            <Typography style={styles.nextActivityLabel}>Next Activity:</Typography>
-                            <Typography style={styles.nextActivityText}>
-                                {nextActivity.title || nextTemplate?.title} {nextActivity.duration ? `(${nextActivity.duration} min)` : ''}
-                            </Typography>
-                        </View>
-                    )}
+            {/* Sticky Bottom Controls */}
+            <View style={styles.stickyBottom}>
+                {/* Timer */}
+                <View style={styles.timerSection}>
+                    <Typography style={styles.timerDisplay}>
+                        {formatTime(elapsedTime)}
+                    </Typography>
+                    <Typography style={styles.timerLabel}>
+                        Elapsed Time
+                    </Typography>
                 </View>
 
-                {/* Footer */}
-                <View style={styles.footer}>
-                    <View style={styles.footerContent}>
-                        {/* Skip Button */}
-                        <TouchableOpacity style={styles.footerButton} onPress={handleSkipActivity}>
-                            <View style={styles.footerButtonIcon}>
-                                <Icon name="skip-forward" size={24} color="#4B5563" />
-                            </View>
-                            <Typography style={[styles.footerButtonText, { color: '#4B5563' }]}>
-                                Skip
-                            </Typography>
-                        </TouchableOpacity>
-
-                        {/* Play/Pause Button */}
-                        <TouchableOpacity style={styles.playPauseButton} onPress={handlePauseResume}>
-                            <Icon
-                                name={isPaused ? "play" : "pause"}
-                                size={24}
-                                color="#FFFFFF"
-                            />
-                        </TouchableOpacity>
-
-                        {/* Complete Button */}
-                        <TouchableOpacity style={styles.footerButton} onPress={handleCompleteActivity}>
-                            <View style={styles.footerButtonIcon}>
-                                <Icon name="check" size={24} color="#4B5563" />
-                            </View>
-                            <Typography style={[styles.footerButtonText, { color: '#4B5563' }]}>
-                                Complete
-                            </Typography>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {/* Menu Bottom Sheet */}
-                <BottomSheet visible={showMenu} onClose={() => setShowMenu(false)}>
-                    <TouchableOpacity style={styles.menuItem} onPress={handleStopLoop}>
-                        <Typography variant="body1" color="error">Stop Loop</Typography>
+                {/* Play Controls */}
+                <View style={styles.controlsRow}>
+                    <TouchableOpacity
+                        style={[
+                            styles.controlButton,
+                            styles.previousButton,
+                            currentActivityIndex === 0 && styles.disabledButton
+                        ]}
+                        onPress={handlePrevious}
+                        disabled={currentActivityIndex === 0}
+                    >
+                        <Icon name="skip-back" size={24} color={theme.colors.textPrimary} />
                     </TouchableOpacity>
-                </BottomSheet>
 
-                {/* Confirmation Modal */}
-                <ConfirmationModal
-                    visible={showConfirmationModal}
-                    title="Incomplete Tasks"
-                    message="Some sub-activities are not completed. Do you want to complete this activity anyway?"
-                    confirmText="Complete Anyway"
-                    cancelText="Cancel"
-                    onConfirm={async () => {
-                        setShowConfirmationModal(false);
-                        await performActivityCompletion();
-                    }}
-                    onCancel={() => setShowConfirmationModal(false)}
-                />
+                    <TouchableOpacity
+                        style={[styles.controlButton, styles.playPauseButton]}
+                        onPress={handlePlayPause}
+                    >
+                        <Icon
+                            name={isPlaying ? "pause" : "play"}
+                            size={28}
+                            color={theme.colors.onPrimary}
+                        />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[
+                            styles.controlButton,
+                            styles.nextButton,
+                            currentActivityIndex === totalActivities - 1 && styles.disabledButton
+                        ]}
+                        onPress={handleNext}
+                        disabled={currentActivityIndex === totalActivities - 1}
+                    >
+                        <Icon name="skip-forward" size={24} color={theme.colors.textPrimary} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Complete Button */}
+                <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+                    <Typography style={styles.completeButtonText}>
+                        Complete Loop
+                    </Typography>
+                </TouchableOpacity>
             </View>
-        </View>
+        </SafeAreaView>
     );
 }

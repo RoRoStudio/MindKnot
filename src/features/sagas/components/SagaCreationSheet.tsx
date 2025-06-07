@@ -13,8 +13,8 @@ import {
 import { BottomSheet, Typography, Button, IconName, IconPicker } from '../../../shared/components';
 import { useTheme } from '../../../app/contexts/ThemeContext';
 import { useThemedStyles } from '../../../shared/hooks/useThemedStyles';
-import FormInput from '../../../shared/components/FormInput';
-import Form from '../../../shared/components/Form';
+import FormInput from '../../../shared/components/form/FormInput';
+import Form from '../../../shared/components/form/Form';
 import { useForm, Controller } from 'react-hook-form';
 
 interface SagaCreationSheetProps {

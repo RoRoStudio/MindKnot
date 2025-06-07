@@ -9,10 +9,10 @@ import {
     TouchableWithoutFeedback,
     Keyboard,
 } from 'react-native';
-import { Typography } from './Typography';
-import { Button } from './Button';
-import { useTheme } from '../../app/contexts/ThemeContext';
-import { useThemedStyles } from '../hooks/useThemedStyles';
+import { Typography } from '../Typography';
+import { Button } from '../Button';
+import { useTheme } from '../../../app/contexts/ThemeContext';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 /**
  * Props for the FormModal component

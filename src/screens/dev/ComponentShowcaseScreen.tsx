@@ -26,20 +26,20 @@ import { refreshAllCategoryInstances } from '../../shared/hooks/useCategories';
 import CategoryManager from '../../shared/components/CategoryManager';
 
 // Form components
-import FormInput from '../../shared/components/FormInput';
-import FormSwitch from '../../shared/components/FormSwitch';
-import FormCheckbox from '../../shared/components/FormCheckbox';
-import FormTextarea from '../../shared/components/FormTextarea';
-import FormRichTextarea from '../../shared/components/FormRichTextarea';
-import FormSelect from '../../shared/components/FormSelect';
-import FormRadioGroup from '../../shared/components/FormRadioGroup';
-import FormDatePicker from '../../shared/components/FormDatePicker';
-import { FormErrorMessage } from '../../shared/components/FormErrorMessage';
-import FormLabelInput from '../../shared/components/FormLabelInput';
-import FormMoodSelector from '../../shared/components/FormMoodSelector';
-import FormCategorySelector from '../../shared/components/FormCategorySelector';
-import FormArrayField from '../../shared/components/FormArrayField';
-import Form from '../../shared/components/Form';
+import FormInput from '../../shared/components/form/FormInput';
+import FormSwitch from '../../shared/components/form/FormSwitch';
+import FormCheckbox from '../../shared/components/form/FormCheckbox';
+import FormTextarea from '../../shared/components/form/FormTextarea';
+import FormRichTextarea from '../../shared/components/form/FormRichTextarea';
+import FormSelect from '../../shared/components/form/FormSelect';
+import FormRadioGroup from '../../shared/components/form/FormRadioGroup';
+import FormDatePicker from '../../shared/components/form/FormDatePicker';
+import { FormErrorMessage } from '../../shared/components/form/FormErrorMessage';
+import FormLabelInput from '../../shared/components/form/FormLabelInput';
+import FormMoodSelector from '../../shared/components/form/FormMoodSelector';
+import FormCategorySelector from '../../shared/components/form/FormCategorySelector';
+import FormArrayField from '../../shared/components/form/FormArrayField';
+import Form from '../../shared/components/form/Form';
 
 // Mock data for component showcase
 const mockData = {
