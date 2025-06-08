@@ -22,9 +22,7 @@ export const useNoteActions = () => {
         }
     }, []);
 
-    useEffect(() => {
-        loadNotes();
-    }, [loadNotes]);
+    // Remove auto-loading to prevent infinite loops - let parent components control when to load
 
     const addNote = useCallback(async (data: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
         try {

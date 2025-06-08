@@ -14,9 +14,7 @@ export function useNotes() {
         getNoteById
     } = useNoteActions();
 
-    useEffect(() => {
-        loadNotes();
-    }, [loadNotes]);
+    // Remove redundant useEffect - let the parent component handle when to load
 
     return {
         notes,

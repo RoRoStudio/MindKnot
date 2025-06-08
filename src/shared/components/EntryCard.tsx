@@ -381,8 +381,25 @@ export const EntryCard: React.FC<EntryCardProps> = ({
                     getById: getPathById
                 };
             case 'loop':
-                // TODO: Re-implement in Phase 3
-                throw new Error('Loop services not yet implemented in Phase 3');
+                // TODO: Re-implement when loops are available
+                return {
+                    update: async () => {
+                        console.warn('Loop operations not available - loops are being re-implemented');
+                        return false;
+                    },
+                    create: async () => {
+                        console.warn('Loop operations not available - loops are being re-implemented');
+                        return false;
+                    },
+                    delete: async () => {
+                        console.warn('Loop operations not available - loops are being re-implemented');
+                        return false;
+                    },
+                    getById: async () => {
+                        console.warn('Loop operations not available - loops are being re-implemented');
+                        return null;
+                    }
+                };
             default:
                 throw new Error(`Unsupported entry type: ${entryType}`);
         }

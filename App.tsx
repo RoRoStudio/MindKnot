@@ -11,7 +11,8 @@ import { store } from './src/app/store';
 import { ThemeProvider } from './src/app/contexts/ThemeContext';
 import { BottomSheetProvider } from './src/app/contexts/BottomSheetContext';
 import AppNavigator from './src/app/navigation/AppNavigator';
-import { ExpandableLoopHeader } from './src/shared/components/ExpandableLoopHeader';
+// TODO: Re-enable when loops are implemented
+// import { ExpandableLoopHeader } from './src/shared/components/ExpandableLoopHeader';
 // TODO: Re-enable when loops are implemented
 // import { LoopExecutionScreen } from './src/features/loops/screens/LoopExecutionScreen';
 // import { useExpandableLoopHeader } from './src/shared/hooks/useExpandableLoopHeader';

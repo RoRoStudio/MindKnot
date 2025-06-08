@@ -8,7 +8,8 @@ import noteSlice from '../../features/notes/store/noteSlice';
 import pathSlice from '../../features/paths/store/pathSlice';
 import sparkSlice from '../../features/sparks/store/sparkSlice';
 import sagaSlice from '../../features/sagas/store/sagaSlice';
-import loopSlice from '../../features/loops/store/loopSlice';
+// TODO: Re-add loopSlice when loops are re-implemented
+// import loopSlice from '../../features/loops/store/loopSlice';
 
 export const store = configureStore({
     reducer: {
@@ -17,7 +18,8 @@ export const store = configureStore({
         path: pathSlice,
         saga: sagaSlice,
         spark: sparkSlice,
-        loops: loopSlice,
+        // TODO: Re-add loops reducer when loops are re-implemented
+        // loops: loopSlice,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

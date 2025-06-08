@@ -26,13 +26,15 @@ import { useNotes } from '../../features/notes/hooks/useNotes';
 import { useSparks } from '../../features/sparks/hooks/useSparks';
 import { useActions } from '../../features/actions/hooks/useActions';
 import { usePaths } from '../../features/paths/hooks/usePaths';
-import { useLoops } from '../../features/loops/hooks/useLoops';
+// TODO: Re-add when loops are re-implemented
+// import { useLoops } from '../../features/loops/hooks/useLoops';
 import { useBottomSheet } from '../../app/contexts/BottomSheetContext';
 import { Note } from '../../shared/types/note';
 import { Spark } from '../../shared/types/spark';
 import { Action } from '../../shared/types/action';
 import { Path } from '../../shared/types/path';
-import { Loop } from '../../shared/types/loop';
+// TODO: Re-add when loops are re-implemented
+// import { Loop } from '../../shared/types/loop';
 import { ENTRY_TYPES } from '../../shared/constants/entryTypes';
 import { EntryType } from '../../shared/constants/entryTypes';
 
@@ -54,7 +56,10 @@ export default function HomeScreen() {
     const { sparks, loadSparks } = useSparks();
     const { actions, loadActions } = useActions();
     const { paths, loadPaths } = usePaths();
-    const { loops, loadLoops } = useLoops();
+    // TODO: Re-add when loops are re-implemented
+    // const { loops, loadLoops } = useLoops();
+    const loops: any[] = [];
+    const loadLoops = async () => { };
     const { showNoteForm, showSparkForm, showActionForm, showPathForm } = useBottomSheet();
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -84,7 +89,7 @@ export default function HomeScreen() {
             }
         };
         loadData();
-    }, [loadNotes, loadSparks, loadActions, loadPaths, loadLoops]);
+    }, []); // Empty dependency array - load data only once on mount
 
     const formatRelativeDate = (dateString: string): string => {
         const date = new Date(dateString);
@@ -111,80 +116,90 @@ export default function HomeScreen() {
                 navigation.navigate('PathScreen', { mode: 'view', id });
                 break;
             case 'loop':
-                navigation.navigate('LoopBuilderScreen', { mode: 'view', id });
+                // TODO: Re-add when loops are re-implemented
+                // navigation.navigate('LoopBuilderScreen', { mode: 'view', id });
+                console.warn('Loop navigation not available - loops are being re-implemented');
                 break;
             default:
                 console.warn(`Unknown entry type: ${type}`);
         }
     };
 
-    // Type-safe entry mappings
-    const noteEntries = Array.isArray(notes)
-        ? notes.map((n: Note) => ({
-            id: n.id,
-            type: 'note',
-            title: n.title,
-            date: formatRelativeDate(n.createdAt),
-            ...iconMap.note
-        }))
-        : [];
+    // Type-safe entry mappings with memoization
+    const noteEntries = React.useMemo(() =>
+        Array.isArray(notes)
+            ? notes.map((n: Note) => ({
+                id: n.id,
+                type: 'note',
+                title: n.title,
+                date: formatRelativeDate(n.createdAt),
+                ...iconMap.note
+            }))
+            : [], [notes]);
 
-    const sparkEntries = Array.isArray(sparks)
-        ? sparks.map((s: Spark) => ({
-            id: s.id,
-            type: 'spark',
-            title: s.title,
-            date: formatRelativeDate(s.createdAt),
-            ...iconMap.spark
-        }))
-        : [];
+    const sparkEntries = React.useMemo(() =>
+        Array.isArray(sparks)
+            ? sparks.map((s: Spark) => ({
+                id: s.id,
+                type: 'spark',
+                title: s.title,
+                date: formatRelativeDate(s.createdAt),
+                ...iconMap.spark
+            }))
+            : [], [sparks]);
 
-    const actionEntries = Array.isArray(actions)
-        ? actions.map((a: Action) => ({
-            id: a.id,
-            type: 'action',
-            title: a.title,
-            date: formatRelativeDate(a.createdAt),
-            ...iconMap.action
-        }))
-        : [];
+    const actionEntries = React.useMemo(() =>
+        Array.isArray(actions)
+            ? actions.map((a: Action) => ({
+                id: a.id,
+                type: 'action',
+                title: a.title,
+                date: formatRelativeDate(a.createdAt),
+                ...iconMap.action
+            }))
+            : [], [actions]);
 
-    const pathEntries = Array.isArray(paths)
-        ? paths.map((p: Path) => ({
-            id: p.id,
-            type: 'path',
-            title: p.title,
-            date: formatRelativeDate(p.createdAt),
-            ...iconMap.path
-        }))
-        : [];
+    const pathEntries = React.useMemo(() =>
+        Array.isArray(paths)
+            ? paths.map((p: Path) => ({
+                id: p.id,
+                type: 'path',
+                title: p.title,
+                date: formatRelativeDate(p.createdAt),
+                ...iconMap.path
+            }))
+            : [], [paths]);
 
-    const loopEntries = Array.isArray(loops)
-        ? loops.map((l: Loop) => ({
-            id: l.id,
-            type: 'loop',
-            title: l.title,
-            date: formatRelativeDate(l.createdAt.toISOString()),
-            ...iconMap.loop
-        }))
-        : [];
+    // TODO: Re-add when loops are re-implemented
+    const loopEntries: any[] = [];
+    // const loopEntries = Array.isArray(loops)
+    //     ? loops.map((l: Loop) => ({
+    //         id: l.id,
+    //         type: 'loop',
+    //         title: l.title,
+    //         date: formatRelativeDate(l.createdAt.toISOString()),
+    //         ...iconMap.loop
+    //     }))
+    //     : [];
 
-    const recentEntries = [
-        ...noteEntries,
-        ...sparkEntries,
-        ...actionEntries,
-        ...pathEntries,
-        ...loopEntries,
-    ]
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 4);
+    const recentEntries = React.useMemo(() => {
+        return [
+            ...noteEntries,
+            ...sparkEntries,
+            ...actionEntries,
+            ...pathEntries,
+            ...loopEntries,
+        ]
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 4);
+    }, [noteEntries, sparkEntries, actionEntries, pathEntries, loopEntries]);
 
     const quickActions = [
         { id: '1', title: 'New Note', icon: 'file-text', color: theme.colors.primary, onPress: () => showNoteForm() },
         { id: '2', title: 'Add Spark', icon: 'lightbulb', color: theme.colors.secondary, onPress: () => showSparkForm() },
         { id: '3', title: 'Create Action', icon: 'check', color: theme.colors.success, onPress: () => showActionForm() },
         { id: '4', title: 'Start Path', icon: 'compass', color: theme.colors.textSecondary, onPress: () => showPathForm() },
-        { id: '5', title: 'Create Loop', icon: 'infinity', color: ENTRY_TYPES[EntryType.LOOP].color, onPress: () => navigation.navigate('LoopBuilderScreen', { mode: 'create' }) },
+        { id: '5', title: 'Create Loop', icon: 'infinity', color: ENTRY_TYPES[EntryType.LOOP].color, onPress: () => console.warn('Loop creation not available - loops are being re-implemented') },
         { id: '6', title: 'UI Showcase', icon: 'layout-grid', color: theme.colors.primaryLight, onPress: () => navigation.navigate('ComponentShowcaseScreen') },
         { id: '7', title: 'Path Timeline', icon: 'git-branch', color: theme.colors.secondaryLight, onPress: () => navigation.navigate('TestScreen') },
     ];

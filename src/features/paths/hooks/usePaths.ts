@@ -24,9 +24,7 @@ export function usePaths() {
         }
     }, []);
 
-    useEffect(() => {
-        loadPaths();
-    }, [loadPaths]);
+    // Remove redundant useEffect - let the parent component handle when to load
 
     const addPath = useCallback(async (path: Omit<Path, 'id' | 'createdAt' | 'updatedAt'>) => {
         try {

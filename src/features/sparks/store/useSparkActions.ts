@@ -22,9 +22,7 @@ export const useSparkActions = () => {
         }
     }, []);
 
-    useEffect(() => {
-        loadSparks();
-    }, [loadSparks]);
+    // Remove auto-loading to prevent infinite loops - let parent components control when to load
 
     const addSpark = useCallback(async (data: Omit<Spark, 'id' | 'createdAt' | 'updatedAt'>) => {
         try {

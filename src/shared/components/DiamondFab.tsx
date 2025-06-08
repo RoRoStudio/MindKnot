@@ -147,7 +147,9 @@ export const DiamondFab = forwardRef<DiamondFabRef, DiamondFabProps>(({ onPress,
 
     const showLoopFormHandler = () => {
         closeMenu();
-        showLoopForm(onCreateSuccess);
+        // TODO: Re-add when loops are re-implemented
+        console.warn('Loop creation not available - loops are being re-implemented');
+        // showLoopForm(onCreateSuccess);
     };
 
     // Updated menu items

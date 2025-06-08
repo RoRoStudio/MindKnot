@@ -17,9 +17,7 @@ export function useActions() {
         getActionById
     } = useActionActions();
 
-    useEffect(() => {
-        loadActions();
-    }, [loadActions]);
+    // Remove redundant useEffect - let the parent component handle when to load
 
     const loadUpcomingActions = useCallback(async () => {
         try {

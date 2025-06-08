@@ -56,7 +56,7 @@ async function applyDatabaseMigrations(): Promise<void> {
         }
 
         // Add starred and hidden columns to all entry tables
-        const entryTables = ['notes', 'sparks', 'actions', 'paths', 'loops'];
+        const entryTables = ['notes', 'sparks', 'actions', 'paths'];
 
         for (const table of entryTables) {
             try {
@@ -214,144 +214,18 @@ async function createTables(): Promise<void> {
             );
         `);
 
-        // Loops table
-        await db.execAsync(`
-            CREATE TABLE IF NOT EXISTS loops (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                description TEXT,
-                frequency TEXT,
-                startTimeByDay TEXT,
-                active INTEGER DEFAULT 1,
-                startDate TEXT,
-                endDate TEXT,
-                tags TEXT,
-                categoryId TEXT,
-                starred INTEGER DEFAULT 0,
-                hidden INTEGER DEFAULT 0,
-                createdAt TEXT NOT NULL,
-                updatedAt TEXT NOT NULL,
-                FOREIGN KEY (categoryId) REFERENCES categories(id)
-            );
-        `);
-
-        // Loop items table
-        await db.execAsync(`
-            CREATE TABLE IF NOT EXISTS loop_items (
-                id TEXT PRIMARY KEY,
-                loopId TEXT NOT NULL,
-                name TEXT NOT NULL,
-                description TEXT,
-                durationMinutes INTEGER,
-                quantity TEXT,
-                icon TEXT,
-                createdAt TEXT NOT NULL,
-                updatedAt TEXT NOT NULL,
-                FOREIGN KEY (loopId) REFERENCES loops(id)
-            );
-        `);
-
-        // Activity templates table
-        await db.execAsync(`
-            CREATE TABLE IF NOT EXISTS activity_templates (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                icon TEXT NOT NULL,
-                description TEXT,
-                type TEXT,
-                navigateTarget TEXT,
-                isPredefined INTEGER DEFAULT 0,
-                createdAt TEXT NOT NULL,
-                updatedAt TEXT NOT NULL
-            );
-        `);
-
-        // Loop activities table
-        await db.execAsync(`
-            CREATE TABLE IF NOT EXISTS loop_activities (
-                id TEXT PRIMARY KEY,
-                loopId TEXT NOT NULL,
-                baseActivityId TEXT NOT NULL,
-                durationSeconds INTEGER,
-                subActions TEXT,
-                navigateTarget TEXT,
-                \`order\` INTEGER DEFAULT 0,
-                createdAt TEXT NOT NULL,
-                updatedAt TEXT NOT NULL,
-                FOREIGN KEY (loopId) REFERENCES loops(id),
-                FOREIGN KEY (baseActivityId) REFERENCES activity_templates(id)
-            );
-        `);
-
-        // Loop activity instances table (new structure)
-        await db.execAsync(`
-            CREATE TABLE IF NOT EXISTS loop_activity_instances (
-                id TEXT PRIMARY KEY,
-                loopId TEXT NOT NULL,
-                templateId TEXT NOT NULL,
-                overriddenTitle TEXT,
-                quantityValue INTEGER,
-                quantityUnit TEXT,
-                durationMinutes INTEGER,
-                subActions TEXT,
-                navigateTarget TEXT,
-                autoCompleteOnTimerEnd INTEGER DEFAULT 1,
-                \`order\` INTEGER DEFAULT 0,
-                createdAt TEXT NOT NULL,
-                updatedAt TEXT NOT NULL,
-                FOREIGN KEY (loopId) REFERENCES loops(id),
-                FOREIGN KEY (templateId) REFERENCES activity_templates(id)
-            );
-        `);
-
-        // Loop execution state table
-        await db.execAsync(`
-            CREATE TABLE IF NOT EXISTS loop_execution_state (
-                id TEXT PRIMARY KEY,
-                loopId TEXT NOT NULL,
-                currentActivityIndex INTEGER DEFAULT 0,
-                startedAt TEXT NOT NULL,
-                completedActivities TEXT,
-                completedSubActions TEXT,
-                isPaused INTEGER DEFAULT 0,
-                pausedAt TEXT,
-                timeSpentSeconds INTEGER DEFAULT 0,
-                activityTimeTracking TEXT,
-                createdAt TEXT NOT NULL,
-                updatedAt TEXT NOT NULL,
-                FOREIGN KEY (loopId) REFERENCES loops(id)
-            );
-        `);
-
-        // Update loops table to include new fields (with error handling)
+        // TODO: Re-add loop tables when loops are re-implemented
+        // Clean up any existing loop tables since we're starting fresh
         try {
-            await db.execAsync(`
-                ALTER TABLE loops ADD COLUMN currentActivityIndex INTEGER DEFAULT 0;
-            `);
-            console.log('Added currentActivityIndex column to loops table');
+            await db.execAsync('DROP TABLE IF EXISTS loop_execution_state');
+            await db.execAsync('DROP TABLE IF EXISTS loop_activity_instances');
+            await db.execAsync('DROP TABLE IF EXISTS loop_activities');
+            await db.execAsync('DROP TABLE IF EXISTS loop_items');
+            await db.execAsync('DROP TABLE IF EXISTS activity_templates');
+            await db.execAsync('DROP TABLE IF EXISTS loops');
+            console.log('Cleaned up existing loop tables for fresh implementation');
         } catch (error) {
-            // Column might already exist, ignore error
-            console.log('currentActivityIndex column already exists or error adding it:', error);
-        }
-
-        try {
-            await db.execAsync(`
-                ALTER TABLE loops ADD COLUMN isExecuting INTEGER DEFAULT 0;
-            `);
-            console.log('Added isExecuting column to loops table');
-        } catch (error) {
-            // Column might already exist, ignore error
-            console.log('isExecuting column already exists or error adding it:', error);
-        }
-
-        try {
-            await db.execAsync(`
-                ALTER TABLE loops ADD COLUMN lastExecutionDate TEXT;
-            `);
-            console.log('Added lastExecutionDate column to loops table');
-        } catch (error) {
-            // Column might already exist, ignore error
-            console.log('lastExecutionDate column already exists or error adding it:', error);
+            console.log('Error cleaning up loop tables (probably didn\'t exist):', error);
         }
 
         // Paths table

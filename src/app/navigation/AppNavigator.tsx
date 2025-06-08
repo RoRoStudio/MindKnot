@@ -17,10 +17,10 @@ import ActionScreen from '../../features/actions/screens/ActionScreen';
 import PathScreen from '../../features/paths/screens/PathScreen';
 import SagaScreen from '../../features/sagas/screens/SagaScreen';
 
-// Loop Screens
-import { LoopBuilderScreen, LoopListScreen, LoopExecutionScreen } from '../../features/loops/screens';
-import LoopDetailsScreen from '../../features/loops/screens/LoopDetailsScreen';
-import LoopSummaryScreen from '../../features/loops/screens/LoopSummaryScreen';
+// TODO: Re-add loop screens when loops are re-implemented
+// import { LoopBuilderScreen, LoopListScreen, LoopExecutionScreen } from '../../features/loops/screens';
+// import LoopDetailsScreen from '../../features/loops/screens/LoopDetailsScreen';
+// import LoopSummaryScreen from '../../features/loops/screens/LoopSummaryScreen';
 
 // Dev Screens
 import TestScreen from '../../screens/dev/TestScreen';
@@ -46,12 +46,12 @@ export default function AppNavigator() {
             <Stack.Screen name="PathScreen" component={PathScreen} />
             <Stack.Screen name="SagaScreen" component={SagaScreen} />
 
-            {/* Loop Screens */}
-            <Stack.Screen name="LoopListScreen" component={LoopListScreen} />
+            {/* TODO: Re-add loop screens when loops are re-implemented */}
+            {/* <Stack.Screen name="LoopListScreen" component={LoopListScreen} />
             <Stack.Screen name="LoopBuilderScreen" component={LoopBuilderScreen} />
             <Stack.Screen name="LoopDetailsScreen" component={LoopDetailsScreen} />
             <Stack.Screen name="LoopExecutionScreen" component={LoopExecutionScreen} />
-            <Stack.Screen name="LoopSummaryScreen" component={LoopSummaryScreen} />
+            <Stack.Screen name="LoopSummaryScreen" component={LoopSummaryScreen} /> */}
 
             {/* Dev Screens */}
             <Stack.Screen name="TestScreen" component={TestScreen} />

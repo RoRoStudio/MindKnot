@@ -14,9 +14,7 @@ export function useSparks() {
         getSparkById
     } = useSparkActions();
 
-    useEffect(() => {
-        loadSparks();
-    }, [loadSparks]);
+    // Remove redundant useEffect - let the parent component handle when to load
 
     return {
         sparks,
